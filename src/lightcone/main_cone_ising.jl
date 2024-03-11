@@ -15,7 +15,7 @@ using ITransverse
 function main()
 
 JXX = 1.0  
-hz = 1.5
+hz = 0.5
 
 dt = 0.1
 
@@ -33,7 +33,7 @@ plus_state = Vector{ComplexF64}([1/sqrt(2),1/sqrt(2)])
 
 init_state = plus_state
 
-SVD_cutoff = 1e-4  
+SVD_cutoff = 1e-8
 maxbondim = 100
 method = "SVD"
 

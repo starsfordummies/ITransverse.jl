@@ -89,7 +89,7 @@ function evolve_cone(psi::MPS, nsteps::Int,
         println("Evolving $dt")
         llwork = deepcopy(ll)
 
-        # if we're worried about symmetry, evolve separately
+        # if we're worried about symmetry, evolve separately L and R 
         ll,_, ents = extend_tmps_cone_alt(llwork, rr, Id, op, ising_params, truncp)
         _,rr, ents = extend_tmps_cone_alt(llwork, rr, op, Id, ising_params, truncp)
 
