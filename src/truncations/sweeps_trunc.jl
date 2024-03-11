@@ -74,7 +74,7 @@ function truncate_normalize_sweep(left_mps::MPS, right_mps::MPS; method::String,
         elseif method == "SVD" 
             U,S,Vdag = svd(left_env, ind(left_env,1); cutoff, maxdim=chi_max)
 
-            @show S 
+            #@show S 
             #readline()
             sqS = sqrt.(S)
             isqS = sqS.^(-1)
@@ -145,6 +145,8 @@ end
 function check_equivalence_svd(left_mps::MPS, right_mps::MPS)
 
     mpslen = length(left_mps)
+    @info "Checking if SVs are the same "
+    @show mpslen
 
     # bring to "standard" right canonical forms individually - ortho center on the 1st site 
     # making copies along the way 
@@ -174,15 +176,21 @@ function check_equivalence_svd(left_mps::MPS, right_mps::MPS)
     left_env = deltaS * Ai 
     left_env *= Bi 
 
-    linds = 
+    u1,s1,v1 = svd(left_env, ind(left_env,1); cutoff=1e-14, maxdim=20)
+
+    linds = []
+    full_mps = left_env
     for jj = 2:mpslen
-        full_mps = left_env * L_ortho[jj] 
-        full_mps *= prime(R_ortho[jj], siteind(R_ortho,jj))
+        full_mps *= L_ortho[jj] 
+        full_mps *= prime(R_ortho[jj], "Site")
         push!(linds, siteind(L_ortho,jj))
     end
 
-    u1,s1,v1 = svd(left_env, ind(left_env,1); cutoff, maxdim=20)
-    u2,s2,v2 = svd(full_mps, linds; cutoff, maxdim=20)
+    @show linds
+    @show inds(full_mps)
+
+
+    u2,s2,v2 = svd(full_mps, linds; cutoff=nothing, maxdim=20)
 
     @show s1
     @show s2
