@@ -5,9 +5,10 @@ using Revise
 using LinearAlgebra, ITensors, JLD2, Dates, Plots
 
 
-includet("../itransverse.jl")
-using .ITransverse
+# includet("../itransverse.jl")
+# using .ITransverse
 
+using ITransverse
 
 ITensors.enable_debug_checks()
 
@@ -26,7 +27,7 @@ function main()
     init_state = plus_state
 
     SVD_cutoff = 1e-8
-    maxbondim = 100
+    maxbondim = 120
     itermax = 400
     verbose=false
     ds2_converged=1e-5
@@ -44,7 +45,7 @@ function main()
     leftvecs = []
     ds2s = []
 
-    for Nsteps=10:1:11
+    for Nsteps=2:1:100
 
         time_sites = siteinds("S=3/2", Nsteps)
 

@@ -6,8 +6,8 @@ using LinearAlgebra
 using Plots
 using LsqFit
 
-include("../itransverse.jl")
-using .ITransverse
+#include("../itransverse.jl")
+using ITransverse
 
 # include("utils.jl")
 # include("../models/ising.jl")

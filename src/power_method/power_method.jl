@@ -273,7 +273,7 @@ function powermethod_fold(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::
     # @show check_symmetry_itensor(in_mpo_1[end], siteinds(in_mpo_1, length(ll)))
     # @show check_symmetry_itensor(in_mpo_X[end], siteinds(in_mpo_X, length(ll)))
 
-    for jj = 1:itermax
+    for jj = 1:itermax  
 
         # Note that ITensors does the apply on the MPS/MPO legs with the SAME label, eg. p-p 
         # and then unprimes the p' leg. 
@@ -293,7 +293,8 @@ function powermethod_fold(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::
         OpsiR = apply(swapprime(in_mpo_1, 0, 1, "Site"), rr,  alg="naive", truncate=false)  
 
 
-        check_equivalence_svd(OpsiL, OpsiR)
+        # DEBUG
+        #check_equivalence_svd(OpsiL, OpsiR)
         
         _l, rr, sjj = truncate_normalize_sweep(OpsiL, OpsiR, cutoff=cutoff, chi_max=maxbondim, method="SVD")
 

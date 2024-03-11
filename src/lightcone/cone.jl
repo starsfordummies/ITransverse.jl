@@ -6,15 +6,15 @@ function init_cone_ising(p::pparams, build_expH_function::Function=build_expH_is
 
     eH = build_expH_function(space_sites, p)
     fold_id = ComplexF64[1,0,0,1]
-    cone_mps = init_cone_left(eH, p.init_state)
+    cone_mps = seed_cone_left(eH, p.init_state)
 
     return cone_mps
 
 end
 
-""" Initializes *left* light cone temporal MPS, given `eH` MPO tensors and `init_state`
-The `init_state` goes to the *right* """
-function init_cone_left(eH::MPO, init_state::Vector{ComplexF64})
+""" Seeds the *left* light cone temporal MPS, given `eH` MPO tensors and `init_state`,
+builds a (length 1) tMPS. The `init_state` goes to the *right* """
+function seed_cone_left(eH::MPO, init_state::Vector{ComplexF64})
     
     Wl = eH[1]
 

@@ -21,8 +21,8 @@ function truncate_normalize_sweep(left_mps::MPS, right_mps::MPS; method::String,
     # bring to "standard" right canonical forms individually - ortho center on the 1st site 
     # making copies along the way 
 
-    # L_ortho = orthogonalize(left_mps,  1, normalize=false)
-    # R_ortho = orthogonalize(right_mps, 1, normalize=false)
+    # L_ortho = orthogonalize(left_mps,  1)
+    # R_ortho = orthogonalize(right_mps, 1)
 
     # # ! does this change anything ? doesn't seem like it 
     L_ortho = orthogonalize(left_mps,  mpslen)
@@ -72,10 +72,15 @@ function truncate_normalize_sweep(left_mps::MPS, right_mps::MPS; method::String,
             XVinv = sqS * Uinv
 
         elseif method == "SVD" 
-            U,S,Vdag = svd(left_env, ind(left_env,1); cutoff, maxdim=chi_max)
+            
+            #@info "cutoff = nothing"
+            #U,S,Vdag = svd(left_env, ind(left_env,1); cutoff=nothing, maxdim=chi_max)
+            #@info SVs = diag(matrix(S))
 
-            #@show S 
-            #readline()
+            U,S,Vdag = svd(left_env, ind(left_env,1); cutoff, maxdim=chi_max)
+            #@info "cutoff = $cutoff"
+            #@info SVs = diag(matrix(S))
+
             sqS = sqrt.(S)
             isqS = sqS.^(-1)
 

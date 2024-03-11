@@ -13,12 +13,14 @@ end
 using Plots
 using ITensors, FileIO, JLD2, Dates
 
-include("utils.jl")
-include("../models/potts.jl")
-include("../tmpo/build_tmpo.jl")
-include("compute_entropies.jl")
-include("../truncations/sweeps_trunc.jl")
-include("power_method.jl")
+# include("utils.jl")
+# include("../models/potts.jl")
+# include("../tmpo/build_tmpo.jl")
+# include("compute_entropies.jl")
+# include("../truncations/sweeps_trunc.jl")
+# include("power_method.jl")
+
+using ITransverse
 
 if Base.Sys.isapple()
     ITensors.enable_debug_checks()

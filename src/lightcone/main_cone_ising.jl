@@ -2,16 +2,14 @@ using ITensors, JLD2, Dates
 using Revise
 using Plots
 
-include("../itransverse.jl")
-using .ITransverse
+using ITransverse
 
-ITensors.enable_debug_checks()
+#include("../itransverse.jl")
+#using .ITransverse
+
+#ITensors.enable_debug_checks()
 
 
-
-ITensors.space(::SiteType"S=3/2") = 4
-ITensors.state(::StateName"↑", ::SiteType"S=3/2") = [1, 0, 0, 0]
-ITensors.state(::StateName"+", ::SiteType"S=3/2") = [1/2, 1/2, 1/2, 1/2]
 
 
 function main()
