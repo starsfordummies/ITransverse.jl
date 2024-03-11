@@ -1,5 +1,6 @@
-
 using ITensors, ITensorTDVP
+include("../myutils/pparams.jl")
+include("../models/common.jl")
 include("../models/ising.jl")
 
 
@@ -14,7 +15,7 @@ hz = 0.8   # local magnetic field in z direction
 
 dt = 0.1  # time step
 
-SVD_cutoff = 1e-12    # cutoff for singular vaulues smaller than SVD_cutoff
+SVD_cutoff = 1e-4   # cutoff for singular vaulues smaller than SVD_cutoff
 maxbondim = 300       # maximum bond dimension allowed
 
 # define local degrees of freedom
@@ -54,7 +55,7 @@ psi_u3 = deepcopy(psi_prod)
 end
 
 
-
+#=
 Ut4 = build_expH_ising_2o_Jan(sites, JXX, hz, dt)
 
 psi_u4 = deepcopy(psi_prod)
@@ -66,7 +67,8 @@ psi_u4 = deepcopy(psi_prod)
     psi_u4[:] = apply(Ut4, psi_u4; normalize = true, cutoff = SVD_cutoff, maxdim = maxbondim)
     println("nt=$(nt),\tt=$(t),\tmaxbondim = $(maxlinkdim(psi_u4))")
 end
-
+=#
+psi_u4 = randomMPS(sites)
 
 Hisi = build_H_ising(sites, JXX, hz)
 

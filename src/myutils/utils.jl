@@ -14,6 +14,7 @@ end
 """ Computes the overlap (ll,rr) between two MPS *without* conjugating either one
 """
 function overlap_noconj(ll::MPS, rr::MPS, approx_real::Bool=false)
+    siteinds(ll) != siteinds(rr) ? rr = replace_siteinds(rr, siteinds(ll)) : nothing
     overlap = inner(dag(ll),rr) :: Union{Float64,ComplexF64}
     if approx_real && imag(overlap) < 1e-15
         return real(overlap)

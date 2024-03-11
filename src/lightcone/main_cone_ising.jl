@@ -33,33 +33,33 @@ plus_state = Vector{ComplexF64}([1/sqrt(2),1/sqrt(2)])
 
 init_state = plus_state
 
-SVD_cutoff = 1e-8
+SVD_cutoff = 1e-10
 maxbondim = 100
 method = "SVD"
 
 params = pparams(JXX, hz, dt, nbeta, init_state)
 truncp = trunc_params(SVD_cutoff, maxbondim, method)
 
-Nsteps = 40
+Nsteps = 100
 
 time_sites = siteinds("S=3/2", 1)
 
 c0 = init_cone_ising(params)
 
 
-c0, c0r, ev_x, ev_z = evolve_cone(c0, Nsteps, sigZ, params, truncp)
+c0, c0r, ev_x, ev_z, chis, overlaps = evolve_cone(c0, Nsteps, sigZ, params, truncp)
 
-return c0, ev_x, ev_z
+return c0, ev_x, ev_z, chis, overlaps
 
 end
 
-c0, ev_x, ev_z = main()
+c0, ev_x, ev_z, chis, overlaps = main()
 
 println(ev_x)
 println(ev_z)
 
 pl1 = plot(real(ev_x))
-@show maxlinkdim(c0)
+pl2 = plot(chis) 
 
-plot(pl1)
+plot(pl1, pl2)
 

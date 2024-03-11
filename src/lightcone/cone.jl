@@ -84,31 +84,43 @@ function evolve_cone(psi::MPS, nsteps::Int,
 
     evs_x = []
     evs_z = []
+    chis = []
+    overlaps = []
+
+    p = Progress(nsteps; desc="$cutoff=$(truncp.cutoff), maxbondim=$(truncp.maxbondim)), method=$(truncp.method)", showspeed=true) 
 
     for dt = 1:nsteps
-        println("Evolving $dt")
+        #println("Evolving $dt")
         llwork = deepcopy(ll)
 
         # if we're worried about symmetry, evolve separately L and R 
         ll,_, ents = extend_tmps_cone_alt(llwork, rr, Id, op, ising_params, truncp)
         _,rr, ents = extend_tmps_cone_alt(llwork, rr, op, Id, ising_params, truncp)
 
+        overlapLR = overlap_noconj(ll,rr)
 
         #println("lens: ", length(ll), "     ", length(rr))
-        @show (overlap_noconj(ll,rr))
-        @show maxlinkdim(ll), maxlinkdim(rr)
+        #@show (overlap_noconj(ll,rr))
+        #@show maxlinkdim(ll), maxlinkdim(rr)
 
         #TODO  renormalize by overlap ?
+        ll = ll * sqrt(1/overlapLR)
+        rr = rr * sqrt(1/overlapLR)
 
         #println(dt)
         #println(ll)
         #println(overlap_noconj(ll,rr)/overlap_noconj(ll,ll), maxlinkdim(ll))
         push!(evs_x, expval_cone(ll, rr, ComplexF64[0,1,1,0], ising_params))
         push!(evs_z, expval_cone(ll, rr, ComplexF64[1,0,0,-1], ising_params))
+        push!(chis, maxlinkdim(ll))
+        push!(overlaps, overlapLR)
+
+        next!(p; showvalues = [(:Info,"χ=$(maxlinkdim(ll)), (L|R) = $overlapLR " )])
+
 
     end
 
-    return ll, rr, evs_x, evs_z
+    return ll, rr, evs_x, evs_z, chis, overlaps 
 end
 
 

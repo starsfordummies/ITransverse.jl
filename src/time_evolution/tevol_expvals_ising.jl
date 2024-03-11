@@ -2,9 +2,9 @@
 using ITensors, ITensorTDVP
 using Plots
 
+include("../myutils/pparams.jl")
+include("../models/common.jl")
 include("../models/ising.jl")
-include("../power_method/utils.jl")
-
 
 N = 40      # System size
 
@@ -14,7 +14,7 @@ hz = 0.5   # local magnetic field in z direction
 
 dt = 0.1  # time step
 
-SVD_cutoff = 1e-12    # cutoff for singular vaulues smaller than SVD_cutoff
+SVD_cutoff = 1e-4    # cutoff for singular vaulues smaller than SVD_cutoff
 maxbondim = 300       # maximum bond dimension allowed
 
 # define local degrees of freedom
@@ -25,7 +25,7 @@ sites = siteinds("S=1/2", N; conserve_qns = false)
 psi_prod = productMPS(ComplexF64, sites, "+")
 
 
-nSteps = 30
+nSteps = 60
 
 
 
