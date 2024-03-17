@@ -39,6 +39,6 @@ export build_ising_folded_tMPO,
      build_folded_tMPO_regul_beta, 
      build_ising_expval_folded_tMPO, 
      build_expval_folded_tMPO, 
-     build_folded_left_tMPO
+     build_folded_left_tMPS
 
 end #module TransverseMPO

@@ -57,8 +57,7 @@ function mytruncate_eig(evs::Array{T}, trunc_error::Real, chi_max::Int) where T<
     evs_normalized = sort(normalize(evs); by=abs, rev=true)  # check this 
     curr_error = zero(Float64)
 
-
-    # Find the location first SV smaller than the cutoff - above this one we surely don't want to cut
+    # Find the location first eig smaller than the cutoff - above this one we surely don't want to cut
     k = findfirst(x -> abs(x) < trunc_error, evs_normalized )
 
     if isnothing(k)  # all evs are above the trunc_error, then I keep all of them
@@ -139,7 +138,12 @@ function eigtrunc(M::Array, cutoff::Real, chi_max::Int)
     trunc_err = norm( U[:,1:k] * diagm(D[1:k]) * Uinv[1:k,:] - M)
     trunc_err_alt = norm( U[:,1:k] * diagm(D[1:k]) * pinv(U[:,1:k]) - M)
 
-    @show (trunc_err, trunc_err_alt)
+    #@show (trunc_err, trunc_err_alt)
+    if trunc_err > cutoff
+        @warn "Truncation error is large: $trunc_err (cutoff = $(cutoff))"
+        @warn "eigs = $(F.values)"
+        @warn "trunc: $D"
+    end
 
     spec = Spectrum(F.values, trunc_err)
 
@@ -154,7 +158,10 @@ function eigtrunc(M::ITensor, cutoff::Real, chi_max::Int)
     
     # check that it's actually a square matrix
     @assert order(M) == 2 
-    @assert dims(M)[1] == dims(M)[2]
+    if dims(M)[1] != dims(M)[2]
+        @error "Not a square matrix, $(inds(M))"
+    end
+
 
     (i,j) = inds(M)
 
