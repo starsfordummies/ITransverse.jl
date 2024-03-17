@@ -99,29 +99,33 @@ function extend_timeMPO!(inTM::timeMPO)
 end
 
 
-function build_folded_left_tMPS(Wc::ITensor, time_sites)
+""" Builds folded initial guess for left tMPS 
+by picking the left (spatial) edges of the MPO """
+function build_folded_left_tMPS(eH::MPO, init_state::Vector, time_sites)
 
     Nsteps = length(time_sites)
     # TODO for the Right one it would be the same, but with (wL, p, ps) and do the same basically.. 
 
-    (p, ps, wR) = inds(Wc)
+    Wl = eH[1]
 
+    p = siteind(eH,1)
+    ps = p'
+    wR = linkind(eH,1)
     
-    
-    # Build W Wdagger - put double prime on Wconj for safety
-    WWc = Wc * dag(prime(Wc,2))
+    # Build W Wdagger - put double prime on Wlonj for safety
+    WWl = Wl * dag(prime(Wl,2))
     # Combine indices appropriately 
     CwR = combiner(wR,wR''; tags="cwR")
     # we flip the p<>* legs on the backwards, shouldn't be necessary since should always have p<>p*
     Cp = combiner(p,ps''; tags="cp")
     Cps = combiner(ps,p''; tags="cps")
 
-    WWc = WWc * CwR * Cp * Cps
+    WWl = WWl * CwR * Cp * Cps
 
     rot_phys = time_sites
     rot_links = [Index(4, "Link,rotl=$ii") for ii in 1:(Nsteps - 1)]
 
-    init_state = [1, 0] 
+    #init_state = [1, 0] 
     #fold_init_state = outer(init_state, init_state) 
     fold_init_state = init_state * init_state' 
 
@@ -138,15 +142,15 @@ function build_folded_left_tMPS(Wc::ITensor, time_sites)
     fin_tensor = ITensor(fold_op, iCps)
 
 
-    first_tensor = (fin_tensor * WWc) * delta(iCwR, rot_phys[1])* delta(iCp, rot_links[1]) 
+    first_tensor = (fin_tensor * WWl) * delta(iCwR, rot_phys[1])* delta(iCp, rot_links[1]) 
 
     list_mps = [first_tensor]
 
     for ii in range(2,Nsteps-1)
-        push!(list_mps, WWc * delta(iCwR, rot_phys[ii]) * delta(iCp, rot_links[ii-1]) * delta(iCps, rot_links[ii]) )
+        push!(list_mps, WWl * delta(iCwR, rot_phys[ii]) * delta(iCp, rot_links[ii-1]) * delta(iCps, rot_links[ii]) )
     end
 
-    last_tensor = (init_tensor * WWc) * delta(iCwR, rot_phys[Nsteps]) * delta(iCps, rot_links[Nsteps-1] )
+    last_tensor = (init_tensor * WWl) * delta(iCwR, rot_phys[Nsteps]) * delta(iCps, rot_links[Nsteps-1] )
 
     push!(list_mps, last_tensor)
 
@@ -174,6 +178,21 @@ function build_ising_folded_tMPO(build_expH_function::Function,
 
     #@info "using $(build_expH_function)"
     build_folded_tMPO_new(eH, init_state, fold_op, time_sites)
+
+end
+
+function build_ising_folded_tMPS(build_expH_function::Function,
+    par::pparams,
+    time_sites::Vector{<:Index})
+
+    space_sites = siteinds("S=1/2", 3; conserve_qns = false)
+
+    # Real time evolution
+    #eH = build_expH_function(space_sites, JXX, hz, dt)
+    eH = build_expH_function(space_sites, par.JXX, par.hz, par.dt)
+
+    #@info "using $(build_expH_function)"
+    build_folded_left_tMPS(eH, par.init_state, time_sites)
 
 end
 
