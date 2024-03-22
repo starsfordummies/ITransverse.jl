@@ -1,7 +1,7 @@
 module ITransverse
 
 using LinearAlgebra
-using ITensors
+using ITensors, NDTensors
 using TakagiFactorization
 using ProgressMeter
 
@@ -35,10 +35,10 @@ export vn_entanglement_entropy_cut,
 
 
 include("truncations/truncations.jl")
-
 include("truncations/symmetric_svd.jl")
-
 include("truncations/sweeps_trunc.jl")
+include("truncations/symm_decompositions.jl")
+
 
 # from truncations.jl
 export mytruncate, mytruncate_eig, svdtrunc, eigtrunc, eigtrunc, mytrunceig!
@@ -48,12 +48,11 @@ export symmetric_svd_iten, symmetric_svd_ndten, symmetric_svd_takagi_iten,
  symmetric_svd_takagi_arr, symmetric_svd_arr, symmetric_svd_arr,
   symmetric_eig_arr, symmetric_eig_arr
 
-
 #from sweeps_trunc.jl
 export truncate_normalize_sweep, truncate_normalize_sweep_LR, truncate_normalize_sweep_sym, truncate_normalize_sweep_sym_right
 
- 
-
+# from symm_decompositions.jl
+export symm_svd, symm_oeig
 
 
 include("models/ising.jl")
@@ -110,6 +109,7 @@ export build_ising_fw_tMPO,
 
 #from build_fold_tmpo.jl
 export build_ising_folded_tMPO,
+     build_ising_folded_tMPS,
      build_folded_tMPO, 
      build_potts_folded_tMPO, 
      build_xxmodel_folded_tMPO, 
@@ -121,7 +121,7 @@ export build_ising_folded_tMPO,
      build_folded_tMPO_regul_beta, 
      build_ising_expval_folded_tMPO, 
      build_expval_folded_tMPO, 
-     build_folded_left_tMPO
+     build_folded_left_tMPS
 
 
 include("power_method/power_method.jl")
@@ -129,7 +129,7 @@ include("power_method/power_method.jl")
 #from power_method.jl
 export powermethod, 
     powermethod_sym,
-    powermethod_sym_svd,
+    powermethod_sym_rdm,
     powermethod_fold, 
     powermethod_fold_regul_beta, 
     powermethod_regul_beta
