@@ -6,26 +6,26 @@ include("../myutils/pparams.jl")
 include("../models/common.jl")
 include("../models/ising.jl")
 
-N = 40      # System size
+N = 10      # System size
 
 
 JXX = 1.0   # spin x -- spin x coupling
-hz = 0.5   # local magnetic field in z direction
+hz = 0.3   # local magnetic field in z direction
 
 dt = 0.1  # time step
 
-SVD_cutoff = 1e-4    # cutoff for singular vaulues smaller than SVD_cutoff
+SVD_cutoff = 1e-14    # cutoff for singular vaulues smaller than SVD_cutoff
 maxbondim = 300       # maximum bond dimension allowed
 
 # define local degrees of freedom
 sites = siteinds("S=1/2", N; conserve_qns = false)
 
 # initial state
-#psi_prod = productMPS(ComplexF64, sites, "↑")
-psi_prod = productMPS(ComplexF64, sites, "+")
+psi_prod = productMPS(ComplexF64, sites, "↑")
+#psi_prod = productMPS(ComplexF64, sites, "+")
 
 
-nSteps = 60
+nSteps = 50
 
 
 
@@ -57,8 +57,8 @@ psi_u3 = deepcopy(psi_prod)
 @time for (nt, t) in enumerate(range(dt, step = dt, length = nSteps))
   psi_u3[:] = apply(Ut3, psi_u3; normalize = true, cutoff = SVD_cutoff, maxdim = maxbondim)
   println("nt=$(nt),\tt=$(t),\tmaxbondim = $(maxlinkdim(psi_u3))")
-  push!(evs_x_midchain, expect(psi_u3, "Sx")[trunc(Int,(length(psi_u3)/2))])
-  push!(evs_z_midchain, expect(psi_u3, "Sz")[trunc(Int,(length(psi_u3)/2))])
+  push!(evs_x_midchain, expect(psi_u3, "X")[trunc(Int,(length(psi_u3)/2))])
+  push!(evs_z_midchain, expect(psi_u3, "Z")[trunc(Int,(length(psi_u3)/2))])
 
 end
 
@@ -80,10 +80,10 @@ psi_tdvp1 = ITensorTDVP.tdvp(
 )
 
 # Expectation values after 
-ev_o1 = expect(psi_u1,"Sz")
-ev_o2 = expect(psi_u2,"Sz")
-ev_o3 = expect(psi_u3,"Sz")
-ev_td = expect(psi_tdvp1,"Sz")
+ev_o1 = expect(psi_u1,"Z")
+ev_o2 = expect(psi_u2,"Z")
+ev_o3 = expect(psi_u3,"Z")
+ev_td = expect(psi_tdvp1,"Z")
 
 # plotlyjs()
 
@@ -94,7 +94,7 @@ plot!(pl1, ev_td, label="tdvp")
 
 pl2 = scatter(evs_x_midchain, label="X")
 scatter!(pl2, evs_z_midchain, label="Z")
-scatter!(pl2,[nSteps], [expect(psi_tdvp1,"Sz", sites=div(N,2))],markersize=6)
+scatter!(pl2,[nSteps], [expect(psi_tdvp1,"Z", sites=div(N,2))],markersize=6)
 
 plot(pl1, pl2)
 

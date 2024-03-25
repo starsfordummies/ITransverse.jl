@@ -45,21 +45,20 @@ function main()
     leftvecs = []
     ds2s = []
 
-    for Nsteps=2:1:100
+    for Nsteps=4:1:5
 
         time_sites = siteinds("S=3/2", Nsteps)
 
-        #test_mps = build_folded_left_tMPS(Wl, time_sites)
-        #test_mps = productMPS(time_sites,"↑")
         #test_mps = productMPS(time_sites,"+")
-        test_mps = productMPS(time_sites,"↑")
+        #test_mps = productMPS(time_sites,"↑")
 
+        init_mps = build_ising_folded_tMPS(build_expH_ising_murg, params, time_sites)
 
         mpo_X = build_ising_folded_tMPO(build_expH_ising_murg, params, sigX, time_sites)
         mpo_Z = build_ising_folded_tMPO(build_expH_ising_murg, params, sigZ, time_sites)
         mpo_1 = build_ising_folded_tMPO(build_expH_ising_murg, params, Id, time_sites)
 
-        ll, rr, ds2_pm  = powermethod_fold(test_mps, mpo_1, mpo_X, pm_params) # kwargs)
+        ll, rr, ds2_pm  = powermethod_fold(init_mps, mpo_1, mpo_X, pm_params) # kwargs)
 
         ev0 = overlap_noconj(ll, rr)
 
