@@ -1,7 +1,3 @@
-# using ITensors
-# using LinearAlgebra
-# using Plots
-
 
 """ Quick random MPS for playing around """
 function myrMPS(len::Int=40, chi::Int=50)

@@ -197,6 +197,8 @@ function symmetric_svd_arr(a::ITensor;
     svd_cutoff::Real=1e-12, chi_max::Int=100, 
     check_precision::Bool=false) 
 
+    @info "SVD DECOMP"
+
     @assert order(a) == 2 
     @assert dims(a)[1] == dims(a)[2]
 
@@ -253,6 +255,7 @@ function symmetric_eig_arr(a::ITensor;
     svd_cutoff::Real=1e-12, chi_max::Int=100, 
     check_precision::Bool=false) 
 
+    @info "EIG DECOMP"
     @assert order(a) == 2 
     @assert dims(a)[1] == dims(a)[2]
 

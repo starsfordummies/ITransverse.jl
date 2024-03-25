@@ -1,7 +1,8 @@
 #import ITensors
 
 """
-Truncates optimizing the overlap (L|R)
+Truncates optimizing the overlap (L|R), returns new L and R in generalized orthogonal form 
+and (an estimate for) the gen. entropy at each site.
 Cutoff on SV of the transition matrix, given by `cutoff` param
 
 For this, we first bring to the usual *right* canonical form both MPS (ortho center on 1st site), \\
@@ -21,19 +22,24 @@ function truncate_normalize_sweep(left_mps::MPS, right_mps::MPS; method::String,
     # bring to "standard" right canonical forms individually - ortho center on the 1st site 
     # making copies along the way 
 
-    # L_ortho = orthogonalize(left_mps,  1)
-    # R_ortho = orthogonalize(right_mps, 1)
+    L_ortho = orthogonalize(left_mps,  1)
+    R_ortho = orthogonalize(right_mps, 1)
 
     # # ! does this change anything ? doesn't seem like it 
-    L_ortho = orthogonalize(left_mps,  mpslen)
-    R_ortho = orthogonalize(right_mps, mpslen)
-    orthogonalize!(L_ortho,1)
-    orthogonalize!(R_ortho,1)
-    normalize!(L_ortho)
-    normalize!(R_ortho)
+    # L_ortho = orthogonalize(left_mps,  mpslen)
+    # R_ortho = orthogonalize(right_mps, mpslen)
+    # orthogonalize!(L_ortho,1)
+    # orthogonalize!(R_ortho,1)
+    #normalize!(L_ortho)
+    #normalize!(R_ortho)
     
 
-    XUinv, XVinv, deltaS = (ITensor(1.), ITensor(1.), ITensor(1.)) 
+    overlap = overlap_noconj(L_ortho,R_ortho)
+
+    #XUinv, XVinv, deltaS = (ITensor(1.), ITensor(1.), ITensor(1.)) 
+    XUinv, XVinv, deltaS = (ITensor(1/sqrt(overlap)), ITensor(1/sqrt(overlap)), ITensor(1.)) 
+
+    @show XUinv.tensor.storage.data
 
     ents_sites = Vector{ComplexF64}()
 
@@ -80,6 +86,12 @@ function truncate_normalize_sweep(left_mps::MPS, right_mps::MPS; method::String,
             U,S,Vdag = svd(left_env, ind(left_env,1); cutoff, maxdim=chi_max)
             #@info "cutoff = $cutoff"
             #@info SVs = diag(matrix(S))
+
+            @show sum(S), sum(S.^2)
+
+            if sum(S) > 10. 
+                throw(ArgumentError(" bad $(diag(matrix(S)))"))
+            end
 
             sqS = sqrt.(S)
             isqS = sqS.^(-1)
@@ -366,6 +378,8 @@ function truncate_normalize_sweep_sym(left_mps::MPS; svd_cutoff::Real=1e-12, chi
         #U,S = symmetric_svd(left_env, svd_cutoff=svd_cutoff)
         U,S = symmetric_svd_arr(left_env, svd_cutoff=svd_cutoff, chi_max=chi_max)
 
+        U2,S2 = symm_svd(left_env, vR, cutoff=svd_cutoff, maxdim=chi_max)
+
         # orig version (works)
         sqS = sqrt.(S)
         isqS = sqS.^(-1)
@@ -418,9 +432,9 @@ function truncate_normalize_sweep_sym!(left_mps::MPS; svd_cutoff::Real=1e-12, ch
     left_env = ITensor(1.)
     Ai = ITensor(1.)
 
-    ents_sites = Vector{Float64}()
+    ents_sites = [] # Vector{Float64}()
 
-    for ii =1:mpslen-1
+    for ii = 1:mpslen-1
 
         Ai = XUinv * left_mps[ii]
 
@@ -428,7 +442,21 @@ function truncate_normalize_sweep_sym!(left_mps::MPS; svd_cutoff::Real=1e-12, ch
         left_env = left_env * Ai'
         left_env *= delta(siteind(left_mps,ii),siteind(left_mps,ii)')
 
+        #U,S = symmetric_svd_arr(left_env, svd_cutoff=svd_cutoff, chi_max=chi_max)
         U,S = symmetric_svd_arr(left_env, svd_cutoff=svd_cutoff, chi_max=chi_max)
+        F = symm_svd(left_env, ind(left_env,1), cutoff=svd_cutoff)
+        @show typeof(F)
+        U = F.U
+        S = F.S
+        F = symm_oeig(left_env, ind(left_env,1), cutoff=svd_cutoff)
+        #@show dump(F)
+        U = F.V
+        S = F.D
+
+        @info "[$ii] - sum SVs = $(sum(S)), sq = $(sum(S.^2))"
+
+        #U = F.U 
+        #S = F.S
 
         #slightly faster version (check)
 
@@ -441,13 +469,17 @@ function truncate_normalize_sweep_sym!(left_mps::MPS; svd_cutoff::Real=1e-12, ch
 
         left_mps[ii] =  Ai * XU  #replacetags(Ai * XU , "Link,v", "Link,v=$ii")
 
+        # TODO NORMALIZE HERE ?? 
+        #left_mps[ii] = left_mps[ii] / norm_gen(left_mps[ii])
+
         left_env =  left_mps[ii] * prime(left_mps[ii], inds(left_mps[ii])[end])
         #println(inds(left_env))
         #println("###")
         #println(linkind(left_mps,ii))
         #println("###")
 
-
+        @show S
+        @show sum(S)
         push!(ents_sites, log(sum(S)))
     end
 
@@ -459,6 +491,9 @@ function truncate_normalize_sweep_sym!(left_mps::MPS; svd_cutoff::Real=1e-12, ch
     # normalize overlap to 1 at each step 
     left_mps[mpslen] =  An /sqrt(overlap[1])
 
+
+    @info "Sweep done, normalization $(overlap_noconj(left_mps, left_mps))"
+    sleep(1)
 
     return ents_sites
 

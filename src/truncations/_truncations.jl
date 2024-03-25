@@ -1,5 +1,6 @@
 #
-# * Updated truncation related stuff 
+# * Truncation related stuff 
+# ! SHOULD BE REPLACED BY MY svdeig_symm.jl in IGensors
 #
 
 """
