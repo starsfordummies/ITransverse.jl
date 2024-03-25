@@ -86,9 +86,10 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::ppm_params)
 
     
     itermax = pm_params.itermax
-    SVD_cutoff = pm_params.SVD_cutoff
+    cutoff = pm_params.SVD_cutoff
     maxbondim = pm_params.maxbondim
     converged_ds2 = pm_params.ds2_converged
+    method = pm_params.method
 
 
     # normalize the vector to get a good starting point?
@@ -101,6 +102,8 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::ppm_params)
 
     #@showprogress desc="ds2=$ds2 chi=$(maxlinkdim(ll))" 
     p = Progress(itermax; showspeed=true)  #barlen=40
+    p = Progress(itermax; desc="L=$(length(ll)), cutoff=$(cutoff), maxbondim=$(pm_params.maxbondim))", showspeed=true) 
+
 
     maxbondim = 10
 
@@ -123,8 +126,10 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::ppm_params)
         #ll, sjj = truncate_normalize_sweep_sym(OpsiL, svd_cutoff=SVD_cutoff, chi_max=maxbondim)
 
         ll = apply(in_mpo, ll,  alg="naive", truncate=false)
-        sjj = truncate_normalize_sweep_sym!(ll, svd_cutoff=SVD_cutoff, chi_max=maxbondim)
-        #sjj = truncate_normalize_sweep_sym_ite!(ll, svd_cutoff=SVD_cutoff, chi_max=maxbondim)
+        sjj = truncate_normalize_sweep_sym!(ll, svd_cutoff=cutoff, chi_max=maxbondim, method=method)
+        
+        # TODO not implemented yet 
+        #sjj = truncate_normalize_sweep_sym_ite!(ll, svd_cutoff=cutoff, chi_max=maxbondim)
 
         #@show length(sprevs)
         #@show sjj
@@ -142,7 +147,9 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::ppm_params)
             templot =  plot(real(sjj),label=jj,legend=:outertopright)
         end
 
-        next!(p; showvalues = [(:jj,jj), (:ds2,ds2), (:chi,(maxlinkdim(ll)))])
+        #next!(p; showvalues = [(:jj,jj), (:ds2,ds2), (:chi,(maxlinkdim(ll)))])
+        next!(p; showvalues = [(:Info,"[$(jj)] ds2=$(ds2), chi=$(maxlinkdim(ll))" )])
+
         #next!(p; showvalues = ["ds2= $ds2, chimax=$(maxlinkdim(ll))"])
 
         # TODO: this is costly - maybe not necessary if all we care for is convergence
@@ -181,7 +188,7 @@ Power method using SVD compression: takes as input a single MPS |L>,
 
 Truncation params are in pm_params
 """
-function powermethod_sym_svd(in_mps::MPS, in_mpo::MPO, pm_params::Dict)
+function powermethod_sym_rdm(in_mps::MPS, in_mpo::MPO, pm_params::Dict)
 
     
     itermax = pm_params[:itermax]
@@ -251,9 +258,11 @@ function powermethod_fold(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::
 
 
     # normalize the vector to get a good starting point?
+    #ll = normalize(in_mps)
+    #rr = normalize(in_mps)
 
-    ll = normalize(in_mps)
-    rr = normalize(in_mps)
+    ll = deepcopy(in_mps)
+    rr = ll
 
     # should we also normalize the MPO !!?
     #normalize!(in_mpo)

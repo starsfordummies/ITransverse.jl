@@ -18,8 +18,7 @@ struct ppm_params
     ds2_converged::Float64
     increase_chi::Bool
     plot_s::Bool
-
-
+    method::String
 end
 
 struct trunc_params
@@ -36,15 +35,7 @@ function ppm_params(itermax::Int64,
     verbose::Bool,
     ds2_converged::Float64,
     increase_chi::Bool=true)
-    return ppm_params(itermax,SVD_cutoff,maxbondim,verbose,ds2_converged, increase_chi, false)
+    return ppm_params(itermax,SVD_cutoff,maxbondim,verbose,ds2_converged, increase_chi, false, "SVD")
 end
 
-#=
-function ppm_params(itermax::Int64,
-    SVD_cutoff::Float64,
-    maxbondim::Int64,
-    verbose::Bool,
-    ds2_converged::Float64)
-    return ppm_params(itermax,SVD_cutoff,maxbondim,verbose,ds2_converged, true, false)
-end
-=#
+
