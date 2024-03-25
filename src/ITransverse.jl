@@ -34,22 +34,27 @@ export vn_entanglement_entropy_cut,
     generalized_entropy
 
 
-include("truncations/truncations.jl")
+#include("truncations/truncations.jl")
 include("truncations/symmetric_svd.jl")
-include("truncations/sweeps_trunc.jl")
-include("truncations/symm_decompositions.jl")
+#include("truncations/symm_decompositions.jl")
 
+# TODO include check_equivalence_svd ? 
 
 # from truncations.jl
-export mytruncate, mytruncate_eig, svdtrunc, eigtrunc, eigtrunc, mytrunceig!
+# export mytruncate, mytruncate_eig, svdtrunc, eigtrunc, eigtrunc, mytrunceig!
 
 #from symmetric_svd.jl
 export symmetric_svd_iten, symmetric_svd_ndten, symmetric_svd_takagi_iten,
  symmetric_svd_takagi_arr, symmetric_svd_arr, symmetric_svd_arr,
   symmetric_eig_arr, symmetric_eig_arr
 
+include("truncations/sweeps.jl")
+include("truncations/sweeps_sym.jl")
+
 #from sweeps_trunc.jl
-export truncate_normalize_sweep, truncate_normalize_sweep_LR, truncate_normalize_sweep_sym, truncate_normalize_sweep_sym_right
+export truncate_normalize_sweep, truncate_normalize_sweep_LR
+
+export truncate_normalize_sweep_sym!, truncate_normalize_sweep_sym_right
 
 # from symm_decompositions.jl
 export symm_svd, symm_oeig
