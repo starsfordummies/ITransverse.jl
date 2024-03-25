@@ -86,7 +86,7 @@ function truncate_normalize_sweep_sym!(left_mps::MPS; svd_cutoff::Float64, chi_m
     orthogonalize!(left_mps,1) # orthogonalize! should NOT normalize MPS 
 
     #CHECK: does this help ?
-    normalize_gen!(left_mps)
+    #normalize_gen!(left_mps)
 
     @show norm_gen(left_mps)
 
@@ -111,6 +111,7 @@ function truncate_normalize_sweep_sym!(left_mps::MPS; svd_cutoff::Float64, chi_m
             isqS = sqS.^(-1)
             
             XU = dag(U) * diagITensor(isqS.storage.data, inds(S))
+            XUinv = diagITensor(sqS.storage.data, inds(S)) * U
 
         elseif method == "SVD"
             F = symm_svd(left_env, ind(left_env,1), cutoff=svd_cutoff)
@@ -120,7 +121,15 @@ function truncate_normalize_sweep_sym!(left_mps::MPS; svd_cutoff::Float64, chi_m
             sqS = S.^(0.5)
             isqS = sqS.^(-1)
             
-            XU = dag(U) * diagITensor(isqS.storage.data, inds(S))
+            #@assert inds(S) ==  inds(isqS)
+ 
+            #XU = dag(U) * diagITensor(isqS.storage.data, inds(S))
+            XU = dag(U) * isqS
+            XUinv = sqS * U
+
+            # test = dag(U) * U' * delta(F.u, F.u')
+
+            # isid(XU * prime(XUinv,"CMB"))
 
         elseif method == "EIG"
             F = symm_oeig(left_env, ind(left_env,1), cutoff=svd_cutoff)
@@ -131,13 +140,18 @@ function truncate_normalize_sweep_sym!(left_mps::MPS; svd_cutoff::Float64, chi_m
             sqS = S.^(0.5)
             isqS = sqS.^(-1)
 
-            XU = U * diagITensor(isqS.storage.data, inds(S))
+            XU = U * isqS
+            XUinv = sqS * U
+
+            @show inds(XU)
+            @show inds(left_env)
+
+            #@show isid(XU * XUinv)
 
         end
 
         #slightly faster version (check)
 
-        XUinv = diagITensor(sqS.storage.data, inds(S)) * U
         #
 
         left_mps[ii] =  Ai * XU  #replacetags(Ai * XU , "Link,v", "Link,v=$ii")
@@ -147,8 +161,8 @@ function truncate_normalize_sweep_sym!(left_mps::MPS; svd_cutoff::Float64, chi_m
 
         left_env =  left_mps[ii] * prime(left_mps[ii], inds(left_mps[ii])[end])
 
-        @show S
-        @show sum(S)
+        #@show S
+        #@show sum(S)
         push!(ents_sites, log(sum(S)))
     end
 
@@ -157,12 +171,16 @@ function truncate_normalize_sweep_sym!(left_mps::MPS; svd_cutoff::Float64, chi_m
 
     overlap = An * An 
 
+    if abs(scalar(overlap)) > 1e20 || abs(scalar(overlap)) < 1e-20
+        @warn ("Careful! overlap = $overlap")
+    end
+
     # normalize overlap to 1 on last matrix 
-    left_mps[mpslen] =  An /sqrt(overlap[1])
+    left_mps[mpslen] =  An /sqrt(scalar(overlap))
 
 
     @info "Sweep done, normalization $(overlap_noconj(left_mps, left_mps))"
-    sleep(1)
+    #sleep(1)
 
     return ents_sites
 
@@ -230,80 +248,6 @@ function truncate_normalize_sweep_sym_right(left_mps::MPS; svd_cutoff::Real=1e-1
     return L_ortho, ents_sites
 
 end
-
-
-
-
-
-""" Check that two MPS are in (generalized-symmetric) *left* canonical form """
-function check_gencan_left_sym_phipsi(psi::MPS, phi::MPS, verbose::Bool=false)
-
-    @assert length(psi) == length(phi)
-
-    if verbose
-        println("Checking LEFT gen/sym form")
-    end
-    
-    if abs(overlap_noconj(psi,phi) - 1.) > 1e-7 || abs(1. - scalar(psi[end]*phi[end]*delta(linkinds(psi)[end],linkinds(phi)[end] ))) > 1e-7
-        println("overlap = $(overlap_noconj(psi,phi))), alt = $(scalar(psi[end]*phi[end]*delta(linkinds(psi)[end],linkinds(phi)[end] )))")
-    end
-
-    mpslen = length(psi)
-    # Start from the operator/final state side (for me that's on the left)
-    left_env = ITensor(1.)
-    for (ii, (Ai,Bi)) in enumerate(zip(psi[1:end-1], phi[1:end-1]))
-        left_env =  left_env * Ai
-        left_env = left_env * prime(Bi, commoninds(Bi,linkinds(phi)))    #* delta(wLa, wLb) )
-        @assert order(left_env) == 2
-        if norm(array(left_env)- diagm(diag(array(left_env)))) > 0.1
-            @warn("[R]non-diag@[$ii]")
-        end
-        delta_norm = norm(array(left_env) - I(size(left_env)[1])) 
-        if delta_norm > 0.0001
-            @warn("[R]non-can@[$ii], $delta_norm")
-        end
-    end
-    if verbose
-        @info("Done checking RIGHT gen/sym form")
-    end
-    
-end
-
-
-""" Check that two MPS are in (generalized-symmetric) *right* canonical form
-TODO not implemented yet  """
-function check_gencan_right_sym_phipsi(psi::MPS, phi::MPS, verbose::Bool=false)
-    if verbose
-        @info("Checking RIGHT gen/sym form")
-    end
-    
-    if abs(overlap_noconj(psi,phi) - 1.) > 1e-7 || abs(1. - scalar(psi[end]*phi[end]*delta(linkinds(psi)[end],linkinds(phi)[end] ))) > 1e-7
-        println("overlap = $(overlap_noconj(psi,phi))), alt = $(scalar(psi[end]*phi[end]*delta(linkinds(psi)[end],linkinds(phi)[end] )))")
-    end
-
-    mpslen = length(psi)
-    # Start from the initial state side (for me that's on the right)
-    right_env = ITensor(1.)
-    for (ii, (Ai,Bi)) in enumerate(zip(psi[end:-1:1], phi[end:-1:1]))
-        right_env =  right_env * Ai
-        right_env = right_env * prime(Bi, commoninds(Bi,linkinds(phi)))    #* delta(wLa, wLb) )
-        @assert order(right_env) == 2
-        if norm(array(right_env)- diagm(diag(array(right_env)))) > 0.1
-            @warn("[R]non-diag@[$ii]")
-        end
-        delta_norm = norm(array(right_env) - I(size(right_env)[1])) 
-        if delta_norm > 0.01
-            @warn("[R]non-can@[$ii], $delta_norm")
-        end
-    end
-    if verbose
-        @info("Done checking RIGHT gen/sym form")
-    end
-    
-end
-
-
-
 
 
 
