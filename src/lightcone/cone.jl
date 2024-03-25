@@ -149,6 +149,7 @@ function extend_tmps_cone_alt(ll::MPS, rr::MPS,
     tmpo = swapprime(build_ising_folded_tMPO(build_expH_ising_murg, ising_params, op_R, time_sites), 0, 1, "Site")
     psi_R = apply_extend(tmpo, rr)
 
+    # ! CHECK CAN WE EVER HAVE LINKS (L) != LINKS (R) ??? WHY DOES EIGEN FAIL??
     ll, rr, ents = truncate_normalize_sweep(psi_L,psi_R, truncp)
 
     return ll,rr,ents
