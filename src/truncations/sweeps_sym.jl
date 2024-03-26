@@ -88,7 +88,7 @@ function truncate_normalize_sweep_sym!(left_mps::MPS; svd_cutoff::Float64, chi_m
     #CHECK: does this help ?
     #normalize_gen!(left_mps)
 
-    @show norm_gen(left_mps)
+    @debug norm_gen(left_mps)
 
     XUinv= ITensor(1.)
     left_env = ITensor(1.)
@@ -179,7 +179,7 @@ function truncate_normalize_sweep_sym!(left_mps::MPS; svd_cutoff::Float64, chi_m
     left_mps[mpslen] =  An /sqrt(scalar(overlap))
 
 
-    @info "Sweep done, normalization $(overlap_noconj(left_mps, left_mps))"
+    @debug "Sweep done, normalization $(overlap_noconj(left_mps, left_mps))"
     #sleep(1)
 
     return ents_sites
@@ -199,6 +199,7 @@ end
 
 """ 
 Symmetric case sweep to bring to gen. RIGHT canonical form
+TODO havent' checked it works yet 
 """
 function truncate_normalize_sweep_sym_right(left_mps::MPS; svd_cutoff::Real=1e-12, chi_max::Int=100)
 
@@ -254,7 +255,7 @@ end
 
 """ Check that an MPS is in (generalized-symmetric) left canonical form,
 ie. that when we contract everything from the left to the right we get identities
-Should be superseded by check_gen_ortho() in my iGensors """
+Should be superseded by check_gen_ortho() in iGensors """
 function _check_gencan_left_sym(in_mps::MPS, verbose::Bool=false)
     if verbose
         println("Checking LEFT gen/sym form")
