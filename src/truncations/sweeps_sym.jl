@@ -143,8 +143,8 @@ function truncate_normalize_sweep_sym!(left_mps::MPS; svd_cutoff::Float64, chi_m
             XU = U * isqS
             XUinv = sqS * U
 
-            @show inds(XU)
-            @show inds(left_env)
+            #@show inds(XU)
+            #@show inds(left_env)
 
             #@show isid(XU * XUinv)
 
