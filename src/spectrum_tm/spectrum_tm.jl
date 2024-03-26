@@ -14,9 +14,8 @@ using KrylovKit: eigsolve
 using Plots
 using Tullio
 
-include("../power_method/utils.jl")
 include("../models/ising.jl")
-#include("symmetric_svd.jl")
+
 
 ITensors.set_warn_order(24)
 

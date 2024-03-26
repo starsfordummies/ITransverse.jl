@@ -5,14 +5,7 @@ using KrylovKit: eigsolve
 using JLD2
 #using Infiltrator
 
-include("../power_method/utils.jl")
-include("../models/ising.jl")
-include("../truncations/symmetric_svd.jl")
-include("../tmpo/build_tmpo.jl")
-include("../power_method/compute_entropies.jl")
-include("../truncations/sweeps_trunc.jl")
-include("../power_method/power_method.jl")
-#include("./gen_dmrg_iten.jl")
+using ITransverse
 
 ITensors.disable_debug_checks()
 

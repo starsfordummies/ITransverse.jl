@@ -1,6 +1,3 @@
-#using ITensors
-#using LongRangeITensors: timeEvo_ITensors_2ndOrder
-#include("../truncations/symmetric_svd.jl")
 
 ITensors.op(::OpName"Σ",::SiteType"S=1") =
 [exp(2*im*pi/3)     0        0 

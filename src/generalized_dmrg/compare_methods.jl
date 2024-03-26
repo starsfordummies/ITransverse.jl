@@ -5,15 +5,7 @@ using Plots
 using JLD2
 #using MKL
 
-include("fuse_inds.jl")
-include("../power_method/utils.jl")
-include("../tmpo/build_tmpo.jl")
-include("../truncations/symmetric_svd.jl")
-include("../truncations/sweeps_trunc.jl")
-include("../power_method/power_method.jl")
-
-include("../models/ising.jl")
-include("./gen_dmrg_iten.jl")
+using ITransverse 
 
 
 ITensors.Strided.disable_threads()

@@ -4,13 +4,7 @@ using LinearAlgebra
 using Plots
 using LsqFit
 
-include("utils.jl")
-include("../models/ising.jl")
-include("symmetric_svd.jl")
-include("../tmpo/build_tmpo.jl")
-include("compute_entropies.jl")
-include("../truncations/sweeps_trunc.jl")
-include("power_method.jl")
+using ITransverse
 
 
 ITensors.enable_debug_checks()

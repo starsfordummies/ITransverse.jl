@@ -51,9 +51,9 @@ export symmetric_svd_iten, symmetric_svd_ndten, symmetric_svd_takagi_iten,
 include("truncations/sweeps.jl")
 include("truncations/sweeps_sym.jl")
 
-#from sweeps_trunc.jl
+#from sweeps.jl
 export truncate_normalize_sweep, truncate_normalize_sweep_LR
-
+# sweeps_sym.jl
 export truncate_normalize_sweep_sym!, truncate_normalize_sweep_sym_right
 
 # from symm_decompositions.jl

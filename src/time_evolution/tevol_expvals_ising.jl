@@ -3,7 +3,7 @@ using ITensors, ITensorTDVP
 using Plots
 
 include("../myutils/pparams.jl")
-include("../models/common.jl")
+include("../models/brakets.jl")
 include("../models/ising.jl")
 
 N = 10      # System size

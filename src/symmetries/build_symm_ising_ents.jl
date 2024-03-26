@@ -13,13 +13,14 @@ else
 end
 
 
-include("../power_method/utils.jl")
-include("../models/ising.jl")
-include("../tmpo/build_tmpo.jl")
-include("../power_method/compute_entropies.jl")
-include("../truncations/sweeps_trunc.jl")
-include("../power_method/power_method.jl")
+# include("../power_method/utils.jl")
+# include("../models/ising.jl")
+# include("../tmpo/build_tmpo.jl")
+# include("../power_method/compute_entropies.jl")
+# include("../truncations/sweeps_trunc.jl")
+# include("../power_method/power_method.jl")
 
+using ITransverse
 
 function main(resume_filename = "none")
 

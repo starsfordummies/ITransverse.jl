@@ -9,13 +9,6 @@ using LsqFit
 #include("../itransverse.jl")
 using ITransverse
 
-# include("utils.jl")
-# include("../models/ising.jl")
-# include("symmetric_svd.jl")
-# include("../tmpo/build_tmpo.jl")
-# include("compute_entropies.jl")
-# include("../truncations/sweeps_trunc.jl")
-# include("power_method.jl")
 
 
 ITensors.enable_debug_checks()
@@ -85,7 +78,7 @@ end
 allens = []
 allens2 = []
 norms = []
-for jj = 20:5:61
+for jj = 24:1:40
     _, en, en2, norm = test_los(jj, method="SVDold")
     push!(allens, en)
     push!(allens2, en2)
