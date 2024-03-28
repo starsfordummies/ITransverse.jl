@@ -12,13 +12,18 @@ end
 
 struct ppm_params
     itermax::Int64
-    SVD_cutoff::Float64
+    cutoff::Float64
     maxbondim::Int64
     verbose::Bool
     ds2_converged::Float64
     increase_chi::Bool
     plot_s::Bool
     method::String
+
+    function ppm_params(; itermax::Int64 = 400, cutoff::Float64=1e-12, maxbondim::Int64=100, 
+        verbose::Bool=false, ds2_converged::Float64=1e-5, increase_chi::Bool=false, plot_s::Bool=false, method::String="SVD")
+        return new(itermax, cutoff, maxbondim, verbose, ds2_converged, increase_chi, plot_s, method)
+    end
 end
 
 struct trunc_params

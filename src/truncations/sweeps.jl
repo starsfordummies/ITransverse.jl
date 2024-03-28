@@ -38,7 +38,7 @@ function truncate_normalize_sweep(left_mps::MPS, right_mps::MPS; method::String,
     #XUinv, XVinv, deltaS = (ITensor(1.), ITensor(1.), ITensor(1.)) 
     XUinv, XVinv, deltaS = (ITensor(1/sqrt(overlap)), ITensor(1/sqrt(overlap)), ITensor(1.)) 
 
-    @show XUinv.tensor.storage.data
+    #@show XUinv.tensor.storage.data
 
     ents_sites = Vector{ComplexF64}()
 
@@ -80,7 +80,7 @@ function truncate_normalize_sweep(left_mps::MPS, right_mps::MPS; method::String,
             
             U,S,Vdag = svd(left_env, ind(left_env,1); cutoff, maxdim=chi_max)
 
-            @show sum(S), sum(S.^2)
+            #@show sum(S), sum(S.^2)
 
             # if sum(S) > 10. 
             #     throw(ArgumentError(" bad $(diag(matrix(S)))"))

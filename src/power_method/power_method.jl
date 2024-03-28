@@ -11,21 +11,29 @@ Power method
 
 Truncation params are in pm_params
 """
-function powermethod(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::Dict; flip_R::Bool=false)
+function powermethod(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::ppm_params; flip_R::Bool=false)
 
-    itermax = pm_params[:itermax]
-    SVD_cutoff = pm_params[:SVD_cutoff] 
-    maxbondim = pm_params[:maxbondim]
-
-    # normalize the vector to get a good starting point?
-    #ll = normalize(in_mps)
-    #rr = normalize(in_mps)
+    itermax = pm_params.itermax
+    cutoff = pm_params.cutoff
+    maxbondim = pm_params.maxbondim
+    method = pm_params.method
 
     mpslen = length(in_mps)
 
-    ds2s = [0.]
-    ds2 = fill(0., mpslen-1)
+    ds2s = ComplexF64[]
+    ds2 = 0.
     sprevs = fill(1., mpslen-1)
+
+    ll = deepcopy(in_mps)
+    rr = deepcopy(in_mps)
+
+    # TODO CHECK 
+    if flip_R
+        in_mpo_R = swapprime(in_mpo_R, 0, 1, "Site")
+    end
+
+    p = Progress(itermax; showspeed=true)  #barlen=40
+    p = Progress(itermax; desc="L=$(length(ll)), cutoff=$(cutoff), maxbondim=$(pm_params.maxbondim))", showspeed=true) 
 
     for jj = 1:itermax
 
@@ -34,13 +42,12 @@ function powermethod(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::Dict;
         
         # Take the ll vector from the previous step as new L,R 
         OpsiL = apply(in_mpo_L, ll,  alg="naive", truncate=false)
-        if flip_R
-            OpsiR = apply(swapprime(in_mpo_R, 0, 1, "Site"), rr,  alg="naive", truncate=false)  
-        else
-            OpsiR = apply(in_mpo_R, rr,  alg="naive", truncate=false) 
-        end 
+        OpsiR = apply(in_mpo_R, rr,  alg="naive", truncate=false)
 
-        ll, rr, sjj = truncate_normalize_sweep(OpsiL, OpsiR, cutoff=pm_params[:SVD_cutoff], method=pm_params[:method])
+        llprev = deepcopy(ll)
+        rrprev = deepcopy(rr)
+
+        ll, rr, sjj = truncate_normalize_sweep(OpsiL, OpsiR, cutoff=cutoff, method=method, chi_max=maxbondim)
 
         # TODO: this is costly - maybe not necessary if all we care for is convergence
         #sjj = generalized_entropy(ll,rr)
@@ -53,14 +60,23 @@ function powermethod(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::Dict;
         ds2 = norm(sprevs - sjj)
 
         
-        push!(ds2s, ds2)
+        #push!(ds2s, ds2)
+        push!(ds2s, inner(llprev,ll))
         sprevs = sjj
 
-        println("$(jj): [$(maxlinkdim(OpsiL)),$(maxlinkdim(OpsiR))] => $(maxlinkdim(ll)) , ds2 = $(ds2), <L|R> = $(overlap_noconj(ll,rr))")
+        #println("$(jj): [$(maxlinkdim(OpsiL)),$(maxlinkdim(OpsiR))] => $(maxlinkdim(ll)) , ds2 = $(ds2), <L|R> = $(overlap_noconj(ll,rr))")
+
+        @show inner(OpsiL, ll)
+        @show inner(OpsiR, rr)
+        @show inner(llprev,ll)
+        @show inner(rrprev,rr)
 
         # this maybe helps keeping memory usage low on cluster(?)
         # https://itensor.discourse.group/t/large-amount-of-memory-used-when-dmrg-runs-on-cluster/1045/4
-        GC.gc()
+        #GC.gc()
+
+        next!(p; showvalues = [(:Info,"[$(jj)] ds2=$(ds2), chi=$(maxlinkdim(ll))" )])
+
 
         if ds2 < 1e-10
             println("converged after $jj steps")
@@ -86,7 +102,7 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::ppm_params)
 
     
     itermax = pm_params.itermax
-    cutoff = pm_params.SVD_cutoff
+    cutoff = pm_params.cutoff
     maxbondim = pm_params.maxbondim
     converged_ds2 = pm_params.ds2_converged
     method = pm_params.method
@@ -252,7 +268,7 @@ Truncation params are in pm_params
 function powermethod_fold(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::ppm_params)
 
     itermax = pm_params.itermax
-    cutoff = pm_params.SVD_cutoff
+    cutoff = pm_params.cutoff
     maxbondim = pm_params.maxbondim
     converged_ds2 = pm_params.ds2_converged
 
@@ -262,7 +278,7 @@ function powermethod_fold(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::
     #rr = normalize(in_mps)
 
     ll = deepcopy(in_mps)
-    rr = ll
+    rr = deepcopy(in_mps)
 
     # should we also normalize the MPO !!?
     #normalize!(in_mpo)

@@ -16,16 +16,16 @@ include("myutils/ExtraUtils.jl")
 using .ExtraUtils
 
 # # from pparams.jl
-# export pparams, ppm_params, trunc_params
+export pparams, ppm_params, trunc_params
 
 # #from utils.jl
-# export myrMPS, 
-#     overlap_noconj, 
-#     check_symmetry_itensor_mpo, 
-#     check_symmetry_itensor, 
-#     check_diag_matrix, 
-#     check_id_matrix,
-#     isid
+export myrMPS, 
+    overlap_noconj, 
+    check_symmetry_itensor_mpo, 
+    check_symmetry_itensor
+    # check_diag_matrix, 
+    # check_id_matrix,
+    # isid
 
 # #from compute_entropies.jl
 # export vn_entanglement_entropy_cut, 
@@ -71,6 +71,9 @@ export symm_svd, symm_oeig
 include("models/ChainModels.jl")
 using .ChainModels
 
+export build_expH_ising_murg
+
+
 # # from ising.jl
 # export build_H_ising_manual,
 #     build_H_ising_manual_lowtri, 
@@ -105,14 +108,13 @@ include("tmpo/build_tmpo_expval.jl")
 #from build_tmpo_[fw|expval].jl
 export
     build_fw_tMPO_regul_beta, 
-    build_ising_tMPO_regul_beta, 
+    build_ising_fw_tMPO_regul_beta, 
     #build_ising_fw_tMPO,
     #build_potts_fw_tMPO, 
     #build_xxmodel_fw_tMPO, 
-    build_potts_tMPO_regul_beta, 
-    build_xxmodel_tMPO_regul_beta, 
+    build_potts_fw_tMPO_regul_beta, 
+    build_xxmodel_fw_tMPO_regul_beta, 
     #build_tMPO_regul_beta, 
-
     build_expval_tMPO, 
     build_ising_expval_tMPO
     #build_left_tMPS

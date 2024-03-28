@@ -4,12 +4,13 @@ with initial state `init_state`, for a given `eH` MPO of the (unrotated) exp(H)
 function build_expval_tMPO(eH::MPO, init_state::AbstractArray, operator::AbstractArray, time_sites::Vector{<:Index})
      #! need to check if this works 
     @assert length(eH) == 3
+    @assert length(time_sites) % 2 == 0
 
     Nsteps = round(Int, length(time_sites)/2)
     
     _, Wc, _ = eH.data
 
-    space_p = siteind(eH,2) #noprime(siteinds(eH)[2][2])
+    space_p = siteind(eH,2) 
 
     (wL, wR) = linkinds(eH)
 
