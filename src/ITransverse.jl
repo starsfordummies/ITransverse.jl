@@ -1,7 +1,9 @@
 module ITransverse
 
 using LinearAlgebra
-using ITensors, NDTensors
+using NDTensors
+using ITensors
+using ITensors.IGensors
 using TakagiFactorization
 using ProgressMeter
 
