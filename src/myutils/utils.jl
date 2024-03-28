@@ -184,25 +184,6 @@ function check_symmetry_itensor_mpo(T::ITensor, wL::Index, wR::Index, space_p1::
 
 end
 
-"""checks whether a given ITensor is symmetric """
-function check_symmetry_itensor_old(T::ITensor, inds_to_permute, other_indices)
-  
-    @assert length(inds_to_permute) == 2  # I only know how to swap pairs 
-
-    ind_list = [inds_to_permute[1], inds_to_permute[2]]
-    append!(ind_list, other_indices)
-
-    swap_ind_list = [inds_to_permute[2], inds_to_permute[1]]
-    append!(swap_ind_list, other_indices)
-
-    ddelta = norm(permute(T, ind_list).tensor - permute(T, swap_ind_list).tensor)
-    if  ddelta < 1e-12
-        @info("Tensor Symmetric in $inds_to_permute")
-    else
-        @warn("Tensor *not* symmetric normdiff=$ddelta in $inds_to_permute")
-    end
-
-end
 
 """ Easier to follow check for whether a given ITensor is symmetric in the `inds_to_permute` index pair 
 Does a few allocations so it's maybe more expensive but it's meant for small tensors anyway """
@@ -233,38 +214,38 @@ end
 
 
 
-function check_diag_matrix(d::Matrix, cutoff::Float64=1e-6)
-    delta_diag = norm(d - Diagonal(d))/norm(d)
-    if delta_diag > cutoff
-        println("Warning, matrix non diagonal: $delta_diag")
-        return false
-    end
-    return true
-end
+# function check_diag_matrix(d::Matrix, cutoff::Float64=1e-6)
+#     delta_diag = norm(d - Diagonal(d))/norm(d)
+#     if delta_diag > cutoff
+#         println("Warning, matrix non diagonal: $delta_diag")
+#         return false
+#     end
+#     return true
+# end
 
 
-function check_id_matrix(d::Matrix, cutoff::Float64=1e-6)
-    if size(d,1) == size(d,2)
-        delta_diag = norm(d - I(size(d,1)))/norm(d)
-        if delta_diag > cutoff
-            println("Not identity: off by(norm) $delta_diag")
-            return false
-        end
-        return true
-    else
-        println("Not even square? $(size(d))")
-        return false
-    end
-end
+# function check_id_matrix(d::Matrix, cutoff::Float64=1e-6)
+#     if size(d,1) == size(d,2)
+#         delta_diag = norm(d - I(size(d,1)))/norm(d)
+#         if delta_diag > cutoff
+#             println("Not identity: off by(norm) $delta_diag")
+#             return false
+#         end
+#         return true
+#     else
+#         println("Not even square? $(size(d))")
+#         return false
+#     end
+# end
 
-function isid(a::ITensor, cutoff::Float64=1e-8)
-    @assert ndims(a) == 2
-    @assert size(a,1) == size(a,2)
+# function isid(a::ITensor, cutoff::Float64=1e-8)
+#     @assert ndims(a) == 2
+#     @assert size(a,1) == size(a,2)
 
-    am = array(a)
+#     am = array(a)
 
-    check_id_matrix(am)
-end
+#     check_id_matrix(am)
+# end
 
 function plot_matrix(a::Matrix)
     heatmap(1:size(a,1),

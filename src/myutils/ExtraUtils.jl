@@ -13,10 +13,10 @@ export pparams, ppm_params, trunc_params
 export myrMPS, 
     overlap_noconj, 
     check_symmetry_itensor_mpo, 
-    check_symmetry_itensor, 
-    check_diag_matrix, 
-    check_id_matrix,
-    isid
+    check_symmetry_itensor
+    # check_diag_matrix, 
+    # check_id_matrix,
+    # isid
 
 #from compute_entropies.jl
 export vn_entanglement_entropy_cut, 
