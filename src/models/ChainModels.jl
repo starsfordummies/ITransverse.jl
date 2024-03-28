@@ -1,8 +1,11 @@
-module MyModels
+module ChainModels
+
 using ITensors
 
-include("../myutils/myutils.jl")
-#using .MyUtils
+# include("../myutils/myutils.jl")
+# #using .MyUtils
+
+using ..ExtraUtils
 
 include("brakets.jl")
 include("ising.jl")

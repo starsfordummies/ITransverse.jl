@@ -1,4 +1,4 @@
-module MyUtils
+module ExtraUtils
 
 using ITensors
 
