@@ -90,6 +90,133 @@ function powermethod(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::ppm_p
 end
 
 
+""" Power method with convergence criterion based on overlap <Lprevious step|L> """
+function powermethod_converge_norm(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::ppm_params; flip_R::Bool=false)
+
+    itermax = pm_params.itermax
+    cutoff = pm_params.cutoff
+    maxbondim = pm_params.maxbondim
+    method = pm_params.method
+
+    mpslen = length(in_mps)
+
+
+    ll = deepcopy(in_mps)
+    rr = deepcopy(in_mps)
+
+    # TODO CHECK 
+    if flip_R
+        in_mpo_R = swapprime(in_mpo_R, 0, 1, "Site")
+    end
+
+    p = Progress(itermax; showspeed=true)  #barlen=40
+    p = Progress(itermax; desc="L=$(length(ll)), cutoff=$(cutoff), maxbondim=$(pm_params.maxbondim))", showspeed=true) 
+
+    overlaps = ComplexF64[]
+    ov2prev = 666.0
+
+    for jj = 1:itermax
+
+        # Note that ITensors does the apply on the MPS/MPO legs with the SAME label, eg. p-p 
+        # and then unprimes the p' leg. 
+        
+        # Take the ll vector from the previous step as new L,R 
+        OpsiL = apply(in_mpo_L, ll,  alg="naive", truncate=false)
+        OpsiR = apply(in_mpo_R, rr,  alg="naive", truncate=false)
+
+        llprev = deepcopy(ll)
+        rrprev = deepcopy(rr)
+
+        ll, rr, sjj = truncate_normalize_sweep(OpsiL, OpsiR, cutoff=cutoff, method=method, chi_max=maxbondim)
+
+        ov2 = sqrt(abs2(inner(llprev,ll)) + abs2(inner(rrprev,rr))) 
+        push!(overlaps, ov2 )
+        
+
+        next!(p; showvalues = [(:Info,"[$(jj)] Δnorm=$(ov2prev-ov2), chi=$(maxlinkdim(ll))" )])
+
+
+        if abs(ov2prev-ov2) < 1e-5
+            println("converged after $jj steps")
+            break
+        end
+        ov2prev = ov2
+
+
+    end
+
+    return ll, rr, overlaps
+
+end
+
+
+""" Power method with convergence criterion based on overlap <Lprevious step|L> """
+function powermethod_converge_eig(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::ppm_params; flip_R::Bool=false)
+
+    itermax = pm_params.itermax
+    cutoff = pm_params.cutoff
+    maxbondim = pm_params.maxbondim
+    method = pm_params.method
+
+    mpslen = length(in_mps)
+
+
+    ll = deepcopy(in_mps)
+    rr = deepcopy(in_mps)
+
+    # TODO CHECK 
+    if flip_R
+        in_mpo_R = swapprime(in_mpo_R, 0, 1, "Site")
+    end
+
+    p = Progress(itermax; showspeed=true)  #barlen=40
+    p = Progress(itermax; desc="L=$(length(ll)), cutoff=$(cutoff), maxbondim=$(pm_params.maxbondim))", showspeed=true) 
+
+    lambdas = []
+    λl_prev = 0.0
+    λr_prev = 0.0
+
+    for jj = 1:itermax
+
+        # Note that ITensors does the apply on the MPS/MPO legs with the SAME label, eg. p-p 
+        # and then unprimes the p' leg. 
+        
+        # Take the ll vector from the previous step as new L,R 
+        OpsiL = apply(in_mpo_L, ll,  alg="naive", truncate=false)
+        OpsiR = apply(in_mpo_R, rr,  alg="naive", truncate=false)
+
+        llprev = deepcopy(ll)
+        rrprev = deepcopy(rr)
+
+        ll, rr, sjj = truncate_normalize_sweep(OpsiL, OpsiR, cutoff=cutoff, method=method, chi_max=maxbondim)
+
+        λl = norm(OpsiL)/norm(llprev)
+        λr = norm(OpsiR)/norm(rrprev)
+
+        λl_alt = norm_gen(OpsiL)/norm_gen(llprev)
+        λr_alt = norm_gen(OpsiR)/norm_gen(rrprev)
+
+        push!(lambdas, [λl, λr, λl_alt, λr_alt] )
+        
+        next!(p; showvalues = [(:Info,"[$(jj)] ΔλL=$(λl_prev-λl), ΔλR=$(λr_prev-λr) chi=$(maxlinkdim(ll))" )])
+
+
+        if abs(λl_prev-λl) +  abs(λr_prev-λr)  < 1e-5
+            println("converged after $jj steps, $(abs(λl_prev-λl)), $(abs(λr_prev-λr))")
+            break
+        end
+
+        λl_prev = λl
+        λr_prev = λr
+
+    end
+
+    return ll, rr, lambdas
+
+end
+
+
+
 
 
 """

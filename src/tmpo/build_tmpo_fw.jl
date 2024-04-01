@@ -166,7 +166,7 @@ end
 # end
 
 
-function build_potts_tMPO_regul_beta( build_expH_function::Function,
+function build_potts_fw_tMPO_regul_beta( build_expH_function::Function,
     JXX::Real, 
     f::Real, 
     dt::Number, 

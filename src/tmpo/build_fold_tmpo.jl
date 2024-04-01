@@ -3,41 +3,6 @@ ITensors.state(::StateName"↑", ::SiteType"S=3/2") = [1, 0, 0, 0]
 ITensors.state(::StateName"+", ::SiteType"S=3/2") = [1/2, 1/2, 1/2, 1/2]
 
 
-""" timeMPO structure for cheaply containing temporal MPO structures, which are 
-(except for the first and last site) translationally invariant """
-struct timeMPO
-    p::pparams
-    func_expH::Function
-    fold_op::Vector{ComplexF64}
-    eH::MPO
-    folded::Bool
-    WWc::ITensor
-    tMPO::MPO
-
-    function timeMPO(p::pparams, func_expH::Function, fold_op::Vector{ComplexF64}, Nsteps::Int)
-    
-        folded = true
-        time_sites = siteinds("S=3/2", Nsteps)
-
-        # Real time evolution
-        space_sites = siteinds("S=1/2", 3; conserve_qns = false)
-        eH = func_expH(space_sites, p)
-
-        tMPO = build_folded_tMPO_new(eH, p.init_state, fold_op, time_sites)
-
-        WWc = build_WWc(eH)[1]
-
-        new(p, func_expH, fold_op, eH, folded, WWc, tMPO)
-    end
-
-end
-
-function ITensors.MPO(tt::timeMPO, Nsteps::Int)
-    return 0
-end
-
-
-
 """ Builds the (bulk) tensor for the *folded* time MPO
 Returns the *unrotated* indices as well, wL, wR, p, p' """
 function build_WWc(eH_space)
@@ -207,7 +172,7 @@ end
 
 
 
-
+#=
 function _build_folded_tMPO_alt(eH::MPO, init_state::Vector, fold_op::Vector, time_sites::Vector{<:Index})
 
     @assert length(eH) == 3
@@ -282,6 +247,7 @@ function _build_folded_tMPO_alt(eH::MPO, init_state::Vector, fold_op::Vector, ti
 return tMPO
 
 end
+=#
 
 
 
@@ -442,6 +408,7 @@ end
 
 function build_folded_tMPO_regul_beta(Wc::ITensor, Wc_im::ITensor, nbeta::Int, time_sites::Vector{Index{Int64}})
     #TODO NOTIMPLEMENTEDYET
+    @error "not implemented yet"
 
     @assert nbeta > 1
     @assert nbeta < time_sites - 2

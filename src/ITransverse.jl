@@ -61,7 +61,7 @@ export truncate_normalize_sweep, truncate_normalize_sweep_LR
 export truncate_normalize_sweep_sym!, truncate_normalize_sweep_sym_right
 
 # from symm_decompositions.jl
-export symm_svd, symm_oeig
+#export symm_svd, symm_oeig
 
 
 # include("models/ising.jl")
@@ -127,17 +127,7 @@ include("tmpo/build_fold_tmpo.jl")
 #from build_fold_tmpo.jl
 export build_ising_folded_tMPO,
      build_ising_folded_tMPS,
-     build_folded_tMPO, 
-     build_potts_folded_tMPO, 
-     build_xxmodel_folded_tMPO, 
-     build_folded_tMPO, 
      build_folded_tMPO_regul_beta, 
-     build_ising_folded_tMPO_regul_beta, 
-     build_potts_folded_tMPO_regul_beta, 
-     build_xxmodel_folded_tMPO_regul_beta, 
-     build_folded_tMPO_regul_beta, 
-     build_ising_expval_folded_tMPO, 
-     build_expval_folded_tMPO, 
      build_folded_left_tMPS
 
 
@@ -145,15 +135,16 @@ include("power_method/power_method.jl")
 
 #from power_method.jl
 export powermethod, 
+    powermethod_converge_norm,
+    powermethod_converge_eig,
     powermethod_sym,
     powermethod_sym_rdm,
-    powermethod_fold, 
-    powermethod_fold_regul_beta, 
-    powermethod_regul_beta
+    powermethod_fold
 
 
 include("lightcone/cone.jl")
 
-export evolve_cone, init_cone_ising
+export evolve_cone,
+ init_cone_ising
 
 end #module ITransverse
