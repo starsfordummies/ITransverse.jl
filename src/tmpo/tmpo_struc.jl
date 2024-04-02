@@ -33,3 +33,25 @@ function ITensors.MPO(tt::timeMPO, Nsteps::Int)
     return 0
 end
 
+
+""" * TODO does this work ? 
+Extend by 1 the tMPO """
+function extend_timeMPO!(inTM::timeMPO)
+    mpolen = length(inTM.tMPO)
+
+    if mpolen == 1  # need to fix both 
+        first = inTM.WWc
+        second = inTM.WWc 
+    end
+    
+    # we only extend the bulk. Insert at the end  
+    wlinkinds = linkinds(eH) #?
+    lk = commonind(inTM.tMPO[mpolen-1],inTM.tMPO[mpolen])
+    lkp = Index(4, "Link,rotl=$mpolen") 
+    newW = inTM.Wc * delta(wlinkinds[1], lk) *  delta(wlinkinds[2], lkp)
+
+    insert!(inTM.tMPO.data, mpolen, newW)
+  
+    inTM.tMPO[mpolen+1] = inTM.tMPO[mpolen+1] * delta(lk, lkp)
+
+end
