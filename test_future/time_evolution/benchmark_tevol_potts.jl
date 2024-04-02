@@ -3,9 +3,9 @@ using ITensorTDVP
 using Plots: plot, scatter, plot!
 #using Polynomials
 using LsqFit
-using LongRangeITensors
+# using LongRangeITensors
 
-include("../models/potts.jl")
+# include("../models/potts.jl")
 
 
 JJ = 1.0
