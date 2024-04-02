@@ -10,6 +10,8 @@ struct pparams
     init_state::Vector{ComplexF64}
 end
 
+
+
 struct ppm_params
     itermax::Int64
     cutoff::Float64
@@ -24,6 +26,18 @@ struct ppm_params
         verbose::Bool=false, ds2_converged::Float64=1e-5, increase_chi::Bool=false, plot_s::Bool=false, method::String="SVD")
         return new(itermax, cutoff, maxbondim, verbose, ds2_converged, increase_chi, plot_s, method)
     end
+
+
+    # past-proof functions to be erased in the future
+    function ppm_params(itermax::Int64,
+        cutoff::Float64,
+        maxbondim::Int64,
+        verbose::Bool,
+        ds2_converged::Float64,
+        increase_chi::Bool=true)
+        return new(itermax,cutoff,maxbondim,verbose,ds2_converged, increase_chi, false, "SVD")
+    end
+
 end
 
 struct trunc_params
@@ -33,14 +47,4 @@ struct trunc_params
 end
 
  
-# past-proof functions to be erased in the future
-function ppm_params(itermax::Int64,
-    SVD_cutoff::Float64,
-    maxbondim::Int64,
-    verbose::Bool,
-    ds2_converged::Float64,
-    increase_chi::Bool=true)
-    return ppm_params(itermax,SVD_cutoff,maxbondim,verbose,ds2_converged, increase_chi, false, "SVD")
-end
-
 

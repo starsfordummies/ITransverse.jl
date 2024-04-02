@@ -1,9 +1,9 @@
 module ITransverse
 
-using LinearAlgebra
+#using LinearAlgebra
 using NDTensors
 using ITensors
-using ITensors.IGensors
+#using ITensors.IGensors
 using TakagiFactorization
 using ProgressMeter
 
@@ -12,7 +12,7 @@ using ProgressMeter
 # include("myutils/utils.jl")
 # include("myutils/compute_entropies.jl")
 
-include("myutils/ExtraUtils.jl")
+include("ExtraUtils/ExtraUtils.jl")
 using .ExtraUtils
 
 # # from pparams.jl
@@ -68,39 +68,8 @@ export truncate_normalize_sweep_sym!, truncate_normalize_sweep_sym_right
 # include("models/potts.jl")
 # include("models/xxzmodel.jl")
 
-include("models/ChainModels.jl")
+include("ChainModels/ChainModels.jl")
 using .ChainModels
-
-export build_expH_ising_murg
-
-
-# # from ising.jl
-# export build_H_ising_manual,
-#     build_H_ising_manual_lowtri, 
-#     build_H_ising, 
-#     build_H_ising_ZZ_X,
-#     build_H_ising_YY,
-#     build_expH_ising_1o, 
-#     build_expH_ising_2o, 
-#     build_expH_ising_murg, 
-#     build_expH_ising_murg_ZZX, 
-#     build_expH_ising_murg_YY
-
-# #from potts.jl
-# export build_H_potts_manual,
-#     build_H_potts_manual_lowtri,
-#     build_H_potts,
-#     build_expH_potts_2o,
-#     build_expH_potts_murg
-
-# # from xxzmodel.jl
-# export build_H_XXZ_manual,
-#     build_H_XXZ_manual_lowtri,
-#     build_H_XXZ,
-#     build_expH_XXZ_1o,
-#     build_expH_XXZ_2o,
-#     build_expH_XXZ_murg
-
 
 include("tmpo/build_tmpo_fw.jl")
 include("tmpo/build_tmpo_expval.jl")
