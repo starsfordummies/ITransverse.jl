@@ -1,7 +1,6 @@
 # Custom param structures for Ising-Potts models
 # and for power methods/ truncations etc 
 
-
 struct pparams
     JXX::Float64
     hz::Float64
@@ -9,7 +8,6 @@ struct pparams
     nbeta::Int64
     init_state::Vector{ComplexF64}
 end
-
 
 
 struct ppm_params
@@ -20,11 +18,11 @@ struct ppm_params
     ds2_converged::Float64
     increase_chi::Bool
     plot_s::Bool
-    method::String
+    ortho_method::String
 
     function ppm_params(; itermax::Int64 = 400, cutoff::Float64=1e-12, maxbondim::Int64=100, 
-        verbose::Bool=false, ds2_converged::Float64=1e-5, increase_chi::Bool=false, plot_s::Bool=false, method::String="SVD")
-        return new(itermax, cutoff, maxbondim, verbose, ds2_converged, increase_chi, plot_s, method)
+        verbose::Bool=false, ds2_converged::Float64=1e-5, increase_chi::Bool=false, plot_s::Bool=false, ortho_method::String="SVD")
+        return new(itermax, cutoff, maxbondim, verbose, ds2_converged, increase_chi, plot_s, ortho_method)
     end
 
 
@@ -43,7 +41,7 @@ end
 struct trunc_params
     cutoff::Float64
     maxbondim::Int64
-    method::String
+    ortho_method::String
 end
 
  
