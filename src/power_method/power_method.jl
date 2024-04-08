@@ -16,7 +16,7 @@ function powermethod(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::ppm_p
     itermax = pm_params.itermax
     cutoff = pm_params.cutoff
     maxbondim = pm_params.maxbondim
-    method = pm_params.method
+    method = pm_params.ortho_method
 
     mpslen = length(in_mps)
 
@@ -96,7 +96,7 @@ function powermethod_converge_norm(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm
     itermax = pm_params.itermax
     cutoff = pm_params.cutoff
     maxbondim = pm_params.maxbondim
-    method = pm_params.method
+    method = pm_params.ortho_method
 
     mpslen = length(in_mps)
 
@@ -156,7 +156,7 @@ function powermethod_converge_eig(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_
     itermax = pm_params.itermax
     cutoff = pm_params.cutoff
     maxbondim = pm_params.maxbondim
-    method = pm_params.method
+    method = pm_params.ortho_method
 
     mpslen = length(in_mps)
 
@@ -232,7 +232,7 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::ppm_params)
     cutoff = pm_params.cutoff
     maxbondim = pm_params.maxbondim
     converged_ds2 = pm_params.ds2_converged
-    method = pm_params.method
+    method = pm_params.ortho_method
 
 
     # normalize the vector to get a good starting point?
