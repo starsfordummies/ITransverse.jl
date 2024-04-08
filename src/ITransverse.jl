@@ -71,6 +71,9 @@ export truncate_normalize_sweep_sym!, truncate_normalize_sweep_sym_right
 include("ChainModels/ChainModels.jl")
 using .ChainModels
 
+export pparams, ppm_params, trunc_params
+export build_expH_ising_murg
+
 include("tmpo/build_tmpo_fw.jl")
 include("tmpo/build_tmpo_expval.jl")
 
