@@ -512,6 +512,8 @@ function build_expH_potts_murg_alt(sites,
         τ = op(sites, "τ", n)
         τd = op(sites, "τdag", n)
 
+        #@show matrix(τ)
+        #@show matrix(τd) 
 
         # Init ITensor inside MPO
         if n == 1
@@ -598,7 +600,8 @@ for n = 1:N-1 # TODO CHECK THIS
 
     e1c = e1 * c1 * c2
 
-    u, s, uT = symmetric_svd_iten(e1c)
+    u, s, uT = ExtraUtils.symmetric_svd_iten(e1c)
+    #u, s, uT = symm_svd(e1c)
     #@show inds(u), inds(s), inds(uT)
     #u, s, uT = ITensors.symm_svd(e1c)
     #@show inds(u), inds(s), inds(uT)

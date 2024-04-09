@@ -6,6 +6,8 @@ include("pparams.jl")
 include("utils.jl")
 include("compute_entropies.jl")
 
+include("symmsvd_iten.jl")
+
 # from pparams
 export pparams, ppm_params, trunc_params
 
