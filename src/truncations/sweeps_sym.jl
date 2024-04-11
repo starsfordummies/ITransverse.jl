@@ -154,7 +154,7 @@ function truncate_normalize_sweep_sym!(left_mps::MPS; svd_cutoff::Float64, chi_m
 
         #
 
-        left_mps[ii] =  Ai * XU  #replacetags(Ai * XU , "Link,v", "Link,v=$ii")
+        left_mps[ii] =  Ai * XU  
 
         # TODO NORMALIZE HERE ?? 
         #left_mps[ii] = left_mps[ii] / norm_gen(left_mps[ii])
@@ -181,6 +181,23 @@ function truncate_normalize_sweep_sym!(left_mps::MPS; svd_cutoff::Float64, chi_m
 
     @debug "Sweep done, normalization $(overlap_noconj(left_mps, left_mps))"
     #sleep(1)
+
+    # Fix indices here ? 
+
+    #@show linkinds(left_mps)
+
+    for (ii,li) in enumerate(linkinds(left_mps))
+        newlink = Index(dim(li), "Link,l=$ii")
+        left_mps[ii] *= delta(li, newlink)
+        left_mps[ii+1] *= delta(li, newlink)
+        @show inds(left_mps[ii])
+    end
+
+    # for ii in eachindex(left_mps)
+    #     replacetags!(left_mps[ii], "v" => "Link,v=$ii")
+    # end
+
+    #@show linkinds(left_mps)
 
     return ents_sites
 
