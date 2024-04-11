@@ -271,6 +271,11 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::ppm_params)
         ll = apply(in_mpo, ll,  alg="naive", truncate=false)
         sjj = truncate_normalize_sweep_sym!(ll, svd_cutoff=cutoff, chi_max=maxbondim, method=method)
         
+        #@show linkinds(ll)
+
+
+        #newInds = ["v" => "l=$i" for i in 1:length(ll)-1]
+        #replacetags!(ll, "v" => "Link", newInds... )
         # TODO not implemented yet 
         #sjj = truncate_normalize_sweep_sym_ite!(ll, svd_cutoff=cutoff, chi_max=maxbondim)
 

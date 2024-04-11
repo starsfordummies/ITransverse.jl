@@ -600,7 +600,36 @@ for n = 1:N-1 # TODO CHECK THIS
 
     e1c = e1 * c1 * c2
 
-    u, s, uT = ExtraUtils.symmetric_svd_iten(e1c)
+    @show matrix(e1c)
+
+    #u, s, uT = ExtraUtils.symmetric_svd_iten(e1c)
+
+    u, s, uT, _, _ = symm_svd(e1c, combinedind(c1), cutoff=1e-15)
+
+    # @show u * s * uT ≈ e1c
+    # @show u2 * s2 * uT2 ≈ e1c
+    # #@show s
+    # #@show s2
+
+    # @show inds(u)
+    # @show inds(u2)
+
+    # @show inds(uT), inds(uT2)
+
+
+    # @show matrix(u2) ≈ matrix(u)
+    # @show matrix(uT2) ≈ transpose(matrix(uT))
+
+    # @info "---------------------------------------"
+    # @show matrix(u)
+    # @show matrix(u2)
+
+
+    # @show matrix(uT)
+    # @show matrix(uT2)
+    # @info "---------------------------------------"
+
+
     #u, s, uT = symm_svd(e1c)
     #@show inds(u), inds(s), inds(uT)
     #u, s, uT = ITensors.symm_svd(e1c)
@@ -616,6 +645,7 @@ for n = 1:N-1 # TODO CHECK THIS
     uT_sqs = sqrt.(s) * uT
 
     u_open = u_sqs * dag(c1) * delta(inds(s))
+    replacetags!(u_open, "u" => "Link,l=$n")
 
 
     if n == 1
@@ -628,6 +658,8 @@ for n = 1:N-1 # TODO CHECK THIS
     end
 
     uT_open = uT_sqs * dag(c2)
+    replacetags!(uT_open, "u" => "Link,l=$n")
+
 
 end
 
@@ -651,6 +683,10 @@ end
 #     link_indices = [Index(link_dimension, "Link,l=$(n-1)") for n = 1:N+1]
 # end
 
+# newInds = ["l=$i" => "n=$i" for i=1:N]
+# replacetags!(U_t, "u" => "Link", newInds... )
+
+@show U_t
 
 return U_t
 
