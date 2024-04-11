@@ -114,7 +114,7 @@ function truncate_normalize_sweep_sym!(left_mps::MPS; svd_cutoff::Float64, chi_m
             XUinv = diagITensor(sqS.storage.data, inds(S)) * U
 
         elseif method == "SVD"
-            F = symm_svd(left_env, ind(left_env,1), cutoff=svd_cutoff)
+            F = symm_svd(left_env, ind(left_env,1), cutoff=svd_cutoff, maxdim=chi_max)
             U = F.U
             S = F.S
 
