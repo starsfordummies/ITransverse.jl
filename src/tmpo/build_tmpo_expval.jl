@@ -3,6 +3,7 @@ with initial state `init_state`, for a given `eH` MPO of the (unrotated) exp(H)
  and `time_sites`, which should have *even* length """
 function build_expval_tMPO(eH::MPO, init_state::AbstractArray, operator::AbstractArray, time_sites::Vector{<:Index})
      #! need to check if this works 
+    @warn "Experimental - need to check"
     @assert length(eH) == 3
     @assert length(time_sites) % 2 == 0
 
