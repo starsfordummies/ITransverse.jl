@@ -172,7 +172,7 @@ function truncate_normalize_sweep_sym!(left_mps::MPS; svd_cutoff::Float64, chi_m
     overlap = An * An 
 
     if abs(scalar(overlap)) > 1e20 || abs(scalar(overlap)) < 1e-20
-        @warn ("Careful! overlap overflowing? = $scalar(overlap)")
+        @warn ("Careful! overlap overflowing? = $(scalar(overlap))")
     end
 
     # normalize overlap to 1 on last matrix 
