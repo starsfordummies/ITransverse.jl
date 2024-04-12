@@ -59,17 +59,19 @@ function build_fw_tMPO_regul_beta(eH::MPO, eHi::MPO,
     @assert length(eH) == length(eHi) == 3
 
 
-    _, Wc, Wr = eH.data
-    _, Wc_im, Wr_im = eHi.data
+    Wl, Wc, _ = eH.data
+    Wl_im, Wc_im, _ = eHi.data
 
     # with the noprime I should be sure that I'm not picking the p' even if I messed up index
     # space_p = noprime(siteinds(eH)[2][2])
     # @show noprime(siteinds(eH)[2][2])
     # @show siteinds(eH)
     space_p = siteind(eH,2)
+    space2_p = siteind(eH,1)
 
-    (iwL, iwR) = linkinds(eH)
-    (iwL_i, iwR_i) = linkinds(eHi)
+
+    (ivL, ivR) = linkinds(eH)
+    (ivL_i, ivR_i) = linkinds(eHi)
 
     #println(Wc)
 
@@ -77,12 +79,11 @@ function build_fw_tMPO_regul_beta(eH::MPO, eHi::MPO,
 
     check_symmetry_itensor_mpo(Wc) # , (wL,wR), (space_p',space_p))
 
-    rot_links = [Index(dim(iwL), "Link,rotl=$ii") for ii in 1:(Nsteps - 1)]
+    rot_links = [Index(dim(ivL), "Link,rotl=$ii") for ii in 1:(Nsteps - 1)]
     rot_links2 = sim(rot_links)
 
     # For Lochschmidt
     fin_state = init_state
-
 
 
     init_tensor = ITensor(init_state, space_p)
@@ -92,31 +93,31 @@ function build_fw_tMPO_regul_beta(eH::MPO, eHi::MPO,
     tMPS = MPS(Nsteps)
 
     for ii = 1:nbeta
-        tMPO[ii] = dag(Wc_im) * delta(iwL_i, time_sites[ii]) * delta(iwR_i, time_sites[ii]') 
-        tMPS[ii] = dag(Wr_im) * delta(iwL_i, time_sites[ii])
+        tMPO[ii] = dag(Wc_im) * delta(ivL_i, time_sites[ii]) * delta(ivR_i, time_sites[ii]') 
+        tMPS[ii] = dag(Wl_im) * delta(ivL_i, time_sites[ii]) 
     end
     for ii = nbeta+1:Nsteps-nbeta
-        tMPO[ii] = Wc * delta(iwL, time_sites[ii]) * delta(iwR, time_sites[ii]') 
-        tMPS[ii] = Wr * delta(iwL, time_sites[ii])
+        tMPO[ii] = Wc * delta(ivL, time_sites[ii]) * delta(ivR, time_sites[ii]') 
+        tMPS[ii] = Wl * delta(ivL, time_sites[ii])
 
     end
     for ii = Nsteps-nbeta+1:Nsteps
-        tMPO[ii] = Wc_im * delta(iwL_i, time_sites[ii]) * delta(iwR_i, time_sites[ii]') 
-        tMPS[ii] = Wr_im * delta(iwL_i, time_sites[ii]) 
+        tMPO[ii] = Wc_im * delta(ivL_i, time_sites[ii]) * delta(ivR_i, time_sites[ii]') 
+        tMPS[ii] = Wl_im * delta(ivL_i, time_sites[ii]) 
     end
 
 
     # Contract edges with init/fin state, label linkinds
     tMPO[1] *= dag(fin_tensor) * delta(space_p, rot_links[1]) 
-    tMPS[1] *= dag(fin_tensor) * delta(space_p, rot_links2[1]) 
+    tMPS[1] *= dag(fin_tensor) * delta(space_p', space2_p') * delta(space2_p, rot_links2[1]) 
 
     for ii = 2:Nsteps-1
         tMPO[ii] *= delta(space_p, rot_links[ii-1]) * delta(space_p', rot_links[ii]) 
-        tMPS[ii] *= delta(space_p, rot_links2[ii-1]) * delta(space_p', rot_links2[ii]) 
-
+        tMPS[ii] *= delta(space2_p, rot_links2[ii-1]) * delta(space2_p', rot_links2[ii]) 
     end
+
     tMPO[Nsteps] *= init_tensor * delta(space_p', rot_links[Nsteps-1]) 
-    tMPS[Nsteps] *= init_tensor * delta(space_p', rot_links2[Nsteps-1]) 
+    tMPS[Nsteps] *= init_tensor * delta(space_p, space2_p) * delta(space2_p', rot_links2[Nsteps-1]) 
 
     return tMPO, tMPS
 
