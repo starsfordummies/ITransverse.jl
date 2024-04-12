@@ -600,7 +600,7 @@ for n = 1:N-1 # TODO CHECK THIS
 
     e1c = e1 * c1 * c2
 
-    @show matrix(e1c)
+    #@show matrix(e1c)
 
     #u, s, uT = ExtraUtils.symmetric_svd_iten(e1c)
 

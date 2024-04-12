@@ -191,7 +191,7 @@ function truncate_normalize_sweep_sym!(left_mps::MPS; svd_cutoff::Float64, chi_m
         newlink = Index(dim(li), "Link,l=$ii")
         left_mps[ii] *= delta(li, newlink)
         left_mps[ii+1] *= delta(li, newlink)
-        @show inds(left_mps[ii])
+        #@show inds(left_mps[ii])
     end
 
     # for ii in eachindex(left_mps)
