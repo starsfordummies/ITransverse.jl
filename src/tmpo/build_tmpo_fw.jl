@@ -58,6 +58,10 @@ function build_fw_tMPO_regul_beta(eH::MPO, eHi::MPO,
     @assert nbeta < length(time_sites) - 2
     @assert length(eH) == length(eHi) == 3
 
+    if maxlinkdim(eH) != maximum(dims(time_sites))
+        @error "Link dimension of unrotated MPO does not match new physical sites: $(maxlinkdim(eH)) vs $(maximum(dims(time_sites)))"
+        @assert maxlinkdim(eH) == maximum(dims(time_sites))
+    end
 
     Wl, Wc, _ = eH.data
     Wl_im, Wc_im, _ = eHi.data
@@ -77,7 +81,7 @@ function build_fw_tMPO_regul_beta(eH::MPO, eHi::MPO,
 
     Nsteps = length(time_sites)
 
-    check_symmetry_itensor_mpo(Wc) # , (wL,wR), (space_p',space_p))
+    check_symmetry_itensor_mpo(Wc, ivL, ivR, space_p',space_p)
 
     rot_links = [Index(dim(ivL), "Link,rotl=$ii") for ii in 1:(Nsteps - 1)]
     rot_links2 = sim(rot_links)
@@ -182,7 +186,6 @@ end
 
 function build_xxmodel_fw_tMPO_regul_beta( build_expH_function::Function,
     JXX::Real, 
-    hz::Real,
     dt::Number, 
     nbeta::Int,
     time_sites::Vector{<:Index},
@@ -191,9 +194,9 @@ function build_xxmodel_fw_tMPO_regul_beta( build_expH_function::Function,
     space_sites = siteinds("S=1/2", 3; conserve_qns = false)
 
     # Real time evolution
-    eH = build_expH_function(space_sites, JXX, hz, dt)
+    eH = build_expH_function(space_sites, JXX, dt)
     # Imaginary time evolution
-    eHi = build_expH_function(space_sites, JXX, hz, -im*dt)
+    eHi = build_expH_function(space_sites, JXX, -im*dt)
 
     build_fw_tMPO_regul_beta(eH, eHi, init_state, nbeta, time_sites)
 

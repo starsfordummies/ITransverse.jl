@@ -1,3 +1,5 @@
+ITensors.space(::SiteType"S=7/2") = 8
+
 function build_H_XXZ_manual(sites, JXX::Real, hz::Real )
     """ Builds manually (no autompo) H ising Hamiltonian, convention 
     H = -( JXX + hZ ) 
@@ -140,68 +142,126 @@ end
 
 
 
+# !This is not implemented yet 
+# """ Symmetric version of Murg exp(-i*H_XXZ*t) """
+# function build_expH_XXZ_murg(
+#     sites,
+#     JXX::Real,
+#     ΔZZ::Real,
+#     hz::Real,
+#     dt::Number)
 
-""" Symmetric version of Murg exp(-i*H_XXZ*t) """
-function build_expH_XXZ_murg(
-    sites,
+
+#     @assert ΔZZ < 0.001  # for now 
+
+#     # For real dt this does REAL time evolution 
+#     # I should have already taken into account both the - sign in exp(-iHt) 
+#     # and the overall minus in Ising H= -(JXX+Z)
+
+#     dt = JXX*dt
+
+#     cosg = cos(hz*dt*0.5)
+#     sing = sin(hz*dt*0.5)
+
+
+#     N = length(sites)
+#     U_t = MPO(N)
+
+#     link_dimension = 2
+
+#     linkindices = [Index(link_dimension, "Link,l=$(n-1)") for n = 1:N+1]
+
+
+#     for n = 1:N
+#         # siteindex s
+#         s = sites[n]
+
+#         # left link index ll with daggered QN conserving direction (if applicable)
+#         ll = dag(linkindices[n])
+#         # right link index rl
+#         rl = linkindices[n+1]
+
+#         combz = (1 - 2*sing^2)*op(sites, "Id", n) + im*2*sing*cosg*op(sites, "Z", n)
+#         X = op(sites, "X", n)
+
+#         if n == 1
+#             #U_t[n] = ITensor(ComplexF64, dag(s), s', dag(rl))
+#             U_t[n] = onehot(rl => 1) * sqrt(cos(dt))*combz
+#             U_t[n] += onehot(rl => 2) * sqrt(im*sin(dt))*X
+#         elseif n == N
+#             #U_t[n] = ITensor(ComplexF64, ll, dag(s), s')
+#             U_t[n] = onehot(ll => 1) * sqrt(cos(dt))*combz
+#             U_t[n] += onehot(ll => 2) * sqrt(im*sin(dt))*X
+
+#         else
+#             #U_t[n] = ITensor(ComplexF64, ll, dag(s), s', dag(rl))
+
+#             U_t[n] = onehot(ll => 1, rl =>1) * cos(dt)*combz
+#             U_t[n] += onehot(ll => 1, rl =>2) * sqrt(im*sin(dt))*sqrt(cos(dt))*X
+#             U_t[n] += onehot(ll => 2, rl =>1) * sqrt(im*sin(dt))*sqrt(cos(dt))*X
+#             U_t[n] += onehot(ll => 2, rl =>2) * im*sin(dt)*combz
+#         end
+
+
+#     end
+
+#     return U_t
+
+
+# end
+
+
+
+""" Symmetric version of Murg exp(-i*H_XX*t) built as product of three Ising MPO W's """
+function build_expH_XX_murg_from_ising(
+    space_sites,
     JXX::Real,
-    ΔZZ::Real,
-    hz::Real,
     dt::Number)
 
-
-    @assert ΔZZ < 0.001  # for now 
 
     # For real dt this does REAL time evolution 
     # I should have already taken into account both the - sign in exp(-iHt) 
     # and the overall minus in Ising H= -(JXX+Z)
 
-    dt = JXX*dt
 
-    cosg = cos(hz*dt*0.5)
-    sing = sin(hz*dt*0.5)
-
-
-    N = length(sites)
+    N = length(space_sites)
     U_t = MPO(N)
 
-    link_dimension = 2
 
-    linkindices = [Index(link_dimension, "Link,l=$(n-1)") for n = 1:N+1]
+    linkindices = [Index(8, "Link,l=$(n-1)") for n = 1:N+1]
 
+    dt = JXX*dt
 
-    for n = 1:N
-        # siteindex s
-        s = sites[n]
-
-        # left link index ll with daggered QN conserving direction (if applicable)
-        ll = dag(linkindices[n])
-        # right link index rl
-        rl = linkindices[n+1]
-
-        combz = (1 - 2*sing^2)*op(sites, "Id", n) + im*2*sing*cosg*op(sites, "Z", n)
-        X = op(sites, "X", n)
-
-        if n == 1
-            #U_t[n] = ITensor(ComplexF64, dag(s), s', dag(rl))
-            U_t[n] = onehot(rl => 1) * sqrt(cos(dt))*combz
-            U_t[n] += onehot(rl => 2) * sqrt(im*sin(dt))*X
-        elseif n == N
-            #U_t[n] = ITensor(ComplexF64, ll, dag(s), s')
-            U_t[n] = onehot(ll => 1) * sqrt(cos(dt))*combz
-            U_t[n] += onehot(ll => 2) * sqrt(im*sin(dt))*X
-
-        else
-            #U_t[n] = ITensor(ComplexF64, ll, dag(s), s', dag(rl))
-
-            U_t[n] = onehot(ll => 1, rl =>1) * cos(dt)*combz
-            U_t[n] += onehot(ll => 1, rl =>2) * sqrt(im*sin(dt))*sqrt(cos(dt))*X
-            U_t[n] += onehot(ll => 2, rl =>1) * sqrt(im*sin(dt))*sqrt(cos(dt))*X
-            U_t[n] += onehot(ll => 2, rl =>2) * im*sin(dt)*combz
-        end
+    eH_YY =  build_expH_ising_murg_YY(space_sites, 1, dt/2)
+    eH_XX = build_expH_ising_murg(space_sites, 1, 0, dt)
 
 
+    temp1 = eH_YY[1] * eH_XX[1]' * eH_YY[1]''
+    comb_R = combiner(inds(temp1,"Link"))
+    temp_left = temp1 * comb_R * delta( inds(comb_R)[1], linkindices[2] )
+    temp_left = replaceprime(temp_left, 3=>1)
+
+    U_t[1] = temp_left 
+
+
+    for nn = 2:N-1
+    temp1 = eH_YY[nn] * eH_XX[nn]' * eH_YY[nn]''
+    comb_L = combiner(inds(temp1,"l="*string(nn-1)))
+    comb_R = combiner(inds(temp1,"l="*string(nn)))
+    temp_center = temp1 * comb_L * comb_R * delta( inds(comb_L)[1], linkindices[nn] ) *  delta( inds(comb_R)[1], linkindices[nn+1] )
+    temp_center = replaceprime(temp_center, 3=>1)
+
+    U_t[nn] = temp_center
     end
+
+    temp1 = eH_YY[end] * eH_XX[end]' * eH_YY[end]''
+    #println(temp1)
+    comb_L = combiner(inds(temp1,"Link"))
+    temp_right = temp1 * comb_L  * delta( inds(comb_L)[1], linkindices[end-1] ) 
+    temp_right = replaceprime(temp_right, 3=>1)
+
+    U_t[end] = temp_right
+
 
     return U_t
 
@@ -209,9 +269,8 @@ function build_expH_XXZ_murg(
 end
 
 
-
-""" Symmetric version of Murg exp(-i*H_XX*t) built as product of three Ising MPO W's """
-function build_expH_XX_murg_from_ising(
+""" TODO CHECK Symmetric version of Murg exp(-i*H_XXZ*t) built as product of three Ising MPO W's """
+function build_expH_XXZ_murg_from_ising(
     space_sites,
     JXX::Real,
     hz::Real,
@@ -282,7 +341,7 @@ end
 
 
 
-""" exp(-i*H_XX*t) using Takagi symmetric SVD (??) and Splus-Sminus convention
+""" exp(-i*H_XX*t) using symmetric SVD (??) and Splus-Sminus convention
 FIXME this doesnt work 
 """
 function build_expH_XX_SpSm_svd(
@@ -299,9 +358,6 @@ function build_expH_XX_SpSm_svd(
     N = length(in_space_sites)
     U_t = MPO(N)
 
-
-    linkindices = [Index(4, "Link,l=$(n-1)") for n = 1:N+1]
-
     ϵ = JXX * 1.0im * dt 
 
     uT_open = ITensor()
@@ -315,21 +371,25 @@ function build_expH_XX_SpSm_svd(
         Smj = op(in_space_sites, "S-", n+1)
     
     
-        e1 = exp(4*ϵ*(Spi * Smj + Smi * Spj))
+        e1 = exp(2*ϵ*(Spi * Smj + Smi * Spj))
     
         c1 = combiner(inds(Spi))
         c2 = combiner(inds(Spj))
     
         e1c = e1 * c1 * c2
-    
-        u, s, uT = symmetric_svd_takagi(e1c)
-    
-        u_sqs = ITensor(u * sqrt.(s), inds(e1c)[1], linkindices[n+1]) 
-        uT_sqs = ITensor(sqrt.(s) * uT, linkindices[n+1], inds(e1c)[2])
-    
-        u_open = u_sqs * dag(c1) 
-    
-    
+
+        #@show e1c
+        #@show matrix(e1c)
+        
+        u, s, uT, _, _ = symm_svd(e1c, combinedind(c1), cutoff=1e-15)
+
+        u_sqs = u * sqrt.(s)
+        uT_sqs = sqrt.(s) * uT
+
+        u_open = u_sqs * dag(c1) * delta(inds(s))
+        replacetags!(u_open, "u" => "Link,l=$n")
+
+
         if n == 1
             U_t[n] = u_open
             
@@ -338,21 +398,17 @@ function build_expH_XX_SpSm_svd(
             uu = replaceprime( uu, 2 => 1)
             U_t[n] = uu
         end
-    
-        uT_open = uT_sqs * dag(c2)
-    
-    end
-    
-    U_t[N] = uT_open
-    
-    
-    # TODO Better labeling for link indices 
-    # for n = 1:N
-    #     link_dimension = 3
-    #     link_indices = [Index(link_dimension, "Link,l=$(n-1)") for n = 1:N+1]
-    # end
-    
 
+        uT_open = uT_sqs * dag(c2)
+        replacetags!(uT_open, "u" => "Link,l=$n")
+
+
+    end # for n = 1:N-1
+
+    U_t[N] = uT_open
+
+
+    @show U_t
 
     return U_t
 
@@ -361,7 +417,7 @@ end
 
 
 
-""" exp(-i*H_XX*t) using Takagi symmetric SVD (??)"""
+""" exp(-i*H_XX*t) using symmetric SVD - TODO Check """
 function build_expH_XX_svd(
     in_space_sites,
     JXX::Real,
@@ -376,8 +432,6 @@ function build_expH_XX_svd(
     N = length(in_space_sites)
     U_t = MPO(N)
 
-
-    linkindices = [Index(4, "Link,l=$(n-1)") for n = 1:N+1]
 
     ϵ = JXX * 1.0im * dt 
 
@@ -398,15 +452,20 @@ function build_expH_XX_svd(
         c2 = combiner(inds(Xj))
     
         e1c = e1 * c1 * c2
-    
-        u, s, uT = symmetric_svd_takagi_iten(e1c)
-    
-        u_sqs = ITensor(u * sqrt.(s), inds(e1c)[1], linkindices[n+1]) 
-        uT_sqs = ITensor(sqrt.(s) * uT, linkindices[n+1], inds(e1c)[2])
-    
-        u_open = u_sqs * dag(c1) 
-    
-    
+
+        #@show e1c
+        #@show matrix(e1c)
+
+        u, s, uT, _, _ = symm_svd(e1c, combinedind(c1), cutoff=1e-15)
+
+
+        u_sqs = u * sqrt.(s)
+        uT_sqs = sqrt.(s) * uT
+
+        u_open = u_sqs * dag(c1) * delta(inds(s))
+        replacetags!(u_open, "u" => "Link,l=$n")
+
+
         if n == 1
             U_t[n] = u_open
             
@@ -415,10 +474,13 @@ function build_expH_XX_svd(
             uu = replaceprime( uu, 2 => 1)
             U_t[n] = uu
         end
-    
+
         uT_open = uT_sqs * dag(c2)
-    
-    end
+        replacetags!(uT_open, "u" => "Link,l=$n")
+
+
+    end # for n = 1:N-1
+
     
     U_t[N] = uT_open
     
@@ -427,6 +489,3 @@ function build_expH_XX_svd(
 
 
 end
-
-
-ITensors.space(::SiteType"S=7/2") = 8
