@@ -110,6 +110,7 @@ export powermethod,
     powermethod_converge_norm,
     powermethod_converge_eig,
     powermethod_sym,
+    powermethod_sym_norms,
     powermethod_sym_rdm,
     powermethod_fold
 
