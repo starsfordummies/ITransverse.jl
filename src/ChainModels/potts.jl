@@ -576,11 +576,7 @@ function build_expH_potts_symmetric_svd(in_space_sites,
 
 N = length(in_space_sites)
 
-#link_dimension = 3
-#linkindices = [Index(link_dimension, "Link,l=$(n-1)") for n = 1:N+1]
-
 U_t = MPO(N)
-
 
 uT_open = ITensor()
 
@@ -600,46 +596,9 @@ for n = 1:N-1 # TODO CHECK THIS
 
     e1c = e1 * c1 * c2
 
-    #@show matrix(e1c)
-
     #u, s, uT = ExtraUtils.symmetric_svd_iten(e1c)
 
     u, s, uT, _, _ = symm_svd(e1c, combinedind(c1), cutoff=1e-15)
-
-    # @show u * s * uT ≈ e1c
-    # @show u2 * s2 * uT2 ≈ e1c
-    # #@show s
-    # #@show s2
-
-    # @show inds(u)
-    # @show inds(u2)
-
-    # @show inds(uT), inds(uT2)
-
-
-    # @show matrix(u2) ≈ matrix(u)
-    # @show matrix(uT2) ≈ transpose(matrix(uT))
-
-    # @info "---------------------------------------"
-    # @show matrix(u)
-    # @show matrix(u2)
-
-
-    # @show matrix(uT)
-    # @show matrix(uT2)
-    # @info "---------------------------------------"
-
-
-    #u, s, uT = symm_svd(e1c)
-    #@show inds(u), inds(s), inds(uT)
-    #u, s, uT = ITensors.symm_svd(e1c)
-    #@show inds(u), inds(s), inds(uT)
-
-
-    # sqs_left = sqrt.(s)
-    # del1 =  delta( inds(s,"v"), linkindices[n+1])
-    # sqs_left = sqs_left * del1
-    # #sqs_right = sqrt.(s) * delta(inds(s,"u"), linkindices[n+1])
 
     u_sqs = u * sqrt.(s)
     uT_sqs = sqrt.(s) * uT
@@ -676,17 +635,7 @@ if fpotts > 1e-10
     end
 end
 
-
-# TODO Better labeling for link indices 
-# for n = 1:N
-#     link_dimension = 3
-#     link_indices = [Index(link_dimension, "Link,l=$(n-1)") for n = 1:N+1]
-# end
-
-# newInds = ["l=$i" => "n=$i" for i=1:N]
-# replacetags!(U_t, "u" => "Link", newInds... )
-
-@show U_t
+#@show U_t
 
 return U_t
 
