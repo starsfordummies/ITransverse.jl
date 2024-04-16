@@ -130,9 +130,10 @@ function powermethod_sym_norms(in_mps::MPS, in_mpo::MPO, pm_params::ppm_params)
     ll = normalize(in_mps)
 
     ds2s = Float64[]
-    ds2 = 0. # fill(0., length(in_mps)-1)  #??
-    sprevs = fill(1., length(in_mps)-1)
+    de0s = Float64[]
 
+    sprevs = fill(1., length(in_mps)-1)
+    e0prev = 0.
     #@showprogress desc="ds2=$ds2 chi=$(maxlinkdim(ll))" 
     p = Progress(itermax; showspeed=true)  #barlen=40
     p = Progress(itermax; desc="L=$(length(ll)), cutoff=$(cutoff), maxbondim=$(pm_params.maxbondim))", showspeed=true) 
@@ -152,7 +153,7 @@ function powermethod_sym_norms(in_mps::MPS, in_mpo::MPO, pm_params::ppm_params)
         ll_new = apply(in_mpo, ll,  alg="naive", truncate=false)
 
         # overlap before trunc should give the dominant eigenvector (assuming we started from gen. normalized states)
-        dominant_eig = overlap_noconj(ll,ll_new)
+        e0 = overlap_noconj(ll,ll_new)
 
         sjj = truncate_normalize_sweep_sym!(ll_new, svd_cutoff=cutoff, chi_max=maxbondim, method=method)
         trunc_error = overlap_noconj(ll,ll_new)
@@ -163,12 +164,16 @@ function powermethod_sym_norms(in_mps::MPS, in_mpo::MPO, pm_params::ppm_params)
         push!(ds2s, ds2)
         sprevs = sjj
 
+        push!(de0s, abs(e0 - e0prev))
+        e0prev = e0
+
+
         if pm_params.plot_s
             templot =  plot(real(sjj),label=jj,legend=:outertopright)
         end
 
         #next!(p; showvalues = [(:jj,jj), (:ds2,ds2), (:chi,(maxlinkdim(ll)))])
-        next!(p; showvalues = [(:Info,"[$(jj)] χ=$(maxlinkdim(ll)) | ΔS=$(round(ds2;digits=5)) | τ0 = $(round(dominant_eig,digits=5)) | trunc = $(round(trunc_error,digits=6))" )])
+        next!(p; showvalues = [(:Info,"[$(jj)] χ=$(maxlinkdim(ll)) | ΔS=$(round(ds2;digits=5)) | τ0 = $(round(e0,digits=5)) | trunc = $(round(trunc_error,digits=6))" )])
 
         #next!(p; showvalues = ["ds2= $ds2, chimax=$(maxlinkdim(ll))"])
 
@@ -191,7 +196,8 @@ function powermethod_sym_norms(in_mps::MPS, in_mpo::MPO, pm_params::ppm_params)
 
     println("Stopped after $(length(ds2s)) steps, final ds^2 = $(ds2s[end]), chimax=$(maxlinkdim(ll))")
 
-    return ll, ds2s
+    pm_info = Dict("ds2s" => ds2s, "de0s" => de0s, "pm_params" => pm_params)
+    return ll, pm_info
 
 end
 
