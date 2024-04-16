@@ -39,7 +39,7 @@ export myrMPS,
 
 
 #include("truncations/truncations.jl")
-include("truncations/symmetric_svd.jl")
+# include("truncations/symmetric_svd.jl")
 #include("truncations/symm_decompositions.jl")
 
 # TODO include check_equivalence_svd ? 

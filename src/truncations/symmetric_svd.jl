@@ -10,7 +10,7 @@ Performs SVD decomposition of a SYMMETRIC tensor using Autonne-Takagi \\
 assumes that NO degeneracy in SVs is present, so the intermediate matrix z is truly diagonal \\
 Intermediate steps are done with the ITensors
 """
-function symmetric_svd_iten(a::ITensor; svd_cutoff::Float64=1e-12, chi_max::Int=100, check_symmetry::Bool=false)
+function _symmetric_svd_iten(a::ITensor; svd_cutoff::Float64=1e-12, chi_max::Int=100, check_symmetry::Bool=false)
  
     # check symmetry ? 
     if check_symmetry
