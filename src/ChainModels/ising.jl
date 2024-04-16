@@ -510,11 +510,6 @@ function build_expH_ising_murg_YY(
     # I should have already taken into account both the - sign in exp(-iHt) 
     # and the overall minus in Ising H= -(JXX+Z)
 
-    # # Not implemented yet 
-    # if hz > 1e-5
-    #     println("Warning: we're going to use hz=0 instead of $hz")
-    # end
-
     dt = JXX*dt
 
     N = length(space_sites)

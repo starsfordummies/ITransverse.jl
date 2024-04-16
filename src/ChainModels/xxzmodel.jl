@@ -269,6 +269,64 @@ function build_expH_XX_murg_from_ising(
 end
 
 
+""" Symmetric version of Murg exp(-i*H_XX*t) built as product of three Ising MPO W's
+ using H = -J(XX + ZZ) convention """
+function build_expH_XXZZ_murg_from_ising(
+    space_sites,
+    JXX::Real,
+    dt::Number)
+
+
+    # For real dt this does REAL time evolution 
+    # I should have already taken into account both the - sign in exp(-iHt) 
+    # and the overall minus in Ising H= -(JXX+Z)
+
+
+    N = length(space_sites)
+    U_t = MPO(N)
+
+
+    linkindices = [Index(8, "Link,l=$(n-1)") for n = 1:N+1]
+
+    dt = JXX*dt
+
+    eH_ZZ =  build_expH_ising_murg_ZZX(space_sites, 1, 0., dt/2)
+    eH_XX = build_expH_ising_murg(space_sites, 1, 0, dt)
+
+
+    temp1 = eH_ZZ[1] * eH_XX[1]' * eH_ZZ[1]''
+    comb_R = combiner(inds(temp1,"Link"))
+    temp_left = temp1 * comb_R * delta( inds(comb_R)[1], linkindices[2] )
+    temp_left = replaceprime(temp_left, 3=>1)
+
+    U_t[1] = temp_left 
+
+
+    for nn = 2:N-1
+    temp1 = eH_ZZ[nn] * eH_XX[nn]' * eH_ZZ[nn]''
+    comb_L = combiner(inds(temp1,"l="*string(nn-1)))
+    comb_R = combiner(inds(temp1,"l="*string(nn)))
+    temp_center = temp1 * comb_L * comb_R * delta( inds(comb_L)[1], linkindices[nn] ) *  delta( inds(comb_R)[1], linkindices[nn+1] )
+    temp_center = replaceprime(temp_center, 3=>1)
+
+    U_t[nn] = temp_center
+    end
+
+    temp1 = eH_ZZ[end] * eH_XX[end]' * eH_ZZ[end]''
+    #println(temp1)
+    comb_L = combiner(inds(temp1,"Link"))
+    temp_right = temp1 * comb_L  * delta( inds(comb_L)[1], linkindices[end-1] ) 
+    temp_right = replaceprime(temp_right, 3=>1)
+
+    U_t[end] = temp_right
+
+
+    return U_t
+
+
+end
+
+
 """ TODO CHECK Symmetric version of Murg exp(-i*H_XXZ*t) built as product of three Ising MPO W's """
 function build_expH_XXZ_murg_from_ising(
     space_sites,
