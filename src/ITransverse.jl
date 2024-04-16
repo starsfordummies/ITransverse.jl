@@ -103,16 +103,18 @@ export build_ising_folded_tMPO,
      build_folded_left_tMPS
 
 
-include("power_method/power_method.jl")
+include("power_method/pm.jl")
+include("power_method/symm_pm.jl")
 
 #from power_method.jl
 export powermethod, 
     powermethod_converge_norm,
     powermethod_converge_eig,
-    powermethod_sym,
-    powermethod_sym_norms,
-    powermethod_sym_rdm,
     powermethod_fold
+
+export powermethod_sym,
+    powermethod_sym_norms,
+    powermethod_sym_rdm
 
 
 include("lightcone/cone.jl")
