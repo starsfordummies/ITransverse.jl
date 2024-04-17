@@ -10,15 +10,9 @@ else
     using Infiltrator
 
 end
+
 using Plots
 using ITensors, FileIO, JLD2, Dates
-
-# include("utils.jl")
-# include("../models/potts.jl")
-# include("../tmpo/build_tmpo.jl")
-# include("compute_entropies.jl")
-# include("../truncations/sweeps_trunc.jl")
-# include("power_method.jl")
 
 using ITransverse
 
