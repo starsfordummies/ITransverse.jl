@@ -4,7 +4,7 @@ using LinearAlgebra
 using NDTensors
 using ITensors
 using ProgressMeter
-
+using IGensors
 
 # include("myutils/pparams.jl")
 # include("myutils/utils.jl")
@@ -24,6 +24,8 @@ export myrMPS,
     # check_diag_matrix, 
     # check_id_matrix,
     # isid
+    vn_entanglement_entropy_cut, 
+    vn_entanglement_entropy
 
 # #from compute_entropies.jl
 # export vn_entanglement_entropy_cut, 

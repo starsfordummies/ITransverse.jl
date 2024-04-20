@@ -1,6 +1,7 @@
 module ChainModels
 
 using ITensors
+using IGensors: symm_svd
 
 # include("../myutils/myutils.jl")
 # #using .MyUtils
