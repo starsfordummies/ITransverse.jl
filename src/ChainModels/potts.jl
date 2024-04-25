@@ -572,72 +572,72 @@ function build_expH_potts_symmetric_svd(in_space_sites,
 
     # ASSERT NEED SYMMETRY p<->p' OR WE SHOuLD BE MORE CAREFUL
 
-ϵ = J * 1.0im * dt 
+    ϵ = J * 1.0im * dt 
 
-N = length(in_space_sites)
+    N = length(in_space_sites)
 
-U_t = MPO(N)
+    U_t = MPO(N)
 
-uT_open = ITensor()
+    uT_open = ITensor()
 
-for n = 1:N-1 # TODO CHECK THIS
+    for n = 1:N-1 # TODO CHECK THIS
 
-    Σi = op(in_space_sites, "Σ", n)
-    Σid = op(in_space_sites, "Σdag", n)
+        Σi = op(in_space_sites, "Σ", n)
+        Σid = op(in_space_sites, "Σdag", n)
 
-    Σj = op(in_space_sites, "Σ", n+1)
-    Σjd = op(in_space_sites, "Σdag", n+1)
-
-
-    e1 = exp(ϵ*(Σi * Σjd + Σid * Σj))
-
-    c1 = combiner(inds(Σi))
-    c2 = combiner(inds(Σj))
-
-    e1c = e1 * c1 * c2
-
-    #u, s, uT = ExtraUtils.symmetric_svd_iten(e1c)
-
-    u, s, uT, _, _ = symm_svd(e1c, combinedind(c1), cutoff=1e-15)
-
-    u_sqs = u * sqrt.(s)
-    uT_sqs = sqrt.(s) * uT
-
-    u_open = u_sqs * dag(c1) * delta(inds(s))
-    replacetags!(u_open, "u" => "Link,l=$n")
+        Σj = op(in_space_sites, "Σ", n+1)
+        Σjd = op(in_space_sites, "Σdag", n+1)
 
 
-    if n == 1
-        U_t[n] = u_open
-        
-    else
-        uu = uT_open * prime(u_open, "Site")
-        uu = replaceprime( uu, 2 => 1)
-        U_t[n] = uu
+        e1 = exp(ϵ*(Σi * Σjd + Σid * Σj))
+
+        c1 = combiner(inds(Σi))
+        c2 = combiner(inds(Σj))
+
+        e1c = e1 * c1 * c2
+
+        #u, s, uT = ExtraUtils.symmetric_svd_iten(e1c)
+
+        u, s, uT, _, _ = symm_svd(e1c, combinedind(c1), cutoff=1e-15)
+
+        u_sqs = u * sqrt.(s)
+        uT_sqs = sqrt.(s) * uT
+
+        u_open = u_sqs * dag(c1) * delta(inds(s))
+        replacetags!(u_open, "u" => "Link,l=$n")
+
+
+        if n == 1
+            U_t[n] = u_open
+            
+        else
+            uu = uT_open * prime(u_open, "Site")
+            uu = replaceprime( uu, 2 => 1)
+            U_t[n] = uu
+        end
+
+        uT_open = uT_sqs * dag(c2)
+        replacetags!(uT_open, "u" => "Link,l=$n")
+
+
     end
 
-    uT_open = uT_sqs * dag(c2)
-    replacetags!(uT_open, "u" => "Link,l=$n")
+    U_t[N] = uT_open
 
+    if fpotts > 1e-10
+        for n = 1:N
 
-end
+            ttdag = op(in_space_sites, "τplusτdag",  n)
+            expT = exp(ϵ * ttdag * fpotts/2)
 
-U_t[N] = uT_open
-
-if fpotts > 1e-10
-    for n = 1:N
-
-        ttdag = op(in_space_sites, "τplusτdag",  n)
-        expT = exp(ϵ * ttdag * fpotts/2)
-
-        U_t[n] = prime(U_t[n], "Site") * expT
-        U_t[n] = noprime(U_t[n] * prime(expT, "Site"), 2)
+            U_t[n] = prime(U_t[n], "Site") * expT
+            U_t[n] = noprime(U_t[n] * prime(expT, "Site"), 2)
+        end
     end
-end
 
-#@show U_t
+    #@show U_t
 
-return U_t
+    return U_t
 
 end
 

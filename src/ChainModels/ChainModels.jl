@@ -30,7 +30,9 @@ export build_H_potts_manual,
     #build_H_potts_manual_lowtri,
     build_H_potts,
     build_expH_potts_2o,
-    build_expH_potts_murg
+    build_expH_potts_murg,
+    build_expH_potts_symmetric_svd
+
 
 # from xxzmodel.jl
 export build_H_XXZ_manual,

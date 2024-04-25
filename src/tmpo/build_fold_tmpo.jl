@@ -73,7 +73,7 @@ function build_folded_left_tMPS(eH::MPO, init_state::Vector, time_sites)
     fold_init_state = init_state * init_state' 
 
 
-    fold_op = [1, 0, 0, 1]
+    fold_op = ComplexF64[1, 0, 0, 1]
 
     iCwR = ind(CwR,1)
     iCp = ind(Cp,1)
@@ -107,8 +107,7 @@ end
 """ Builds *rotated* and *folded* MPO for Ising, defined on `time_sites`.
 Closed with `fold_op` on the left and `init_state` to the right. 
 """
-function build_ising_folded_tMPO(build_expH_function::Function,
-    JXX::Real, hz::Real, 
+function build_ising_folded_tMPO(build_expH_function::Function, JXX::Real, hz::Real, 
     dt::Number, 
     init_state::AbstractVector,
     fold_op::AbstractVector,
@@ -124,8 +123,7 @@ function build_ising_folded_tMPO(build_expH_function::Function,
 
 end
 
-function build_ising_folded_tMPS(build_expH_function::Function,
-    par::pparams,
+function build_ising_folded_tMPS(build_expH_function::Function, par::pparams,
     time_sites::Vector{<:Index})
 
     space_sites = siteinds("S=1/2", 3; conserve_qns = false)
@@ -139,8 +137,7 @@ function build_ising_folded_tMPS(build_expH_function::Function,
 
 end
 
-function build_ising_folded_tMPO(build_expH_function::Function,
-    p::pparams,
+function build_ising_folded_tMPO(build_expH_function::Function, p::pparams,
     fold_op::Vector{ComplexF64},
     time_sites::Vector{<:Index})
 
@@ -387,6 +384,7 @@ end
 function build_folded_tMPO_regul_beta(Wc::ITensor, Wc_im::ITensor, nbeta::Int, time_sites::Vector{Index{Int64}})
     #TODO NOTIMPLEMENTEDYET
     @error "not implemented yet"
+    return 0 
 
     @assert nbeta > 1
     @assert nbeta < time_sites - 2

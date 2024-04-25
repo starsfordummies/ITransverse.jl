@@ -1,49 +1,7 @@
-#= 
-""" Builds tMPO for forward-only evolution, closes top and bottom (Loschmidt echo style)
-with the `init_state` vector. No beta regularization - should be superseded by other  """
-function _build_fw_tMPO(eH::MPO, init_state::Vector{ComplexF64}, time_sites::Vector{<:Index})
+""" Builds temporal MPO and starting tMPS guess for forward evolution only with nbeta steps of imaginary time regularization.
 
-    @assert length(eH) == 3
+Returns (tMPO, tMPS) pair.
 
-    Nsteps = length(time_sites)
-    # The time sites will provide the (rotated) physical indices
-
-    _, Wc, _ = eH.data
-    space_p = siteind(eH,2) #noprime(siteinds(eH)[2][2])
-
-    (wL, wR) = linkinds(eH)
-
-
-    rot_links = [Index(2, "Link,rot_link=$ii") for ii in 1:(Nsteps - 1)]
-
-    #init_state = [1 0] 
-    fin_state = init_state
-
-    init_tensor = ITensor(init_state, space_p)
-    fin_tensor = ITensor(fin_state, space_p')
-
-    tMPO = MPO(Nsteps)
-
-    for ii = 1:Nsteps
-        tMPO[ii] = Wc * delta(wL, time_sites[ii]) * delta(wR, dag(time_sites[ii])') 
-    end
-
-
-    tMPO[1] *= fin_tensor * delta(space_p, rot_links[1]) 
-
-    for ii = 2:Nsteps-1
-        tMPO[ii] *= delta(space_p, rot_links[ii-1]) * delta(space_p', rot_links[ii]) 
-    end
-
-    tMPO[Nsteps] *= init_tensor * delta(space_p', rot_links[Nsteps-1]) 
-
-    return tMPO
-
-end
-=#
-
-
-""" Builds temporal MPO for forward evolution only with nbeta steps of imaginary time regularization
 The structure built (Loschmidt style is)
 ```
 (init_state)-Wβ-Wβ-Wt-Wt-Wt-...-Wt-Wβ-Wβ-(init_state)
@@ -128,6 +86,7 @@ function build_fw_tMPO_regul_beta(eH::MPO, eHi::MPO,
 end
 
 
+""" Returns (tMPO, tMPS) pair. """
 function build_ising_fw_tMPO_regul_beta( build_expH_function::Function,
     JXX::Real, hz::Real, 
     dt::Number, 

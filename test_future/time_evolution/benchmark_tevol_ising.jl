@@ -1,8 +1,8 @@
 using ITensors, ITensorTDVP
-include("../myutils/pparams.jl")
-include("../models/brakets.jl")
-include("../models/ising.jl")
 
+using ITransverse
+using ITransverse: build_expH_ising_1o, build_expH_ising_2o, build_H_ising
+using IGensors
 
 N = 60      # System size
 
@@ -15,16 +15,21 @@ hz = 0.8   # local magnetic field in z direction
 
 dt = 0.1  # time step
 
-SVD_cutoff = 1e-4   # cutoff for singular vaulues smaller than SVD_cutoff
+SVD_cutoff = 1e-10   # cutoff for singular vaulues smaller than SVD_cutoff
 maxbondim = 300       # maximum bond dimension allowed
 
 # define local degrees of freedom
 sites = siteinds("S=1/2", N; conserve_qns = false)
 
 # initial state
-psi_prod = productMPS(ComplexF64, sites, "↑")
+#psi_prod = productMPS(ComplexF64, sites, "↑")
+psi_prod = productMPS(ComplexF64, sites, "+")
 
 
+ev_tebdO1 = [] 
+ev_tebdO2 = []
+ev_tebdmurg = []
+ev_tdvp = []
 
 Ut1 = build_expH_ising_1o(sites, JXX, hz, dt)
 
@@ -33,6 +38,7 @@ psi_u1 = deepcopy(psi_prod)
 @time for (nt, t) in enumerate(range(dt, step = dt, length = nSteps))
   psi_u1[:] = apply(Ut1, psi_u1; normalize = true, cutoff = SVD_cutoff, maxdim = maxbondim)
   println("nt=$(nt),\tt=$(t),\tmaxbondim = $(maxlinkdim(psi_u1))")
+  push!(ev_tebdO1, expect(psi_u1, "Z", sites=round(Int,N/2)))
 end
 
 
@@ -42,6 +48,8 @@ println("Apply O2")
 psi_u2 = deepcopy(psi_prod)
 @time for (nt, t) in enumerate(range(dt, step = dt, length = nSteps))
   psi_u2[:] = apply(Ut2, psi_u2; normalize = true, cutoff = SVD_cutoff, maxdim = maxbondim)
+  push!(ev_tebdO2, expect(psi_u2, "Z", sites=round(Int,N/2)))
+
   println("nt=$(nt),\tt=$(t),\tmaxbondim = $(maxlinkdim(psi_u2))")
 end
 
@@ -51,6 +59,8 @@ println("Apply murg")
 psi_u3 = deepcopy(psi_prod)
 @time for (nt, t) in enumerate(range(dt, step = dt, length = nSteps))
   psi_u3[:] = apply(Ut3, psi_u3; normalize = true, cutoff = SVD_cutoff, maxdim = maxbondim)
+  push!(ev_tebdmurg, expect(psi_u3, "Z", sites=round(Int,N/2)))
+
   println("nt=$(nt),\tt=$(t),\tmaxbondim = $(maxlinkdim(psi_u3))")
 end
 
@@ -85,6 +95,9 @@ psi_tdvp1 = tdvp(
 )
 
 
+plot(ev_tebdO1)
+plot!(ev_tebdO2)
+plot!(ev_tebdmurg)
 
 ### These checks should be trivial 
 

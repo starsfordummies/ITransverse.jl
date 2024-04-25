@@ -2,15 +2,13 @@
 using ITensors, ITensorTDVP
 using Plots
 
-include("../myutils/pparams.jl")
-include("../models/brakets.jl")
-include("../models/ising.jl")
+using ITransverse: build_expH_ising_1o, build_expH_ising_2o, build_expH_ising_murg, build_H_ising
 
-N = 10      # System size
+N = 40      # System size
 
 
 JXX = 1.0   # spin x -- spin x coupling
-hz = 0.3   # local magnetic field in z direction
+hz = 0.4   # local magnetic field in z direction
 
 dt = 0.1  # time step
 
@@ -25,7 +23,7 @@ psi_prod = productMPS(ComplexF64, sites, "↑")
 #psi_prod = productMPS(ComplexF64, sites, "+")
 
 
-nSteps = 50
+nSteps = 30
 
 
 
