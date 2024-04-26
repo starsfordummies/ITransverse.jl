@@ -10,7 +10,7 @@ then we build environments L|R from the *left* and truncate on their SVDs (or EI
 So this can be seen as a "RL: Right(can)Left(gen)" sweep 
 """
 function truncate_normalize_sweep(left_mps::MPS, right_mps::MPS, truncp::trunc_params)
-    truncate_normalize_sweep(left_mps, right_mps, method=truncp.method, cutoff=truncp.cutoff, chi_max=truncp.maxbondim)
+    truncate_normalize_sweep(left_mps, right_mps, method=truncp.ortho_method, cutoff=truncp.cutoff, chi_max=truncp.maxbondim)
 end
 
 
@@ -48,7 +48,7 @@ function truncate_normalize_sweep(left_mps::MPS, right_mps::MPS; method::String,
         Bi = XVinv * R_ortho[ii] 
 
         # Generalized canonical - no complex conjugation!
-        left_env = deltaS * Ai 
+        left_env = Ai * deltaS 
         left_env *= Bi 
 
         @assert order(left_env) == 2
@@ -78,7 +78,7 @@ function truncate_normalize_sweep(left_mps::MPS, right_mps::MPS; method::String,
 
         elseif method == "SVD" 
             
-            U,S,Vdag = svd(left_env, ind(left_env,1); cutoff, maxdim=chi_max)
+            U,S,Vdag = svd(left_env, ind(left_env,1); cutoff=cutoff^2, maxdim=chi_max, use_absolute_cutoff=true)
 
             #@show sum(S), sum(S.^2)
 
