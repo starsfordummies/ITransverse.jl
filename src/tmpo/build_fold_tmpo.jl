@@ -119,7 +119,7 @@ function build_ising_folded_tMPO(build_expH_function::Function, JXX::Real, hz::R
     eH = build_expH_function(space_sites, JXX, hz, dt)
 
     #@info "using $(build_expH_function)"
-    build_folded_tMPO_new(eH, init_state, fold_op, time_sites)
+    build_folded_tMPO(eH, init_state, fold_op, time_sites)
 
 end
 
@@ -147,163 +147,6 @@ end
 
 
 
-#=
-function _build_folded_tMPO_alt(eH::MPO, init_state::Vector, fold_op::Vector, time_sites::Vector{<:Index})
-
-    @assert length(eH) == 3
-
-    Nsteps = length(time_sites)
-
-    WWc, iCwL, iCwR, iCp, iCps = build_WWc(eH)
-
-
-    # _, Wc, _ = eH.data
-    # check_symmetry_itensor_mpo(Wc) # , (wL,wR), (space_p',space_p))
-
-    # space_p = siteind(eH,2)
-
-    # (wL, wR) = linkinds(eH)
-
-    # #println(Wc)
-
-    # # Build W Wdagger - put double prime on Wconj for safety
-    # WWc = Wc * dag(prime(Wc,2))
-
-    # # Combine indices appropriately 
-    # CwL = combiner(wL,wL''; tags="cwL")
-    # CwR = combiner(wR,wR''; tags="cwR")
-    # # we flip the p<>* legs on the backwards, shouldn't matter if we have p<>p*
-    # Cp = combiner(space_p',space_p''; tags="cp")
-    # Cps = combiner(space_p,space_p'''; tags="cps")
-
-    # WWc = WWc * CwL * CwR * Cp * Cps
-
-    #println(inds(WWc))
-
-    rot_links = [Index(4, "Link,rotl=$ii") for ii in 1:(Nsteps - 1)]
-
-
-
-
-    #fold_init_state = outer(init_state, init_state) 
-    fold_init_state = init_state * init_state'
-
-
-    # Start building the tMPO
-    tMPO = MPO(Nsteps)
-
-    # Assign the L-R indices to the rotated physical(time) indices and fill the MPO 
-    for ii = 1:Nsteps
-       tMPO[ii] = WWc * delta(iCwL, time_sites[ii]') * delta(iCwR, time_sites[ii]) 
-    end
-
-
-    # delta(iCp, rot_links[ii-1]) * delta(iCps, rot_links[ii]) )
-    # Assign the physical as link indices
-
-    for ii = 2:Nsteps-1
-        tMPO[ii] *= delta(iCp, rot_links[ii-1]) * delta(iCps, rot_links[ii]) 
-    end
-
-
-    """ My convention now: 
-    - initial state => (above/right)
-    - folding operator => (below/left) 
-    """
-
-    init_state_tensor = ITensor(fold_init_state, iCp)
-    fold_op_tensor = ITensor(fold_op, iCps)
-
-    # contract left and right edges of the rotated MPO 
-    tMPO[1] *= fold_op_tensor * delta(iCp, rot_links[1]) 
-    tMPO[end] *= init_state_tensor * delta(iCps, rot_links[Nsteps-1]) 
-
-
-return tMPO
-
-end
-=#
-
-
-
-#= old
-function build_folded_tMPO(Wc::ITensor, fold_op::Vector, time_sites)
-
-    Nsteps = length(time_sites)
-
-    (wL, p, ps, wR) = inds(Wc)
-
-    if  permute(Wc, (wL, ps, p, wR)).tensor == Wc.tensor
-        println("Symmetric p <->p*")
-    else
-        println("Warning! Wc *not* symmetric p<->p*")
-    end
-
-    #_t2 = Array(Wc, (wR, p, ps, wL))
-
-    if permute(Wc, (wR, p, ps, wL)).tensor == Wc.tensor
-        println("Symmetric wL <->wR")
-    else
-        println("Wc *not* symmetric wL<->wR")
-    end
-
-    
-    # Build W Wdagger - put double prime on Wconj for safety
-    WWc = Wc * dag(prime(Wc,2))
-    # Combine indices appropriately 
-    CwL = combiner(wL,wL''; tags="cwL")
-    CwR = combiner(wR,wR''; tags="cwR")
-    # we flip the p<>* legs on the backwards, shouldn't be necessary since should always have p<>p*
-    Cp = combiner(p,ps''; tags="cp")
-    Cps = combiner(ps,p''; tags="cps")
-
-    WWc = WWc * CwL * CwR * Cp * Cps
-    println(inds(WWc))
-
-    rot_phys = time_sites
-    rot_links = [Index(4, "Link,rotl=$ii") for ii in 1:(Nsteps - 1)]
-
-
-    # Boundaries of the network: initial state (below/right) and closing operator (above/left)
-    init_state = [1, 0] 
-    fold_init_state = outer(init_state, init_state) 
-
-    #fold_op = [1, 0, 0, -1]
-    fold_op = [0,1,1,0]
-
-    # combiners have the combined index as first one 
-    iCwL = ind(CwL,1)
-    iCwR = ind(CwR,1)
-    iCp = ind(Cp,1)
-    iCps = ind(Cps,1)
-
-
-    # I already prime them the other way round so it's easier to contract them
-    init_tensor = ITensor(fold_init_state, iCp)
-    fin_tensor = ITensor(fold_op, iCps)
-
-    first_tensor = (fin_tensor * WWc)
-    println(inds(first_tensor))
-
-    first_tensor = first_tensor * delta(iCwL, rot_phys[1]') * delta(iCwR, rot_phys[1])* delta(iCp, rot_links[1]) 
-    println(inds(first_tensor))
-
-    list_mpo = [first_tensor]
-
-    for ii in range(2,Nsteps-1)
-        push!(list_mpo, WWc *  delta(iCwL, rot_phys[ii]') * delta(iCwR, rot_phys[ii]) * delta(iCp, rot_links[ii-1]) * delta(iCps, rot_links[ii]) )
-    end
-
-    last_tensor = (init_tensor * WWc) * delta(iCwL, rot_phys[Nsteps]') * delta(iCwR, rot_phys[Nsteps]) * delta(iCps, rot_links[Nsteps-1] )
-
-    push!(list_mpo, last_tensor)
-
-    tMPO = MPO(list_mpo)
-
-    return tMPO
-
-end
-=#
 
 
 """ Build a *rotated and folded* TMPO associated with exp. value starting from eH tensors of U=exp(iHt) 
@@ -321,14 +164,14 @@ and contract with the operator `fold_op` on the *left*
 and the initial state `init_state` on the *right*, ie.
 
 ````
-          p'
-      |   |   |   |
+           p'
+       |   |   |   |
 [op]X=(W)=(W)=(W)=(W)=o [in]
-      |   |   |   |
-          p
+       |   |   |   |
+           p
 ````
 """
-function build_folded_tMPO_new(eH_space::MPO, init_state::Vector, fold_op::Vector, time_sites::Vector{<:Index})
+function build_folded_tMPO(eH_space::MPO, init_state::Vector, fold_op::Vector, time_sites::Vector{<:Index})
     
     @assert length(eH_space) == 3
 
@@ -339,28 +182,25 @@ function build_folded_tMPO_new(eH_space::MPO, init_state::Vector, fold_op::Vecto
     #@info "checking folded WWc symmetries"
     #check_symmetry_itensor_mpo(WWc, iCwL, iCwR, iCps, iCp) 
 
-    fold_op_tensor = ITensor(fold_op, iCps)
+    fold_op_tensor = ITensor((fold_op), iCps)
 
-    fold_init_state = init_state * init_state'
-    init_state_tensor = ITensor(fold_init_state, iCp)
+    fold_psi0 = (init_state) * (init_state')
+    init_state_tensor = ITensor(fold_psi0, iCp)
 
 
     # define the links of the rotated MPO 
-    rot_links = [Index(4, "Link,rotl=$ii") for ii in 1:(Nsteps - 1)]
-
+    rot_links = [Index( dim(iCp) , "Link,rotl=$ii") for ii in 1:(Nsteps - 1)]
 
     # Start building the tMPO
     tMPO = MPO(Nsteps)
 
-
-
-    tMPO[1] = WWc * fold_op_tensor # iCps idx contraction
+    # First site: Contract with operator (iCps index) and rotate the other indices
+    tMPO[1] = WWc * fold_op_tensor 
     tMPO[1] *= delta(iCwL, time_sites[1]) 
     tMPO[1] *= delta(iCwR, time_sites[1]') 
     tMPO[1] *= delta(iCp, rot_links[1])  
 
-    # Assign the L-R indices to the rotated physical(time) indices and fill the MPO 
-
+    # Rotate indices and fill the MPO
     for ii = 2:Nsteps-1
         tMPO[ii] = WWc
         tMPO[ii] *= delta(iCwL, time_sites[ii])
@@ -369,7 +209,8 @@ function build_folded_tMPO_new(eH_space::MPO, init_state::Vector, fold_op::Vecto
         tMPO[ii] *= delta(iCps, rot_links[ii-1]) 
     end
 
-    tMPO[end] = WWc * init_state_tensor # iCp idx contraction
+    # Close final tensor with initial state on iCp and rotate other inds
+    tMPO[end] = WWc * init_state_tensor
     tMPO[end] *= delta(iCwL, time_sites[end]) 
     tMPO[end] *= delta(iCwR, time_sites[end]') 
     tMPO[end] *= delta(iCps, rot_links[end])  
