@@ -1,4 +1,6 @@
-""" Builds temporal MPO and starting tMPS guess for forward evolution only with nbeta steps of imaginary time regularization.
+""" Builds temporal MPO and starting tMPS guess for *forward evolution only* 
+with `nbeta` steps of imaginary time regularization.
+Closes with initial state again, so it's a Loschmidt echo type setup.
 
 Returns (tMPO, tMPS) pair.
 
