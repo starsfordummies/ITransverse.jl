@@ -8,6 +8,9 @@ include("compute_entropies.jl")
 
 include("symmsvd_iten.jl")
 
+include("bench_data.jl")
+
+
 # from pparams
 export pparams, ppm_params, trunc_params
 
