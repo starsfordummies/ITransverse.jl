@@ -18,7 +18,8 @@ export pparams, ppm_params, trunc_params
 export myrMPS, 
     overlap_noconj, 
     check_symmetry_itensor_mpo, 
-    check_symmetry_itensor
+    check_symmetry_itensor,
+    normbyfactor
     # check_diag_matrix, 
     # check_id_matrix,
     # isid

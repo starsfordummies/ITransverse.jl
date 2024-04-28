@@ -259,3 +259,15 @@ function plot_matrix(a::ITensor)
     @assert order(a) == 2
     plot_matrix(matrix(a))
 end
+
+
+function normbyfactor(psi::AbstractMPS, factor::Number )
+
+    lf = log(factor)
+    z = exp(lf/length(psi))
+    # XXX: this is not modifying `M` in-place.
+    # M[c] ./= z
+    for n in eachindex(psi)
+      psi[n] ./= z
+    end
+end
