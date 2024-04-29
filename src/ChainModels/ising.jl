@@ -154,14 +154,14 @@ end
 H = -( JXX + hZ ) 
 specify J and h as input params 
 """
-function build_H_ising(sites, JXX::Real, hz::Real)
+function build_H_ising(sites, Jxx::Real, hz::Real)
 
     # Input operator terms which define a Hamiltonian
     N = length(sites)
     os = OpSum()
 
     for j in 1:(N - 1)
-        os += -JXX, "X", j, "X", j + 1
+        os += -Jxx, "X", j, "X", j + 1
     end
 
     for j in 1:N
@@ -176,18 +176,18 @@ end
 H = -( JZZ + hX ) 
 specify J and h as input params 
 """
-function build_H_ising_ZZ_X(sites, JXX::Real, hz::Real)
+function build_H_ising_ZZ_X(sites, Jzz::Real, hx::Real)
 
     # Input operator terms which define a Hamiltonian
     N = length(sites)
     os = OpSum()
 
     for j in 1:(N - 1)
-        os += -JXX, "Z", j, "Z", j + 1
+        os += -Jzz, "Z", j, "Z", j + 1
     end
 
     for j in 1:N
-        os += -hz, "X", j
+        os += -hx, "X", j
     end
 
     # Convert these terms to an MPO tensor network
@@ -200,14 +200,14 @@ end
 H = -( JYY + hZ ) 
 specify J and h as input params 
 """
-function build_H_ising_YY(sites, JXX::Real, hz::Real)
+function build_H_ising_YY(sites, Jyy::Real, hz::Real)
 
     # Input operator terms which define a Hamiltonian
     N = length(sites)
     os = OpSum()
 
     for j in 1:(N - 1)
-        os += -JXX, "Y", j, "Y", j + 1
+        os += -Jyy, "Y", j, "Y", j + 1
     end
 
     for j in 1:N
