@@ -107,7 +107,7 @@ end
 
 function truncate_normalize_sweep(left_mps::MPS, right_mps::MPS; method::String, cutoff::Real, chi_max::Int)
 
-    L_ortho, R_ortho, ents_sites, gen_overlap = truncate_sweep(left_mps::MPS, right_mps::MPS; method::String, cutoff::Real, chi_max::Int)
+    L_ortho, R_ortho, ents_sites, gen_overlap = truncate_sweep(left_mps, right_mps; method, cutoff, chi_max)
 
     L_ortho = normbyfactor(L_ortho, sqrt(gen_overlap))
     R_ortho = normbyfactor(R_ortho, sqrt(gen_overlap))
