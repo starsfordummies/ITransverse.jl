@@ -261,13 +261,18 @@ function plot_matrix(a::ITensor)
 end
 
 
+""" Returns a copy of psi normalized by a `factor` (spread out over all MPS tensors) """
 function normbyfactor(psi::AbstractMPS, factor::Number )
 
+    psic = deepcopy(psi)
+    
     lf = log(factor)
     z = exp(lf/length(psi))
-    # XXX: this is not modifying `M` in-place.
-    # M[c] ./= z
-    for n in eachindex(psi)
-      psi[n] ./= z
+
+    for n in eachindex(psic)
+      psic[n] ./= z
     end
+
+    return psic
+
 end
