@@ -1,4 +1,3 @@
-include("../initialize.jl")
 
 using Revise
 
@@ -20,14 +19,15 @@ function main()
 
 
     JXX = 1.0  
-    hz = 0.5
+    hz = 0.4
     dt = 0.1
+
     nbeta=0
 
     init_state = plus_state
 
-    SVD_cutoff = 1e-8
-    maxbondim = 120
+    SVD_cutoff = 1e-14
+    maxbondim = 80
     itermax = 400
     verbose=false
     ds2_converged=1e-5
@@ -45,7 +45,8 @@ function main()
     leftvecs = []
     ds2s = []
 
-    for Nsteps=4:1:5
+    ts = 10:30
+    for Nsteps in ts
 
         time_sites = siteinds("S=3/2", Nsteps)
 
@@ -58,7 +59,7 @@ function main()
         mpo_Z = build_ising_folded_tMPO(build_expH_ising_murg, params, sigZ, time_sites)
         mpo_1 = build_ising_folded_tMPO(build_expH_ising_murg, params, Id, time_sites)
 
-        ll, rr, ds2_pm  = powermethod_fold(init_mps, mpo_1, mpo_X, pm_params) # kwargs)
+        ll, rr, ds2_pm  = powermethod(init_mps, mpo_1, mpo_X, pm_params) # kwargs)
 
         ev0 = overlap_noconj(ll, rr)
 
@@ -71,6 +72,8 @@ function main()
 
         ev1 = overlap_noconj(lid, rr)
 
+        @show ev1 
+
         evx2 = evx/ev1
         evz2 = evz/ev1
 
@@ -80,20 +83,25 @@ function main()
         push!(ds2s, ds2_pm)
 
         
-        if Nsteps%10 == 0
-            out_filename = "checkpoint_pm_fold_ising_" * Dates.format(now(), "yymmdd_HHMM") * ".jld2"
-            @info "saving cp $out_filename after $Nsteps steps"
-            jldsave(out_filename; leftvecs, evs_z, evs_x, ds2s, params, pm_params)
-        end
+        # if Nsteps%10 == 0
+        #     out_filename = "checkpoint_pm_fold_ising_" * Dates.format(now(), "yymmdd_HHMM") * ".jld2"
+        #     @info "saving cp $out_filename after $Nsteps steps"
+        #     jldsave(out_filename; leftvecs, evs_z, evs_x, ds2s, params, pm_params)
+        # end
 
 
     end
 
-    return leftvecs, evs_z, evs_x, ds2s
+    return leftvecs, evs_z, evs_x, ds2s, ts 
 end
 
 
 
 leftvecs, evs_z, evs_x, ds2s = main()
 
-jldsave("out_folded_pm_ising.jld2"; leftvecs, evs_z, evs_x, ds2s)
+scatter(real(evs_x))
+scatter!(real(evs_z))
+#jldsave("out_folded_pm_ising.jld2"; leftvecs, evs_z, evs_x, ds2s)
+
+plot!(ITransverse.ExtraUtils.bench_X_04_plus[10:30])
+plot!(ITransverse.ExtraUtils.bench_Z_04_plus[10:30])

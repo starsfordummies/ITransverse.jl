@@ -7,11 +7,11 @@ Power method
     Note that at each step, there is a single optimization which returns a new set Lnew, Rnew
     which are used as starting point for the next step. 
 
-    So this is only if we don't put in extra operators and the like. For that case, use `powermethod_fold`
+    So this is only if we don't put in extra operators and the like. For that case, use `powermethod`
 
 Truncation params are in pm_params
 """
-function powermethod(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::ppm_params; flip_R::Bool=false)
+function powermethod_both(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::ppm_params; flip_R::Bool=false)
 
     itermax = pm_params.itermax
     cutoff = pm_params.cutoff
@@ -230,103 +230,63 @@ The algorithm makes *two* updates, first it computes <L1|OR> and updates <Lnew|,
 
 Truncation params are in pm_params
 """
-function powermethod_fold(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::ppm_params)
+
+function powermethod(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::ppm_params)
 
     itermax = pm_params.itermax
     cutoff = pm_params.cutoff
     maxbondim = pm_params.maxbondim
     converged_ds2 = pm_params.ds2_converged
 
-
-    # normalize the vector to get a good starting point?
-    #ll = normalize(in_mps)
-    #rr = normalize(in_mps)
-
     ll = deepcopy(in_mps)
     rr = deepcopy(in_mps)
 
-    # should we also normalize the MPO !!?
-    #normalize!(in_mpo)
 
     ds2s = Float64[]
-    ds2 = 0. # fill(0., length(in_mps)-1)  #??
+    dnormsL = Float64[]
+
+    ds2 = 0. 
     sprevs = fill(1., length(in_mps)-1)
+    normprev = 0.
 
     p = Progress(itermax; desc="L=$(length(ll)), cutoff=$(cutoff), maxbondim=$(maxbondim))", showspeed=true) 
 
-    # @show check_symmetry_itensor(in_mpo_1[1], siteinds(in_mpo_1,1) )
-    # @show check_symmetry_itensor(in_mpo_X[1], siteinds(in_mpo_X,1) )
-
-    # @show check_symmetry_itensor_mpo(in_mpo_1[4])
-    # @show check_symmetry_itensor_mpo(in_mpo_X[4])
-
-    # @show check_symmetry_itensor(in_mpo_1[end], siteinds(in_mpo_1, length(ll)))
-    # @show check_symmetry_itensor(in_mpo_X[end], siteinds(in_mpo_X, length(ll)))
-
     for jj = 1:itermax  
 
-        # Note that ITensors does the apply on the MPS/MPO legs with the SAME label, eg. p-p 
-        # and then unprimes the p' leg. 
-        ll_work = deepcopy(ll)
+
+        #TODO check that we need sqrt() here 
+        #@show overlap_noconj(ll,rr)
+        ll_work = normbyfactor(ll, sqrt(overlap_noconj(ll,rr)))
+        rr_work = normbyfactor(rr, sqrt(overlap_noconj(ll,rr)))
+        #@show overlap_noconj(ll_work,rr_work)
 
         OpsiL = apply(in_mpo_1, ll_work,  alg="naive", truncate=false)
-        OpsiR = apply(swapprime(in_mpo_X, 0, 1, "Site"), rr,  alg="naive", truncate=false)  
+        OpsiR = apply(swapprime(in_mpo_X, 0, 1, "Site"), rr_work,  alg="naive", truncate=false)  
 
-        ll, _r, sjj = truncate_normalize_sweep(OpsiL, OpsiR, cutoff=cutoff, chi_max=maxbondim, method="SVD")
+        ll, _r, sjj, overlap = truncate_sweep(OpsiL, OpsiR, cutoff=cutoff, chi_max=maxbondim, method="SVD")
 
-        #check_gencan_left_sym_phipsi(ll, _r, true)
-
-
-        #@show overlap_noconj(OpsiL, OpsiR)
 
         OpsiL = apply(in_mpo_X, ll_work,  alg="naive", truncate=false)
-        OpsiR = apply(swapprime(in_mpo_1, 0, 1, "Site"), rr,  alg="naive", truncate=false)  
+        OpsiR = apply(swapprime(in_mpo_1, 0, 1, "Site"), rr_work,  alg="naive", truncate=false)  
 
-
-        # DEBUG
-        #check_equivalence_svd(OpsiL, OpsiR)
         
-        _l, rr, sjj = truncate_normalize_sweep(OpsiL, OpsiR, cutoff=cutoff, chi_max=maxbondim, method="SVD")
-
-        #check_gencan_left_sym_phipsi(_l,rr, true)
-
-        # ! we should be sure about symmetry ..
-        #rr = deepcopy(ll)
-
-        # @show matrix(ll[1])
-        # @show matrix(rr[1])
-
-        # @show matrix(ll[1])-matrix(rr[1])
-        #@show overlap_noconj(OpsiL, OpsiR)
+        _l, rr, _, overlap = truncate_sweep(OpsiL, OpsiR, cutoff=cutoff, chi_max=maxbondim, method="SVD")
 
         # If I cook them separately, likely the overlap will be messed up 
         overl = overlap_noconj(ll,rr)
-        #@show overl 
-
-        #@show(norm(ll[1]))
-        #@show(norm(rr[1]))
-
-        #@show norm(matrix(ll[1])-matrix(rr[1]))
-
-        #@show norm(matrix(ll[end])-matrix(rr[end]))
-
+   
         if abs(overl) < 0.01
             @warn "Small overlap $overl, watch for trunc error"
         end
-
-        # normalize overlap to 1 at each step 
-        ll[end] =  ll[end] /sqrt(overl)
-        rr[end] =  rr[end] /sqrt(overl)
 
         ds2 = norm(sprevs - sjj)
         push!(ds2s, ds2)
         sprevs = sjj
 
-        #println("$(jj): [$(maxlinkdim(OpsiL)),$(maxlinkdim(OpsiR))] => $(maxlinkdim(ll)) , ds2 = $(ds2), <L|R> = $(overlap_noconj(ll,rr))")
+        #TODO 
+        normprev = norm(ll_work)
+        push!(dnormsL, norm(ll_work))
 
-        # this maybe helps keeping memory usage low on cluster(?)
-        # https://itensor.discourse.group/t/large-amount-of-memory-used-when-dmrg-runs-on-cluster/1045/4
-        #GC.gc()
 
         if ds2 < converged_ds2
             @info ("[$(length(ll))] converged after $jj steps - χ=$(maxlinkdim(ll))")
@@ -337,12 +297,15 @@ function powermethod_fold(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::
             @warn ("NOT converged after $jj steps - χ=$(maxlinkdim(ll))")
         end
 
-        #next!(p; showvalues = [(:ds2,ds2), (:chi,(maxlinkdim(ll)))])
         next!(p; showvalues = [(:Info,"[$(jj)] ds2=$(ds2), chi=$(maxlinkdim(ll))" )])
 
     end
 
+    return ll, rr, ds2s, dnormsL
 
-    return ll, rr, ds2s
+end
 
+# backward compatibility
+function powermethod_fold(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::ppm_params)
+    powermethod(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::ppm_params)
 end
