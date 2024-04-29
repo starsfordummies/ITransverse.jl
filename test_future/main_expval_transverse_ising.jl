@@ -5,8 +5,6 @@ using Plots
 
 using ITransverse
 
-
-
 ITensors.enable_debug_checks()
 
 function test_los(nsteps::Int)
@@ -35,18 +33,20 @@ ll_murg_s = MPS()
 ds2s = Vector{Float64}[]
 
 
-mpo_I = build_ising_expval_tMPO(build_expH_ising_murg, JXX, hz, dt, nsteps, init_state, [1 0 ; 0 1])
+mpo_I, _ = build_ising_expval_tMPO(build_expH_ising_murg, JXX, hz, dt, nsteps, init_state, [1 0 ; 0 1])
+
+@show mpo_I 
 
 ts = [siteind(mpo_I,jj) for jj in 1:length(mpo_I)]
 
-mpo_X = build_ising_expval_tMPO(build_expH_ising_murg, JXX, hz, dt, ts, init_state, [0 1 ; 1 0])
-mpo_Z = build_ising_expval_tMPO(build_expH_ising_murg, JXX, hz, dt, ts, init_state, [1 0 ; 0 -1])
+mpo_X, start_mps = build_ising_expval_tMPO(build_expH_ising_murg, JXX, hz, dt, ts, init_state, [0 1 ; 1 0])
+mpo_Z, _ = build_ising_expval_tMPO(build_expH_ising_murg, JXX, hz, dt, ts, init_state, [1 0 ; 0 -1])
 
-start_mps = productMPS(ts,"↑")
+#start_mps = productMPS(ts,"↑")
 
 #ll_dmrg = dmrg(mpo_L, start_mps, nsweeps=10, ishermitian=false, eigsolve_which_eigenvalue=:LR, outputlevel=3)
 
-ll_murg_s, ds2s_murg_s  = powermethod_fold(start_mps, mpo_I, mpo_X, pm_params)
+ll_murg_s, ds2s_murg_s  = powermethod(start_mps, mpo_I, mpo_X, pm_params)
 
 leading_eig = inner(conj(ll_murg_s'), mpo_I, ll_murg_s)
 ev_x = inner(conj(ll_murg_s'), mpo_X, ll_murg_s)/inner(conj(ll_murg_s'), mpo_I, ll_murg_s)

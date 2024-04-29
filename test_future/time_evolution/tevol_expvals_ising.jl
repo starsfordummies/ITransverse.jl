@@ -4,7 +4,7 @@ using Plots
 
 using ITransverse: build_expH_ising_1o, build_expH_ising_2o, build_expH_ising_murg, build_H_ising
 
-N = 40      # System size
+N = 30      # System size
 
 
 JXX = 1.0   # spin x -- spin x coupling
