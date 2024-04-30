@@ -6,10 +6,6 @@ using ITensors
 using ProgressMeter
 using IGensors
 
-# include("myutils/pparams.jl")
-# include("myutils/utils.jl")
-# include("myutils/compute_entropies.jl")
-
 include("ExtraUtils/ExtraUtils.jl")
 using .ExtraUtils
 
@@ -25,7 +21,10 @@ export myrMPS,
     # check_id_matrix,
     # isid
     vn_entanglement_entropy_cut, 
-    vn_entanglement_entropy
+    vn_entanglement_entropy,
+    renyi_entanglement_entropy,
+    generalized_entropy,
+    generalized_renyi_entropy
 
 # #from compute_entropies.jl
 # export vn_entanglement_entropy_cut, 
@@ -53,10 +52,14 @@ export myrMPS,
 #   symmetric_eig_arr, symmetric_eig_arr
 
 include("truncations/sweeps.jl")
+include("truncations/alt_sweeps.jl")
+
 include("truncations/sweeps_sym.jl")
 
 #from sweeps.jl
 export truncate_normalize_sweep, truncate_normalize_sweep_LR
+# from alt_sweeps.jl
+export truncate_sweep_keep_lenv, truncate_sweep_aggressive_normalize
 # sweeps_sym.jl
 export truncate_normalize_sweep_sym!, truncate_normalize_sweep_sym_right
 

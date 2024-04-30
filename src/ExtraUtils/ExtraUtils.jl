@@ -32,6 +32,7 @@ export vn_entanglement_entropy_cut,
     generalized_entropy_symmetric_cut, 
     generalized_entropy_symmetric, 
     #generalized_entropy_cut,
-    generalized_entropy
+    generalized_entropy,
+    generalized_renyi_entropy
 
 end

@@ -98,14 +98,10 @@ end
 
 
 """
-Generalized entropy for a symmetric environment (psiL,psiL)
-    at a given cut 
+Generalized entropy for a *symmetric* environment (psiL,psiL)
+    at a given cut, assuming we're in *LEFT* mixed/generalized canonical form 
 """
 function generalized_entropy_symmetric_cut(psiL::MPS, cut::Int)
-    # Assuming we're dealing with a SYMMETRIC transition matrix (ie. L=R)
-    # (TODO: up to transposes?))
-
-    # Assuming we're in LEFT mixed/generalized canonical form 
 
     mpslen = length(psiL)
     #links = linkinds(psiL)
@@ -200,6 +196,10 @@ Assuming we're in LEFT GENERALIZED canonical form
 """
 function generalized_entropy(psiL::MPS,psiR::MPS)
 
+    # TODO CHECK form 
+    # ...
+
+
     # Assuming we're in LEFT mixed/generalized canonical form 
 
     mpslen = length(psiL)
@@ -237,4 +237,53 @@ function generalized_entropy(psiL::MPS,psiR::MPS)
     
 end
 
+function generalized_renyi_entropy(psiL::MPS,psiR::MPS,n::Int)
+
+    if n == 1
+        return generalized_entropy(psiL,psiR)
+    end
+
+
+    # TODO CHECK form 
+    # ...
+
+    
+    # Assuming we're in LEFT mixed/generalized canonical form 
+
+    mpslen = length(psiL)
+    #links = linkinds(psiL)
+
+    println("overlap = $(overlap_noconj(psiL,psiR))")
+    renyi_gen_ents = Vector{ComplexF64}()
+
+    right_env = ITensor(1.)
+
+    for ii = mpslen:-1:2
+        Ai = psiL[ii]
+        Bi = psiR[ii]
+        right_env = Ai * right_env 
+        right_env = Bi * right_env
+        @assert order(right_env) == 2 
+        #println(left_env)
+        eigss, _ = eigen(right_env, inds(right_env)[1], inds(right_env)[2])
+        
+        renyi_gen_ent_cut = 0.
+        if abs(sum(eigss) - 1.) > 0.01
+            print("warning, RTM not well normalized? $(abs(sum(eigss) - 1.)) ")
+        end
+
+        for jj=1:dim(eigss, 1)
+            p = eigss[jj,jj]  
+            renyi_gen_ent_cut += p^n
+            #println("[$ii]temp = $(gen_ent_cut) | sum = $(sum(eigss))")
+        end
+        renyi_gen_ent_cut /= 1-n
+
+        push!(renyi_gen_ents, renyi_gen_ent_cut)
+    
+    end
+
+    return renyi_gen_ents
+    
+end
 
