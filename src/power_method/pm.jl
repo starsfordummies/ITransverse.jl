@@ -251,28 +251,44 @@ function powermethod(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::ppm_p
 
     p = Progress(itermax; desc="L=$(length(ll)), cutoff=$(cutoff), maxbondim=$(maxbondim))", showspeed=true) 
 
+    Ol = MPS()
+    Or = MPS()
     for jj = 1:itermax  
 
 
-        #TODO check that we need sqrt() here 
-        #@show overlap_noconj(ll,rr)
+        # Enforce that the overlap is zero in the end 
         ll_work = normbyfactor(ll, sqrt(overlap_noconj(ll,rr)))
         rr_work = normbyfactor(rr, sqrt(overlap_noconj(ll,rr)))
-        #@show overlap_noconj(ll_work,rr_work)
-        # ll_work = deepcopy(ll)
-        # rr_work = deepcopy(rr)
+        @show overlap_noconj(ll_work,rr_work)
+ 
 
         OpsiL = apply(in_mpo_1, ll_work,  alg="naive", truncate=false)
         OpsiR = apply(swapprime(in_mpo_X, 0, 1, "Site"), rr_work,  alg="naive", truncate=false)  
 
-        ll, _r, sjj, overlap = truncate_sweep_keep_lenv(OpsiL, OpsiR, cutoff=cutoff, chi_max=maxbondim, method="SVD")
+        #ll, _r, sjj, overlap = truncate_sweep_keep_lenv(OpsiL, OpsiR, cutoff=cutoff, chi_max=maxbondim, method="SVD")
+        ll, Or, sjj, overlap = truncate_sweep_aggressive_normalize(OpsiL, OpsiR, cutoff=cutoff, chi_max=maxbondim, method="SVD")
 
+        # Try to fix norms a bit so they're both as close to 1 as possible while retaining their overlap_noconj
+        facLR = norm(Or)
+
+        #@show jj, norm(ll), norm(Or), overlap_noconj(ll,Or), facLR
+        ll = normbyfactor(ll, 1/facLR)
+        Or = normbyfactor(Or, facLR)
+
+        #@show jj, norm(ll), norm(Or), overlap_noconj(ll,Or)
 
         OpsiL = apply(in_mpo_X, ll_work,  alg="naive", truncate=false)
         OpsiR = apply(swapprime(in_mpo_1, 0, 1, "Site"), rr_work,  alg="naive", truncate=false)  
 
         
-        _l, rr, _, overlap = truncate_sweep_keep_lenv(OpsiL, OpsiR, cutoff=cutoff, chi_max=maxbondim, method="SVD")
+        #_l, rr, _, overlap = truncate_sweep_keep_lenv(OpsiL, OpsiR, cutoff=cutoff, chi_max=maxbondim, method="SVD")
+        Ol, rr, _, overlap = truncate_sweep_aggressive_normalize(OpsiL, OpsiR, cutoff=cutoff, chi_max=maxbondim, method="SVD")
+
+        facLR = norm(Ol)
+
+        #@show jj, norm(ll), norm(Or), overlap_noconj(ll,Or), facLR
+        rr = normbyfactor(rr, 1/facLR)
+        Ol = normbyfactor(Ol, facLR)
 
         # If I cook them separately, likely the overlap will be messed up 
         overl = overlap_noconj(ll,rr)
@@ -324,7 +340,7 @@ function powermethod(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::ppm_p
 
     end
 
-    return ll, rr, ds2s, dns
+    return ll, rr, Ol, Or, ds2s, dns
 
 end
 
@@ -344,8 +360,6 @@ function powermethod_Lonly(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params:
     converged_ds2 = pm_params.ds2_converged
 
     ll = deepcopy(in_mps)
-    rr = deepcopy(in_mps)
-
 
     ds2s = [0.]
     dns = ComplexF64[]
@@ -361,7 +375,7 @@ function powermethod_Lonly(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params:
 
         #TODO check that we need sqrt() here 
         #@show overlap_noconj(ll,rr)
-        ll_work = normbyfactor(ll, sqrt(overlap_noconj(ll,rr)))
+        ll_work = normbyfactor(ll, sqrt(overlap_noconj(ll,ll)))
 
         OpsiL = apply(in_mpo_1, ll_work,  alg="naive", truncate=false)
         OpsiR = apply(swapprime(in_mpo_X, 0, 1, "Site"), ll_work,  alg="naive", truncate=false)  

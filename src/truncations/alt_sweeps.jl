@@ -145,8 +145,11 @@ function truncate_sweep_aggressive_normalize(left_mps::MPS, right_mps::MPS; meth
         @assert order(left_env) == 2
 
         if method == "SVD" 
-            @info "[$ii] renormalizing left_env from $(norm(left_env))"
-            normalize!(left_env)
+            #@info "[$ii] renormalizing left_env from $(norm(left_env))"
+
+            lnorm = norm(left_env)
+            left_env /= lnorm
+            #normalize!(left_env)
             
             #U,S,Vdag = svd(left_env, ind(left_env,1); cutoff=cutoff^2, maxdim=chi_max, use_absolute_cutoff=true)
             #U,S,Vdag = svd(left_env, ind(left_env,1); cutoff=nothing, maxdim=chi_max, use_absolute_cutoff=true)
@@ -175,6 +178,9 @@ function truncate_sweep_aggressive_normalize(left_mps::MPS, right_mps::MPS; meth
         #left_prev *= R_ortho[ii]
         #left_prev *= deltaS
 
+        ratnorm = norm(L_ortho[ii])/norm(R_ortho[ii])
+        L_ortho[ii] /= sqrt(lnorm*ratnorm)
+        R_ortho[ii] /= sqrt(lnorm/ratnorm)
 
 
         deltaS = delta(inds(S))
