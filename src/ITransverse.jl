@@ -110,7 +110,8 @@ include("power_method/symm_pm.jl")
 export powermethod, 
     powermethod_converge_norm,
     powermethod_converge_eig,
-    powermethod_fold
+    powermethod_fold,
+    powermethod_Lonly
 
 export powermethod_sym,
     powermethod_sym_norms,

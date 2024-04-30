@@ -1,4 +1,5 @@
-
+""" Basic truncate sweep: first brings to regular RIGHT ortho form,
+then performs a LEFT generalized canonical sweep with SVD/EIG truncation """
 function truncate_sweep(left_mps::MPS, right_mps::MPS; method::String, cutoff::Real, chi_max::Int)
 
     mpslen = length(left_mps)
@@ -90,7 +91,6 @@ function truncate_sweep(left_mps::MPS, right_mps::MPS; method::String, cutoff::R
 end
 
 
-
 """
 Truncates optimizing the overlap (L|R), returns new L and R in generalized orthogonal form 
 and (an estimate for) the gen. entropy at each site.
@@ -116,142 +116,6 @@ function truncate_normalize_sweep(left_mps::MPS, right_mps::MPS; method::String,
 
 end
 
-
-function _truncate_normalize_sweep(left_mps::MPS, right_mps::MPS; method::String, cutoff::Real, chi_max::Int)
-
-    mpslen = length(left_mps)
-
-    # bring to "standard" right canonical forms individually - ortho center on the 1st site 
-    # making copies along the way 
-
-    L_ortho = orthogonalize(left_mps,  1)
-    R_ortho = orthogonalize(right_mps, 1)
-
-    # # ! does this change anything ? doesn't seem like it 
-    # L_ortho = orthogonalize(left_mps,  mpslen)
-    # R_ortho = orthogonalize(right_mps, mpslen)
-    # orthogonalize!(L_ortho,1)
-    # orthogonalize!(R_ortho,1)
-    #normalize!(L_ortho)
-    #normalize!(R_ortho)
-    
-
-    # overlap = overlap_noconj(L_ortho,R_ortho)
-    # @info "normalizing by overlap $(overlap)"
-
-    XUinv, XVinv, deltaS = (ITensor(1.), ITensor(1.), ITensor(1.)) 
-
-    #@show XUinv.tensor.storage.data
-
-    ents_sites = Vector{ComplexF64}()
-
-    # Left sweep with truncation 
-    for ii = 1:mpslen-1
-        Ai = XUinv * L_ortho[ii]
-        Bi = XVinv * R_ortho[ii] 
-
-        # Generalized canonical - no complex conjugation!
-        left_env = Ai * deltaS 
-        left_env *= Bi 
-
-        @assert order(left_env) == 2
-
-        if method == "EIG"  # Truncation based on eigenvalues
-
-            F = eigtrunc(left_env, cutoff, chi_max)
-            # eigen(left_env, iL, iR; cutoff, maxdim=chi_max, ishermitian=false)
-            U = F.V
-            S = F.D
-            Uinv = F.Vt 
-
-            ind_v = commonind(S,Uinv)
-            ind_u = commonind(S, U)
-            link_v = uniqueind(Uinv, S)
-            link_u = uniqueind(U, S)
-
-            sqS = sqrt.(S)
-            isqS = sqS.^(-1)
-
-            XU = (Uinv*delta(ind_v, ind_u) * delta(link_v, link_u) ) * isqS  
-            XUinv = sqS * U
-
-            XV = (U * delta( ind_v, ind_u)*delta( link_v, link_u )) * isqS # same as [p]inv(Vdag) * isqS ?
-            #XV = (U * delta( inds(Vdag, "v"), inds(U, "u"))*delta( inds(Vdag, "Link"), inds(U, "Link"))) * isqS # same as [p]inv(Vdag) * isqS ?
-            XVinv = sqS * Uinv
-
-        elseif method == "SVD" 
-            
-            U,S,Vdag = svd(left_env, ind(left_env,1); cutoff, maxdim=chi_max)
-            #U,S,Vdag = svd(left_env, ind(left_env,1); cutoff=cutoff^2, maxdim=chi_max, use_absolute_cutoff=true)
-
-            #@show sum(S), sum(S.^2)
-
-            # if sum(S) > 10. 
-            #     throw(ArgumentError(" bad $(diag(matrix(S)))"))
-            # end
-
-            sqS = sqrt.(S)
-            isqS = sqS.^(-1)
-
-            XU = dag(U) * isqS
-            XUinv = sqS * U
-
-            XV = dag(Vdag) * isqS
-            XVinv = sqS * Vdag
-
-
-        else
-            throw(ArgumentError("need to specify method EIG|SVD - current method=$method"))
-        end
-
-        deltaS = delta(inds(S))
-
-        L_ortho[ii] = Ai * XU  
-        R_ortho[ii] = Bi * XV
-
-        #println(S)
-        # compute some "effective entropy" using the SVs here
-        # gen_ent_cut = 0.
-        # for n=1:dim(S,1)
-        #     p = S[n,n]        # I don't think we need the ^2 here 
-        #     gen_ent_cut -= p * log(p)
-        # end
-
-        # Eg renyi 2 should be cheap? just for convergence - always abs() even if it's complex 
-        #gen_ent_cut = sum(abs2.(S)/(norm(S)^2))
-        #push!(ents_sites, gen_ent_cut)
-
-        #! This could be nasty if we have imaginary stuff...
-        #! should not be a problem for SVDs though
-        push!(ents_sites, log(sum(S)))
-      
-    end
-
-    # the last two 
-    An = XUinv * L_ortho[end]
-    Bn = XVinv * R_ortho[end]
-
-    overlap = deltaS * ( An * Bn ) 
-
-
-    
-    # TODO CHECK - should I normalize always by overlap here? 
-    # this could lead to large roundoff errors when eg. overlap is zero
-    # @assert order(overlap) == 0 
-    
-    # # normalize overlap to 1 at each step 
-    # L_ortho[end] =  An/sqrt(scalar(overlap))
-    # R_ortho[end] =  Bn/sqrt(scalar(overlap))
-
-    # check that we're in the appropriate gen ortho form at the end 
-    #check_gencan_left_sym_phipsi(L_ortho, R_ortho)
-
-    #println("div by overlap $(overlap)")
-    #println(complex(overlap))
-
-    return L_ortho, R_ortho, ents_sites
-
-end
 
 """ sweep for generalized truncation, Left(Can)> then <Right(Gen) """
 function truncate_normalize_sweep_LR(left_mps::MPS, right_mps::MPS; method::String, svd_cutoff::Real, chi_max::Int)

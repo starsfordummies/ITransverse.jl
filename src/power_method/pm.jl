@@ -242,8 +242,8 @@ function powermethod(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::ppm_p
     rr = deepcopy(in_mps)
 
 
-    ds2s = Float64[]
-    dnormsL = Float64[]
+    ds2s = [0.]
+    dns = ComplexF64[]
 
     ds2 = 0. 
     sprevs = fill(1., length(in_mps)-1)
@@ -259,18 +259,20 @@ function powermethod(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::ppm_p
         ll_work = normbyfactor(ll, sqrt(overlap_noconj(ll,rr)))
         rr_work = normbyfactor(rr, sqrt(overlap_noconj(ll,rr)))
         #@show overlap_noconj(ll_work,rr_work)
+        # ll_work = deepcopy(ll)
+        # rr_work = deepcopy(rr)
 
         OpsiL = apply(in_mpo_1, ll_work,  alg="naive", truncate=false)
         OpsiR = apply(swapprime(in_mpo_X, 0, 1, "Site"), rr_work,  alg="naive", truncate=false)  
 
-        ll, _r, sjj, overlap = truncate_sweep(OpsiL, OpsiR, cutoff=cutoff, chi_max=maxbondim, method="SVD")
+        ll, _r, sjj, overlap = truncate_sweep_keep_lenv(OpsiL, OpsiR, cutoff=cutoff, chi_max=maxbondim, method="SVD")
 
 
         OpsiL = apply(in_mpo_X, ll_work,  alg="naive", truncate=false)
         OpsiR = apply(swapprime(in_mpo_1, 0, 1, "Site"), rr_work,  alg="naive", truncate=false)  
 
         
-        _l, rr, _, overlap = truncate_sweep(OpsiL, OpsiR, cutoff=cutoff, chi_max=maxbondim, method="SVD")
+        _l, rr, _, overlap = truncate_sweep_keep_lenv(OpsiL, OpsiR, cutoff=cutoff, chi_max=maxbondim, method="SVD")
 
         # If I cook them separately, likely the overlap will be messed up 
         overl = overlap_noconj(ll,rr)
@@ -280,13 +282,34 @@ function powermethod(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::ppm_p
         end
 
         ds2 = norm(sprevs - sjj)
+
+        # if jj > 10 && abs(ds2s[end-2] - ds2) < 1e-8
+        #     @warn "stuck? try making two steps"
+
+        #     OpsiL = apply(in_mpo_1, ll_work,  alg="naive", truncate=false)
+        #     OpsiL = apply(in_mpo_1, OpsiL,  alg="naive", truncate=false)
+        #     OpsiR = apply(swapprime(in_mpo_X, 0, 1, "Site"), rr_work,  alg="naive", truncate=false)  
+        #     ll, _r, sjj, overlap = truncate_sweep(OpsiL, OpsiR, cutoff=1e-40, chi_max=maxbondim, method="SVD")
+            
+        #     OpsiL = apply(in_mpo_X, ll_work,  alg="naive", truncate=false)
+        #     OpsiR = apply(swapprime(in_mpo_1, 0, 1, "Site"), rr_work,  alg="naive", truncate=false)  
+        #     OpsiR = apply(swapprime(in_mpo_1, 0, 1, "Site"), OpsiR,  alg="naive", truncate=false)  
+
+        #     _l, rr, _, overlap = truncate_sweep(OpsiL, OpsiR, cutoff=1e-40, chi_max=maxbondim, method="SVD")
+        # end
+
+
         push!(ds2s, ds2)
         sprevs = sjj
 
-        #TODO 
-        normprev = norm(ll_work)
-        push!(dnormsL, norm(ll_work))
 
+        #TODO 
+        #dn = inner(ll_work,ll)
+        dn = overlap_noconj(ll, OpsiR) 
+        #dn = overlap_noconj(ll,_r)-overlap_noconj(_l,rr)
+        push!(dns, dn)
+
+        maxnormS = maximum([norm(ss for ss in sjj)])
 
         if ds2 < converged_ds2
             @info ("[$(length(ll))] converged after $jj steps - χ=$(maxlinkdim(ll))")
@@ -297,15 +320,106 @@ function powermethod(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::ppm_p
             @warn ("NOT converged after $jj steps - χ=$(maxlinkdim(ll))")
         end
 
-        next!(p; showvalues = [(:Info,"[$(jj)] ds2=$(ds2), chi=$(maxlinkdim(ll))" )])
+        next!(p; showvalues = [(:Info,"[$(jj)][χ=$(maxlinkdim(ll))] ds2=$(ds2), <L|Lnew>=$(round(dn,digits=8)) |S|=$(maxnormS)" )])
 
     end
 
-    return ll, rr, ds2s, dnormsL
+    return ll, rr, ds2s, dns
 
 end
 
 # backward compatibility
 function powermethod_fold(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::ppm_params)
     powermethod(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::ppm_params)
+end
+
+
+
+""" Same as powermethod but only update L, assuming symmetry (L| = |R) """
+function powermethod_Lonly(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::ppm_params)
+
+    itermax = pm_params.itermax
+    cutoff = pm_params.cutoff
+    maxbondim = pm_params.maxbondim
+    converged_ds2 = pm_params.ds2_converged
+
+    ll = deepcopy(in_mps)
+    rr = deepcopy(in_mps)
+
+
+    ds2s = [0.]
+    dns = ComplexF64[]
+
+    ds2 = 0. 
+    sprevs = fill(1., length(in_mps)-1)
+    normprev = 0.
+
+    p = Progress(itermax; desc="L=$(length(ll)), cutoff=$(cutoff), maxbondim=$(maxbondim))", showspeed=true) 
+
+    for jj = 1:itermax  
+
+
+        #TODO check that we need sqrt() here 
+        #@show overlap_noconj(ll,rr)
+        ll_work = normbyfactor(ll, sqrt(overlap_noconj(ll,rr)))
+
+        OpsiL = apply(in_mpo_1, ll_work,  alg="naive", truncate=false)
+        OpsiR = apply(swapprime(in_mpo_X, 0, 1, "Site"), ll_work,  alg="naive", truncate=false)  
+
+        #ll, _r, sjj, overlap = truncate_sweep_keep_lenv(OpsiL, OpsiR, cutoff=cutoff, chi_max=maxbondim, method="SVD")
+        ll, _r, sjj, overlap = truncate_sweep_aggressive_normalize(OpsiL, OpsiR, cutoff=cutoff, chi_max=maxbondim, method="SVD")
+
+
+        # If I cook them separately, likely the overlap will be messed up 
+        overl = overlap_noconj(ll,ll)
+   
+        if abs(overl) < 0.01
+            @warn "Small overlap $overl, watch for trunc error"
+        end
+
+        ds2 = norm(sprevs - sjj)
+
+        # if jj > 10 && abs(ds2s[end-2] - ds2) < 1e-8
+        #     @warn "stuck? try making two steps"
+
+        #     OpsiL = apply(in_mpo_1, ll_work,  alg="naive", truncate=false)
+        #     OpsiL = apply(in_mpo_1, OpsiL,  alg="naive", truncate=false)
+        #     OpsiR = apply(swapprime(in_mpo_X, 0, 1, "Site"), rr_work,  alg="naive", truncate=false)  
+        #     ll, _r, sjj, overlap = truncate_sweep(OpsiL, OpsiR, cutoff=1e-40, chi_max=maxbondim, method="SVD")
+            
+        #     OpsiL = apply(in_mpo_X, ll_work,  alg="naive", truncate=false)
+        #     OpsiR = apply(swapprime(in_mpo_1, 0, 1, "Site"), rr_work,  alg="naive", truncate=false)  
+        #     OpsiR = apply(swapprime(in_mpo_1, 0, 1, "Site"), OpsiR,  alg="naive", truncate=false)  
+
+        #     _l, rr, _, overlap = truncate_sweep(OpsiL, OpsiR, cutoff=1e-40, chi_max=maxbondim, method="SVD")
+        # end
+
+
+        push!(ds2s, ds2)
+        sprevs = sjj
+
+
+        #TODO 
+        #dn = inner(ll_work,ll)
+        dn = overlap_noconj(ll, OpsiR) 
+        #dn = overlap_noconj(ll,_r)-overlap_noconj(_l,rr)
+        push!(dns, dn)
+
+        maxnormS = maximum([norm(ss for ss in sjj)])
+
+        if ds2 < converged_ds2
+            @info ("[$(length(ll))] converged after $jj steps - χ=$(maxlinkdim(ll))")
+            break
+        end
+
+        if jj == itermax
+            @warn ("NOT converged after $jj steps - χ=$(maxlinkdim(ll))")
+        end
+
+        next!(p; showvalues = [(:Info,"[$(jj)][χ=$(maxlinkdim(ll))] ds2=$(ds2), <L|Lnew>=$(round(dn,digits=8)) |S|=$(maxnormS)" )])
+
+    end
+
+    return ll, ds2s, dns
+
 end
