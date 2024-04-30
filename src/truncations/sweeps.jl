@@ -260,11 +260,12 @@ function check_gencan_left_sym_phipsi(psi::MPS, phi::MPS, verbose::Bool=false)
         left_env = left_env * prime(Bi, commoninds(Bi,linkinds(phi)))    #* delta(wLa, wLb) )
         @assert order(left_env) == 2
         if norm(array(left_env)- diagm(diag(array(left_env)))) > 0.1
-            @warn("[R]non-diag@[$ii]")
+            @warn("[L]non-diag@[$ii]")
         end
         delta_norm = norm(array(left_env) - I(size(left_env)[1])) 
         if delta_norm > 0.0001
-            @warn("[R]non-can@[$ii], $delta_norm")
+            @warn("[L]non-can@[$ii], $delta_norm")
+            @show array(left_env)
         end
     end
     if verbose
