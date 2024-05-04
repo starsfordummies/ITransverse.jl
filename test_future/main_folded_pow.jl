@@ -48,11 +48,12 @@ function main()
     leftvecs = []
     ds2s = []
 
-    ts = 70:10:70
+    ts = 10:100:1
 
     #TODO 
-    renyi2 = []
-    renyi2alt = []
+    renyi2s = []
+    renyi2alts = []
+
     for Nsteps in ts
 
         time_sites = siteinds("S=3/2", Nsteps)
@@ -76,10 +77,10 @@ function main()
         ITransverse.check_gencan_left_sym_phipsi(lO,rr)
 
         renyi2 = ITransverse.ExtraUtils.generalized_renyi_entropy(ll,Or, 2)
-        renyi2alt = ITransverse.ExtraUtils.generalized_renyi_entropy(lO,rr, 2)
+        renyi2alt = ITransverse.ExtraUtils.generalized_renyi_entropy(ll,Or, 2; normalize=true)
 
-        @show renyi2
-        @show renyi2alt
+        push!(renyi2s, renyi2)
+        push!(renyi2alts,renyi2alt)
 
         llalt, ds2_pm  = powermethod_Lonly(init_mps, mpo_1, mpo_X, pm_params) 
 
@@ -146,7 +147,7 @@ function main()
     return leftvecs, 
     evs_z, evs_x, evs_x2, evs_z2, 
     evs_zs, evs_xs, evs_x2s, evs_z2s, 
-    renyi2, renyi2alt,
+    renyi2s, renyi2alts,
     ds2s, ts 
 end
 
@@ -155,20 +156,24 @@ end
 leftvecs, evs_z, evs_x, evs_x2, evs_z2, evs_zs, evs_xs, evs_x2s,
  evs_z2s, renyi2, renyi2alt, ds2s, ts= main()
 
-scatter(ts, real(evs_x),label="<X>", legend=:left)
-scatter!(ts, real(evs_z), label="<Z>")
+ jldsave("out_renyis.jld2"; 
+ leftvecs, evs_z, evs_x, evs_x2, evs_z2, evs_zs, evs_xs, evs_x2s,
+  evs_z2s, renyi2, renyi2alt, ds2s, ts)
 
-scatter!(ts, real(evs_x2),label="<Xn>", legend=:left)
-scatter!(ts, real(evs_z2), label="<Zn>")
-#jldsave("out_folded_pm_ising.jld2"; leftvecs, evs_z, evs_x, ds2s)
+# scatter(ts, real(evs_x),label="<X>", legend=:left)
+# scatter!(ts, real(evs_z), label="<Z>")
 
-
-scatter!(ts, real(evs_xs),label="<Xs>", legend=:left)
-scatter!(ts, real(evs_zs), label="<Zs>")
-
-scatter(ts, real(evs_x2s),label="<Xsn>", legend=:left)
-scatter!(ts, real(evs_z2s), label="<Zsn>")
+# scatter!(ts, real(evs_x2),label="<Xn>", legend=:left)
+# scatter!(ts, real(evs_z2), label="<Zn>")
+# #jldsave("out_folded_pm_ising.jld2"; leftvecs, evs_z, evs_x, ds2s)
 
 
-plot!(ITransverse.ExtraUtils.bench_X_04_plus[1:80], label=nothing)
-plot!(ITransverse.ExtraUtils.bench_Z_04_plus[1:80], label=nothing)
+# scatter!(ts, real(evs_xs),label="<Xs>", legend=:left)
+# scatter!(ts, real(evs_zs), label="<Zs>")
+
+# scatter(ts, real(evs_x2s),label="<Xsn>", legend=:left)
+# scatter!(ts, real(evs_z2s), label="<Zsn>")
+
+
+#plot!(ITransverse.ExtraUtils.bench_X_04_plus[1:80], label=nothing)
+#plot!(ITransverse.ExtraUtils.bench_Z_04_plus[1:80], label=nothing)

@@ -237,7 +237,13 @@ function generalized_entropy(psiL::MPS,psiR::MPS)
     
 end
 
-function generalized_renyi_entropy(psiL::MPS,psiR::MPS,n::Int)
+function generalized_renyi_entropy(psiL::MPS,psiR::MPS,n::Int; normalize::Bool=false)
+
+    if normalize
+        overlap = overlap_noconj(psiL,psiR)
+        psiL[end] /= sqrt(overlap)
+        psiR[end] /= sqrt(overlap)
+    end
 
     if n == 1
         return generalized_entropy(psiL,psiR)
@@ -269,7 +275,9 @@ function generalized_renyi_entropy(psiL::MPS,psiR::MPS,n::Int)
         
         renyi_gen_ent_cut = 0.
         if abs(sum(eigss) - 1.) > 0.01
-            print("warning, RTM not well normalized? $(abs(sum(eigss) - 1.)) ")
+            @warn "RTM not well normalized? $(abs(sum(eigss) - 1.)) "
+        else
+            @info "RTM well normalized"
         end
 
         for jj=1:dim(eigss, 1)
@@ -286,4 +294,5 @@ function generalized_renyi_entropy(psiL::MPS,psiR::MPS,n::Int)
     return renyi_gen_ents
     
 end
+
 
