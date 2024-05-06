@@ -1,100 +1,3 @@
-#using ITensors
-#include("./utils.jl")
-
-""" Computes the Von Neumann entanglement entropy of an MPS psi at a given cut
-"""
-function vn_entanglement_entropy_cut(psi::MPS, cut::Int)
-
-    orthogonalize!(psi, cut)
-    #println(norm(psi))
-
-    if cut == 1
-        _,S,_ = svd(psi[cut], (siteind(psi,cut)))
-    else
-        _,S,_ = svd(psi[cut], (linkind(psi, cut-1), siteind(psi,cut)))
-    end
-
-    SvN = 0.0
-    for n=1:dim(S, 1)
-        p = S[n,n]^2
-        SvN -= p * log(p)
-    end
-
-    return SvN
-end
-
-
-
-""" Computes the Von Neumann entanglement entropy of an MPS psi at all links, 
-returns a vector of floats containing the VN entropies 
-"""
-function vn_entanglement_entropy(psi::MPS)
-
-    workpsi = normalize(psi)
-
-    SvNs = Vector{Float64}()
-
-    for icut=1:length(workpsi)-1
-        Si = vn_entanglement_entropy_cut(workpsi, icut)
-        push!(SvNs, Si)
-    end
-
-    return SvNs
-end
-
-
-
-function renyi_entanglement_entropy_cut(psi::MPS, cut::Int, nren::Int)
-
-    S_ren = 0.0
-
-    if nren == 1  # VN entropy
-        S_ren = vn_entanglement_entropy_cut(psi, cut)
-
-    elseif nren == 2 # Renyi 2 
-            
-        orthogonalize!(psi, cut)
-        #println(norm(psi))
-
-        if cut == 1
-            _,S,_ = svd(psi[cut], (siteind(psi,cut)))
-        else
-            _,S,_ = svd(psi[cut], (linkind(psi, cut-1), siteind(psi,cut)))
-        end
-
-        sum_s2 = 0.0
-        for n=1:dim(S, 1)
-            p = S[n,n]^2
-            sum_s2 += p^2
-        end
-        S_ren = -log(sum_s2)
-
-    else # Not implemented yet
-        S_ren = 0.
-    end
-
-    return S_ren
-end
-
-
-
-""" Computes the nth Renyi entanglement entropy of an MPS psi at all links, 
-returns a vector of floats containing the VN entropies 
-"""
-function renyi_entanglement_entropy(psi::MPS, nren::Int=2)
-
-    workpsi = normalize(psi)
-
-    SvNs = Vector{Float64}()
-
-    for icut=1:length(workpsi)-1
-        Si = renyi_entanglement_entropy_cut(workpsi, icut, nren)
-        push!(SvNs, Si)
-    end
-
-    return SvNs
-end
-
 
 
 """
@@ -118,7 +21,7 @@ function generalized_entropy_symmetric_cut(psiL::MPS, cut::Int)
     eigss, _ = eigen(right_env)
 
     if abs(sum(eigss) - 1.) > 0.01
-        print("warning, RTM not well normalized? $(abs(sum(eigss) - 1.)) ")
+        @warn "RTM not well normalized? Σeigs=1-$(abs(sum(eigss) - 1.)) "
     end
 
     gen_ent_cut = log(sum(eigss))
@@ -146,7 +49,7 @@ function generalized_entropy_symmetric(psiL::MPS, bring_left_gen::Bool=false)
 
     overlap = overlap_noconj(psiL,psiL)
     if abs(1-overlap) > 1e-4
-        println("Warning: overlap not 1: $overlap")
+        @warn" overlap not 1: $overlap"
     end
     
     gen_ents = ComplexF64[]
@@ -171,7 +74,7 @@ function generalized_entropy_symmetric(psiL::MPS, bring_left_gen::Bool=false)
         #gen_ent_cut = sum(eigss.*log.(eigss))
         
         if abs(sum(eigss) - 1.) > 0.01
-            print("warning, RTM not well normalized? $(abs(sum(eigss) - 1.)) ")
+            @warn "RTM not well normalized? Σeigs = 1-$(abs(sum(eigss) - 1.)) "
         end
 
         gen_ent_cut = ComplexF64(0.)
@@ -205,7 +108,11 @@ function generalized_entropy(psiL::MPS,psiR::MPS)
     mpslen = length(psiL)
     #links = linkinds(psiL)
 
-    println("overlap = $(overlap_noconj(psiL,psiR))")
+    overlap = overlap_noconj(psiL,psiR)
+    if abs(1-overlap) > 1e-4
+        @warn" overlap not 1: $overlap"
+    end
+
     gen_ents = Vector{ComplexF64}()
 
     right_env = ITensor(1.)
@@ -221,7 +128,7 @@ function generalized_entropy(psiL::MPS,psiR::MPS)
         
         gen_ent_cut = 0.
         if abs(sum(eigss) - 1.) > 0.01
-            print("warning, RTM not well normalized? $(abs(sum(eigss) - 1.)) ")
+            @warn "RTM not well normalized? 1-Σeigs = $(abs(sum(eigss) - 1.)) "
         end
 
         for n=1:dim(eigss, 1)
@@ -259,7 +166,13 @@ function generalized_renyi_entropy(psiL::MPS,psiR::MPS,n::Int; normalize::Bool=f
     mpslen = length(psiL)
     #links = linkinds(psiL)
 
-    println("overlap = $(overlap_noconj(psiL,psiR))")
+    overlap = overlap_noconj(psiL,psiR)
+    if abs(1-overlap) > 1e-4
+        @warn" overlap not 1: $overlap"
+    end
+
+    #println("overlap = $(overlap_noconj(psiL,psiR))")
+
     renyi_gen_ents = Vector{ComplexF64}()
 
     right_env = ITensor(1.)

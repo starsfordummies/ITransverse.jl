@@ -3,6 +3,7 @@ using Revise
 using LinearAlgebra, ITensors, JLD2, Dates, Plots
 
 using ITransverse
+using ITransverse.ExtraUtils
 
 ITensors.enable_debug_checks()
 
@@ -21,9 +22,9 @@ function main()
 
     init_state = plus_state
 
-    SVD_cutoff = 1e-10
-    maxbondim = 60
-    itermax = 400
+    SVD_cutoff = 1e-14
+    maxbondim = 120
+    itermax = 500
     verbose=false
     ds2_converged=1e-6
 
@@ -48,9 +49,10 @@ function main()
     leftvecs = []
     ds2s = []
 
-    ts = 10:100:1
+    ts = 10:10:40
 
-    #TODO 
+    genVNs = [] 
+
     renyi2s = []
     renyi2alts = []
 
@@ -76,9 +78,12 @@ function main()
         @info "Checking (lO|r)"
         ITransverse.check_gencan_left_sym_phipsi(lO,rr)
 
-        renyi2 = ITransverse.ExtraUtils.generalized_renyi_entropy(ll,Or, 2)
-        renyi2alt = ITransverse.ExtraUtils.generalized_renyi_entropy(ll,Or, 2; normalize=true)
+        genVN = generalized_entropy(ll, Or)
 
+        renyi2 = generalized_renyi_entropy(ll,Or, 2)
+        renyi2alt = generalized_renyi_entropy(ll,Or, 2; normalize=true)
+
+        push!(genVNs, genVN)
         push!(renyi2s, renyi2)
         push!(renyi2alts,renyi2alt)
 
@@ -144,21 +149,19 @@ function main()
 
     end
 
-    return leftvecs, 
-    evs_z, evs_x, evs_x2, evs_z2, 
-    evs_zs, evs_xs, evs_x2s, evs_z2s, 
-    renyi2s, renyi2alts,
-    ds2s, ts 
+    evs = Dict("evs_x" => evs_x, "evs_z" => evs_z, "evs_x2" => evs_x2, "evs_z2" => evs_z2, 
+                "evs_xs" => evs_xs, "evs_zs" => evs_zs, "evs_x2s" => evs_x2s, "evs_z2s" => evs_z2s)
+
+    ents = Dict("genVNs" => genVNs, "renyi2s" => renyi2s, "renyi2alts" => renyi2alts)
+
+    return leftvecs, evs, ents, ds2s, ts 
 end
 
 
 
-leftvecs, evs_z, evs_x, evs_x2, evs_z2, evs_zs, evs_xs, evs_x2s,
- evs_z2s, renyi2, renyi2alt, ds2s, ts= main()
+leftvecs, evs, ents, ds2s, ts= main()
 
- jldsave("out_renyis.jld2"; 
- leftvecs, evs_z, evs_x, evs_x2, evs_z2, evs_zs, evs_xs, evs_x2s,
-  evs_z2s, renyi2, renyi2alt, ds2s, ts)
+ jldsave("out_renyis.jld2";  leftvecs, evs, ents, ds2s, ts)
 
 # scatter(ts, real(evs_x),label="<X>", legend=:left)
 # scatter!(ts, real(evs_z), label="<Z>")

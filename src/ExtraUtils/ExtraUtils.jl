@@ -4,7 +4,9 @@ using ITensors
 
 include("pparams.jl")
 include("utils.jl")
-include("compute_entropies.jl")
+
+include("entropies.jl")
+include("gen_entropies.jl")
 
 include("symmsvd_iten.jl")
 

@@ -36,12 +36,11 @@ ITensors.state(::StateName"Dn", ::SiteType"S1_Z3") = [0,0,1]
 
 
 
-function ITensors.space(::SiteType"S1_Z3";
-    conserve_qns=false)
-if conserve_qns
-    return [QN("Z",0,3)=>1, QN("Z",1,3)=>1, QN("Z",2,3)=>1]
-end
-return 3
+function ITensors.space(::SiteType"S1_Z3"; conserve_qns=false)
+    if conserve_qns
+        return [QN("Z",0,3)=>1, QN("Z",1,3)=>1, QN("Z",2,3)=>1]
+    end
+    return 3
 end
 
 
@@ -80,7 +79,10 @@ ITensors.op(::OpName"τplusτdag",::SiteType"S1_Z3") =
  0 0 0 
  0 0 -1]
 
- """ Potts H MPO built with autoMPO """
+ """ Potts H MPO built with autoMPO 
+ Convention is H = -J Σ Σdag - J Σdag Σ - f τplusτdag
+ with Σ = diag(exp(2πi/3), exp(4πi/3), 1) 
+ """
 function build_H_potts(sites_potts, JJ::Real, ff::Real)
  
     N = length(sites_potts)
@@ -228,7 +230,7 @@ end
 """ Builds Potts H MPO
 using the alternate prescription swapping basically Σ ↔ τ
 """
-function build_H_potts_alt(sites_potts, JJ, ff)
+function build_H_potts_tausigma(sites_potts, JJ, ff)
  
     N = length(sites_potts)
 

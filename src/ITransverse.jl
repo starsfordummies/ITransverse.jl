@@ -27,29 +27,7 @@ export myrMPS,
     generalized_renyi_entropy
 
 # #from compute_entropies.jl
-# export vn_entanglement_entropy_cut, 
-#     vn_entanglement_entropy, 
-#     renyi_entanglement_entropy_cut, 
-#     renyi_entanglement_entropy,
-#     generalized_entropy_symmetric_cut, 
-#     generalized_entropy_symmetric, 
-#     generalized_entropy_cut,
-#     generalized_entropy
 
-
-#include("truncations/truncations.jl")
-# include("truncations/symmetric_svd.jl")
-#include("truncations/symm_decompositions.jl")
-
-# TODO include check_equivalence_svd ? 
-
-# from truncations.jl
-# export mytruncate, mytruncate_eig, svdtrunc, eigtrunc, eigtrunc, mytrunceig!
-
-#from symmetric_svd.jl
-# export symmetric_svd_iten, symmetric_svd_ndten, symmetric_svd_takagi_iten,
-#  symmetric_svd_takagi_arr, symmetric_svd_arr, symmetric_svd_arr,
-#   symmetric_eig_arr, symmetric_eig_arr
 
 include("truncations/sweeps.jl")
 include("truncations/alt_sweeps.jl")
