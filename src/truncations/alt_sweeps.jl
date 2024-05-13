@@ -1,4 +1,4 @@
-""" If we're not sure that our generalized Left env in the sweep is normalized to 1,
+""" If we're not sure that our generalized Left env in the sweep is well normalized to an identity,
  we can drag it along and multiply to build our environment at every step """
 function truncate_sweep_keep_lenv(left_mps::MPS, right_mps::MPS; method::String, cutoff::Real, chi_max::Int)
 
@@ -113,9 +113,9 @@ function truncate_sweep_keep_lenv(left_mps::MPS, right_mps::MPS; method::String,
 end
 
 
-""" Here we normalize the left environment at every step, 
-    so that truncation should be more uniform
-     (need to check we're not destroying anyhting though """
+""" Here we normalize the left environment at every step, so that truncation should be more uniform
+     (need to check we're not destroying anything though). This way we basically go accumulating norm
+     along the sweep, in a way that at the end (L|R) = 1  """
 function truncate_sweep_aggressive_normalize(left_mps::MPS, right_mps::MPS; method::String, cutoff::Real, chi_max::Int)
 
     mpslen = length(left_mps)
@@ -126,7 +126,8 @@ function truncate_sweep_aggressive_normalize(left_mps::MPS, right_mps::MPS; meth
     #@show ortho_lims(L_ortho)
 
 
-    XUinv, XVinv, deltaS = (ITensor(1.), ITensor(1.), ITensor(1.)) 
+    XUinv, XVinv = (ITensor(1.), ITensor(1.))
+    deltaS = ITensor(1.)
     #left_prev = ITensor(1.)
 
     ents_sites = Vector{ComplexF64}()
@@ -138,23 +139,22 @@ function truncate_sweep_aggressive_normalize(left_mps::MPS, right_mps::MPS; meth
 
         # Generalized canonical - no complex conjugation!
         left_env = deltaS
-        #left_env = left_prev
         left_env *= Ai 
         left_env *= Bi 
 
         @assert order(left_env) == 2
 
         if method == "SVD" 
-            #@info "[$ii] renormalizing left_env from $(norm(left_env))"
 
+            # Normalize so sum(sv^2) = 1 
             lnorm = norm(left_env)
             left_env /= lnorm
-            #normalize!(left_env)
             
             #U,S,Vdag = svd(left_env, ind(left_env,1); cutoff=cutoff^2, maxdim=chi_max, use_absolute_cutoff=true)
             #U,S,Vdag = svd(left_env, ind(left_env,1); cutoff=nothing, maxdim=chi_max, use_absolute_cutoff=true)
             U,S,Vdag = svd(left_env, ind(left_env,1); cutoff, maxdim=chi_max)
 
+            @assert sum(S.^2) ≈ 1.
 
             sqS = sqrt.(S)
             isqS = sqS.^(-1)

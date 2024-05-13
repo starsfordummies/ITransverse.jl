@@ -99,11 +99,8 @@ Assuming we're in LEFT GENERALIZED canonical form
 """
 function generalized_entropy(psiL::MPS,psiR::MPS)
 
-    # TODO CHECK form 
-    # ...
-
-
-    # Assuming we're in LEFT mixed/generalized canonical form 
+    # check gen form 
+    check_gencan_left_phipsi(ll,Or)
 
     mpslen = length(psiL)
     #links = linkinds(psiL)
@@ -156,9 +153,8 @@ function generalized_renyi_entropy(psiL::MPS,psiR::MPS,n::Int; normalize::Bool=f
         return generalized_entropy(psiL,psiR)
     end
 
-
-    # TODO CHECK form 
-    # ...
+    # check gen form 
+    check_gencan_left_phipsi(psiL,psiR)
 
     
     # Assuming we're in LEFT mixed/generalized canonical form 
@@ -189,8 +185,8 @@ function generalized_renyi_entropy(psiL::MPS,psiR::MPS,n::Int; normalize::Bool=f
         renyi_gen_ent_cut = 0.
         if abs(sum(eigss) - 1.) > 0.01
             @warn "RTM not well normalized? $(abs(sum(eigss) - 1.)) "
-        else
-            @info "RTM well normalized"
+        # else
+        #     @info "RTM well normalized"
         end
 
         for jj=1:dim(eigss, 1)

@@ -2,8 +2,10 @@ module ITransverse
 
 using LinearAlgebra
 using NDTensors
-using ITensors
+using ITensors, ITensorMPS
 using ProgressMeter
+
+
 using IGensors
 
 include("ExtraUtils/ExtraUtils.jl")
@@ -40,6 +42,7 @@ export truncate_normalize_sweep, truncate_normalize_sweep_LR
 export truncate_sweep_keep_lenv, truncate_sweep_aggressive_normalize
 # sweeps_sym.jl
 export truncate_normalize_sweep_sym!, truncate_normalize_sweep_sym_right
+
 
 # from symm_decompositions.jl
 #export symm_svd, symm_oeig
@@ -92,7 +95,9 @@ export powermethod,
     powermethod_converge_norm,
     powermethod_converge_eig,
     powermethod_fold,
-    powermethod_Lonly
+    powermethod_Lonly,
+    pm_all
+
 
 export powermethod_sym,
     powermethod_sym_norms,

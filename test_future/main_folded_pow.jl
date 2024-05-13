@@ -49,7 +49,7 @@ function main()
     leftvecs = []
     ds2s = []
 
-    ts = 10:10:40
+    ts = 60:1:60
 
     genVNs = [] 
 
@@ -70,13 +70,14 @@ function main()
         mpo_1 = build_ising_folded_tMPO(build_expH_ising_murg, params, Id, time_sites)
 
 
-        ll, rr, lO, Or, ds2_pm, dns  = powermethod(init_mps, mpo_1, mpo_X, pm_params) # kwargs)
+        #ll, rr, lO, Or, ds2_pm, dns  = powermethod(init_mps, mpo_1, mpo_X, pm_params) # kwargs)
+        ll, rr, lO, Or, vals, deltas  = pm_all(init_mps, mpo_1, mpo_X, pm_params) # kwargs)
 
         @info "Checking (l|Or)"
-        ITransverse.check_gencan_left_sym_phipsi(ll,Or)
+        ITransverse.check_gencan_left_phipsi(ll,Or)
 
         @info "Checking (lO|r)"
-        ITransverse.check_gencan_left_sym_phipsi(lO,rr)
+        ITransverse.check_gencan_left_phipsi(lO,rr)
 
         genVN = generalized_entropy(ll, Or)
 
@@ -161,7 +162,7 @@ end
 
 leftvecs, evs, ents, ds2s, ts= main()
 
- jldsave("out_renyis.jld2";  leftvecs, evs, ents, ds2s, ts)
+# jldsave("out_renyis.jld2";  leftvecs, evs, ents, ds2s, ts)
 
 # scatter(ts, real(evs_x),label="<X>", legend=:left)
 # scatter!(ts, real(evs_z), label="<Z>")

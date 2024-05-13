@@ -1,11 +1,14 @@
 module ExtraUtils
 
+using LinearAlgebra
 using ITensors
 
 include("pparams.jl")
 include("utils.jl")
 
 include("entropies.jl")
+
+include("gen_form_checks.jl")
 include("gen_entropies.jl")
 
 include("symmsvd_iten.jl")
@@ -36,5 +39,8 @@ export vn_entanglement_entropy_cut,
     #generalized_entropy_cut,
     generalized_entropy,
     generalized_renyi_entropy
+
+# from gen_form_checks
+export check_gencan_left_phipsi
 
 end
