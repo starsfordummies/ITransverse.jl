@@ -1,7 +1,7 @@
 using Revise
 
-using ITensors
-using IGensors
+using ITensors, ITensorMPS
+using .IGensors
 using Plots
 using LsqFit
 

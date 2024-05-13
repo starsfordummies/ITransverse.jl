@@ -1,8 +1,8 @@
-using ITensors, ITensorTDVP
+using ITensors, ITensorMPS
 
 using ITransverse
 using ITransverse: build_expH_ising_1o, build_expH_ising_2o, build_H_ising
-using IGensors
+using .IGensors
 
 N = 60      # System size
 

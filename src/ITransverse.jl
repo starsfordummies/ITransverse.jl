@@ -5,8 +5,9 @@ using NDTensors
 using ITensors, ITensorMPS
 using ProgressMeter
 
+include("IGensors/src/IGensors.jl")
 
-using IGensors
+using .IGensors
 
 include("ExtraUtils/ExtraUtils.jl")
 using .ExtraUtils
