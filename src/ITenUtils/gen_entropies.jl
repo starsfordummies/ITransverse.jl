@@ -92,15 +92,20 @@ function generalized_entropy_symmetric(psiL::MPS, bring_left_gen::Bool=false)
     
 end
 
+""" Backwards compatibility """
+function generalized_entropy(psiL::MPS,psiR::MPS)
+    generalized_vn_entropy(psiL,psiR)
+end
+
 
 """ 
 Generalized entropy for two vectors (psiL, psiR) \\
 Assuming we're in LEFT GENERALIZED canonical form 
 """
-function generalized_entropy(psiL::MPS,psiR::MPS)
+function generalized_vn_entropy(psiL::MPS,psiR::MPS)
 
     # check gen form 
-    check_gencan_left_phipsi(ll,Or)
+    check_gencan_left_phipsi(psiL,psiR)
 
     mpslen = length(psiL)
     #links = linkinds(psiL)
