@@ -1,4 +1,4 @@
-module ExtraUtils
+module ITenUtils
 
 using LinearAlgebra
 using ITensors
