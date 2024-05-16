@@ -5,12 +5,12 @@ using NDTensors
 using ITensors, ITensorMPS
 using ProgressMeter
 
-include("IGensors/src/IGensors.jl")
-
-using .IGensors
 
 include("ExtraUtils/ExtraUtils.jl")
 using .ExtraUtils
+
+include("IGensors/src/IGensors.jl")
+using .IGensors
 
 # # from pparams.jl
 export pparams, ppm_params, trunc_params
@@ -34,7 +34,6 @@ export myrMPS,
 
 include("truncations/sweeps.jl")
 include("truncations/alt_sweeps.jl")
-
 include("truncations/sweeps_sym.jl")
 
 #from sweeps.jl

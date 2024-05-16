@@ -1,7 +1,7 @@
 using Revise
 
 using ITensors, ITensorMPS
-using .IGensors
+using .IGensors: dmrg_onesite
 using Plots
 using LsqFit
 

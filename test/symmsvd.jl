@@ -1,5 +1,6 @@
 using ITensors
 using LinearAlgebra
+using ITransverse
 
 m1 = rand(ComplexF64, 8, 13)
 
