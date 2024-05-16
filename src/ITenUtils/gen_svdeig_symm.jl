@@ -317,6 +317,15 @@ function symm_svd(a::ITensor, linds; cutoff=nothing, maxdim=nothing)
     return ITensors.TruncSVD(u,s,uT, spec, index_u, index_v)
 end
 
+""" If we don't specify linds, assume we're working with a matrix and just do index1 vs index2 """
+function symm_svd(a::ITensor; cutoff=nothing, maxdim=nothing)
+    if ndims(a) != 2
+        @error "$(ndims(a))(>2)-dimensional tensor, need to specify linds"
+    end
+
+    symm_svd(a, ind(a,1); cutoff, maxdim)
+
+end
 
 
 """ When called on ITensors, `symm_oeig`` returns a single `TruncEigen` object""" 
