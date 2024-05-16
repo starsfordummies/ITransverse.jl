@@ -3,11 +3,30 @@ module ITenUtils
 using LinearAlgebra
 using ITensors
 
+using NDTensors 
+
+import NDTensors:
+ replace_nothing,
+ default_use_absolute_cutoff,
+ default_use_relative_cutoff,
+ expose,
+ truncate!!
+
+
 include("pparams.jl")
 
 include("utils.jl")
 include("matrix_utils.jl")
 include("moreutils.jl")
+
+
+include("ctruncate.jl")
+include("ceigen.jl")
+
+# Symmetric SVD/EIG decompositions
+include("gen_svdeig_symm.jl")
+
+
 
 include("entropies.jl")
 
@@ -17,6 +36,8 @@ include("gen_entropies.jl")
 #include("symmsvd_iten.jl")
 
 include("bench_data.jl")
+
+
 
 
 # from pparams
@@ -47,6 +68,12 @@ export symmetrize,
     check_diag_matrix,
     randmat_decayspec
 
+    # gen_svdeig_symm.jl
+export
+    symm_svd,
+    symm_oeig,
+    mytrunc_svd,
+    mytrunc_eig
 #from compute_entropies.jl
 export vn_entanglement_entropy_cut, 
     vn_entanglement_entropy, 

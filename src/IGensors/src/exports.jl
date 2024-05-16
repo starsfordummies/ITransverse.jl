@@ -21,14 +21,8 @@ export
     norm_gen,
     check_gen_ortho,
     normalize_gen,
-    normalize_gen!,
+    normalize_gen!
   
 
 
-    # gen_svdeig_symm.jl
-    symmetrize,
-    symm_svd,
-    symm_oeig,
-    mytrunc_svd,
-    mytrunc_eig
     

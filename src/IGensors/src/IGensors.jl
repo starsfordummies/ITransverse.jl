@@ -4,12 +4,6 @@ include("imports.jl")
 include("exports.jl")
 
 
-include("ctruncate.jl")
-include("ceigen.jl")
-
-# Symmetric SVD/EIG decompositions
-include("gen_svdeig_symm.jl")
-
 include("gen_abstractmps.jl")
 
 
