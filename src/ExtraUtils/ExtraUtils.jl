@@ -4,14 +4,17 @@ using LinearAlgebra
 using ITensors
 
 include("pparams.jl")
+
 include("utils.jl")
+include("matrix_utils.jl")
+include("moreutils.jl")
 
 include("entropies.jl")
 
 include("gen_form_checks.jl")
 include("gen_entropies.jl")
 
-include("symmsvd_iten.jl")
+#include("symmsvd_iten.jl")
 
 include("bench_data.jl")
 
@@ -28,6 +31,21 @@ export myrMPS,
     # check_diag_matrix, 
     # check_id_matrix,
     # isid
+
+
+# moreutils.jl
+export randsymITensor,
+    isid,
+    #plot_matrix,
+    pinvten,
+    #symmetrize,
+    randITensor_decayspec
+
+# matrix_utils.jl
+export symmetrize,
+    check_id_matrix,
+    check_diag_matrix,
+    randmat_decayspec
 
 #from compute_entropies.jl
 export vn_entanglement_entropy_cut, 

@@ -1,9 +1,9 @@
 module IGensors
 
+#using .ExtraUtils
 include("imports.jl")
 include("exports.jl")
 
-include("matrix_utils.jl")
 
 include("ctruncate.jl")
 include("ceigen.jl")
@@ -21,7 +21,6 @@ include("gen_abstractprojmpo.jl")
 include("gen_onesite_dmrg.jl")
 include("gen_onesite_dmrg_slow.jl")
 include("gen_dmrg.jl")
-include("moreutils.jl")
 
 
 

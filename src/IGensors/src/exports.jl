@@ -11,19 +11,6 @@ export
     # mps/onesite_gen_dmrg_slow.jl
     dmrg_gen_onesite_slow,
 
-    # moreutils.jl
-    randsymITensor,
-    isid,
-    #plot_matrix,
-    pinvten,
-    #symmetrize,
-    randITensor_decayspec,
-
-    # matrix_utils.jl
-    symmetrize,
-    check_id_matrix,
-    check_diag_matrix,
-    randmat_decayspec,
 
     # mps/gen_abstractprojmpo.jl
     #position_gen!,
