@@ -8,7 +8,7 @@ using LsqFit
 #plotlyjs()
 
 using ITransverse
-using ITransverse.ExtraUtils: vn_entanglement_entropy
+using ITransverse.ITenUtils: vn_entanglement_entropy
 using ITransverse.ChainModels: build_H_ising
 
 function gs_ising(N::Int; onesite::Bool=false)

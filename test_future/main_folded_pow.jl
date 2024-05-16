@@ -3,7 +3,7 @@ using Revise
 using LinearAlgebra, ITensors, JLD2, Dates, Plots
 
 using ITransverse
-using ITransverse.ExtraUtils
+using ITransverse.ITenUtils
 
 ITensors.enable_debug_checks()
 
@@ -179,5 +179,5 @@ leftvecs, evs, ents, ds2s, ts= main()
 # scatter!(ts, real(evs_z2s), label="<Zsn>")
 
 
-#plot!(ITransverse.ExtraUtils.bench_X_04_plus[1:80], label=nothing)
-#plot!(ITransverse.ExtraUtils.bench_Z_04_plus[1:80], label=nothing)
+#plot!(ITransverse.ITenUtils.bench_X_04_plus[1:80], label=nothing)
+#plot!(ITransverse.ITenUtils.bench_Z_04_plus[1:80], label=nothing)

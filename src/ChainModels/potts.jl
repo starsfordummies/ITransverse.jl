@@ -598,8 +598,6 @@ function build_expH_potts_symmetric_svd(in_space_sites,
 
         e1c = e1 * c1 * c2
 
-        #u, s, uT = ExtraUtils.symmetric_svd_iten(e1c)
-
         u, s, uT, _, _ = symm_svd(e1c, combinedind(c1), cutoff=1e-15)
 
         u_sqs = u * sqrt.(s)

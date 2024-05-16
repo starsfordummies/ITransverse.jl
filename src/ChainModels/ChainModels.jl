@@ -6,7 +6,7 @@ using ITensors, ITensorMPS
 # include("../myutils/myutils.jl")
 # #using .MyUtils
 
-using ..ExtraUtils
+using ..ITenUtils
 
 include("brakets.jl")
 include("ising.jl")

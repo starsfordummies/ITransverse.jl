@@ -6,8 +6,8 @@ using ITensors, ITensorMPS
 using ProgressMeter
 
 
-include("ExtraUtils/ExtraUtils.jl")
-using .ExtraUtils
+include("ITenUtils/ITenUtils.jl")
+using .ITenUtils
 
 include("IGensors/src/IGensors.jl")
 using .IGensors

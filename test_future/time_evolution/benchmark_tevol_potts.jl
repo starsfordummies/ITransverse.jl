@@ -5,7 +5,7 @@ using Plots
 using LsqFit
 # using LongRangeITensors
 using ITransverse.ChainModels: build_H_potts, build_expH_potts_2o, build_expH_potts_2o_Jan, build_expH_potts_murg, build_expH_potts_symmetric_svd
-using ITransverse.ExtraUtils: vn_entanglement_entropy
+using ITransverse.ITenUtils: vn_entanglement_entropy
 # include("../models/potts.jl")
 
 
