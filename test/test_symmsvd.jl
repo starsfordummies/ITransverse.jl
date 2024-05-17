@@ -1,6 +1,7 @@
 using ITensors
 using LinearAlgebra
-using ITransverse
+using ITransverse.ITenUtils
+using Test
 
 m1 = rand(ComplexF64, 8, 13)
 
@@ -12,8 +13,8 @@ u,s,v = svd(m1)
 m1 ≈ u * Diagonal(s) * v'
 
 # The SVD() object is built via vdagger though !!!
-f == SVD(u,s,v')
-f == SVD(u,s,v)
+@test f == SVD(u,s,v') 
+#@test f == SVD(u,s,v)  # False! 
 
 
 
@@ -39,15 +40,15 @@ f.U == u
 u
 f.U 
 
-matrix(u) ≈ matrix(f.U)
-matrix(v) ≈ matrix(f.V)
+@test matrix(u) ≈ matrix(f.U)
+@test matrix(v) ≈ matrix(f.V)
 
 m2 = rand(ComplexF64, 8, 8)
 s1 = m2 + transpose(m2)
 
 fs, spec = symm_svd(s1)
 
-fs.U * Diagonal(fs.S) * fs.V' ≈ s1
+@test fs.U * Diagonal(fs.S) * fs.V' ≈ s1
 
 ts1 = randsymITensor(10)
 is1 = ind(ts1,1)
@@ -58,4 +59,4 @@ fst.U * fst.S * fst.V ≈ ts1
 
 u,s,uT = symm_svd(ts1, is1)
 
-u * s * uT ≈ ts1
+@test u * s * uT ≈ ts1

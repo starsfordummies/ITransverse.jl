@@ -15,6 +15,4 @@ include("gen_onesite_dmrg.jl")
 include("gen_onesite_dmrg_slow.jl")
 include("gen_dmrg.jl")
 
-
-
 end #module IGensors

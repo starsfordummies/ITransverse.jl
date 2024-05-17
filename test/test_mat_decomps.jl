@@ -1,6 +1,6 @@
 using LinearAlgebra
 using ITensors
-using IGensors
+using ITransverse.ITenUtils
 using Test
 
 @info "Testing IGensors symmetric SVD/EIG..."
@@ -61,7 +61,7 @@ m = ITensor(hermitianpart(matrix(m)), inds(m))
 cutoff = 1e-5
 
 fmy, spec =  mytrunc_eig(Matrix(matrix(m)); cutoff)
-fiten = eigen(m, ind(m,1), ind(m,2); cutoff=0.1)
+fiten = eigen(m, ind(m,1), ind(m,2); cutoff)
 @test fmy.values ≈ diag(fiten.D)
 #@test fmy.U ≈ matrix(fiten.U)
 #@test fmy.Vt ≈ Matrix(fiten.V, fiten.v, ind(m,2))
