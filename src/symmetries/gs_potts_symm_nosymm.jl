@@ -24,7 +24,7 @@ function gs_potts(N::Int, ff::Real, use_symmetric::Bool)
         state = ["Up" for n=1:N]
         psi0 = productMPS(sites,state)
     #else
-    #    psi0 = randomMPS(sites,2)
+    #    psi0 = random_mps(sites,2)
     #end
 
 

@@ -19,7 +19,7 @@ function gs_xxz(N::Int, do_symmetric::Bool)
         state = [isodd(n) ? "Up" : "Dn" for n=1:N]
         psi0 = productMPS(sites,state)
     else
-        psi0 = randomMPS(sites,2)
+        psi0 = random_mps(sites,2)
     end
 
     energy,psi = dmrg(H,psi0; nsweeps, maxdim, cutoff)

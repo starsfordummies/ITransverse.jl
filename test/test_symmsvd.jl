@@ -22,7 +22,7 @@ m1 ≈ u * Diagonal(s) * v'
 
 i1 = Index(9)
 i2 = Index(15)
-t1 = randomITensor(i1,i2)
+t1 = random_itensor(i1,i2)
 
 f = svd(t1,i1)
 u,s,vd = svd(t1,i1)

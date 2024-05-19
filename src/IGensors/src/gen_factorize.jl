@@ -214,7 +214,7 @@ function factorize_twosite_gen_two(
 
 
   sqD = F.D.^(0.5)
-  isqD = diagITensor(vector(diag(pinv(sqD.tensor))), inds(sqD))
+  isqD = diag_itensor(vector(diag(pinv(sqD.tensor))), inds(sqD))
 
   spec = F.spec
 
@@ -269,7 +269,7 @@ function factorize_twosite_gen_svd(
   F = symm_svd(A2, Lis; mindim, maxdim, cutoff, tags)
 
   sqS = F.S.^(0.5)
-  isqS = diagITensor(vector(diag(pinv(sqS.tensor))), inds(sqS))
+  isqS = diag_itensor(vector(diag(pinv(sqS.tensor))), inds(sqS))
 
   spec = F.spec
 

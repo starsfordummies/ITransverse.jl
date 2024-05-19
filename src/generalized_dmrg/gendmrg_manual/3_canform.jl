@@ -17,8 +17,8 @@ function basic_left_can!(ψ::MPS; normalize::Bool=true)
         linkidx = linkind(ψ,i)
 
         uL = ITensor(conj(u), linkidx, tempidx)
-        isqs = diagITensor(s.^(-0.5), tempidx, tempidx')
-        sqs = diagITensor(s.^(0.5), tempidx', tempidx)
+        isqs = diag_itensor(s.^(-0.5), tempidx, tempidx')
+        sqs = diag_itensor(s.^(0.5), tempidx', tempidx)
         uR = ITensor(u, linkidx, tempidx)
 
         #debug 

@@ -5,6 +5,7 @@ using NDTensors
 using ITensors, ITensorMPS
 using ProgressMeter
 
+version() = VersionNumber(_parse_project_toml("version"))
 
 include("ITenUtils/ITenUtils.jl")
 using .ITenUtils

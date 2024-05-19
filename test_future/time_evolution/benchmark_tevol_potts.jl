@@ -32,7 +32,7 @@ Tmaxs = Vector{Float64}()
 psi_prod = productMPS(ComplexF64, sites_potts, "↑") 
 #psi_prod = productMPS(ComplexF64, sites_potts, "↑") 
 
-psi_prod = randomMPS(ComplexF64, sites_potts, linkdims=10) 
+psi_prod = random_mps(ComplexF64, sites_potts, linkdims=10) 
 
 
 Hpotts = build_H_potts(sites_potts, JJ, ff)

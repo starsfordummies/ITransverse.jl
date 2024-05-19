@@ -141,9 +141,9 @@ function replacebond_onesite_gen!(PH, M::MPS, b::Int, phi::ITensor; kwargs...)
   sqD = D.^(0.5)
   isqD = sqD.^(-1)
 
-  #isqD = diagITensor(, inds(sqD))
-  #isqD = diagITensor(vec([d for d in pinv(diag(sqD).storage)]), inds(sqD))
-  isqD = diagITensor(vector(diag(pinv(sqD.tensor))), inds(sqD))
+  #isqD = diag_itensor(, inds(sqD))
+  #isqD = diag_itensor(vec([d for d in pinv(diag(sqD).storage)]), inds(sqD))
+  isqD = diag_itensor(vector(diag(pinv(sqD.tensor))), inds(sqD))
 
   #@show sqD, isqD
 
@@ -152,7 +152,7 @@ function replacebond_onesite_gen!(PH, M::MPS, b::Int, phi::ITensor; kwargs...)
 
   Z = (F.Vt * noprime(F.Vt))
   isqZ = diag(Z).^(-0.5)
-  O = F.Vt * diagITensor(isqZ.storage.data, inds(Z))
+  O = F.Vt * diag_itensor(isqZ.storage.data, inds(Z))
 
   if ortho == "left"
     L = A * O * isqD
@@ -341,7 +341,7 @@ function factorize_onesite_svd_gen(
 
   Z = (F.Vt * noprime(F.Vt))
   isqZ = diag(Z).^(-0.5)
-  O = F.Vt * diagITensor(isqZ.storage.data, inds(Z))
+  O = F.Vt * diag_itensor(isqZ.storage.data, inds(Z))
 
   L = A * O * isqD
   R = sqD * O 

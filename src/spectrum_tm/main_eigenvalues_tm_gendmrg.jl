@@ -36,7 +36,7 @@ function ITensors.measure!(o::ExcitedStatesObserver; kwargs...)
     println("$(sw) $(b)")
     vals, vecs, infoKrylov = eigsolve(  #KrylovKit
         PH,
-        randomITensor(ComplexF64, inds(phi)),
+        random_itensor(ComplexF64, inds(phi)),
         4,
         :LM;
         ishermitian=false,
@@ -115,7 +115,7 @@ time_sites =  addtags(siteinds("S=1/2", Nsteps; conserve_qns = false), "time")
 
 
 #start_mps = productMPS(time_sites,"+");
-start_mps = randomMPS(ComplexF64, time_sites, linkdims=40)
+start_mps = random_mps(ComplexF64, time_sites, linkdims=40)
 
 mpo_L = build_ising_tMPO_regul_beta(build_expH_ising_murg, JXX, hz, dt, nbeta, time_sites, init_state)
 

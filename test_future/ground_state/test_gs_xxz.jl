@@ -17,7 +17,7 @@ function gs_xxz(N)
     maxdim = [20,100,100,200,300,400] # gradually increase states kept
     cutoff = [1E-8,1E-10,1E-12,1E-14] # desired truncation error
 
-    psi0 = randomMPS(sites,2)
+    psi0 = random_mps(sites,2)
 
     energy,psi = dmrg(H,psi0; nsweeps, maxdim, cutoff)
     

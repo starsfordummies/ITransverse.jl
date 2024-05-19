@@ -22,7 +22,7 @@ sites = siteinds("S=1/2", N; conserve_qns = false)
 
 # initial state
 #psi_prod = productMPS(ComplexF64, sites, "↑")
-psi_prod = randomMPS(sites,10)
+psi_prod = random_mps(sites,10)
 
 
 

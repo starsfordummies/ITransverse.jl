@@ -242,7 +242,7 @@ function factorize_svd_gen(
 
     Z = (F.Vt * noprime(F.Vt))
     isqZ = diag(Z).^(-0.5)
-    O = F.Vt * diagITensor(isqZ.storage.data, inds(Z))
+    O = F.Vt * diag_itensor(isqZ.storage.data, inds(Z))
 
     L = A * O * isqD
     R = sqD * O 
@@ -301,7 +301,7 @@ function factorize_svd_gen(
 
     Z = (F.Vt * noprime(F.Vt))
     isqZ = diag(Z).^(-0.5)
-    O = F.Vt * diagITensor(isqZ.storage.data, inds(Z))
+    O = F.Vt * diag_itensor(isqZ.storage.data, inds(Z))
    
 
     L = O

@@ -38,7 +38,7 @@ function _symmetric_svd_iten(a::ITensor; svd_cutoff::Float64=1e-12, chi_max::Int
         println("warning: z likely not diag")
     end
 
-    zdiag = diagITensor(diag(z).storage.data, inds(z))
+    zdiag = diag_itensor(diag(z).storage.data, inds(z))
     sq_z = sqrt.(zdiag)
 
     uz = u * sq_z 
@@ -91,7 +91,7 @@ function symmetric_svd_ndten(a::ITensor; svd_cutoff::Float64=1e-12, check_symmet
     iv = Index(size(s)[1],tags="v")
 
     uz = ITensor(uz, i, iu)
-    s = diagITensor(s.storage.data, iu, iv)
+    s = diag_itensor(s.storage.data, iu, iv)
 
     return uz, s
 end
@@ -242,10 +242,10 @@ function symmetric_svd_arr(arr_a::Matrix{T}, i::Index{Int};
 
 
     #uz = ITensor(uz, i, iu)
-    #s = diagITensor(s, iu, iv)
+    #s = diag_itensor(s, iu, iv)
     #return uz, s 
 
-    return  ITensor(uz, i, iu), diagITensor(s, iu, iv)
+    return  ITensor(uz, i, iu), diag_itensor(s, iu, iv)
 end
 
 
@@ -296,10 +296,10 @@ function symmetric_eig_arr(arr_a::Matrix{T}, i::Index{Int};
 
 
     #uz = ITensor(uz, i, iu)
-    #s = diagITensor(s, iu, iv)
+    #s = diag_itensor(s, iu, iv)
     #return uz, s 
 
-    return  ITensor(uz, i, iu), diagITensor(s, iu, iv)
+    return  ITensor(uz, i, iu), diag_itensor(s, iu, iv)
 end
 
 

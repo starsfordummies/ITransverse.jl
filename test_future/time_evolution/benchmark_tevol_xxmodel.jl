@@ -26,7 +26,7 @@ sites = siteinds("S=1/2", N; conserve_qns = false)
 
 # initial state
 #psi_prod = productMPS(ComplexF64, sites, "↑")
-psi_prod = randomMPS(sites, 1)
+psi_prod = random_mps(sites, 1)
 
 
 Ut1 = build_expH_XX_murg_from_ising(sites, JXX, dt)

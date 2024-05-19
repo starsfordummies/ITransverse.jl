@@ -2,7 +2,7 @@
 """ Quick random MPS for playing around """
 function myrMPS(len::Int=40, chi::Int=50)
     s = siteinds("S=1/2", len)
-    p = randomMPS(ComplexF64, s, linkdims=chi)
+    p = random_mps(ComplexF64, s, linkdims=chi)
 
     return p
 end

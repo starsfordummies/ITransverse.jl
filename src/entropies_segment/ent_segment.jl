@@ -65,7 +65,7 @@ function main_check_rdmdiag()
 sites = siteinds("S=1/2", 12; conserve_qns = false)
 
 
-psi= randomMPS(sites, 40)
+psi= random_mps(sites, 40)
 
 norm(psi)
 

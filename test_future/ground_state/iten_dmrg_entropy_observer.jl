@@ -68,7 +68,7 @@ function main_gs_ising(N, gg, etol=1E-4)
     s = siteinds("S=1/2",N)
 
     H = build_H_ising(s, 1, gg)
-    psi0 = randomMPS(s,4)
+    psi0 = random_mps(s,4)
 
     nsweeps = 30
     cutoff = 1E-8
@@ -92,7 +92,7 @@ function main_gs_potts(N; ff = 1.0, etol = 1E-4)
     s = siteinds("S=1",N)
 
     H = build_H_potts(s, 1, ff)
-    psi0 = randomMPS(s,4)
+    psi0 = random_mps(s,4)
 
     nsweeps = 30
     cutoff = 1E-8
@@ -119,7 +119,7 @@ function main_gs_XX(N ; hh = 1.0, use_symmetries=false, etol = 1E-4 )
         state = [isodd(n) ? "Up" : "Dn" for n=1:N]
         psi0 = productMPS(s,state)
     #else
-    #    psi0 = randomMPS(s,4)
+    #    psi0 = random_mps(s,4)
     #end
 
     nsweeps = 30
@@ -150,7 +150,7 @@ function main_gs_XXZ(N; use_symmetries=false,  etol = 1E-4)
 
         psi0 = productMPS(s,state)
     # else
-    #     psi0 = randomMPS(s,4)
+    #     psi0 = random_mps(s,4)
     # end
 
     nsweeps = 20

@@ -49,7 +49,7 @@ function main()
     leftvecs = []
     ds2s = []
 
-    ts = 60:1:60
+    ts = 5:5:60
 
     genVNs = [] 
 

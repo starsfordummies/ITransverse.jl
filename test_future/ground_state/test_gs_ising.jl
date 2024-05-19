@@ -22,10 +22,10 @@ function gs_ising(N::Int; onesite::Bool=false)
     cutoff = [1E-5,1E-8,1E-10,1E-12] # desired truncation error
 
     if onesite
-        psi0 = randomMPS(sites,20)
+        psi0 = random_mps(sites,20)
         energy,psi = dmrg_onesite(H,psi0; nsweeps, maxdim, cutoff)
     else
-        psi0 = randomMPS(sites,2)
+        psi0 = random_mps(sites,2)
         energy,psi = dmrg(H,psi0; nsweeps, maxdim, cutoff)
     end
     

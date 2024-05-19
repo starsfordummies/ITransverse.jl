@@ -28,7 +28,7 @@ function main_dmrg()
  
     hmpo = build_expH_ising_murg(aa, 1., 1., 0.1)
 
-    startmps = randomMPS(aa)
+    startmps = random_mps(aa)
 
     en, psi = dmrg(hmpo, startmps, nsweeps=3, which_decomp="svd",  #eigen gives the same 
     eigsolve_which_eigenvalue=:LM, ishermitian=false, cutoff=1e-14, maxdim=100, 

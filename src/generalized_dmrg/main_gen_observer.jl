@@ -120,7 +120,7 @@ time_sites =  addtags(siteinds("S=1/2", Nsteps; conserve_qns = false), "time")
 
 
 start_mps = productMPS(time_sites,"+");
-start_mps = randomMPS(time_sites,4)
+start_mps = random_mps(time_sites,4)
 
 mpo_L = build_ising_tMPO_regul_beta(build_expH_ising_murg, JXX, hz, dt, nbeta, time_sites, init_state)
 

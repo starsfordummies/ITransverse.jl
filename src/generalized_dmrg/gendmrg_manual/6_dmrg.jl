@@ -3,7 +3,7 @@
 
 function mygendmrg_manual(Hmpo::MPO, ssites; nsweeps = 4, fact_method = 1)
     
-    ψ = randomMPS(ComplexF64, ssites, linkdims=4)
+    ψ = random_mps(ComplexF64, ssites, linkdims=4)
     h_w = Hmpo
 
     basic_left_can!(ψ, normalize=true)

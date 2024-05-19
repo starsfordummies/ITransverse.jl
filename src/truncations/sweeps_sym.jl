@@ -47,8 +47,8 @@ returns L_ortho, ents_sites
 #         sqS = sqrt.(diag(S))
 #         isqS = sqS.^(-1)
         
-#         XU = dag(U) * diagITensor(isqS.storage.data, inds(S))
-#         XUinv = diagITensor(sqS.storage.data, inds(S)) * U
+#         XU = dag(U) * diag_itensor(isqS.storage.data, inds(S))
+#         XUinv = diag_itensor(sqS.storage.data, inds(S)) * U
 #         =#
 
 #         #L_ortho[ii] =  Ai * XU  #replacetags(Ai * XU , "Link,v", "Link,v=$ii")
@@ -110,8 +110,8 @@ function truncate_normalize_sweep_sym!(left_mps::MPS; svd_cutoff::Float64, chi_m
             sqS = sqrt.(diag(S))
             isqS = sqS.^(-1)
             
-            XU = dag(U) * diagITensor(isqS.storage.data, inds(S))
-            XUinv = diagITensor(sqS.storage.data, inds(S)) * U
+            XU = dag(U) * diag_itensor(isqS.storage.data, inds(S))
+            XUinv = diag_itensor(sqS.storage.data, inds(S)) * U
 
         elseif method == "SVD"
             F = symm_svd(left_env, ind(left_env,1), cutoff=svd_cutoff, maxdim=chi_max)
@@ -123,7 +123,7 @@ function truncate_normalize_sweep_sym!(left_mps::MPS; svd_cutoff::Float64, chi_m
             
             #@assert inds(S) ==  inds(isqS)
  
-            #XU = dag(U) * diagITensor(isqS.storage.data, inds(S))
+            #XU = dag(U) * diag_itensor(isqS.storage.data, inds(S))
             XU = dag(U) * isqS
             XUinv = sqS * U
 

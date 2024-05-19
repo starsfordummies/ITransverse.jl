@@ -78,7 +78,7 @@ psi_u4 = deepcopy(psi_prod)
     println("nt=$(nt),\tt=$(t),\tmaxbondim = $(maxlinkdim(psi_u4))")
 end
 =#
-psi_u4 = randomMPS(sites)
+psi_u4 = random_mps(sites)
 
 Hisi = build_H_ising(sites, JXX, hz)
 

@@ -311,7 +311,7 @@ function symm_svd(a::ITensor, linds; cutoff=nothing, maxdim=nothing)
     #@show size(F.Vt), dim(index_v), dim(combinedind(cR))
 
     u = ITensor(F.U, combinedind(cL), index_u) * dag(cL)
-    s = diagITensor(F.S, index_u, index_v)
+    s = diag_itensor(F.S, index_u, index_v)
     uT = ITensor(F.Vt, index_v, combinedind(cR)) * dag(cR)
   
     return ITensors.TruncSVD(u,s,uT, spec, index_u, index_v)
@@ -341,7 +341,7 @@ function symm_oeig(a::ITensor, linds; cutoff=nothing, maxdim=nothing)
     Om = F.vectors
 
     eigind = Index(size(F.values,1), tags="eig_sym")
-    D = diagITensor(D, eigind, eigind')
+    D = diag_itensor(D, eigind, eigind')
     O = ITensor(Om, combinedind(cL), eigind) * dag(cL)
     Ot = ITensor(permutedims(Om,(2,1)), eigind', combinedind(cR)) * dag(cR)
 

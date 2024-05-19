@@ -19,7 +19,7 @@ function gs_potts(N::Int, JJ::Real, ff::Real, ham_function)
     maxdim = [400] # gradually increase states kept
     cutoff = [1E-10] # desired truncation error
 
-    psi0 = randomMPS(sites,2)
+    psi0 = random_mps(sites,2)
 
     e_gs, psi_gs = dmrg(H,psi0; nsweeps, maxdim, cutoff)
 
