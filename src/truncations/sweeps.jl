@@ -57,7 +57,7 @@ function truncate_sweep(left_mps::MPS, right_mps::MPS; method::String, cutoff::R
 
             sqS = sqrt.(S)
             isqS = sqS.^(-1)
-
+            
             XU = dag(U) * isqS
             XUinv = sqS * U
 
@@ -220,20 +220,6 @@ function truncate_normalize_sweep_LR(left_mps::MPS, right_mps::MPS; method::Stri
 
 end
 
-
-"""
-Just bring the MPS to generalized *left* canonical form without truncating (as far as possible)
-"""
-function gen_canonical_left(in_mps::MPS)
-    return truncate_normalize_sweep_sym(in_mps; svd_cutoff=1e-14, chi_max=2*maxlinkdim(in_mps))
-end
-
-"""
-Just bring the MPS to generalized *right* canonical form without truncating (as far as possible)
-"""
-function gen_canonical_right(in_mps::MPS)
-    return truncate_normalize_sweep_sym_right(in_mps; svd_cutoff=1e-14, chi_max=2*maxlinkdim(in_mps))
-end
 
 
 

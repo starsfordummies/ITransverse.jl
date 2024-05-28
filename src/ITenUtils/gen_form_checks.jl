@@ -12,7 +12,7 @@ function check_gencan_left_phipsi(psi::MPS, phi::MPS, verbose::Bool=false)
         println("overlap = $(overlap_noconj(psi,phi))), alt = $(scalar(psi[end]*phi[end]*delta(linkinds(psi)[end],linkinds(phi)[end] )))")
     end
 
-    mpslen = length(psi)
+    #mpslen = length(psi)
     # Start from the operator/final state side (for me that's on the left)
     left_env = ITensor(1.)
     for (ii, (Ai,Bi)) in enumerate(zip(psi[1:end-1], phi[1:end-1]))
@@ -46,7 +46,7 @@ function check_gencan_right_phipsi(psi::MPS, phi::MPS, verbose::Bool=false)
         println("overlap = $(overlap_noconj(psi,phi))), alt = $(scalar(psi[end]*phi[end]*delta(linkinds(psi)[end],linkinds(phi)[end] )))")
     end
 
-    mpslen = length(psi)
+    #mpslen = length(psi)
     # Start from the initial state side (for me that's on the right)
     right_env = ITensor(1.)
     for (ii, (Ai,Bi)) in enumerate(zip(psi[end:-1:1], phi[end:-1:1]))
