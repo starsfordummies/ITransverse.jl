@@ -41,7 +41,7 @@ include("bench_data.jl")
 
 
 # from pparams
-export pparams, ppm_params, trunc_params
+export pparams, ppm_params, trunc_params, model_params, tmpo_params
 
 #from utils.jl
 export myrMPS, 

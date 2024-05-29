@@ -10,6 +10,7 @@ using ..ITenUtils
 
 include("brakets.jl")
 include("ising.jl")
+include("ising_parallel.jl")
 include("potts.jl")
 include("xxzmodel.jl")
 
@@ -23,7 +24,11 @@ export build_H_ising_manual,
     build_expH_ising_2o, 
     build_expH_ising_murg, 
     build_expH_ising_murg_ZZX, 
-    build_expH_ising_murg_YY
+    build_expH_ising_murg_YY,
+    build_expH
+    
+# from ising_parallel.jl
+export  build_expH_ising_murg_parallel
 
 #from potts.jl
 export build_H_potts_manual,

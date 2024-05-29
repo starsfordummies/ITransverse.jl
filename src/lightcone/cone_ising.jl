@@ -2,15 +2,16 @@
 init_cone_ising => seed_cone_left =>
 """
 
-""" Initializes lightcone for a generic MPO  """
-function init_cone(p::tmpo_params)
+""" Initializes lightcone for Ising"""
+function init_cone_ising(p::pparams, build_expH_function::Function=build_expH_ising_murg)
+    time_sites = siteinds("S=3/2", 1)
+    time_sites= addtags(time_sites, "time_fold")
 
-    # time_sites = siteinds("S=3/2", 1)
-    # time_sites= addtags(time_sites, "time_fold")
-  
-    eH = p.expH_func(p.mp)
+    space_sites = siteinds("S=1/2", 3; conserve_qns = false)
+
+    eH = build_expH_function(space_sites, p)
     
-    cone_mps = seed_cone(eH, p.init_state)
+    cone_mps = seed_cone_left(eH, p.init_state)
 
     return cone_mps
 
@@ -19,7 +20,7 @@ end
 
 """ Seeds the *left* light cone temporal MPS, given `eH` MPO tensors and `init_state`,
 builds a (length 1) tMPS. The `init_state` goes to the *right* """
-function seed_cone(eH::MPO, init_state::Vector{ComplexF64})
+function seed_cone_left(eH::MPO, init_state::Vector{ComplexF64})
     
     Wl = eH[1]
 
@@ -70,19 +71,19 @@ Returns the updated left-right tMPS
 """
 function extend_tmps_cone(ll::MPS, rr::MPS, 
     op_L::Vector{ComplexF64}, op_R::Vector{ComplexF64}, 
-    tp::tmpo_params,
+    ising_params::pparams,
     truncp::trunc_params)
 
     time_sites = siteinds("S=3/2", length(ll)+1)
     time_sites= addtags(time_sites, "time_fold")
 
-    tmpo = build_ham_folded_tMPO(tp, op_L, time_sites)
+    tmpo = build_ising_folded_tMPO(build_expH_ising_murg, ising_params, op_L, time_sites)
 
     #println("check: " , length(tmpo), length(ll), length(rr))
 
     psi_L = apply_extend(tmpo, ll)
 
-    tmpo = swapprime(build_ham_folded_tMPO(tp, op_R, time_sites), 0, 1, "Site")
+    tmpo = swapprime(build_ising_folded_tMPO(build_expH_ising_murg, ising_params, op_R, time_sites), 0, 1, "Site")
     psi_R = apply_extend(tmpo, rr)
 
     # ! CHECK CAN WE EVER HAVE LINKS (L) != LINKS (R) ??? WHY DOES EIGEN FAIL??
@@ -144,19 +145,19 @@ end
 
 
 
-function expval_cone(ll::MPS, rr::MPS, op::Vector{ComplexF64}, tp::tmpo_params)
+function expval_cone(ll::MPS, rr::MPS, op::Vector{ComplexF64}, ising_params::pparams)
 
     fold_id = ComplexF64[1,0,0,1]
 
     time_sites = siteinds(ll)
-    tmpo = build_ham_folded_tMPO(tp,  fold_id, time_sites)
+    tmpo = build_ising_folded_tMPO(build_expH_ising_murg, ising_params, fold_id, time_sites)
     psi_L = apply(tmpo, ll)
 
     time_sites = siteinds(rr)
-    tmpo = swapprime(build_ham_folded_tMPO(tp, op, time_sites), 0, 1, "Site")
+    tmpo = swapprime(build_ising_folded_tMPO(build_expH_ising_murg, ising_params, op, time_sites), 0, 1, "Site")
     psi_R = apply(tmpo, rr)
 
-    tmpo = swapprime(build_ham_folded_tMPO(tp, fold_id, time_sites), 0, 1, "Site")
+    tmpo = swapprime(build_ising_folded_tMPO(build_expH_ising_murg, ising_params, fold_id, time_sites), 0, 1, "Site")
     psi_R_id = apply(tmpo, rr)
 
 
@@ -169,10 +170,10 @@ end
 
 
 
-function run_cone(psi::MPS, 
+function evolve_cone(psi::MPS, 
     nsteps::Int, 
     op::Vector{ComplexF64}, 
-    tp::tmpo_params,
+    ising_params::pparams,
     truncp::trunc_params
     )
 
@@ -193,8 +194,8 @@ function run_cone(psi::MPS,
         llwork = deepcopy(ll)
 
         # if we're worried about symmetry, evolve separately L and R 
-        ll,_, ents = extend_tmps_cone(llwork, rr, Id, op, tp, truncp)
-        _,rr, ents = extend_tmps_cone(llwork, rr, op, Id, tp, truncp)
+        ll,_, ents = extend_tmps_cone(llwork, rr, Id, op, ising_params, truncp)
+        _,rr, ents = extend_tmps_cone(llwork, rr, op, Id, ising_params, truncp)
 
         overlapLR = overlap_noconj(ll,rr)
 
@@ -209,9 +210,9 @@ function run_cone(psi::MPS,
         #println(dt)
         #println(ll)
         #println(overlap_noconj(ll,rr)/overlap_noconj(ll,ll), maxlinkdim(ll))
-        push!(evs_x, expval_cone(ll, rr, ComplexF64[0,1,1,0], tp))
-        push!(evs_z, expval_cone(ll, rr, ComplexF64[1,0,0,-1], tp))
-
+        push!(evs_x, expval_cone(ll, rr, ComplexF64[0,1,1,0], ising_params))
+        push!(evs_z, expval_cone(ll, rr, ComplexF64[1,0,0,-1], ising_params))
+        
         push!(chis, maxlinkdim(ll))
         push!(overlaps, overlapLR)
 

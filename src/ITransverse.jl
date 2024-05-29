@@ -14,7 +14,7 @@ include("IGensors/src/IGensors.jl")
 using .IGensors
 
 # # from pparams.jl
-export pparams, ppm_params, trunc_params
+export pparams, ppm_params, trunc_params, model_params, tmpo_params
 
 # #from utils.jl
 export myrMPS, 
@@ -85,7 +85,8 @@ include("tmpo/build_fold_tmpo.jl")
 export build_ising_folded_tMPO,
      build_ising_folded_tMPS,
      build_folded_tMPO_regul_beta, 
-     build_folded_left_tMPS
+     build_folded_left_tMPS,
+     build_ham_folded_tMPO
 
 
 include("power_method/pm.jl")
@@ -97,7 +98,8 @@ export powermethod,
     powermethod_converge_eig,
     powermethod_fold,
     powermethod_Lonly,
-    pm_all
+    pm_all,
+    pm_svd
 
 
 export powermethod_sym,
@@ -109,5 +111,7 @@ include("lightcone/cone.jl")
 
 export evolve_cone,
  init_cone_ising
+
+export init_cone, run_cone
 
 end #module ITransverse

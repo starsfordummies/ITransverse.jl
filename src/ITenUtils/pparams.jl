@@ -9,6 +9,25 @@ struct pparams
     init_state::Vector{ComplexF64}
 end
 
+struct model_params
+    phys_space::String
+    JXX::Float64
+    hz::Float64
+    λx::Float64
+    dt::Float64
+end
+
+struct tmpo_params
+    time_phys_space::String
+    virt_space::String
+    expH_func::Function
+    mp::model_params
+    dt::Float64
+    nbeta::Int64
+    init_state::Vector{ComplexF64}
+end
+
+
 
 struct ppm_params
     itermax::Int64

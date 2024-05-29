@@ -1,0 +1,89 @@
+""" Prescription a la Murg for exp(-i*H*dt) Ising transverse+parallel
+Convention H = -( JXX + gzZ + λxX )
+"""
+function build_expH_ising_murg_parallel(
+    sites::Vector{<:Index},
+    JXX::Real,
+    gz::Real,
+    λx::Real,
+    dt::Number)
+    """ Symmetric version of Murg exp(-iHising t) """
+
+    # For real dt this does REAL time evolution 
+    # I should have already taken into account both the - sign in exp(-iHt) 
+    # and the overall minus in Ising H= -(JXX+Z)
+
+    dt = JXX*dt
+
+    N = length(sites)
+    U_t = MPO(N)
+
+    link_dimension = 2
+
+    link_indices = [Index(link_dimension, "Link,l=$(n-1)") for n = 1:N+1]
+
+
+    for n = 1:N
+        # siteindex s
+
+        # left link index ll with daggered QN conserving direction (if applicable)
+        ll = dag(link_indices[n])
+        # right link index rl
+        rl = link_indices[n+1]
+
+        I = op(sites, "Id", n) 
+        X = op(sites, "X", n)
+
+        if n == 1
+            #U_t[n] = ITensor(ComplexF64, dag(s), s', dag(rl))
+            U_t[n] = onehot(rl => 1) * sqrt(cos(dt))*I
+            U_t[n] += onehot(rl => 2) * sqrt(im*sin(dt))*X
+        elseif n == N
+            #U_t[n] = ITensor(ComplexF64, ll, dag(s), s')
+            U_t[n] = onehot(ll => 1) * sqrt(cos(dt))*I
+            U_t[n] += onehot(ll => 2) * sqrt(im*sin(dt))*X
+
+        else
+            #U_t[n] = ITensor(ComplexF64, ll, dag(s), s', dag(rl))
+
+            U_t[n] = onehot(ll => 1, rl =>1) * cos(dt)*I
+            U_t[n] += onehot(ll => 1, rl =>2) * sqrt(im*sin(dt))*sqrt(cos(dt))*X
+            U_t[n] += onehot(ll => 2, rl =>1) * sqrt(im*sin(dt))*sqrt(cos(dt))*X
+            U_t[n] += onehot(ll => 2, rl =>2) * im*sin(dt)*I
+        end
+
+        Ux = exp(im*λx*dt*op(sites, "X", n))
+        Uz2 = exp(0.5*im*gz*dt*op(sites, "Z", n))
+
+
+        # Multiply in order:  exp(iZ/2)*exp(iX)*exp(iXX)*exp(iZ/2)
+        # everything is symmetric in phys legs here so no need to worry too much
+        # (otherwise this is not right, transpositions!) 
+
+        U_t[n] *= Uz2' 
+        U_t[n] *= Ux
+        U_t[n] *= Uz2
+        U_t[n] = replaceprime(U_t[n], 2 => 1)
+
+    end
+
+    return U_t
+
+
+end
+
+
+function build_expH_ising_murg_parallel(p::model_params)
+    
+    space_sites = siteinds(p.phys_space, 3; conserve_qns = false)
+    build_expH_ising_murg_parallel(space_sites, p.JXX, p.hz, p.λx, p.dt)
+
+end
+
+
+function build_expH(p::tmpo_params)
+    
+    space_sites = siteinds(p.mp.phys_space, 3; conserve_qns = false)
+    p.expH_func(space_sites, p.mp.JXX, p.mp.hz, p.mp.λx, p.dt)
+
+end

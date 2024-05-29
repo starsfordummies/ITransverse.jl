@@ -84,7 +84,7 @@ function truncate_sweep(left_mps::MPS, right_mps::MPS; method::String, cutoff::R
     L_ortho[end] = XUinv * L_ortho[end]
     R_ortho[end] = XVinv * R_ortho[end]
 
-    gen_overlap = deltaS * ( L_ortho[end] *  R_ortho[end] ) 
+    gen_overlap = scalar(deltaS * ( L_ortho[end] *  R_ortho[end] ) )
 
     return L_ortho, R_ortho, ents_sites, gen_overlap
 
