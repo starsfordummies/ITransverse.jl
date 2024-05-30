@@ -185,6 +185,7 @@ function run_cone(psi::MPS,
     evs_z = []
     chis = []
     overlaps = []
+    vn_ents = []
 
     p = Progress(nsteps; desc="[cone] $cutoff=$(truncp.cutoff), maxbondim=$(truncp.maxbondim)), method=$(truncp.ortho_method)", showspeed=true) 
 
@@ -215,9 +216,14 @@ function run_cone(psi::MPS,
         push!(chis, maxlinkdim(ll))
         push!(overlaps, overlapLR)
 
+        llc = deepcopy(ll)
+        orthogonalize!(llc,1)
+        ent = vn_entanglement_entropy(llc)
+
+        push!(vn_ents, ent)
         next!(p; showvalues = [(:Info,"[$(dt)] χ=$(maxlinkdim(ll)), (L|R) = $overlapLR " )])
 
     end
 
-    return ll, rr, evs_x, evs_z, chis, overlaps 
+    return ll, rr, evs_x, evs_z, chis, overlaps, vn_ents
 end
