@@ -30,6 +30,8 @@ include("gen_svdeig_symm.jl")
 
 include("entropies.jl")
 
+include("compute_rho2.jl")
+
 include("gen_form_checks.jl")
 include("gen_entropies.jl")
 
@@ -68,12 +70,13 @@ export symmetrize,
     check_diag_matrix,
     randmat_decayspec
 
-    # gen_svdeig_symm.jl
+# gen_svdeig_symm.jl
 export
     symm_svd,
     symm_oeig,
     mytrunc_svd,
     mytrunc_eig
+
 #from compute_entropies.jl
 export vn_entanglement_entropy_cut, 
     vn_entanglement_entropy, 
@@ -87,5 +90,10 @@ export vn_entanglement_entropy_cut,
 
 # from gen_form_checks
 export check_gencan_left_phipsi
+
+# from compute_rho2.jl
+export rho2, 
+    rtm2_contracted, 
+    rtm2_bruteforce
 
 end
