@@ -1,7 +1,7 @@
 """ Compute the generalized renyi2 entropy by contracting left and right MPS"""
 function rtm2_contracted(psi::MPS, phi::MPS)
     r2s = []
-    for jj in eachindex(psi)[2:end-2]
+    for jj in eachindex(psi)[1:end-1]
         push!(r2s, rtm2_contracted(psi, phi, jj))
     end
 
@@ -25,8 +25,8 @@ o--o--o--o--o
 """
 
 function rtm2_contracted(psi::MPS, phi::MPS, cut::Int)
-    @assert cut < length(psi)-1
-    @assert cut > 1
+    @assert cut < length(psi)
+    @assert cut > 0
 
     phi = deepcopy(phi)
     replace_siteinds!(phi, siteinds(psi))
