@@ -1,7 +1,7 @@
 """ Prescription a la Murg for exp(-i*H*dt) Ising transverse+parallel
 Convention H = -( JXX + gzZ + λxX )
 """
-function build_expH_ising_murg_parallel(
+function build_expH_ising_parallel_field_murg(
     sites::Vector{<:Index},
     JXX::Real,
     gz::Real,
@@ -73,10 +73,10 @@ function build_expH_ising_murg_parallel(
 end
 
 
-function build_expH_ising_murg_parallel(p::model_params)
+function build_expH_ising_parallel_field_murg(p::model_params)
     
     space_sites = siteinds(p.phys_space, 3; conserve_qns = false)
-    build_expH_ising_murg_parallel(space_sites, p.JXX, p.hz, p.λx, p.dt)
+    build_expH_ising_parallel_field_murg(space_sites, p.JXX, p.hz, p.λx, p.dt)
 
 end
 

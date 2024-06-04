@@ -28,7 +28,7 @@ export build_H_ising_manual,
     build_expH
     
 # from ising_parallel.jl
-export  build_expH_ising_murg_parallel
+export  build_expH_ising_parallel_field_murg
 
 #from potts.jl
 export build_H_potts_manual,
