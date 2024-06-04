@@ -27,14 +27,6 @@ include("ceigen.jl")
 include("gen_svdeig_symm.jl")
 
 
-
-include("entropies.jl")
-
-include("compute_rho2.jl")
-
-include("gen_form_checks.jl")
-include("gen_entropies.jl")
-
 #include("symmsvd_iten.jl")
 
 include("bench_data.jl")
@@ -76,24 +68,5 @@ export
     symm_oeig,
     mytrunc_svd,
     mytrunc_eig
-
-#from compute_entropies.jl
-export vn_entanglement_entropy_cut, 
-    vn_entanglement_entropy, 
-    renyi_entanglement_entropy_cut, 
-    renyi_entanglement_entropy,
-    generalized_entropy_symmetric_cut, 
-    generalized_entropy_symmetric, 
-    #generalized_entropy_cut,
-    generalized_entropy,
-    generalized_renyi_entropy
-
-# from gen_form_checks
-export check_gencan_left_phipsi
-
-# from compute_rho2.jl
-export rho2, 
-    rtm2_contracted, 
-    rtm2_bruteforce
 
 end

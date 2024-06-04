@@ -72,6 +72,14 @@ returns L_ortho, ents_sites
 # end
 
 
+function truncate_normalize_sweep_sym(left_mps::MPS; svd_cutoff::Float64, chi_max::Int, method::String)
+    l = deepcopy(left_mps)
+    truncate_normalize_sweep_sym!(l; svd_cutoff, chi_max, method)
+    @show linkinds(l)
+    return l 
+end
+
+
 
 """ 
 Symmetric case: Truncates a single MPS optimizing overlap (L|L) (no conj)
@@ -96,13 +104,19 @@ function truncate_normalize_sweep_sym!(left_mps::MPS; svd_cutoff::Float64, chi_m
 
     ents_sites = [] # Vector{Float64}()
 
+    s = siteinds(left_mps)
+
     for ii = 1:mpslen-1
 
-        Ai = XUinv * left_mps[ii]
+        Ai = noprime(XUinv * left_mps[ii])
 
-        left_env = left_env * Ai
-        left_env = left_env * Ai'
-        left_env *= delta(siteind(left_mps,ii),siteind(left_mps,ii)')
+        left_env *= Ai
+
+        left_env *= Ai'
+        left_env *= delta(s[ii],s[ii]')
+
+        #left_env = left_env * Ai'
+        #left_env *= delta(siteind(left_mps,ii),siteind(left_mps,ii)')
 
         if method == "SVDold"
             U,S = symmetric_svd_arr(left_env, svd_cutoff=svd_cutoff, chi_max=chi_max)
@@ -150,16 +164,14 @@ function truncate_normalize_sweep_sym!(left_mps::MPS; svd_cutoff::Float64, chi_m
 
         end
 
-        #slightly faster version (check)
-
-        #
-
-        left_mps[ii] =  Ai * XU  
+        left_mps[ii] =  Ai * XU
 
         # TODO NORMALIZE HERE ?? 
         #left_mps[ii] = left_mps[ii] / norm_gen(left_mps[ii])
 
-        left_env =  left_mps[ii] * prime(left_mps[ii], inds(left_mps[ii])[end])
+        # ??
+        left_env *= replaceprime(XU * XU', 2=>0)  # TODO CHECK should I care about symmetry here ? 
+        #left_env =  left_mps[ii] * prime(left_mps[ii], uniqueind(XU, Ai))
 
         #@show S
         #@show sum(S)
@@ -186,6 +198,7 @@ function truncate_normalize_sweep_sym!(left_mps::MPS; svd_cutoff::Float64, chi_m
 
     #@show linkinds(left_mps)
 
+    noprime!(left_mps) # so bad 
     # At the end, better relabeling of indices 
     for (ii,li) in enumerate(linkinds(left_mps))
         newlink = Index(dim(li), "Link,l=$ii")
@@ -215,10 +228,12 @@ end
 
 
 
+
 """ 
 Symmetric case sweep to bring to gen. RIGHT canonical form
-TODO havent' checked it works yet 
+!TODO havent' checked it works yet 
 """
+#!TODO havent' checked it works yet 
 function truncate_normalize_sweep_sym_right(left_mps::MPS; svd_cutoff::Real=1e-12, chi_max::Int=100)
 
     mpslen = length(left_mps)
@@ -416,7 +431,8 @@ end
 Just bring the MPS to generalized *left* canonical form without truncating (as far as possible)
 """
 function gen_canonical_left(in_mps::MPS)
-    return truncate_normalize_sweep_sym(in_mps; svd_cutoff=1e-14, chi_max=2*maxlinkdim(in_mps))
+    temp = deepcopy(in_mps)
+    return truncate_normalize_sweep_sym(temp; svd_cutoff=1e-14, chi_max=2*maxlinkdim(in_mps), method="EIG")
 end
 
 """

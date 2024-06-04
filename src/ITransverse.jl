@@ -14,7 +14,11 @@ include("IGensors/src/IGensors.jl")
 using .IGensors
 
 # # from pparams.jl
-export pparams, ppm_params, trunc_params, model_params, tmpo_params
+export pparams, 
+    ppm_params, 
+    trunc_params, 
+    model_params, 
+    tmpo_params
 
 # #from utils.jl
 export myrMPS, 
@@ -24,11 +28,6 @@ export myrMPS,
     # check_diag_matrix, 
     # check_id_matrix,
     # isid
-    vn_entanglement_entropy_cut, 
-    vn_entanglement_entropy,
-    renyi_entanglement_entropy,
-    generalized_entropy,
-    generalized_renyi_entropy
 
 # #from compute_entropies.jl
 
@@ -38,11 +37,48 @@ include("truncations/alt_sweeps.jl")
 include("truncations/sweeps_sym.jl")
 
 #from sweeps.jl
-export truncate_normalize_sweep, truncate_normalize_sweep_LR
+export truncate_normalize_sweep, 
+    truncate_normalize_sweep_LR
+
 # from alt_sweeps.jl
 export truncate_sweep_keep_lenv, truncate_sweep_aggressive_normalize
 # sweeps_sym.jl
-export truncate_normalize_sweep_sym!, truncate_normalize_sweep_sym_right
+export  truncate_normalize_sweep_sym,
+    truncate_normalize_sweep_sym!,
+    truncate_normalize_sweep_sym_right,
+    gen_canonical_left
+
+
+include("entropies/gen_form_checks.jl")
+
+include("entropies/entropies.jl")
+include("entropies/gen_entropies.jl")
+include("entropies/compute_rho2.jl")
+#include("entropies/ent_segment.jl")
+
+
+#from compute_entropies.jl
+export vn_entanglement_entropy_cut, 
+    vn_entanglement_entropy, 
+    renyi_entanglement_entropy_cut, 
+    renyi_entanglement_entropy,
+    generalized_entropy_symmetric_cut, 
+    generalized_entropy_symmetric, 
+    #generalized_entropy_cut,
+    generalized_entropy,
+    generalized_renyi_entropy,
+    build_entropies
+
+# from gen_form_checks
+export check_gencan_left_phipsi
+
+# from compute_rho2.jl
+export rho2, 
+    rtm2_contracted, 
+    rtm2_bruteforce,
+    gen_symm_diagonalize_rtm
+ 
+
 
 
 # from symm_decompositions.jl
