@@ -39,6 +39,7 @@ function rtm2_contracted(psi::MPS, phi::MPS, cut::Int)
     
     for jj = 1:cut
         left1 *= psi[jj] * phi[jj]
+        #@show left1
     end
     left2 = prime(left1)
 
@@ -50,7 +51,10 @@ function rtm2_contracted(psi::MPS, phi::MPS, cut::Int)
     right2 = swapprime(right1, 1=>0)    
     
     #this is already trace(rho^2)
-    tr_rho2 = left1 * right1 * left2 * right2
+    tr_rho2 = left1
+    tr_rho2 *= right1 
+    tr_rho2 *= left2 
+    tr_rho2 *= right2
     
     return scalar(tr_rho2)
 end

@@ -42,7 +42,9 @@ export myrMPS,
     overlap_noconj, 
     check_symmetry_itensor_mpo, 
     check_symmetry_itensor,
-    normbyfactor
+    normbyfactor,
+    sim,
+    sim!
     # check_diag_matrix, 
     # check_id_matrix,
     # isid

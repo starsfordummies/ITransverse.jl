@@ -20,10 +20,30 @@ function overlap_noconj(ll::MPS, rr::MPS, approx_real::Bool=false)
     
 end
 
+function ITensors.sim(psi::MPS)
+    phi = deepcopy(psi)
+    sim!(phi)
+    return phi
+end    
+
+function sim!(psi::MPS)
+    replace_siteinds!(psi, sim(siteinds(psi)))
+    ll = linkinds(psi)
+    sl = sim(ll)
+
+    replaceind!(psi[1], ll[1], sl[1])
+    for ii in eachindex(psi)[2:end-1]
+        replaceind!(psi[ii], ll[ii-1], sl[ii-1])
+        replaceind!(psi[ii], ll[ii], sl[ii])
+    end
+    replaceind!(psi[end], ll[end], sl[end])
+
+end
 
 
 """ Returns an MPS which is a copy of the 2nd argument
-with physical indices matching those of the first one"""
+with physical indices matching those of the first one
+TODO CHECK IS THIS THE SAME AS REPLACE_SITEINDS? """
 function match_mps_indices(mps1::MPS, mps2::MPS)
     @assert length(mps1) == length(mps2)
     mps3 = copy(mps2)
