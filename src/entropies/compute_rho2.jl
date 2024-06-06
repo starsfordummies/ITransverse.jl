@@ -45,7 +45,8 @@ function rtm2_contracted(psi::MPS, phi::MPS, cut::Int)
     left2 = prime(left1)
 
     @showprogress for jj = length(psi):-1:cut+1
-        right1 *= psi[jj] * phi[jj]
+        right1 *= psi[jj]
+        right1 *= phi[jj]
     end
 
     right1 = prime(right1, ind_cut_psi)
