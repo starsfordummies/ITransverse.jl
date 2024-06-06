@@ -38,7 +38,8 @@ function rtm2_contracted(psi::MPS, phi::MPS, cut::Int)
     ind_cut_phi = linkind(phi, cut)
     
     @showprogress for jj = 1:cut
-        left1 *= psi[jj] * phi[jj]
+        left1 *= psi[jj] 
+        left1 *= phi[jj]
     end
 
     left2 = prime(left1)
