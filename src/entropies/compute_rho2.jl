@@ -37,13 +37,13 @@ function rtm2_contracted(psi::MPS, phi::MPS, cut::Int)
     ind_cut_psi = linkind(psi, cut)
     ind_cut_phi = linkind(phi, cut)
     
-    for jj = 1:cut
+    @showprogress for jj = 1:cut
         left1 *= psi[jj] * phi[jj]
-        #@show left1
     end
+
     left2 = prime(left1)
 
-    for jj = length(psi):-1:cut+1
+    @showprogress for jj = length(psi):-1:cut+1
         right1 *= psi[jj] * phi[jj]
     end
 
@@ -52,8 +52,11 @@ function rtm2_contracted(psi::MPS, phi::MPS, cut::Int)
     
     #this is already trace(rho^2)
     tr_rho2 = left1
+    @info "1: $(inds(tr_rho2))"
     tr_rho2 *= right1 
+    @info "2: $(inds(tr_rho2))"
     tr_rho2 *= left2 
+    @info "3: $(inds(tr_rho2))"
     tr_rho2 *= right2
     
     return scalar(tr_rho2)

@@ -4,14 +4,6 @@ using Plots
 
 using ITransverse
 
-#include("../itransverse.jl")
-#using .ITransverse
-
-#ITensors.enable_debug_checks()
-
-
-
-
 function main()
 
     JXX = 1.0  
@@ -30,16 +22,15 @@ function main()
 
     init_state = plus_state
 
-    SVD_cutoff = 1e-12
+    SVD_cutoff = 1e-24
     maxbondim = 100
     ortho_method = "SVD"
 
     params = pparams(JXX, hz, dt, nbeta, init_state)
     truncp = trunc_params(SVD_cutoff, maxbondim, ortho_method)
 
-    Nsteps = 30
-
-    time_sites = siteinds("S=3/2", 1)
+    Nsteps = 40
+    #time_sites = siteinds("S=3/2", 1)
 
     c0 = init_cone_ising(params)
 
@@ -55,16 +46,17 @@ c0, ev_x, ev_z, chis, overlaps = main()
 println(ev_x)
 println(ev_z)
 
-a = jldopen("test_future/time_evolution/plus_04.jld2")
+#a = jldopen("test_future/time_evolution/plus_04.jld2")
 
 xs = 2:length(ev_x)+1
+
 pl1 = scatter(xs, real(ev_z))
 scatter!(pl1, xs, real(ev_x))
 
 pl2 = plot(chis) 
 
-plot!(pl1, a["Sx"])
-plot!(pl1, a["Sz"])
+# plot!(pl1, a["Sx"])
+# plot!(pl1, a["Sz"])
 
 
 plot(pl1, pl2)
