@@ -1,3 +1,4 @@
+""" Overriding ITensor's eigen() when we're dealing with complex matrices?"""
 function LinearAlgebra.eigen(
   T::DenseTensor{ElT,2,IndsT};
   mindim=nothing,
@@ -15,7 +16,8 @@ function LinearAlgebra.eigen(
     )
   end
 
-  #@info "ceigen"
+  # so we know when it's being used 
+  @info "ceigen"
   DM, VM = eigen(expose(matrixT))
 
   # Sort by largest to smallest eigenvalues

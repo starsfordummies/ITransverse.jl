@@ -114,6 +114,8 @@ export
 
 
 include("tmpo/build_fold_tmpo.jl")
+include("tmpo/ising_fold_tmpo.jl")
+
 #from build_fold_tmpo.jl
 export 
      #build_ising_folded_tMPO,  # superseded by build_ham_ ? 

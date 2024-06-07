@@ -1,3 +1,6 @@
+""" My modification of ITensors' truncate!() allowing for complex values. 
+We truncate on the absolute value of the spectrum
+"""
 function ctruncate!(
     P::AbstractVector;
     mindim=nothing,

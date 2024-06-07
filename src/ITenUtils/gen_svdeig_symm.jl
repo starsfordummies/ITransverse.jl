@@ -1,6 +1,6 @@
 
 """  
-Recall how Julia SVD works 
+Recall how Julia/ITensors SVD conventions work
 
 For Julia arrays,
 

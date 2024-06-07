@@ -108,22 +108,6 @@ function build_ising_fw_tMPO_regul_beta( build_expH_function::Function,
 end
 
 
-# function build_potts_tMPO_regul_beta( build_expH_function::Function,
-#     JXX::Real, f::Real, 
-#     dt::Number, 
-#     nbeta::Int,
-#     time_sites::Vector{<:Index})
-
-#     init_state = ComplexF64[1,0,0]
-#     println("No initial state specified, defaulting to $init_state")
-
-#     build_potts_tMPO_regul_beta( build_expH_function,
-#     JXX, f,
-#     dt, nbeta,
-#     time_sites,
-#     init_state)
-# end
-
 
 function build_potts_fw_tMPO_regul_beta( build_expH_function::Function,
     JXX::Real, 
