@@ -65,7 +65,7 @@ function build_expval_tMPO(eH::MPO, init_state::AbstractArray, operator::Abstrac
 end
 
 
-
+""" TODO need to check this """ 
 function build_expval_tMPS(eH::MPO, init_state::AbstractArray, operator::AbstractArray, time_sites::Vector{<:Index})
     #! need to check if this works 
    #@warn "Experimental - need to check"
@@ -137,20 +137,3 @@ function build_ising_expval_tMPO( build_expH_function::Function,
     return tMPO, tMPS
 end
 
-
-function build_ising_expval_tMPO( build_expH_function::Function,
-    JXX::Real, hz::Real, 
-    dt::Number, 
-    time_sites::Vector{<:Index},
-    init_state::AbstractArray,
-    operator::AbstractArray)
-
-    space_sites = siteinds("S=1/2", 3; conserve_qns = false)
-    # Real time evolution
-    eH = build_expH_function(space_sites, JXX, hz, dt)
-
-    tMPO = build_expval_tMPO(eH, init_state, operator, time_sites)
-    tMPS = build_expval_tMPS(eH, init_state, operator, time_sites)
-
-    return tMPO, tMPS
-end

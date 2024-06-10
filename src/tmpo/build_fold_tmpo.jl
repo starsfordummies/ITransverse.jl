@@ -112,7 +112,7 @@ function build_ham_folded_tMPO(tp::tmpo_params,
     fold_op::AbstractVector,
     time_sites::Vector{<:Index})
 
-    space_sites = siteinds("S=1/2", 3; conserve_qns = false)
+    #space_sites = siteinds("S=1/2", 3; conserve_qns = false)
 
     # Real time evolution
     #eH = build_expH_function(space_sites, JXX, hz, dt)
@@ -197,7 +197,7 @@ end
 
 
 
-
+""" Not implemented yet """
 function build_folded_tMPO_regul_beta(Wc::ITensor, Wc_im::ITensor, nbeta::Int, time_sites::Vector{Index{Int64}})
     #TODO NOTIMPLEMENTEDYET
     @error "not implemented yet"
