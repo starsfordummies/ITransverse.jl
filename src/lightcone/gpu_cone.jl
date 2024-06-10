@@ -68,7 +68,7 @@ extends the time MPO and the left-right tMPS by optimizing
 
 Returns the updated left-right tMPS 
 """
-function extend_tmps_cone(ll::MPS, rr::MPS, 
+function gpu_extend_tmps_cone(ll::AbstractMPS, rr::AbstractMPS, 
     op_L::Vector{ComplexF64}, op_R::Vector{ComplexF64}, 
     tp::tmpo_params,
     truncp::trunc_params)
@@ -76,19 +76,19 @@ function extend_tmps_cone(ll::MPS, rr::MPS,
     time_sites = siteinds("S=3/2", length(ll)+1)
     time_sites= addtags(time_sites, "time_fold")
 
-    tmpo = build_ham_folded_tMPO(tp, op_L, time_sites)
+    tmpo = NDTensors.cu(build_ham_folded_tMPO(tp, op_L, time_sites))
 
     #println("check: " , length(tmpo), length(ll), length(rr))
 
-    psi_L = apply_extend(tmpo, ll)
+    psi_L = gpu_apply_extend(tmpo, ll)
 
-    tmpo = swapprime(build_ham_folded_tMPO(tp, op_R, time_sites), 0, 1, "Site")
-    psi_R = apply_extend(tmpo, rr)
+    tmpo = NDTensors.cu(swapprime(build_ham_folded_tMPO(tp, op_R, time_sites), 0, 1, "Site"))
+    psi_R = gpu_apply_extend(tmpo, rr)
 
     # ! CHECK CAN WE EVER HAVE LINKS (L) != LINKS (R) ??? WHY DOES EIGEN FAIL??
-    ll, rr, ents = truncate_normalize_sweep(psi_L,psi_R, truncp)
+    ll, rr, ents = ITransverse.gpu_truncate_sweep(psi_L,psi_R, truncp)
     
-    gen_renyi2 = generalized_renyi_entropy(ll, rr, 2, normalize=true)
+    #gen_renyi2 = generalized_renyi_entropy(ll, rr, 2, normalize=true)
 
 
     return ll,rr, gen_renyi2 # ents
@@ -106,7 +106,7 @@ The p' leg of the MPO on the first site is closed by a `close_op` vector
         o-o-o-o-o-o
 ``` 
 """
-function apply_extend(A::MPO, ψ::MPS, close_op::Vector = ComplexF64[1,0,0,0])
+function gpu_apply_extend(A::MPO, ψ::AbstractMPS, close_op::Vector = ComplexF64[1,0,0,0])
 
     A = sim(linkinds, A)
     ψ = sim(linkinds, ψ)
@@ -115,7 +115,7 @@ function apply_extend(A::MPO, ψ::MPS, close_op::Vector = ComplexF64[1,0,0,0])
 
     N = length(ψ)
 
-    ψ_out = MPS(N+1)
+    ψ_out = NDTensors.cu(MPS(N+1))
 
     # First site: we close with a [1,0,0,0] (should be ok up to normalization)
     ψ_out[1] = A[1] * ITensor(close_op, siteind(A,1))
@@ -172,7 +172,7 @@ end
 
 
 
-function run_cone(psi::MPS, 
+function gpu_run_cone(psi::AbstractMPS, 
     nsteps::Int, 
     op::Vector{ComplexF64}, 
     tp::tmpo_params,
@@ -199,10 +199,10 @@ function run_cone(psi::MPS,
         llwork = deepcopy(ll)
 
         # if we're worried about symmetry, evolve separately L and R 
-        ll,_, ents = extend_tmps_cone(llwork, rr, Id, op, tp, truncp)
+        ll,_, ents = gpu_extend_tmps_cone(llwork, rr, Id, op, tp, truncp)
         push!(gen_r2sL, ents)
 
-        _,rr, ents = extend_tmps_cone(llwork, rr, op, Id, tp, truncp)
+        _,rr, ents = gpu_extend_tmps_cone(llwork, rr, op, Id, tp, truncp)
         push!(gen_r2sR, ents)
 
         overlapLR = overlap_noconj(ll,rr)
