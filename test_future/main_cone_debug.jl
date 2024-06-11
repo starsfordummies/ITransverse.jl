@@ -4,7 +4,7 @@ using Plots
 
 using ITransverse
 
-using ITransverse.ChainModels: build_expH_ising_murg_parallel
+using ITransverse.ChainModels: build_expH_ising_parallel_field_murg
 
 function main()
 
@@ -19,51 +19,66 @@ function main()
     sigZ = ComplexF64[1,0,0,-1]
     Id = ComplexF64[1,0,0,1]
 
+    optimize_op = sigZ 
+
     zero_state = Vector{ComplexF64}([1,0])
     plus_state = Vector{ComplexF64}([1/sqrt(2),1/sqrt(2)])
 
     init_state = plus_state
 
-    SVD_cutoff = 1e-24
+    cutoff = 1e-24
     maxbondim = 100
     ortho_method = "SVD"
 
-    #params = pparams(JXX, hz, dt, nbeta, init_state)
-    truncp = trunc_params(SVD_cutoff, maxbondim, ortho_method)
+    truncp = trunc_params(cutoff, maxbondim, ortho_method)
 
-    Nsteps = 40
+    Nsteps = 20
 
     #time_sites = siteinds("S=3/2", 1)
 
     mp = model_params("S=1/2", JXX, hz, 0.7, dt)
-    tp = tmpo_params("S=1/2", "S=1/2", build_expH_ising_murg_parallel, mp, dt, nbeta, init_state)
+    tp = tmpo_params("S=1/2", "S=1/2", build_expH_ising_parallel_field_murg, mp, dt, nbeta, init_state)
 
     c0 = init_cone(tp)
 
     # TODO remember ev_ start at T=2dt actually (one already from init_cone)
-    c0, c0r, ev_x, ev_z, chis, overlaps = run_cone(c0, Nsteps, sigZ, tp, truncp)
+    #c0, c0r, evs_x, evs_z, chis, overlaps, entropies= run_cone(c0, Nsteps, optimize_op, tp, truncp)
 
-    return c0, ev_x, ev_z, chis, overlaps
+    psi, psiR, chis, expvals, entropies, infos = run_cone(c0, Nsteps, optimize_op, tp, truncp)
+
+    jldsave("cp_cone.jld2"; psi, psiR, chis, expvals, entropies, infos)
+
+    return  psi, psiR, chis, expvals, entropies, infos 
+    #c0, evs_x, evs_z, chis, overlaps, entropies, optimize_op, tp, truncp
 
 end
 
-c0, ev_x, ev_z, chis, overlaps = main()
-
-println(ev_x)
-println(ev_z)
-
-#a = jldopen("test_future/time_evolution/plus_04.jld2")
-
-xs = 2:length(ev_x)+1
-
-pl1 = scatter(xs, real(ev_z))
-scatter!(pl1, xs, real(ev_x))
-
-plot!(pl1, plot!(ITransverse.ITenUtils.bench_X_04_plus[1:end]))
-pl2 = plot(chis) 
-
-# plot!(pl1, a["Sx"])
-# plot!(pl1, a["Sz"])
+#f = main()
+#ITransverse.ITenUtils.cpsave(main)
 
 
-plot(pl1, pl2)
+#c0, evs_x, evs_z, chis, overlaps, entropies, optimize_op, tp, truncp = main()
+psi, psiR, chis, expvals, entropies, infos = main()
+
+resu = ITransverse.resume_cone("cp_cone.jld2", 10)
+
+
+
+# println(ev_x)
+# println(ev_z)
+
+# #a = jldopen("test_future/time_evolution/plus_04.jld2")
+
+# xs = 2:length(ev_x)+1
+
+# pl1 = scatter(xs, real(ev_z))
+# scatter!(pl1, xs, real(ev_x))
+
+# plot!(pl1, plot!(ITransverse.ITenUtils.bench_X_04_plus[1:end]))
+# pl2 = plot(chis) 
+
+# # plot!(pl1, a["Sx"])
+# # plot!(pl1, a["Sz"])
+
+
+# plot(pl1, pl2)

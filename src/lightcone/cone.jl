@@ -89,10 +89,9 @@ function extend_tmps_cone(ll::MPS, rr::MPS,
     # ! CHECK CAN WE EVER HAVE LINKS (L) != LINKS (R) ??? WHY DOES EIGEN FAIL??
     ll, rr, ents = truncate_normalize_sweep(psi_L,psi_R, truncp)
     
+    gen_renyi2 = [0.]
     if compute_r2
         gen_renyi2 = generalized_renyi_entropy(ll, rr, 2, normalize=true)
-    else
-       compute_r2 = [0.]
     end
 
     return ll,rr, gen_renyi2 # ents
@@ -234,11 +233,31 @@ function run_cone(psi::MPS,
         ent = vn_entanglement_entropy(llc)
 
         push!(vn_ents, ent)
-        next!(p; showvalues = [(:Info,"[$(dt)] χ=$(maxlinkdim(ll)), (L|R) = $overlapLR " )])
+        next!(p; showvalues = [(:Info,"[$(length(ll))] χ=$(maxlinkdim(ll)), (L|R) = $overlapLR " )])
 
     end
 
-    all_ents = Dict(:genr2L => gen_r2sL, :genr2R => gen_r2sR, :vn => vn_ents)
+    T0 = length(psi)*tp.dt
+    ts = T0:tp.dt:T0+nsteps*tp.dt
 
-    return ll, rr, evs_x, evs_z, chis, overlaps, all_ents
+    entropies = Dict(:genr2L => gen_r2sL, :genr2R => gen_r2sR, :vn => vn_ents)
+    expvals = Dict(:evs_x => evs_x, :evs_z => evs_z, :overlaps => overlaps)
+    infos = Dict(:ts => ts, :truncp => truncp, :tp => tp, :op => op)
+
+    return ll, rr, chis, expvals, entropies, infos
+end
+
+""" Resumes a light cone simulation from a checkpoint file """
+function resume_cone(checkpoint::String, nsteps::Int)
+
+    c = jldopen(checkpoint, "r")
+
+    psi = c["psi"]
+    op = c["infos"][:op]
+    tp = c["infos"][:tp]
+    truncp = c["infos"][:truncp]
+
+    # TODO extend with prev results 
+    return run_cone(psi, nsteps, op, tp, truncp)
+    
 end
