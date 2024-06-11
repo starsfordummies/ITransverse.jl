@@ -1,8 +1,8 @@
 """ Compute the generalized renyi2 entropy by contracting left and right MPS"""
-function rtm2_contracted(psi::MPS, phi::MPS)
+function rtm2_contracted(psi::MPS, phi::MPS; normalize_factor::Number=1.0)
     r2s = []
     for jj in eachindex(psi)[1:end-1]
-        push!(r2s, rtm2_contracted(psi, phi, jj))
+        push!(r2s, rtm2_contracted(psi, phi, jj; normalize_factor))
     end
 
     return r2s
@@ -13,22 +13,31 @@ end
 
       ^  ^  ^ 
       |  |  |
-o--o--o--o--o 
+o--o--o--o--o  |phi>
 |  |      
-*--*--*--*--*
+*--*--*--*--*  <psi|
       |  |  |
-o--o--o--o--o 
+o--o--o--o--o  |phi>
 |  |      
-*--*--*--*--*
+*--*--*--*--*  <psi|
       |  |  | 
       V  V  V
 """
 
-function rtm2_contracted(psi::MPS, phi::MPS, cut::Int)
+function rtm2_contracted(psi::MPS, phi::MPS, cut::Int; normalize_factor::Number=1.0)
     @assert cut < length(psi)
     @assert cut > 0
 
+
     phi = deepcopy(phi)
+
+    # we can do it here or at the end ..
+    # if normalize
+    #     phi = phi/overlap_noconj(phi,psi)
+    # end
+    phi = phi/normalize_factor
+
+
     replace_siteinds!(phi, siteinds(psi))
 
     left1 = ITensor(1.)
@@ -124,4 +133,52 @@ function rtm2_bruteforce(psi::MPS, phi::MPS)
     end
 
     return r2s
+end
+
+
+""" Bring psi in generalized RIGHT symmetric canonical form,
+then contract LEFT enviroments and diagonalize them """
+function rtm2_sym_gauged(psi::MPS, normalize::Bool=true)
+
+    mpslen = length(psi)
+
+    psi_gauged = gen_canonical_right(psi)
+
+    if normalize
+        psi_gauged = psi_gauged/sqrt(overlap_noconj(psi_gauged,psi_gauged))
+    end
+
+    lenv= ITensor(1.)
+    s = siteinds(psi_gauged)
+
+    r2s = []
+    r2s_check = []
+    for jj in 1:mpslen-1
+
+        lenv *= psi_gauged[jj]
+        lenv *= psi_gauged[jj]'
+        lenv *= delta(s[jj],s[jj]' )
+
+        @assert ndims(lenv) == 2 
+
+        vals, vecs = eigen(lenv, ind(lenv,1), ind(lenv,2))
+
+        push!(r2s, rho2(vals))
+
+        if mpslen - jj < 4
+            renv = ITensor(1.)
+            for kk in mpslen:-1:jj+1
+                renv *= psi_gauged[kk]
+                renv *= psi_gauged[kk]'
+            end
+
+            rtm_full = lenv * renv
+            vals_fu, vecs_fu = eigen(rtm_full, inds(rtm_full,plev=0), inds(rtm_full,plev=1))
+
+            push!(r2s_check, rho2(vals_fu))
+        end
+
+    end
+    
+    return r2s, r2s_check 
 end
