@@ -115,10 +115,10 @@ function gpu_apply_extend(A::MPO, ψ::AbstractMPS, close_op::Vector = ComplexF64
 
     N = length(ψ)
 
-    ψ_out = NDTensors.cu(MPS(N+1))
+    ψ_out = MPS(N+1)
 
     # First site: we close with a [1,0,0,0] (should be ok up to normalization)
-    ψ_out[1] = A[1] * ITensor(close_op, siteind(A,1))
+    ψ_out[1] = A[1] * NDTensors.cu(ITensor(close_op, siteind(A,1)))
 
     for j in 1:N
         ψ_out[j+1] = A[j+1] * ψ[j] * delta(siteind(ψ,j), siteind(A,j+1))
