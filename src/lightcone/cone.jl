@@ -71,7 +71,8 @@ Returns the updated left-right tMPS
 function extend_tmps_cone(ll::MPS, rr::MPS, 
     op_L::Vector{ComplexF64}, op_R::Vector{ComplexF64}, 
     tp::tmpo_params,
-    truncp::trunc_params)
+    truncp::trunc_params,
+    compute_r2::Bool=false)
 
     time_sites = siteinds("S=3/2", length(ll)+1)
     time_sites= addtags(time_sites, "time_fold")
@@ -87,8 +88,14 @@ function extend_tmps_cone(ll::MPS, rr::MPS,
 
     # ! CHECK CAN WE EVER HAVE LINKS (L) != LINKS (R) ??? WHY DOES EIGEN FAIL??
     ll, rr, ents = truncate_normalize_sweep(psi_L,psi_R, truncp)
+    
+    if compute_r2
+        gen_renyi2 = generalized_renyi_entropy(ll, rr, 2, normalize=true)
+    else
+       compute_r2 = [0.]
+    end
 
-    return ll,rr,ents
+    return ll,rr, gen_renyi2 # ents
 
 end
 
@@ -186,6 +193,8 @@ function run_cone(psi::MPS,
     chis = []
     overlaps = []
     vn_ents = []
+    gen_r2sL = []
+    gen_r2sR = []
 
     p = Progress(nsteps; desc="[cone] $cutoff=$(truncp.cutoff), maxbondim=$(truncp.maxbondim)), method=$(truncp.ortho_method)", showspeed=true) 
 
@@ -195,7 +204,10 @@ function run_cone(psi::MPS,
 
         # if we're worried about symmetry, evolve separately L and R 
         ll,_, ents = extend_tmps_cone(llwork, rr, Id, op, tp, truncp)
+        push!(gen_r2sL, ents)
+
         _,rr, ents = extend_tmps_cone(llwork, rr, op, Id, tp, truncp)
+        push!(gen_r2sR, ents)
 
         overlapLR = overlap_noconj(ll,rr)
 
@@ -206,6 +218,7 @@ function run_cone(psi::MPS,
         #TODO  renormalize by overlap ?
         ll = ll * sqrt(1/overlapLR)
         rr = rr * sqrt(1/overlapLR)
+
 
         #println(dt)
         #println(ll)
@@ -225,5 +238,7 @@ function run_cone(psi::MPS,
 
     end
 
-    return ll, rr, evs_x, evs_z, chis, overlaps, vn_ents
+    all_ents = Dict(:genr2L => gen_r2sL, :genr2R => gen_r2sR, :vn => vn_ents)
+
+    return ll, rr, evs_x, evs_z, chis, overlaps, all_ents
 end
