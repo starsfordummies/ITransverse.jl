@@ -5,7 +5,14 @@ using NDTensors
 using ITensors, ITensorMPS
 using ProgressMeter
 
-version() = VersionNumber(_parse_project_toml("version"))
+
+# pkg_dir() = joinpath(dirname(pathof(@__MODULE__)), "..")
+
+# function _parse_project_toml(field::String)
+#     return Pkg.TOML.parsefile(joinpath(pkg_dir(), "Project.toml"))[field]
+# end
+
+# version() = VersionNumber(_parse_project_toml("version"))
 
 include("ITenUtils/ITenUtils.jl")
 using .ITenUtils
