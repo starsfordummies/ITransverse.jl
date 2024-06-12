@@ -301,6 +301,6 @@ end
 function cpsave(myfunc::Function, cp_name = "checkpoint.jld2")
     #TODO change default filename as date/time ? 
     f = myfunc()
-    jldsave(cp_name; f...)
+    jldsave(cp_name; f)
     @info "Saving checkpoint to $(cp_name)"
 end
