@@ -75,7 +75,7 @@ returns L_ortho, ents_sites
 function truncate_normalize_sweep_sym(left_mps::MPS; svd_cutoff::Float64, chi_max::Int, method::String)
     l = deepcopy(left_mps)
     truncate_normalize_sweep_sym!(l; svd_cutoff, chi_max, method)
-    @show linkinds(l)
+    #@show linkinds(l)
     return l 
 end
 
@@ -229,57 +229,114 @@ end
 
 
 
-""" 
-Symmetric case sweep to bring to gen. RIGHT canonical form
-!TODO havent' checked it works yet 
-"""
-#!TODO havent' checked it works yet 
-function truncate_normalize_sweep_sym_right(left_mps::MPS; svd_cutoff::Real=1e-12, chi_max::Int=100)
+# """ 
+# Symmetric case sweep to bring to gen. RIGHT canonical form
+# !TODO havent' checked it works yet 
+# """
+# #!TODO havent' checked it works yet 
+# function old_truncate_normalize_sweep_sym_right(left_mps::MPS; svd_cutoff::Real=1e-12, chi_max::Int=100)
 
-    mpslen = length(left_mps)
+#     mpslen = length(left_mps)
+
+#     # bring to LEFT standard canonical form 
+#     L_ortho = orthogonalize(left_mps,mpslen, normalize=false)
+
+#     XUinv= ITensor(1.)
+
+#     ents_sites = Vector{Float64}()
+
+#     for ii =mpslen:-1:2
+#         Ai = XUinv * L_ortho[ii]
+
+#         vL = linkind(L_ortho,ii-1)
+    
+#         # assume it's identities to the right (ie. we're carrying along gen. canon form)
+#         right_env = Ai * prime(Ai, vL)
+
+#         @assert order(right_env) == 2
+
+#         U,S = symmetric_svd_arr(right_env, svd_cutoff=svd_cutoff, chi_max=chi_max)
+
+#         sqS = sqrt.(S)
+#         isqS = sqS.^(-1)
+
+#         XU = dag(U) * isqS
+#         XUinv = sqS * U
+
+#         L_ortho[ii] =  replacetags(Ai, "v", "Link,v=$(ii)") * replacetags(XU, "v", "Link,v=$(ii-1)") 
+
+#         push!(ents_sites, log(sum(S)))
+#     end
+
+#     # the last two 
+#     An = XUinv * L_ortho[1]
+
+#     overlap = An * An 
+
+    
+#     @assert order(overlap) == 0 
+#     # normalize overlap to 1 at each step 
+#     L_ortho[1] =  replacetags(An, "v", "Link,v=1") /sqrt(overlap[1])
+
+
+#     return L_ortho, ents_sites
+
+# end
+
+""" Bring the MPS to symmetric right generalized canonical form """
+function sweep_sym_ortho_right(psi::MPS; cutoff::Real=1e-12, chi_max::Int=100)
+
+    mpslen = length(psi)
 
     # bring to LEFT standard canonical form 
-    L_ortho = orthogonalize(left_mps,mpslen, normalize=false)
+    psi_ortho = orthogonalize(psi, mpslen)
+    s = siteinds(psi_ortho)
 
     XUinv= ITensor(1.)
+    renv = ITensor(1.)
 
     ents_sites = Vector{Float64}()
 
-    for ii =mpslen:-1:2
-        Ai = XUinv * L_ortho[ii]
+    for ii = mpslen:-1:2
+        Ai = XUinv * psi_ortho[ii]
 
-        vL = linkind(L_ortho,ii-1)
-    
-        # assume it's identities to the right (ie. we're carrying along gen. canon form)
-        right_env = Ai * prime(Ai, vL)
+        renv *= Ai
+        renv *= Ai'
+        renv *= delta(s[ii], s[ii]')
 
-        @assert order(right_env) == 2
+        @assert order(renv) == 2
 
-        U,S = symmetric_svd_arr(right_env, svd_cutoff=svd_cutoff, chi_max=chi_max)
+        F = symm_oeig(renv, ind(renv,1); cutoff)
+        #@show dump(F)
+        U = F.V
+        S = F.D
 
-        sqS = sqrt.(S)
+        sqS = S.^(0.5)
         isqS = sqS.^(-1)
 
-        XU = dag(U) * isqS
+        XU = U * isqS
         XUinv = sqS * U
 
-        L_ortho[ii] =  replacetags(Ai, "v", "Link,v=$(ii)") * replacetags(XU, "v", "Link,v=$(ii-1)") 
+        psi_ortho[ii] = Ai * XU
 
-        push!(ents_sites, log(sum(S)))
+        renv *= XU 
+        renv *= XU' 
+
+        #push!(ents_sites, log(sum(S)))
     end
 
-    # the last two 
-    An = XUinv * L_ortho[1]
+    # the last one 
+    An = XUinv * psi_ortho[1]
 
     overlap = An * An 
 
     
     @assert order(overlap) == 0 
     # normalize overlap to 1 at each step 
-    L_ortho[1] =  replacetags(An, "v", "Link,v=1") /sqrt(overlap[1])
+    psi_ortho[1] =  An
 
 
-    return L_ortho, ents_sites
+    return psi_ortho, ents_sites
 
 end
 
@@ -437,7 +494,9 @@ end
 
 """
 Just bring the MPS to generalized *right* canonical form without truncating (as far as possible)
+TODO should use chi_min here to make sure ! 
 """
 function gen_canonical_right(in_mps::MPS)
-    return truncate_normalize_sweep_sym_right(in_mps; svd_cutoff=1e-14, chi_max=2*maxlinkdim(in_mps))
+    psi_gen, ents = sweep_sym_ortho_right(in_mps; cutoff=1e-20, chi_max=2*maxlinkdim(in_mps))
+    return psi_gen
 end

@@ -1,4 +1,3 @@
-
 """ Quick random MPS for playing around """
 function myrMPS(len::Int=40, chi::Int=50)
     s = siteinds("S=1/2", len)
@@ -11,7 +10,7 @@ end
 """
 function overlap_noconj(ll::MPS, rr::MPS, approx_real::Bool=false)
     siteinds(ll) != siteinds(rr) ? rr = replace_siteinds(rr, siteinds(ll)) : nothing
-    overlap = inner(dag(ll),rr) :: Union{Float64,ComplexF64}
+    overlap = inner(dag(ll),rr) 
     if approx_real && imag(overlap) < 1e-15
         return real(overlap)
     end
