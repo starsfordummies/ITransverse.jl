@@ -101,7 +101,12 @@ include("ChainModels/ChainModels.jl")
 using .ChainModels
 
 export pparams, ppm_params, trunc_params
-export build_expH_ising_murg, build_expH_potts_murg, build_expH_potts_symmetric_svd
+export build_expH_ising_murg, 
+build_expH_potts_murg, 
+build_expH_potts_symmetric_svd,
+build_expH_ising_parallel_field_murg
+
+
 
 include("tmpo/build_tmpo_fw.jl")
 include("tmpo/build_tmpo_expval.jl")
