@@ -1,17 +1,19 @@
 using ITensors, ITensorMPS
 
+using Plots
 using ITransverse
 using ITransverse: build_expH_ising_1o, build_expH_ising_2o, build_H_ising
-using .IGensors
+#using .IGensors
 
-N = 60      # System size
+let 
+N = 40      # System size
 
 # number of time steps
-nSteps = 30
+nSteps = 20
 
 
 JXX = 1.0   # spin x -- spin x coupling
-hz = 0.8   # local magnetic field in z direction
+hz = 1.05   # local magnetic field in z direction
 
 dt = 0.1  # time step
 
@@ -22,8 +24,8 @@ maxbondim = 300       # maximum bond dimension allowed
 sites = siteinds("S=1/2", N; conserve_qns = false)
 
 # initial state
-#psi_prod = productMPS(ComplexF64, sites, "↑")
-psi_prod = productMPS(ComplexF64, sites, "+")
+psi_prod = productMPS(ComplexF64, sites, "↑")
+#psi_prod = productMPS(ComplexF64, sites, "+")
 
 
 ev_tebdO1 = [] 
@@ -82,22 +84,36 @@ psi_u4 = random_mps(sites)
 
 Hisi = build_H_ising(sites, JXX, hz)
 
+# println("TDVP autoMPO isi")
+# psi_tdvp1 = tdvp(
+#           Hisi,
+#           2.0im,
+#           psi_prod;
+#           nsteps=20, # 'real' time evolution according to U(τ) ≈ exp(τ * H) = exp(-im*dt * H)
+#           nsweeps = nSteps,
+#           maxdim = maxbondim,
+#           cutoff = SVD_cutoff,
+#           normalize = true,
+#           outputlevel=1,
+# )
+
+ev_tdvp = [] 
+psi_tdvp1 = deepcopy(psi_prod)
 println("TDVP autoMPO isi")
-psi_tdvp1 = tdvp(
-          Hisi,
-          psi_prod,
-          -im * dt; # 'real' time evolution according to U(τ) ≈ exp(τ * H) = exp(-im*dt * H)
-          nsweeps = nSteps,
-          maxdim = maxbondim,
-          cutoff = SVD_cutoff,
-          normalize = true,
-          outputlevel=1,
-)
-
-
-plot(ev_tebdO1)
-plot!(ev_tebdO2)
-plot!(ev_tebdmurg)
+for nt in 1:20
+  psi_tdvp1 = tdvp(
+            Hisi,
+            0.1im,
+            psi_tdvp1;
+            nsteps=1, # 'real' time evolution according to U(τ) ≈ exp(τ * H) = exp(-im*dt * H)
+            nsweeps = nSteps,
+            maxdim = maxbondim,
+            cutoff = SVD_cutoff,
+            normalize = true,
+            outputlevel=1,
+  )
+  push!(ev_tdvp, expect(psi_tdvp1, "Z", sites=round(Int,N/2)))
+end
 
 ### These checks should be trivial 
 
@@ -168,3 +184,11 @@ println(" <U_o1(ψ) | U_o2(ψ)> = $(u1_u2)")
 println(" <U_o1(ψ) | Umurg(ψ)> = $(u1_u3)")
 println(" <Umurg(ψ) | U_oj2(ψ)> = $(u3_u4)")
 
+
+scatter(ev_tebdO1, label="tebd 1o")
+scatter!(ev_tebdO2, label="tebd 2o")
+scatter!(ev_tebdmurg, label="tebd murg")
+plot!(ev_tdvp, label="tdvp")
+
+println(ev_tdvp)
+end
