@@ -182,3 +182,53 @@ function rtm2_sym_gauged(psi::MPS, normalize::Bool=true)
     
     return r2s, r2s_check 
 end
+
+
+
+""" For a state psi, build the symmetric RTM <psibar|psi>,
+Bring psi in generalized RIGHT symmetric canonical form,
+then contract LEFT enviroments and diagonalize them """
+function diagonalize_rtm_sym_gauged(psi::MPS, normalize::Bool=true)
+
+    mpslen = length(psi)
+
+    psi_gauged = gen_canonical_right(psi)
+
+    if normalize
+        psi_gauged = psi_gauged/sqrt(overlap_noconj(psi_gauged,psi_gauged))
+    end
+
+    lenv= ITensor(1.)
+    s = siteinds(psi_gauged)
+
+    eigs_rho = []
+    eigs_rho_check = []
+    for jj in 1:mpslen-1
+
+        lenv *= psi_gauged[jj]
+        lenv *= psi_gauged[jj]'
+        lenv *= delta(s[jj],s[jj]' )
+
+        @assert ndims(lenv) == 2 
+
+        vals, vecs = eigen(lenv, ind(lenv,1), ind(lenv,2))
+
+        push!(eigs_rho, rho2(vals))
+
+        if mpslen - jj < 4
+            renv = ITensor(1.)
+            for kk in mpslen:-1:jj+1
+                renv *= psi_gauged[kk]
+                renv *= psi_gauged[kk]'
+            end
+
+            rtm_full = lenv * renv
+            vals_full, _ = eigen(rtm_full, inds(rtm_full,plev=0), inds(rtm_full,plev=1))
+
+            push!(eigs_rho_check, vals_full)
+        end
+
+    end
+    
+    return r2s, r2s_check 
+end
