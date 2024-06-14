@@ -172,6 +172,45 @@ function expval_cone(ll::MPS, rr::MPS, op::Vector{ComplexF64}, tp::tmpo_params)
 
 end
 
+# Version with 2 operators
+function expval_LR(ll::MPS, rr::MPS, opL::Vector{ComplexF64}, opR::Vector{ComplexF64} tp::tmpo_params)
+
+    fold_id = ComplexF64[1,0,0,1]
+
+    time_sites = siteinds(ll)
+    tmpo = build_ham_folded_tMPO(tp,  opL, time_sites)
+    psi_L = apply(tmpo, ll)
+
+    tmpo = build_ham_folded_tMPO(tp, fold_id, time_sites)
+    psi_L_id = apply(tmpo, rr)
+
+    time_sites = siteinds(rr)
+    tmpo = swapprime(build_ham_folded_tMPO(tp, opR, time_sites), 0, 1, "Site")
+    psi_R = apply(tmpo, rr)
+
+    tmpo = swapprime(build_ham_folded_tMPO(tp, fold_id, time_sites), 0, 1, "Site")
+    psi_R_id = apply(tmpo, rr)
+
+
+    ev = overlap_noconj(psi_L,psi_R)/overlap_noconj(psi_L_id,psi_R_id)
+
+    return ev
+
+end
+
+""" TODO need to finish """
+function expval_endensity(ll::MPS, rr::MPS, tp::tmpo_params)
+
+    Id = ComplexF64[1,0,0,1]
+    sig_X = ComplexF64[0,1,1,0]
+    sig_Z = ComplexF64[1,0,0,-1]
+    #ZZ+g1X+gX1+hZ1+h1Z
+    Ham_dens =  (kron(sig_X,sig_X) 
+    + tp.mp.hz*(kron(Id, sig_X) + kron(sig_X, Id)) 
+    + tp.mp.λx*(kron(sig_Z, Id) + kron(Id, sig_Z)))
+
+end
+
 
 
 
