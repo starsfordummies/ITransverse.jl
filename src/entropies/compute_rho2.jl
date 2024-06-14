@@ -228,5 +228,5 @@ function diagonalize_rtm_sym_gauged(psi::MPS; normalize_factor::Number=1.0)
 
     end
     
-    return r2s, r2s_check 
+    return eigs_rho, eigs_rho_check 
 end
