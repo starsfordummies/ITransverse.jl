@@ -1,3 +1,5 @@
+using .ITransverseCUDAext
+
 """
 init_cone_ising => seed_cone_left =>
 """
@@ -85,13 +87,12 @@ function gpu_extend_tmps_cone(ll::AbstractMPS, rr::AbstractMPS,
     tmpo = NDTensors.cu(swapprime(build_ham_folded_tMPO(tp, op_R, time_sites), 0, 1, "Site"))
     psi_R = gpu_apply_extend(tmpo, rr)
 
-    # ! CHECK CAN WE EVER HAVE LINKS (L) != LINKS (R) ??? WHY DOES EIGEN FAIL??
-    ll, rr, ents = ITransverse.gpu_truncate_sweep(psi_L,psi_R, truncp)
+    ll, rr, ents = ITransverseCUDAext.gpu_truncate_sweep(psi_L,psi_R, cutoff=truncp.cutoff, chi_max=truncp.maxbondim)
     
     #gen_renyi2 = generalized_renyi_entropy(ll, rr, 2, normalize=true)
 
 
-    return ll,rr, gen_renyi2 # ents
+    return ll,rr, ents # ents
 
 end
 
@@ -108,8 +109,8 @@ The p' leg of the MPO on the first site is closed by a `close_op` vector
 """
 function gpu_apply_extend(A::MPO, ψ::AbstractMPS, close_op::Vector = ComplexF64[1,0,0,0])
 
-    A = sim(linkinds, A)
-    ψ = sim(linkinds, ψ)
+    A = NDTensors.cu(sim(linkinds, A))
+    ψ = NDTensors.cu(sim(linkinds, ψ))
     
     @assert length(A) == length(ψ) + 1 
 
@@ -121,7 +122,7 @@ function gpu_apply_extend(A::MPO, ψ::AbstractMPS, close_op::Vector = ComplexF64
     ψ_out[1] = A[1] * NDTensors.cu(ITensor(close_op, siteind(A,1)))
 
     for j in 1:N
-        ψ_out[j+1] = A[j+1] * ψ[j] * delta(siteind(ψ,j), siteind(A,j+1))
+        ψ_out[j+1] = A[j+1] * ψ[j] * NDTensors.cu(dense(delta(siteind(ψ,j), siteind(A,j+1))))
     end
     
     # fix links
@@ -152,14 +153,14 @@ function expval_cone(ll::MPS, rr::MPS, op::Vector{ComplexF64}, tp::tmpo_params)
     fold_id = ComplexF64[1,0,0,1]
 
     time_sites = siteinds(ll)
-    tmpo = build_ham_folded_tMPO(tp,  fold_id, time_sites)
+    tmpo = NDTensors.cu(build_ham_folded_tMPO(tp,  fold_id, time_sites))
     psi_L = apply(tmpo, ll)
 
     time_sites = siteinds(rr)
-    tmpo = swapprime(build_ham_folded_tMPO(tp, op, time_sites), 0, 1, "Site")
+    tmpo = NDTensors.cu(swapprime(build_ham_folded_tMPO(tp, op, time_sites), 0, 1, "Site"))
     psi_R = apply(tmpo, rr)
 
-    tmpo = swapprime(build_ham_folded_tMPO(tp, fold_id, time_sites), 0, 1, "Site")
+    tmpo = NDTensors.cu(swapprime(build_ham_folded_tMPO(tp, fold_id, time_sites), 0, 1, "Site"))
     psi_R_id = apply(tmpo, rr)
 
 
