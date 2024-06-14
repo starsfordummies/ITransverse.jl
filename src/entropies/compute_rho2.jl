@@ -92,6 +92,14 @@ function rho2(eigenvalues::Vector)
 end
 
 
+function rho2_eigen(all_eigenvalues::Vector)
+    r2s = []
+    for eigenvalues in all_eigenvalues
+         push!(r2s, sum(eigenvalues .* eigenvalues))
+    end
+end
+
+
 
 # Brute-force diagonalization
 
@@ -186,7 +194,8 @@ end
 
 """ For a state psi, build the symmetric RTM <psibar|psi>,
 Bring psi in generalized RIGHT symmetric canonical form,
-then contract LEFT enviroments and diagonalize them """
+then contract LEFT enviroments and diagonalize them.
+Returns an array of arrays containing the eigenvalues of the RTM for each cut """
 function diagonalize_rtm_sym_gauged(psi::MPS; normalize_factor::Number=1.0)
 
     mpslen = length(psi)
@@ -201,6 +210,7 @@ function diagonalize_rtm_sym_gauged(psi::MPS; normalize_factor::Number=1.0)
 
     eigs_rho = []
     eigs_rho_check = []
+
     for jj in 1:mpslen-1
 
         lenv *= psi_gauged[jj]

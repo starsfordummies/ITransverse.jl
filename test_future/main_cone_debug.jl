@@ -1,10 +1,8 @@
-using ITensors, JLD2, Dates
+using ITensors, ITensorMPS, JLD2, Dates
 using Revise
 using Plots
 
 using ITransverse
-
-using ITransverse.ChainModels: build_expH_ising_parallel_field_murg
 
 function main()
 
@@ -36,8 +34,12 @@ function main()
 
     #time_sites = siteinds("S=3/2", 1)
 
-    mp = model_params("S=1/2", JXX, hz, 0.7, dt)
-    tp = tmpo_params("S=1/2", "S=1/2", build_expH_ising_parallel_field_murg, mp, dt, nbeta, init_state)
+    # mp = model_params("S=1/2", JXX, hz, 0.4, dt)
+    # tp = tmpo_params("S=1/2", "S=1/2", build_expH_ising_parallel_field_murg, mp, dt, nbeta, init_state)
+
+    mp = model_params("S=1/2", JXX, hz, 0.0, dt)
+    tp = tmpo_params("S=1/2", "S=1/2", build_expH_ising_murg, mp, dt, nbeta, init_state)
+
 
     c0 = init_cone(tp)
 
@@ -49,15 +51,9 @@ function main()
     jldsave("cp_cone.jld2"; psi, psiR, chis, expvals, entropies, infos)
 
     return  psi, psiR, chis, expvals, entropies, infos 
-    #c0, evs_x, evs_z, chis, overlaps, entropies, optimize_op, tp, truncp
 
 end
 
-#f = main()
-#ITransverse.ITenUtils.cpsave(main)
-
-
-#c0, evs_x, evs_z, chis, overlaps, entropies, optimize_op, tp, truncp = main()
 psi, psiR, chis, expvals, entropies, infos = main()
 
 resu = ITransverse.resume_cone("cp_cone.jld2", 10)
