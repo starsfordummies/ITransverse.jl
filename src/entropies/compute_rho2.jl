@@ -138,15 +138,14 @@ end
 
 """ Bring psi in generalized RIGHT symmetric canonical form,
 then contract LEFT enviroments and diagonalize them """
-function rtm2_sym_gauged(psi::MPS, normalize::Bool=true)
+function rtm2_sym_gauged(psi::MPS, normalize_factor::Number=1.0)
 
     mpslen = length(psi)
 
     psi_gauged = gen_canonical_right(psi)
 
-    if normalize
-        psi_gauged = psi_gauged/sqrt(overlap_noconj(psi_gauged,psi_gauged))
-    end
+    psi_gauged = psi_gauged/normalize_factor
+
 
     lenv= ITensor(1.)
     s = siteinds(psi_gauged)
@@ -188,15 +187,14 @@ end
 """ For a state psi, build the symmetric RTM <psibar|psi>,
 Bring psi in generalized RIGHT symmetric canonical form,
 then contract LEFT enviroments and diagonalize them """
-function diagonalize_rtm_sym_gauged(psi::MPS, normalize::Bool=true)
+function diagonalize_rtm_sym_gauged(psi::MPS; normalize_factor::Number=1.0)
 
     mpslen = length(psi)
 
     psi_gauged = gen_canonical_right(psi)
 
-    if normalize
-        psi_gauged = psi_gauged/sqrt(overlap_noconj(psi_gauged,psi_gauged))
-    end
+    psi_gauged = psi_gauged/normalize_factor
+
 
     lenv= ITensor(1.)
     s = siteinds(psi_gauged)

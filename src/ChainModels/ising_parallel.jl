@@ -83,7 +83,6 @@ end
 
 function build_expH(p::tmpo_params)
     
-    space_sites = siteinds(p.mp.phys_space, 3; conserve_qns = false)
-    p.expH_func(space_sites, p.mp.JXX, p.mp.hz, p.mp.λx, p.dt)
+    p.expH_func(p.mp)
 
 end

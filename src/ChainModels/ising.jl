@@ -356,9 +356,12 @@ function build_expH_ising_murg(sites::Vector{<:Index}, p::pparams)
     build_expH_ising_murg(sites, p.JXX, p.hz, p.dt)
 end
 
-""" Prescription a la Murg for exp(-i*H*dt) Ising  
-Convention H = -( JXX + hZ )
-"""
+function build_expH_ising_murg(p::model_params)
+    
+    space_sites = siteinds(p.phys_space, 3; conserve_qns = false)
+    build_expH_ising_murg(space_sites, p.JXX, p.hz, p.dt)
+end
+
 function build_expH_ising_murg(
     sites::Vector{<:Index},
     JXX::Real,

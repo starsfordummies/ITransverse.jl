@@ -84,7 +84,9 @@ export check_gencan_left_phipsi
 export rho2, 
     rtm2_contracted, 
     rtm2_bruteforce,
-    gen_symm_diagonalize_rtm
+    #gen_symm_diagonalize_rtm,
+    diagonalize_rtm_sym_gauged
+
  
 
 
