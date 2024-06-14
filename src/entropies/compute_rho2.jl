@@ -211,7 +211,7 @@ function diagonalize_rtm_sym_gauged(psi::MPS; normalize_factor::Number=1.0)
 
         vals, vecs = eigen(lenv, ind(lenv,1), ind(lenv,2))
 
-        push!(eigs_rho, rho2(vals))
+        push!(eigs_rho, vals)
 
         if mpslen - jj < 4
             renv = ITensor(1.)
