@@ -112,6 +112,8 @@ function gpu_run_cone(psi::AbstractMPS,
 
         overlapLR = overlap_noconj(ll,rr)
 
+        @show overlapLR
+
         #println("lens: ", length(ll), "     ", length(rr))
         #@show (overlap_noconj(ll,rr))
         #@show maxlinkdim(ll), maxlinkdim(rr)

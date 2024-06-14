@@ -161,7 +161,9 @@ export powermethod_sym,
 include("lightcone/cone.jl")
 
 export evolve_cone,
- init_cone_ising
+ init_cone_ising,
+ expval_cone,
+ expval_LR
 
 export init_cone, run_cone
 
