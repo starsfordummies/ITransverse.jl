@@ -173,7 +173,7 @@ function expval_cone(ll::MPS, rr::MPS, op::Vector{ComplexF64}, tp::tmpo_params)
 end
 
 # Version with 2 operators
-function expval_LR(ll::MPS, rr::MPS, opL::Vector{ComplexF64}, opR::Vector{ComplexF64} tp::tmpo_params)
+function expval_LR(ll::MPS, rr::MPS, opL::Vector{ComplexF64}, opR::Vector{ComplexF64}, tp::tmpo_params)
 
     fold_id = ComplexF64[1,0,0,1]
 
@@ -249,18 +249,11 @@ function run_cone(psi::MPS,
 
         overlapLR = overlap_noconj(ll,rr)
 
-        #println("lens: ", length(ll), "     ", length(rr))
-        #@show (overlap_noconj(ll,rr))
-        #@show maxlinkdim(ll), maxlinkdim(rr)
-
         #TODO  renormalize by overlap ?
         ll = ll * sqrt(1/overlapLR)
         rr = rr * sqrt(1/overlapLR)
 
 
-        #println(dt)
-        #println(ll)
-        #println(overlap_noconj(ll,rr)/overlap_noconj(ll,ll), maxlinkdim(ll))
         push!(evs_x, expval_cone(ll, rr, ComplexF64[0,1,1,0], tp))
         push!(evs_z, expval_cone(ll, rr, ComplexF64[1,0,0,-1], tp))
 
@@ -270,6 +263,10 @@ function run_cone(psi::MPS,
         llc = deepcopy(ll)
         orthogonalize!(llc,1)
         ent = vn_entanglement_entropy(llc)
+
+        if length(ll) > 50 && length(ll) % 20 == 0
+            jldsave("cp_cone_$(length(ll))_chi_$(chis[end]).jld2"; psi, ll, rr, chis, expvals, entropies, infos)
+        end
 
         push!(vn_ents, ent)
         next!(p; showvalues = [(:Info,"[$(length(ll))] χ=$(maxlinkdim(ll)), (L|R) = $overlapLR " )])
