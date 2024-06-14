@@ -1,64 +1,3 @@
-using .ITransverseCUDAext
-
-"""
-init_cone_ising => seed_cone_left =>
-"""
-
-""" Initializes lightcone for a generic MPO  """
-function init_cone(p::tmpo_params)
-
-    # time_sites = siteinds("S=3/2", 1)
-    # time_sites= addtags(time_sites, "time_fold")
-  
-    eH = p.expH_func(p.mp)
-    
-    cone_mps = seed_cone(eH, p.init_state)
-
-    return cone_mps
-
-end
-
-
-""" Seeds the *left* light cone temporal MPS, given `eH` MPO tensors and `init_state`,
-builds a (length 1) tMPS. The `init_state` goes to the *right* """
-function seed_cone(eH::MPO, init_state::Vector{ComplexF64})
-    
-    Wl = eH[1]
-
-    iL, iR = linkinds(eH)
-    iP1 = siteind(eH, 1)
-    iP2 = siteind(eH, 2) 
-
-    WWl = Wl * dag(prime(Wl,2))
-
-    # Combine indices appropriately 
-    CwR = combiner(iL,iL''; tags="cwR")
-    # we flip the p<>* legs on the backwards, shouldn't be necessary if we have p<>p*
-    Cp = combiner(iP1,iP1'''; tags="cp")
-    Cps = combiner(iP1',iP1''; tags="cps")
-
-    WWl = WWl * CwR * Cp * Cps
-
-    # (in rotated indices, we trace to the left and contract with the initial state to the right 
-    WWl_L = WWl * dag(Cps) * delta(iP1',iP1'')
-
-
-    fold_init_state = init_state * init_state'
-    init_tensor = ITensor(fold_init_state, combinedind(Cp))
-
-    WWl_LR = WWl_L * init_tensor
-
-    tMPS = MPS(1)
-
-    time_sites = siteinds("S=3/2", 1)
-    time_sites= addtags(time_sites, "time_fold")
-
-    tMPS[1] = WWl_LR * delta(combinedind(CwR), time_sites[1]) 
-
-return tMPS
-
-end
-
 
 
 """
@@ -87,32 +26,22 @@ function gpu_extend_tmps_cone(ll::AbstractMPS, rr::AbstractMPS,
     tmpo = NDTensors.cu(swapprime(build_ham_folded_tMPO(tp, op_R, time_sites), 0, 1, "Site"))
     psi_R = gpu_apply_extend(tmpo, rr)
 
-    ll, rr, ents = ITransverseCUDAext.gpu_truncate_sweep(psi_L,psi_R, cutoff=truncp.cutoff, chi_max=truncp.maxbondim)
+    ll, rr = ITransverseCUDAext.gpu_truncate_sweep(psi_L,psi_R, cutoff=truncp.cutoff, chi_max=truncp.maxbondim)
     
     #gen_renyi2 = generalized_renyi_entropy(ll, rr, 2, normalize=true)
 
 
-    return ll,rr, ents # ents
+    return ll,rr
 
 end
 
 
-""" Extends MPS ψ to the *left* by one site by applying the MPO A on top,
-Returns a new MPS which is the extension of ψ (extended to the left), with siteinds matching those of A
-The p' leg of the MPO on the first site is closed by a `close_op` vector 
-```
-      | | | | | | |
- (op)-o-o-o-o-o-o-o-(in)
-      v | | | | | |
-        o-o-o-o-o-o
-``` 
-"""
 function gpu_apply_extend(A::MPO, ψ::AbstractMPS, close_op::Vector = ComplexF64[1,0,0,0])
 
-    A = NDTensors.cu(sim(linkinds, A))
-    ψ = NDTensors.cu(sim(linkinds, ψ))
+    A = sim(linkinds, A)
+    ψ = sim(linkinds, ψ)
     
-    @assert length(A) == length(ψ) + 1 
+    #@assert length(A) == length(ψ) + 1 
 
     N = length(ψ)
 
@@ -122,7 +51,7 @@ function gpu_apply_extend(A::MPO, ψ::AbstractMPS, close_op::Vector = ComplexF64
     ψ_out[1] = A[1] * NDTensors.cu(ITensor(close_op, siteind(A,1)))
 
     for j in 1:N
-        ψ_out[j+1] = A[j+1] * ψ[j] * NDTensors.cu(dense(delta(siteind(ψ,j), siteind(A,j+1))))
+        ψ_out[j+1] = A[j+1] * ψ[j] * delta(siteind(ψ,j), siteind(A,j+1)) # NDTensors.cu(dense(
     end
     
     # fix links
@@ -148,31 +77,6 @@ end
 
 
 
-function expval_cone(ll::MPS, rr::MPS, op::Vector{ComplexF64}, tp::tmpo_params)
-
-    fold_id = ComplexF64[1,0,0,1]
-
-    time_sites = siteinds(ll)
-    tmpo = NDTensors.cu(build_ham_folded_tMPO(tp,  fold_id, time_sites))
-    psi_L = apply(tmpo, ll)
-
-    time_sites = siteinds(rr)
-    tmpo = NDTensors.cu(swapprime(build_ham_folded_tMPO(tp, op, time_sites), 0, 1, "Site"))
-    psi_R = apply(tmpo, rr)
-
-    tmpo = NDTensors.cu(swapprime(build_ham_folded_tMPO(tp, fold_id, time_sites), 0, 1, "Site"))
-    psi_R_id = apply(tmpo, rr)
-
-
-    ev = overlap_noconj(psi_L,psi_R)/overlap_noconj(psi_L,psi_R_id)
-
-    return ev
-
-end
-
-
-
-
 function gpu_run_cone(psi::AbstractMPS, 
     nsteps::Int, 
     op::Vector{ComplexF64}, 
@@ -180,8 +84,8 @@ function gpu_run_cone(psi::AbstractMPS,
     truncp::trunc_params
     )
 
-    ll = deepcopy(psi)
-    rr = deepcopy(psi)
+    ll = NDTensors.cu(deepcopy(psi))
+    rr = NDTensors.cu(deepcopy(psi))
 
     Id = ComplexF64[1,0,0,1]
 
@@ -200,11 +104,9 @@ function gpu_run_cone(psi::AbstractMPS,
         llwork = deepcopy(ll)
 
         # if we're worried about symmetry, evolve separately L and R 
-        ll,_, ents = gpu_extend_tmps_cone(llwork, rr, Id, op, tp, truncp)
-        push!(gen_r2sL, ents)
+        ll,_ = gpu_extend_tmps_cone(llwork, rr, Id, op, tp, truncp)
 
-        _,rr, ents = gpu_extend_tmps_cone(llwork, rr, op, Id, tp, truncp)
-        push!(gen_r2sR, ents)
+        _,rr = gpu_extend_tmps_cone(llwork, rr, op, Id, tp, truncp)
 
         overlapLR = overlap_noconj(ll,rr)
 
@@ -217,25 +119,15 @@ function gpu_run_cone(psi::AbstractMPS,
         rr = rr * sqrt(1/overlapLR)
 
 
-        #println(dt)
-        #println(ll)
-        #println(overlap_noconj(ll,rr)/overlap_noconj(ll,ll), maxlinkdim(ll))
         push!(evs_x, expval_cone(ll, rr, ComplexF64[0,1,1,0], tp))
         push!(evs_z, expval_cone(ll, rr, ComplexF64[1,0,0,-1], tp))
 
         push!(chis, maxlinkdim(ll))
         push!(overlaps, overlapLR)
-
-        llc = deepcopy(ll)
-        orthogonalize!(llc,1)
-        ent = vn_entanglement_entropy(llc)
-
-        push!(vn_ents, ent)
+     
         next!(p; showvalues = [(:Info,"[$(dt)] χ=$(maxlinkdim(ll)), (L|R) = $overlapLR " )])
 
     end
 
-    all_ents = Dict(:genr2L => gen_r2sL, :genr2R => gen_r2sR, :vn => vn_ents)
-
-    return ll, rr, evs_x, evs_z, chis, overlaps, all_ents
+    return ll, rr, evs_x, evs_z, chis, overlaps
 end

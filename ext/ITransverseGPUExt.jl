@@ -1,4 +1,4 @@
-module ITransverseCUDAext
+module ITransverseGPUExt
 
 using CUDA
 
