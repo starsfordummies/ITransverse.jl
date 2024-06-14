@@ -1,7 +1,7 @@
 name = "ITransverse"
 uuid = "0b04ad49-86dd-4710-99cf-a56925ebcbe5"
 authors = ["Stefano Carignano <stefano.carignano@bsc.es>"]
-version = "0.4.9"
+version = "0.5.0"
 
 [deps]
 ITensorMPS = "0d1a4710-d33b-49a5-8f18-73bdf49b47e2"
@@ -17,4 +17,4 @@ ProgressMeter = "92933f4c-e287-5a05-a399-4b506db050ca"
 CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
 
 [extensions]
-ITransverseCUDAExt = "CUDA"
+ITransverseGPUExt = "CUDA"
