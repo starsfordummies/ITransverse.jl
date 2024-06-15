@@ -119,6 +119,7 @@ function ITransverse.gpu_run_cone(psi::AbstractMPS,
     vn_ents = []
     gen_r2sL = []
     gen_r2sR = []
+    ts = []
 
     entropies = Dict(:genr2L => gen_r2sL, :genr2R => gen_r2sR, :vn => vn_ents)
     expvals = Dict(:evs_x => evs_x, :evs_z => evs_z, :overlaps => overlaps)
@@ -161,6 +162,7 @@ function ITransverse.gpu_run_cone(psi::AbstractMPS,
             jldsave("cp_cone_$(length(ll))_chi_$(chis[end]).jld2"; llw, rrw, chis, expvals, entropies, infos)
         end
      
+        push!(ts, length(ll)*tp.dt)
         next!(p; showvalues = [(:Info,"[$(dt)] χ=$(maxlinkdim(ll)), (L|R) = $overlapLR " )])
 
     end
