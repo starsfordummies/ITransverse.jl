@@ -299,3 +299,10 @@ function resume_cone(checkpoint::String, nsteps::Int)
     return run_cone(psi, nsteps, op, tp, truncp)
     
 end
+
+
+function gpu_run_cone() 
+    @info "not loaded" 
+end
+function gpu_truncate_sweep() end
+function gpu_expval_cone() end

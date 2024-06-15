@@ -1,4 +1,4 @@
-function gpu_expval_cone(ll::MPS, rr::MPS, op::Vector{ComplexF64}, tp::tmpo_params)
+function ITransverse.gpu_expval_cone(ll::MPS, rr::MPS, op::Vector{ComplexF64}, tp::tmpo_params)
 
     fold_id = ComplexF64[1,0,0,1]
 
@@ -99,7 +99,7 @@ end
 
 
 
-function gpu_run_cone(psi::AbstractMPS, 
+function ITransverse.gpu_run_cone(psi::AbstractMPS, 
     nsteps::Int, 
     op::Vector{ComplexF64}, 
     tp::tmpo_params,

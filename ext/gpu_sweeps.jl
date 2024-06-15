@@ -2,7 +2,7 @@ using CUDA
 
 """ Basic truncate sweep: first brings to regular RIGHT ortho form,
 then performs a LEFT generalized canonical sweep with SVD/EIG truncation """
-function gpu_truncate_sweep(left_mps::MPS, right_mps::MPS; cutoff::Real, chi_max::Int)
+function ITransverse.gpu_truncate_sweep(left_mps::MPS, right_mps::MPS; cutoff::Real, chi_max::Int)
 
     mpslen = length(left_mps)
 
