@@ -125,7 +125,7 @@ function ITransverse.gpu_run_cone(psi::AbstractMPS,
     expvals = Dict(:evs_x => evs_x, :evs_z => evs_z, :overlaps => overlaps)
     infos = Dict(:ts => ts, :truncp => truncp, :tp => tp, :op => op)
 
-    p = Progress(nsteps; desc="[cone] $cutoff=$(truncp.cutoff), maxbondim=$(truncp.maxbondim)), method=$(truncp.ortho_method)", showspeed=true) 
+    p = Progress(nsteps; desc="[GPU cone] $cutoff=$(truncp.cutoff), maxbondim=$(truncp.maxbondim)), method=$(truncp.ortho_method)", showspeed=true) 
 
     for dt = 1:nsteps
         #println("Evolving $dt")
@@ -159,6 +159,7 @@ function ITransverse.gpu_run_cone(psi::AbstractMPS,
         if save_cp && length(ll) > 50 && length(ll) % 20 == 0
             llw = NDTensors.cpu(ll)
             rrw = NDTensors.cpu(rr)
+            @info "Writing checkpoint file"
             jldsave("cp_cone_$(length(ll))_chi_$(chis[end]).jld2"; llw, rrw, chis, expvals, entropies, infos)
         end
      
