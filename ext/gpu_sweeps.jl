@@ -28,8 +28,9 @@ function gpu_truncate_sweep(left_mps::MPS, right_mps::MPS; cutoff::Real, chi_max
         U,S,Vdag = svd(left_env, ind(left_env,1); cutoff, maxdim=chi_max)
 
         # WORKAROUND CPU-back it until ITensors fix it 
-        sqS = NDTensors.cu(sqrt.(NDTensors.cpu(S)))
+        sqS = sqrt.(NDTensors.cpu(S))
         isqS = NDTensors.cu(sqS.^(-1))
+        sqS = NDTensors.cu(sqS)
         
         XU = dag(U) * isqS
         XUinv = sqS * U
