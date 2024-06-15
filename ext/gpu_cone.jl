@@ -49,6 +49,7 @@ function gpu_apply_extend(A::MPO, ψ::AbstractMPS, close_op::Vector = ComplexF64
 
     ψ_out = MPS(N+1)
 
+
     # First site: we close with a [1,0,0,0] (should be ok up to normalization)
     ψ_out[1] = A[1] * NDTensors.cu(ITensor(close_op, siteind(A,1)))
 
@@ -112,7 +113,7 @@ function gpu_run_cone(psi::AbstractMPS,
 
         overlapLR = overlap_noconj(ll,rr)
 
-        @show overlapLR
+        #@show overlapLR
 
         #println("lens: ", length(ll), "     ", length(rr))
         #@show (overlap_noconj(ll,rr))

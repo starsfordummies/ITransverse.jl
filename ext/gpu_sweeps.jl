@@ -27,9 +27,9 @@ function gpu_truncate_sweep(left_mps::MPS, right_mps::MPS; cutoff::Real, chi_max
 
         U,S,Vdag = svd(left_env, ind(left_env,1); cutoff, maxdim=chi_max)
 
-        # WORKAROUND dense(S) until ITensors fix it 
-        sqS = sqrt.(dense(S))
-        isqS = sqS.^(-1)
+        # WORKAROUND CPU-back it until ITensors fix it 
+        sqS = NDTensors.cu(sqrt.(NDTensors.cpu(S)))
+        isqS = NDTensors.cu(sqS.^(-1))
         
         XU = dag(U) * isqS
         XUinv = sqS * U
@@ -38,7 +38,7 @@ function gpu_truncate_sweep(left_mps::MPS, right_mps::MPS; cutoff::Real, chi_max
         XVinv = sqS * Vdag
 
 
-        deltaS = NDTensors.cu(delta(inds(S)))
+        deltaS = delta(inds(S))
 
         L_ortho[ii] = Ai * XU  
         R_ortho[ii] = Bi * XV
