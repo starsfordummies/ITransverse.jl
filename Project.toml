@@ -1,7 +1,7 @@
 name = "ITransverse"
 uuid = "0b04ad49-86dd-4710-99cf-a56925ebcbe5"
 authors = ["Stefano Carignano <stefano.carignano@bsc.es>"]
-version = "0.5.0"
+version = "0.5.1"
 
 [deps]
 ITensorMPS = "0d1a4710-d33b-49a5-8f18-73bdf49b47e2"
