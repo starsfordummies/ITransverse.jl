@@ -10,10 +10,13 @@ function ITransverse.gpu_expval_cone(ll::MPS, rr::MPS, op::Vector{ComplexF64}, t
     tmpo = NDTensors.cu(swapprime(build_ham_folded_tMPO(tp, op, time_sites), 0, 1, "Site"))
     psi_R = apply(tmpo, rr, alg="naive", truncate=false)
 
-    tmpo = NDTensors.cu(swapprime(build_ham_folded_tMPO(tp, fold_id, time_sites), 0, 1, "Site"))
-    psi_R_id = apply(tmpo, rr, alg="naive", truncate=false)
+    ev_LOR = overlap_noconj(psi_L,psi_R)
 
-    ev = overlap_noconj(psi_L,psi_R)/overlap_noconj(psi_L,psi_R_id)
+    tmpo = NDTensors.cu(swapprime(build_ham_folded_tMPO(tp, fold_id, time_sites), 0, 1, "Site"))
+    psi_R = apply(tmpo, rr, alg="naive", truncate=false)
+
+    ev_L1R = overlap_noconj(psi_L,psi_R)
+    ev = ev_LOR/ev_L1R
 
     return ev
 
