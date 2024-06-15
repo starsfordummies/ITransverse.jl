@@ -218,7 +218,8 @@ function run_cone(psi::MPS,
     nsteps::Int, 
     op::Vector{ComplexF64}, 
     tp::tmpo_params,
-    truncp::trunc_params
+    truncp::trunc_params,
+    save_cp::Bool=true
     )
 
     ll = deepcopy(psi)
@@ -233,6 +234,12 @@ function run_cone(psi::MPS,
     vn_ents = []
     gen_r2sL = []
     gen_r2sR = []
+    ts = [] 
+
+    entropies = Dict(:genr2L => gen_r2sL, :genr2R => gen_r2sR, :vn => vn_ents)
+    expvals = Dict(:evs_x => evs_x, :evs_z => evs_z, :overlaps => overlaps)
+    infos = Dict(:ts => ts, :truncp => truncp, :tp => tp, :op => op)
+
 
     p = Progress(nsteps; desc="[cone] $cutoff=$(truncp.cutoff), maxbondim=$(truncp.maxbondim)), method=$(truncp.ortho_method)", showspeed=true) 
 
@@ -253,7 +260,6 @@ function run_cone(psi::MPS,
         ll = ll * sqrt(1/overlapLR)
         rr = rr * sqrt(1/overlapLR)
 
-
         push!(evs_x, expval_cone(ll, rr, ComplexF64[0,1,1,0], tp))
         push!(evs_z, expval_cone(ll, rr, ComplexF64[1,0,0,-1], tp))
 
@@ -264,21 +270,17 @@ function run_cone(psi::MPS,
         orthogonalize!(llc,1)
         ent = vn_entanglement_entropy(llc)
 
-        if length(ll) > 50 && length(ll) % 20 == 0
+        if save_cp && length(ll) > 50 && length(ll) % 20 == 0
             jldsave("cp_cone_$(length(ll))_chi_$(chis[end]).jld2"; psi, ll, rr, chis, expvals, entropies, infos)
         end
 
         push!(vn_ents, ent)
+        push!(ts, length(ll)*tp.dt)
+
         next!(p; showvalues = [(:Info,"[$(length(ll))] χ=$(maxlinkdim(ll)), (L|R) = $overlapLR " )])
 
     end
 
-    T0 = length(psi)*tp.dt
-    ts = T0:tp.dt:T0+nsteps*tp.dt
-
-    entropies = Dict(:genr2L => gen_r2sL, :genr2R => gen_r2sR, :vn => vn_ents)
-    expvals = Dict(:evs_x => evs_x, :evs_z => evs_z, :overlaps => overlaps)
-    infos = Dict(:ts => ts, :truncp => truncp, :tp => tp, :op => op)
 
     return ll, rr, chis, expvals, entropies, infos
 end
