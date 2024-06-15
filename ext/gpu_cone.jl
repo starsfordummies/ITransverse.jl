@@ -103,7 +103,8 @@ function ITransverse.gpu_run_cone(psi::AbstractMPS,
     nsteps::Int, 
     op::Vector{ComplexF64}, 
     tp::tmpo_params,
-    truncp::trunc_params
+    truncp::trunc_params,
+    save_cp::Bool=true
     )
 
     ll = NDTensors.cu(deepcopy(psi))
@@ -155,7 +156,9 @@ function ITransverse.gpu_run_cone(psi::AbstractMPS,
 
 
         if save_cp && length(ll) > 50 && length(ll) % 20 == 0
-            jldsave("cp_cone_$(length(ll))_chi_$(chis[end]).jld2"; NDTensors.cpu(ll), NDTensors.cpu(rr), chis, expvals, entropies, infos)
+            llw = NDTensors.cpu(ll)
+            rrw = NDTensors.cpu(rr)
+            jldsave("cp_cone_$(length(ll))_chi_$(chis[end]).jld2"; llw, rrw, chis, expvals, entropies, infos)
         end
      
         next!(p; showvalues = [(:Info,"[$(dt)] χ=$(maxlinkdim(ll)), (L|R) = $overlapLR " )])

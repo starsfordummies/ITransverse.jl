@@ -2,7 +2,8 @@ module ITransverseGPUExt
 
 using CUDA
 
-using ITensors, ITensorMPS
+using ITensors
+using ITensorMPS
 using ITransverse 
 using ProgressMeter
 using JLD2
