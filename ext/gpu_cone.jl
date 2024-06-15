@@ -119,6 +119,10 @@ function ITransverse.gpu_run_cone(psi::AbstractMPS,
     gen_r2sL = []
     gen_r2sR = []
 
+    entropies = Dict(:genr2L => gen_r2sL, :genr2R => gen_r2sR, :vn => vn_ents)
+    expvals = Dict(:evs_x => evs_x, :evs_z => evs_z, :overlaps => overlaps)
+    infos = Dict(:ts => ts, :truncp => truncp, :tp => tp, :op => op)
+
     p = Progress(nsteps; desc="[cone] $cutoff=$(truncp.cutoff), maxbondim=$(truncp.maxbondim)), method=$(truncp.ortho_method)", showspeed=true) 
 
     for dt = 1:nsteps
@@ -148,11 +152,17 @@ function ITransverse.gpu_run_cone(psi::AbstractMPS,
 
         push!(chis, maxlinkdim(ll))
         push!(overlaps, overlapLR)
+
+
+        if save_cp && length(ll) > 50 && length(ll) % 20 == 0
+            jldsave("cp_cone_$(length(ll))_chi_$(chis[end]).jld2"; NDTensors.cpu(ll), NDTensors.cpu(rr), chis, expvals, entropies, infos)
+        end
      
         next!(p; showvalues = [(:Info,"[$(dt)] χ=$(maxlinkdim(ll)), (L|R) = $overlapLR " )])
 
     end
 
-    return ll, rr, evs_x, evs_z, chis, overlaps
+    return ll, rr, chis, expvals, entropies, infos
+
 end
 
