@@ -45,8 +45,8 @@ function gpu_extend_tmps_cone(ll::AbstractMPS, rr::AbstractMPS,
     tmpo = NDTensors.cu(swapprime(build_ham_folded_tMPO(tp, op_R, time_sites), 0, 1, "Site"))
     psi_R = gpu_apply_extend(tmpo, rr)
 
-    println(typeof(psi_L[2].tensor.storage))
-    println(typeof(psi_R[2].tensor.storage))
+    #println(typeof(psi_L[2].tensor.storage))
+    #println(typeof(psi_R[2].tensor.storage))
     ll, rr = gpu_truncate_sweep(psi_L,psi_R, cutoff=truncp.cutoff, chi_max=truncp.maxbondim)
     
     #gen_renyi2 = generalized_renyi_entropy(ll, rr, 2, normalize=true)
