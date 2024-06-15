@@ -10,6 +10,8 @@ using JLD2
 include("gpu_sweeps.jl")
 include("gpu_cone.jl")
 
-export gpu_run_cone, gpu_truncate_sweep
+export gpu_run_cone, 
+gpu_truncate_sweep,
+gpu_expval_cone
 
 end
