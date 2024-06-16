@@ -89,9 +89,10 @@ function ITransverse.gpu_run_cone_svd(psi::MPS,
         push!(chis, maxlinkdim(ll))
         push!(overlaps, overlapLR)
 
-        llc = deepcopy(ll)
-        orthogonalize!(llc,1)
-        ent = vn_entanglement_entropy(llc)
+        # llc = deepcopy(ll)
+        # orthogonalize!(llc,1)
+        # ent = vn_entanglement_entropy(llc)
+        ent= [0.] # TODO 
 
         if save_cp && length(ll) > 50 && length(ll) % 20 == 0
             jldsave("cp_cone_$(length(ll))_chi_$(chis[end])_sym.jld2"; psi, ll, chis, expvals, entropies, infos)
