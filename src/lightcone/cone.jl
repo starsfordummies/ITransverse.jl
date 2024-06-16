@@ -244,15 +244,28 @@ function run_cone(psi::MPS,
     p = Progress(nsteps; desc="[cone] $cutoff=$(truncp.cutoff), maxbondim=$(truncp.maxbondim)), method=$(truncp.ortho_method)", showspeed=true) 
 
     for dt = 1:nsteps
-        #println("Evolving $dt")
+        
+        # Original should work 
         llwork = deepcopy(ll)
-
         # if we're worried about symmetry, evolve separately L and R 
         ll,_, ents = extend_tmps_cone(llwork, rr, Id, op, tp, truncp)
         push!(gen_r2sL, ents)
 
         _,rr, ents = extend_tmps_cone(llwork, rr, op, Id, tp, truncp)
         push!(gen_r2sR, ents)
+
+        #= 
+        # Alternative: 
+        # if we're worried about symmetry, evolve separately L and R 
+        llwork = deepcopy(ll)
+
+        ll,_, ents = extend_tmps_cone_alt(llwork, rr, Id, op, tp, truncp)
+        push!(gen_r2sL, ents)
+
+        _,rr, ents = extend_tmps_cone_alt(llwork, rr, op, Id, tp, truncp)
+        push!(gen_r2sR, ents)
+        =# 
+
 
         overlapLR = overlap_noconj(ll,rr)
 
@@ -298,6 +311,43 @@ function resume_cone(checkpoint::String, nsteps::Int)
     # TODO extend with prev results 
     return run_cone(psi, nsteps, op, tp, truncp)
     
+end
+
+function extend_tmps_cone_alt(ll_in::MPS, rr_in::MPS, 
+    op_L::Vector{ComplexF64}, op_R::Vector{ComplexF64}, 
+    tp::tmpo_params,
+    truncp::trunc_params,
+    compute_r2::Bool=false)
+
+    ll = deepcopy(ll_in)
+    rr = deepcopy(rr_in)
+
+    time_sites = siteinds("S=3/2", length(ll)+1)
+    time_sites= addtags(time_sites, "time_fold")
+
+    tmpo = build_ham_folded_tMPO(tp, op_L, time_sites)
+
+    psin = ITensor(ComplexF64[1,0,0,0], siteind(tmpo,1))
+    insert!(ll.data, 1, psin)
+    replace_siteinds!(ll, siteinds(tmpo))
+    psi_L = apply(tmpo, ll, alg="naive", truncate=false)
+
+    tmpo = swapprime(build_ham_folded_tMPO(tp, op_R, time_sites), 0, 1, "Site")
+    psin = ITensor(ComplexF64[1,0,0,0], siteind(tmpo,1))
+    insert!(rr.data, 1, psin)
+    replace_siteinds!(rr, siteinds(tmpo))
+    psi_R = apply(tmpo, rr)
+
+    # ! CHECK CAN WE EVER HAVE LINKS (L) != LINKS (R) ??? WHY DOES EIGEN FAIL??
+    ll, rr, ents = truncate_normalize_sweep(psi_L,psi_R, truncp)
+    
+    gen_renyi2 = [0.]
+    if compute_r2
+        gen_renyi2 = generalized_renyi_entropy(ll, rr, 2, normalize=true)
+    end
+
+    return ll,rr, gen_renyi2 # ents
+
 end
 
 

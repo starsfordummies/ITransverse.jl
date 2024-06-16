@@ -45,7 +45,6 @@ end
 
 function ITransverse.gpu_run_cone_svd(psi::MPS, 
     nsteps::Int, 
-    op::Vector{ComplexF64}, 
     tp::tmpo_params,
     truncp::trunc_params,
     save_cp::Bool=true
@@ -66,7 +65,7 @@ function ITransverse.gpu_run_cone_svd(psi::MPS,
 
     entropies = Dict(:genr2L => gen_r2sL, :genr2R => gen_r2sR, :vn => vn_ents)
     expvals = Dict(:evs_x => evs_x, :evs_z => evs_z, :overlaps => overlaps)
-    infos = Dict(:ts => ts, :truncp => truncp, :tp => tp, :op => op)
+    infos = Dict(:ts => ts, :truncp => truncp, :tp => tp, :op => Id)
 
 
     p = Progress(nsteps; desc="[cone] $cutoff=$(truncp.cutoff), maxbondim=$(truncp.maxbondim)), method=$(truncp.ortho_method)", showspeed=true) 
@@ -76,7 +75,7 @@ function ITransverse.gpu_run_cone_svd(psi::MPS,
         llwork = NDTensors.cu(deepcopy(ll))
 
         # if we're worried about symmetry, evolve separately L and R 
-        ll = gpu_extend_tmps_cone_sym_svd(llwork, op, tp, truncp)
+        ll = gpu_extend_tmps_cone_sym_svd(llwork, Id, tp, truncp)
 
         overlapLR = overlap_noconj(ll,ll)
 
