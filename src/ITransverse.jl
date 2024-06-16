@@ -171,7 +171,6 @@ export init_cone, run_cone
 export gpu_run_cone, 
 gpu_truncate_sweep,
 gpu_expval_cone,
-gpu_expval_cone_sym
-
+gpu_run_cone_svd
 
 end #module ITransverse
