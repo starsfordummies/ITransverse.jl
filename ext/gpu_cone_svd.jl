@@ -74,7 +74,7 @@ function ITransverse.gpu_run_cone_svd(psi::MPS,
 
     for dt = 1:nsteps
         #println("Evolving $dt")
-        llwork = deepcopy(ll)
+        llwork = NDTensors.cu(deepcopy(ll))
 
         # if we're worried about symmetry, evolve separately L and R 
         ll = gpu_extend_tmps_cone_sym_svd(llwork, op, tp, truncp)
@@ -85,7 +85,7 @@ function ITransverse.gpu_run_cone_svd(psi::MPS,
         ll = ll * sqrt(1/overlapLR)
 
         push!(evs_x, gpu_expval_cone_sym(ll, ComplexF64[0,1,1,0], tp))
-        push!(evs_z, expval_cone(ll, ComplexF64[1,0,0,-1], tp))
+        push!(evs_z, gpu_expval_cone_sym(ll, ComplexF64[1,0,0,-1], tp))
 
         push!(chis, maxlinkdim(ll))
         push!(overlaps, overlapLR)
