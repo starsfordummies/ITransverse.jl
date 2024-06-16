@@ -29,7 +29,6 @@ function gpu_expval_cone_sym(ll::MPS, op::Vector{ComplexF64}, tp::tmpo_params)
     tmpo = NDTensors.cu(build_ham_folded_tMPO(tp,  fold_id, time_sites))
     psi_L = apply(tmpo, ll, alg="naive", truncate=false)
 
-    time_sites = siteinds(rr)
     tmpo = NDTensors.cu(swapprime(build_ham_folded_tMPO(tp, op, time_sites), 0, 1, "Site"))
     psi_R = apply(tmpo, ll, alg="naive", truncate=false)
 
