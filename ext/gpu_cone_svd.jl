@@ -95,7 +95,7 @@ function ITransverse.gpu_run_cone_svd(psi::MPS,
         ent = vn_entanglement_entropy(llc)
 
         if save_cp && length(ll) > 50 && length(ll) % 20 == 0
-            jldsave("cp_cone_$(length(ll))_chi_$(chis[end]).jld2"; psi, ll, ll, chis, expvals, entropies, infos)
+            jldsave("cp_cone_$(length(ll))_chi_$(chis[end])_sym.jld2"; psi, ll, chis, expvals, entropies, infos)
         end
 
         push!(vn_ents, ent)
