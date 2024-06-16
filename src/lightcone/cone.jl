@@ -306,3 +306,5 @@ function gpu_run_cone()
 end
 function gpu_truncate_sweep() end
 function gpu_expval_cone() end
+function gpu_expval_cone_sym() end
+

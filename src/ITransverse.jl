@@ -170,7 +170,8 @@ export init_cone, run_cone
 # GPU but I really don't know 
 export gpu_run_cone, 
 gpu_truncate_sweep,
-gpu_expval_cone
+gpu_expval_cone,
+gpu_expval_cone_sym
 
 
 end #module ITransverse
