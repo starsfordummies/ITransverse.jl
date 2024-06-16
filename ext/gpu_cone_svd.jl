@@ -10,9 +10,9 @@ function gpu_extend_tmps_cone_sym_svd(ll::AbstractMPS,
 
     psin = NDTensors.cu(ITensor(ComplexF64[1,0,0,0], siteind(tmpo,1)))
     insert!(ll.data, 1, psin)
-
     replace_siteinds!(ll, time_sites)
-    apply(tmpo, ll, cutoff=truncp.cutoff)
+
+    ll = apply(tmpo, ll, cutoff=truncp.cutoff)
 
     return ll
 
