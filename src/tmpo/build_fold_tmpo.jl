@@ -106,16 +106,12 @@ end
 
 
 """ Builds *rotated* and *folded* MPO for a generic(hopefully) Hamiltonian, defined on `time_sites`.
-Closed with `fold_op` on the left and `init_state` to the right. 
+Closed with `fold_op` on the *left* and `init_state` to the *right*. 
 """
 function build_ham_folded_tMPO(tp::tmpo_params,
     fold_op::AbstractVector,
     time_sites::Vector{<:Index})
 
-    #space_sites = siteinds("S=1/2", 3; conserve_qns = false)
-
-    # Real time evolution
-    #eH = build_expH_function(space_sites, JXX, hz, dt)
     eH = build_expH(tp)
 
     #@info "using $(build_expH_function)"
@@ -194,6 +190,53 @@ function build_folded_tMPO(eH_space::MPO, init_state::Vector, fold_op::Vector, t
 return tMPO
 
 end
+
+function build_folded_open_tMPO(eH_space::MPO, time_sites::Vector{<:Index})
+    
+    @assert length(eH_space) == 3
+
+    Nsteps = length(time_sites)
+
+    WWc, iCwL, iCwR, iCp, iCps = build_WWc(eH_space)
+
+    # define the links of the rotated MPO 
+    rot_links = [Index( dim(iCp) , "Link,rotl=$ii") for ii in 1:(Nsteps + 1)]
+
+    # Start building the tMPO
+    tMPO = MPO(Nsteps)
+
+    # Rotate indices and fill the MPO
+    for ii = 1:Nsteps
+        tMPO[ii] = WWc
+        tMPO[ii] *= delta(iCwL, time_sites[ii])
+        tMPO[ii] *= delta(iCwR, time_sites[ii]') 
+        tMPO[ii] *= delta(iCp, rot_links[ii]) 
+        tMPO[ii] *= delta(iCps, rot_links[ii+1]) 
+    end
+
+    left_open_link = rot_links[1]
+    right_open_link = rot_links[end]
+
+return tMPO, left_open_link, right_open_link 
+
+end
+
+function build_folded_tMPO_new(eH_space::MPO, init_state::Vector, fold_op::Vector, time_sites::Vector{<:Index})
+    
+    tMPO, left_open, right_open = build_folded_open_tMPO(eH_space, time_sites)
+
+    fold_op_tensor = ITensor((fold_op), left_open)
+
+    fold_psi0 = (init_state) * (init_state')
+    init_state_tensor = ITensor(fold_psi0, right_open)
+
+    tMPO[1] *= fold_op_tensor 
+    tMPO[end] *= init_state_tensor
+
+return tMPO
+
+end
+
 
 
 
