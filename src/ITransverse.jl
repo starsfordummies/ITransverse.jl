@@ -173,8 +173,10 @@ export init_cone, run_cone
 
 # GPU but I really don't know 
 export gpu_run_cone, 
+gpu_run_cone_svd,
 gpu_truncate_sweep,
-gpu_expval_cone,
-gpu_run_cone_svd
+gpu_expval_LR,
+cpu_expval_LR,
+gpu_expval_LL_sym
 
 end #module ITransverse

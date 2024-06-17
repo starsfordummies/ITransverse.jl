@@ -1,26 +1,3 @@
-function ITransverse.gpu_expval_cone(ll::MPS, rr::MPS, op::Vector{ComplexF64}, tp::tmpo_params)
-
-    fold_id = ComplexF64[1,0,0,1]
-
-    time_sites = siteinds(ll)
-    tmpo = NDTensors.cu(build_ham_folded_tMPO(tp,  fold_id, time_sites))
-    psi_L = apply(tmpo, ll, alg="naive", truncate=false)
-
-    time_sites = siteinds(rr)
-    tmpo = NDTensors.cu(swapprime(build_ham_folded_tMPO(tp, op, time_sites), 0, 1, "Site"))
-    psi_R = apply(tmpo, rr, alg="naive", truncate=false)
-
-    ev_LOR = overlap_noconj(psi_L,psi_R)
-
-    tmpo = NDTensors.cu(swapprime(build_ham_folded_tMPO(tp, fold_id, time_sites), 0, 1, "Site"))
-    psi_R = apply(tmpo, rr, alg="naive", truncate=false)
-
-    ev_L1R = overlap_noconj(psi_L,psi_R)
-    ev = ev_LOR/ev_L1R
-
-    return ev
-
-end
 
 """
 One step of the light cone algorithm: takes left and right tMPS ll, rr,
@@ -152,8 +129,8 @@ function ITransverse.gpu_run_cone(psi::AbstractMPS,
         rr = rr * sqrt(1/overlapLR)
 
 
-        push!(evs_x, gpu_expval_cone(ll, rr, ComplexF64[0,1,1,0], tp))
-        push!(evs_z, gpu_expval_cone(ll, rr, ComplexF64[1,0,0,-1], tp))
+        push!(evs_x, gpu_expval_LR(ll, rr, ComplexF64[0,1,1,0], tp))
+        push!(evs_z, gpu_expval_LR(ll, rr, ComplexF64[1,0,0,-1], tp))
 
         push!(chis, maxlinkdim(ll))
         push!(overlaps, overlapLR)
