@@ -62,8 +62,8 @@ function ITransverse.gpu_run_cone_svd(psi::MPS,
         #TODO  renormalize by overlap ?
         ll = ll * sqrt(1/overlapLR)
 
-        push!(evs_x, gpu_expval_cone_sym(ll, ComplexF64[0,1,1,0], tp))
-        push!(evs_z, gpu_expval_cone_sym(ll, ComplexF64[1,0,0,-1], tp))
+        push!(evs_x, gpu_expval_LL_sym(ll, ComplexF64[0,1,1,0], tp))
+        push!(evs_z, gpu_expval_LL_sym(ll, ComplexF64[1,0,0,-1], tp))
 
         push!(chis, maxlinkdim(ll))
         push!(overlaps, overlapLR)
