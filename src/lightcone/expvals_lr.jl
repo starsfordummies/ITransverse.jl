@@ -29,22 +29,25 @@ function expval_LR(ll::MPS, rr::MPS, opL::Vector{ComplexF64}, opR::Vector{Comple
 
     time_sites = siteinds(ll)
     tmpo = build_ham_folded_tMPO(tp,  opL, time_sites)
-    psi_L = apply(tmpo, ll)
-
-    tmpo = build_ham_folded_tMPO(tp, fold_id, time_sites)
-    psi_L_id = apply(tmpo, rr)
+    psi_L = applys(tmpo, ll)
 
     time_sites = siteinds(rr)
     tmpo = swapprime(build_ham_folded_tMPO(tp, opR, time_sites), 0, 1, "Site")
-    psi_R = apply(tmpo, rr)
+    psi_R = applys(tmpo, rr)
 
+    ev_LOOR = overlap_noconj(psi_L,psi_R)
+
+    time_sites = siteinds(ll)
+    tmpo = build_ham_folded_tMPO(tp,  fold_id, time_sites)
+    psi_L = applys(tmpo, ll)
+
+    time_sites = siteinds(rr)
     tmpo = swapprime(build_ham_folded_tMPO(tp, fold_id, time_sites), 0, 1, "Site")
-    psi_R_id = apply(tmpo, rr)
+    psi_R = applys(tmpo, rr)
 
+    ev_L11R = overlap_noconj(psi_L,psi_R)
 
-    ev = overlap_noconj(psi_L,psi_R)/overlap_noconj(psi_L_id,psi_R_id)
-
-    return ev
+    return ev_LOOR/ev_L11R
 
 end
 
@@ -56,10 +59,11 @@ function expval_en_density(ll::MPS, rr::MPS, tp::tmpo_params)
     tMPO1, li1, ri1 = build_folded_open_tMPO(tp, time_sites)
     tMPO2, li2, ri2 = build_folded_open_tMPO(tp, time_sites)
 
-    rho0 = ITensor(tp.init_state) * (tp.init_state')
+    rho0 = (tp.init_state) * (tp.init_state')
     tMPO1[end] *= ITensor(rho0, ri1)
     tMPO2[end] *= ITensor(rho0, ri2)
 
+    temp_s = siteinds("S=1/2",2)
     os = OpSum()
     os += tp.mp.JXX, "X",1,"X",2
     os += tp.mp.hz,  "I",1,"Z",2
@@ -67,11 +71,32 @@ function expval_en_density(ll::MPS, rr::MPS, tp::tmpo_params)
     os += tp.mp.λx,  "I",1,"X",2
     os += tp.mp.λx,  "X",1,"I",2
 
-    ϵ_op = ITensor(op, li1, li2')
+    #ϵ_op = ITensor(os, temp_s, temp_s')
+    ϵ_op = MPO(os, temp_s)
+    cs1 = combiner(temp_s[1], temp_s[1]')
+    cs2 = combiner(temp_s[2], temp_s[2]')
+    ϵ_op[1] *= cs1 
+    ϵ_op[2] *= cs2 
+    ϵ_op[1] *= delta(combinedind(cs1), li1)
+    ϵ_op[2] *= delta(combinedind(cs2), li2)
 
-    tMPO_eps = tMPO1 * tMPO2' 
-    tMPO_eps[1] *= ϵ_op
+    tMPO_eps = applys(tMPO2, tMPO1)
+    tMPO_eps[1] *= delta(li2',li2)
+    tMPO_eps[1] *= ϵ_op[1]
+    tMPO_eps[1] *= ϵ_op[2]
 
+    #@show inds(tMPO_eps[1])
+
+    tMPO_ids = applys(tMPO2, tMPO1)
+    tMPO_ids[1] *= delta(li2',li2)
+    #normalization 
+    LOO = apply(tMPO_ids, ll)
+    ev_L11R = overlap_noconj(LOO, rr)
+
+    LOO = apply(tMPO_eps, ll)
+    ev_LOOR = overlap_noconj(L11, rr)
+
+    return ev_LOOR/ev_L11R
 
 end
 
