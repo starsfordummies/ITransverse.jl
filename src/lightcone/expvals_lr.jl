@@ -89,6 +89,10 @@ function expval_en_density(ll::MPS, rr::MPS, tp::tmpo_params)
 
     tMPO_ids = applys(tMPO2, tMPO1)
     tMPO_ids[1] *= delta(li2',li2)
+
+    tMPO_ids[1] *= ITensor(ComplexF64[1,0,0,1], li1)
+    tMPO_ids[1] *= ITensor(ComplexF64[1,0,0,1], li2)
+
     #normalization 
     LOO = apply(tMPO_ids, ll)
     ev_L11R = overlap_noconj(LOO, rr)

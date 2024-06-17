@@ -76,8 +76,8 @@ function ITransverse.gpu_truncate_sweep!(left_mps::MPS, right_mps::MPS; cutoff::
 
     # Left gen.can. sweep with truncation 
     for ii = 1:mpslen-1
-        Ai = XUinv * L_ortho[ii]
-        Bi = XVinv * R_ortho[ii] 
+        Ai = XUinv * left_mps[ii]
+        Bi = XVinv * right_mps[ii] 
 
         # Generalized canonical - no complex conjugation!
         left_env = Ai * deltaS 
@@ -101,8 +101,8 @@ function ITransverse.gpu_truncate_sweep!(left_mps::MPS, right_mps::MPS; cutoff::
 
         deltaS = delta(inds(S))
 
-        L_ortho[ii] = Ai * XU  
-        R_ortho[ii] = Bi * XV
+        left_mps[ii] = Ai * XU  
+        right_mps[ii] = Bi * XV
 
         #! This could be nasty if we have imaginary stuff...
         #! should not be a problem for SVDs though
@@ -111,11 +111,11 @@ function ITransverse.gpu_truncate_sweep!(left_mps::MPS, right_mps::MPS; cutoff::
     end
 
     # the last two 
-    L_ortho[end] = XUinv * L_ortho[end]
-    R_ortho[end] = XVinv * R_ortho[end]
+    left_mps[end] = XUinv * left_mps[end]
+    right_mps[end] = XVinv * right_mps[end]
 
-    gen_overlap = scalar(deltaS * ( L_ortho[end] *  R_ortho[end] ) )
+    gen_overlap = scalar(deltaS * ( left_mps[end] *  right_mps[end] ) )
 
-    return L_ortho, R_ortho, gen_overlap
+    return left_mps, right_mps, gen_overlap
 
 end
