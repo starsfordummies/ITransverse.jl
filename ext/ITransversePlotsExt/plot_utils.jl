@@ -1,6 +1,6 @@
 # TODO put as extension
 
-function ITransverse.plot_matrix(a::Matrix)
+function plot_matrix(a::Matrix)
     heatmap(1:size(a,1),
            1:size(a,2), abs.(a),
            c=cgrad([:blue, :white,:red, :yellow]),
@@ -8,7 +8,7 @@ function ITransverse.plot_matrix(a::Matrix)
            title="matrix")
 end
 
-function ITransverse.plot_matrix(a::ITensor)
+function plot_matrix(a::ITensor)
     @assert order(a) == 2
     plot_matrix(matrix(a))
 end
