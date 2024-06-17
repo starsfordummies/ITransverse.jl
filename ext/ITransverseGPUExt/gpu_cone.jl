@@ -27,7 +27,7 @@ function gpu_extend_tmps_cone(ll::AbstractMPS, rr::AbstractMPS,
 
     #println(typeof(psi_L[2].tensor.storage))
     #println(typeof(psi_R[2].tensor.storage))
-    ll, rr = gpu_truncate_sweep(psi_L,psi_R, cutoff=truncp.cutoff, chi_max=truncp.maxbondim)
+    ll, rr = gpu_truncate_sweep!(psi_L,psi_R, cutoff=truncp.cutoff, chi_max=truncp.maxbondim)
     
     #gen_renyi2 = generalized_renyi_entropy(ll, rr, 2, normalize=true)
 

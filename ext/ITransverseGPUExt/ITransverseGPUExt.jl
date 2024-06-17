@@ -17,6 +17,7 @@ include("gpu_cone_svd.jl")
 export gpu_run_cone, 
 gpu_run_cone_svd,
 gpu_truncate_sweep,
+gpu_truncate_sweep!,
 gpu_expval_LR,
 cpu_expval_LR,
 gpu_expval_LL_sym
