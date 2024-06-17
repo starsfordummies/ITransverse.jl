@@ -137,7 +137,9 @@ export
      build_ising_folded_tMPS,
      build_folded_tMPO_regul_beta, 
      build_folded_left_tMPS,
-     build_ham_folded_tMPO
+     build_ham_folded_tMPO,
+     build_folded_open_tMPO,
+     build_folded_tMPO_new
 
 
 include("power_method/pm.jl")
@@ -158,12 +160,15 @@ export powermethod_sym,
     powermethod_sym_rdm
 
 
+include("lightcone/expvals_lr.jl")
+export expval_cone,
+    expval_LR
+
 include("lightcone/cone.jl")
 
 export evolve_cone,
- init_cone_ising,
- expval_cone,
- expval_LR
+ init_cone_ising
+
 
 export init_cone, run_cone
 

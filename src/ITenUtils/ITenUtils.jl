@@ -16,13 +16,12 @@ import NDTensors:
 
 include("pparams.jl")
 
-include("utils.jl")
-include("matrix_utils.jl")
-include("moreutils.jl")
-
-
 include("ctruncate.jl")
 include("ceigen.jl")
+
+include("matrix_utils.jl")
+include("itensor_utils.jl")
+include("mps_utils.jl")
 
 # Symmetric SVD/EIG decompositions
 include("gen_svdeig_symm.jl")
