@@ -161,8 +161,7 @@ export powermethod_sym,
 
 
 include("lightcone/expvals_lr.jl")
-export expval_cone,
-    expval_LR
+export expval_LR
 
 include("lightcone/cone.jl")
 

@@ -33,7 +33,6 @@ include("bench_data.jl")
 
 
 
-
 # from pparams
 export pparams, ppm_params, trunc_params, model_params, tmpo_params
 
@@ -44,7 +43,8 @@ export myrMPS,
     check_symmetry_itensor,
     normbyfactor,
     sim,
-    sim!
+    sim!,
+    applys
     # check_diag_matrix, 
     # check_id_matrix,
     # isid
