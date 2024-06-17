@@ -18,9 +18,6 @@ using ProgressMeter
 include("ITenUtils/ITenUtils.jl")
 using .ITenUtils
 
-include("IGensors/src/IGensors.jl")
-using .IGensors
-
 # # from pparams.jl
 export pparams, 
     ppm_params, 
@@ -32,12 +29,14 @@ export pparams,
 export myrMPS, 
     overlap_noconj, 
     check_symmetry_itensor_mpo, 
-    check_symmetry_itensor
+    check_symmetry_itensor,
+    applys
     # check_diag_matrix, 
     # check_id_matrix,
     # isid
 
-# #from compute_entropies.jl
+include("IGensors/src/IGensors.jl")
+using .IGensors
 
 
 include("truncations/sweeps.jl")
