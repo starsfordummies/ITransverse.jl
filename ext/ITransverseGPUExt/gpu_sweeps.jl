@@ -61,14 +61,14 @@ function ITransverse.gpu_truncate_sweep(left_mps::MPS, right_mps::MPS; cutoff::R
 end
 
 
-""" Basic truncate sweep trying to do inplace to save GPU memory """
+""" Basic truncate sweep, trying to do inplace to save GPU memory """
 function ITransverse.gpu_truncate_sweep!(left_mps::MPS, right_mps::MPS; cutoff::Real, chi_max::Int)
 
     mpslen = length(left_mps)
 
     #@show ortho_lims(left_mps)
     left_mps = orthogonalize(left_mps,  1)
-    left_mps = orthogonalize(right_mps, 1)
+    right_mps = orthogonalize(right_mps, 1)
     #@show ortho_lims(L_ortho)
 
 

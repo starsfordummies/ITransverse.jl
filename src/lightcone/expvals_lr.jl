@@ -98,7 +98,7 @@ function expval_en_density(ll::MPS, rr::MPS, tp::tmpo_params)
     ev_L11R = overlap_noconj(LOO, rr)
 
     LOO = apply(tMPO_eps, ll)
-    ev_LOOR = overlap_noconj(L11, rr)
+    ev_LOOR = overlap_noconj(LOO, rr)
 
     return ev_LOOR/ev_L11R
 
