@@ -66,10 +66,10 @@ function expval_en_density(ll::MPS, rr::MPS, tp::tmpo_params)
     temp_s = siteinds("S=1/2",2)
     os = OpSum()
     os += tp.mp.JXX, "X",1,"X",2
-    os += tp.mp.hz,  "I",1,"Z",2
-    os += tp.mp.hz,  "Z",1,"I",2
-    os += tp.mp.λx,  "I",1,"X",2
-    os += tp.mp.λx,  "X",1,"I",2
+    os += tp.mp.hz/2,  "I",1,"Z",2
+    os += tp.mp.hz/2,  "Z",1,"I",2
+    os += tp.mp.λx/2,  "I",1,"X",2
+    os += tp.mp.λx/2,  "X",1,"I",2
 
     #ϵ_op = ITensor(os, temp_s, temp_s')
     ϵ_op = MPO(os, temp_s)
