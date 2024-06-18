@@ -51,13 +51,14 @@ function gpu_extend_tmps_cone_aggr(ll::AbstractMPS, rr::AbstractMPS,
     ll = gpu_apply_extend(tmpo, ll)
 
     tmpo = NDTensors.cu(swapprime(build_ham_folded_tMPO(tp, op_R, time_sites), 0, 1, "Site"))
-    ll = gpu_apply_extend(tmpo, rr)
+    rr = gpu_apply_extend(tmpo, rr)
 
 
     GC.gc(true)
     CUDA.memory_status()
+    @info "sizes: LL=$(Base.summarysize(ll)/1024/1024/1024) GB, RR=$(Base.summarysize(rr)/1024/1024/1024) GB, chi = $(maxlinkdim(ll))"
 
-    ll, rr = gpu_truncate_sweep!(psi_L,psi_R, cutoff=truncp.cutoff, chi_max=truncp.maxbondim)
+    ll, rr = gpu_truncate_sweep!(ll,rr, cutoff=truncp.cutoff, chi_max=truncp.maxbondim)
     
     #gen_renyi2 = generalized_renyi_entropy(ll, rr, 2, normalize=true)
 
