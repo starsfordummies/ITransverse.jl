@@ -54,9 +54,10 @@ function gpu_extend_tmps_cone_aggr(ll::AbstractMPS, rr::AbstractMPS,
     rr = gpu_apply_extend(tmpo, rr)
 
 
-    GC.gc(true)
-    CUDA.memory_status()
-    @info "sizes: LL=$(Base.summarysize(ll)/1024/1024/1024) GB, RR=$(Base.summarysize(rr)/1024/1024/1024) GB, chi = $(maxlinkdim(ll))"
+    # GC.gc(true)
+    # CUDA.reclaim()
+    # CUDA.memory_status()
+    #@info "sizes: LL=$(Base.summarysize(ll)/1024/1024/1024) GB, RR=$(Base.summarysize(rr)/1024/1024/1024) GB, chi = $(maxlinkdim(ll))"
 
     ll, rr = gpu_truncate_sweep!(ll,rr, cutoff=truncp.cutoff, chi_max=truncp.maxbondim)
     

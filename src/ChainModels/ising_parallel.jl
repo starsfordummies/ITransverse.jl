@@ -1,3 +1,30 @@
+function build_H_ising_parallel_field(sites, mp::mpdel_params)
+    build_H_ising_parallel_field(sites, mp.JXX, mp.hz, mp.λx)
+end
+
+function build_H_ising_parallel_field(sites, JXX::Real, hz::Real, λx::Real)
+
+    # Input operator terms which define a Hamiltonian
+    N = length(sites)
+    os = OpSum()
+
+    for j in 1:(N - 1)
+        os += -JXX, "X", j, "X", j + 1
+    end
+
+    for j in 1:N
+        os += -hz, "Z", j
+    end
+
+    for j in 1:N
+        os += -λx, "X", j
+    end
+
+    # Convert these terms to an MPO tensor network
+    return MPO(os, sites)
+end
+
+
 """ Prescription a la Murg for exp(-i*H*dt) Ising transverse+parallel
 Convention H = -( JXX + gzZ + λxX )
 """
