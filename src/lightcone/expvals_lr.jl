@@ -51,7 +51,7 @@ function expval_LR(ll::MPS, rr::MPS, opL::Vector{ComplexF64}, opR::Vector{Comple
 
 end
 
-""" TODO need to finish """
+""" TODO CHECK """
 function expval_en_density(ll::MPS, rr::MPS, tp::tmpo_params)
 
     time_sites = siteinds(ll)
