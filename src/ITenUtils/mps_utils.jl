@@ -19,6 +19,23 @@ function overlap_noconj(ll::MPS, rr::MPS, approx_real::Bool=false)
     
 end
 
+""" Computes the overlap (ll,rr) between two MPS *without* conjugating either one
+"""
+function overlap_noconj_manual(ll::MPS, rr::MPS, approx_real::Bool=false)
+    siteinds(ll) != siteinds(rr) ? rr = replace_siteinds(rr, siteinds(ll)) : nothing
+
+    for (Ai, Bi) in zip(ll, rr)
+        overlap = Ai * Bi 
+    end
+    if approx_real && imag(overlap) < 1e-15
+        return real(overlap)
+    end
+    
+    return overlap
+    
+end
+
+
 function ITensors.sim(psi::MPS)
     phi = deepcopy(psi)
     sim!(phi)

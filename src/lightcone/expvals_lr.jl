@@ -161,6 +161,8 @@ end
 
 function compute_expvals(ll::AbstractMPS, rr::AbstractMPS, op_list::Vector{String}, tp::tmpo_params)
 
+       # ! TODO To save time, split calculation L1R and L11R in separate function called only once - make also optional ..
+
     if op_list[1] == "all"
         op_list = ["X", "Z", "XX", "ZZ", "eps"]
     end

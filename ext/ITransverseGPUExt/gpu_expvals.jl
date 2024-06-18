@@ -112,8 +112,8 @@ function gpu_expval_en_density(ll::MPS, rr::MPS, tp::tmpo_params)
     deleteat!(LO.data,1)
     deleteat!(OR.data,1)
 
-    LO[1] *= ITensor(ComplexF64[1,0,0,1], li1)
-    OR[1] *= ITensor(ComplexF64[1,0,0,1], li2)
+    LO[1] *= NDTensors.cu(ITensor(ComplexF64[1,0,0,1], li1))
+    OR[1] *= NDTensors.cu(ITensor(ComplexF64[1,0,0,1], li2))
 
     #normalization 
     ev_L11R = overlap_noconj(LO, OR)
@@ -124,6 +124,8 @@ end
 
 
 function gpu_compute_expvals(ll::AbstractMPS, rr::AbstractMPS, op_list::Vector{String}, tp::tmpo_params)
+
+   # ! TODO To save time, split calculation L1R and L11R in separate function called only once - make also optional ..
 
     if op_list[1] == "all"
         op_list = ["X", "Z", "XX", "ZZ", "eps"]
