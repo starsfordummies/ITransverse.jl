@@ -80,25 +80,25 @@ function expval_en_density(ll::MPS, rr::MPS, tp::tmpo_params)
     ϵ_op[1] *= delta(combinedind(cs1), li1)
     ϵ_op[2] *= delta(combinedind(cs2), li2)
 
-    tMPO_eps = applys(tMPO2, tMPO1)
-    tMPO_eps[1] *= delta(li2',li2)
+    TTop = applys(tMPO2, tMPO1)
+    TTop[1] *= delta(li2',li2)
+
+    tMPO_eps = deepcopy(TTop)
+
     tMPO_eps[1] *= ϵ_op[1]
     tMPO_eps[1] *= ϵ_op[2]
 
-    #@show inds(tMPO_eps[1])
+    LOO = applys(tMPO_eps, ll)
+    ev_LOOR = overlap_noconj(LOO, rr)
 
-    tMPO_ids = applys(tMPO2, tMPO1)
-    tMPO_ids[1] *= delta(li2',li2)
 
-    tMPO_ids[1] *= ITensor(ComplexF64[1,0,0,1], li1)
-    tMPO_ids[1] *= ITensor(ComplexF64[1,0,0,1], li2)
+    tMPO_11 = TTop 
+    tMPO_11[1] *= ITensor(ComplexF64[1,0,0,1], li1)
+    tMPO_11[1] *= ITensor(ComplexF64[1,0,0,1], li2)
 
     #normalization 
-    LOO = apply(tMPO_ids, ll)
-    ev_L11R = overlap_noconj(LOO, rr)
-
-    LOO = apply(tMPO_eps, ll)
-    ev_LOOR = overlap_noconj(LOO, rr)
+    L11 = applys(tMPO_11, ll)
+    ev_L11R = overlap_noconj(L11, rr)
 
     return ev_LOOR/ev_L11R
 

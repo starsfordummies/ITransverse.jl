@@ -118,10 +118,10 @@ function gpu_expval_en_density(ll::MPS, rr::MPS, tp::tmpo_params)
     tMPO_eps = NDTensors.cu(tMPO_eps)
 
     #normalization 
-    LOO = apply(tMPO_ids, ll)
+    LOO = applys(tMPO_ids, ll)
     ev_L11R = overlap_noconj(LOO, rr)
 
-    LOO = apply(tMPO_eps, ll)
+    LOO = applys(tMPO_eps, ll)
     ev_LOOR = overlap_noconj(LOO, rr)
 
     return ev_LOOR/ev_L11R
