@@ -191,6 +191,15 @@ return tMPO
 
 end
 
+function build_folded_open_tMPO(tp::tmpo_params,
+    time_sites::Vector{<:Index})
+
+    eH = build_expH(tp)
+
+    build_folded_open_tMPO(eH, time_sites)
+
+end
+
 function build_folded_open_tMPO(eH_space::MPO, time_sites::Vector{<:Index})
     
     @assert length(eH_space) == 3
