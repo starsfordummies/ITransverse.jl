@@ -173,7 +173,7 @@ function ITransverse.gpu_run_cone(psi::AbstractMPS,
         # push!(evs_x, gpu_expval_LR(ll, rr, ComplexF64[0,1,1,0], tp))
         # push!(evs_z, gpu_expval_LR(ll, rr, ComplexF64[1,0,0,-1], tp))
 
-        evs_computed = compute_expvals(ll, rr, ["all"], tp)
+        evs_computed = gpu_compute_expvals(ll, rr, ["all"], tp)
         mergedicts!(expvals, evs_computed)
 
         push!(chis, maxlinkdim(ll))

@@ -20,6 +20,7 @@ gpu_truncate_sweep,
 gpu_truncate_sweep!,
 gpu_expval_LR,
 cpu_expval_LR,
-gpu_expval_LL_sym
+gpu_expval_LL_sym,
+gpu_compute_expvals
     
 end #module ITransverseGPUExt
