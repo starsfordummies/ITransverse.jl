@@ -30,7 +30,8 @@ export myrMPS,
     overlap_noconj, 
     check_symmetry_itensor_mpo, 
     check_symmetry_itensor,
-    applys
+    applys,
+    mergedicts!
     # check_diag_matrix, 
     # check_id_matrix,
     # isid
@@ -170,6 +171,8 @@ export evolve_cone,
 
 export init_cone, run_cone
 
+
+include("empty_extensions.jl")
 # GPU but I really don't know 
 export gpu_run_cone, 
 gpu_run_cone_svd,
@@ -178,5 +181,6 @@ gpu_truncate_sweep!,
 gpu_expval_LR,
 cpu_expval_LR,
 gpu_expval_LL_sym
+
 
 end #module ITransverse

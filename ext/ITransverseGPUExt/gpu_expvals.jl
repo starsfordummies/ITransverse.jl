@@ -71,3 +71,18 @@ function ITransverse.gpu_expval_LL_sym(ll::MPS, op::Vector{ComplexF64}, tp::tmpo
     return ev
 
 end
+
+
+function ITransverse.compute_gpu_expvals(ll::AbstractMPS, rr::AbstractMPS, op_list::Vector{String}, tp::tmpo_params)
+    evs = Dict()
+    for op in op_list
+        if op == "X"
+            println("X")
+        elseif op == "Z"
+            println("Z")
+        elseif op == "eps"
+            println("eps")
+        end
+    end
+    #gpu_expval_LR(ll, rr, op, tp)
+end

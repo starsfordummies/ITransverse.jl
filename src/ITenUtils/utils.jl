@@ -1,6 +1,10 @@
 
 
-
+function mergedicts!(dict1::Dict, dict2::Dict)
+    for key in keys(dict2)
+        append!(dict1[key], dict2[key])
+    end
+end
 
 
 

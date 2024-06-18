@@ -167,13 +167,20 @@ function run_cone(psi::MPS,
     ts = [] 
 
     entropies = Dict(:genr2L => gen_r2sL, :genr2R => gen_r2sR, :vn => vn_ents)
-    expvals = Dict(
-        :evs_x => evs_x, 
-        :evs_z => evs_z, 
-        :evs_zz => evs_zz, 
-        :evs_xx => evs_xx,
-        :evs_eps => evs_eps,
-        :overlaps => overlaps)
+
+    which_evs = ["X","Z","eps"]
+    expvals = Dict()
+    for op in which_evs
+        expvals[op] = []
+    end
+
+    # expvals = Dict(
+    #     :evs_x => evs_x, 
+    #     :evs_z => evs_z, 
+    #     :evs_zz => evs_zz, 
+    #     :evs_xx => evs_xx,
+    #     :evs_eps => evs_eps,
+    #     :overlaps => overlaps)
 
     infos = Dict(:ts => ts, :truncp => truncp, :tp => tp, :op => op)
 
@@ -210,13 +217,16 @@ function run_cone(psi::MPS,
         ll = ll * sqrt(1/overlapLR)
         rr = rr * sqrt(1/overlapLR)
 
-        push!(evs_x, expval_LR(ll, rr, ComplexF64[0,1,1,0], tp))
-        push!(evs_z, expval_LR(ll, rr, ComplexF64[1,0,0,-1], tp))
+        evs_computed = compute_expvals(ll, rr, ["all"], tp)
+        mergedicts!(expvals, evs_computed)
 
-        push!(evs_xx, expval_LR(ll, rr, ComplexF64[0,1,1,0], ComplexF64[0,1,1,0], tp))
-        push!(evs_zz, expval_LR(ll, rr, ComplexF64[1,0,0,-1], ComplexF64[1,0,0,-1], tp))
+        # push!(evs_x, expval_LR(ll, rr, ComplexF64[0,1,1,0], tp))
+        # push!(evs_z, expval_LR(ll, rr, ComplexF64[1,0,0,-1], tp))
 
-        push!(evs_eps, expval_en_density(ll, rr, tp))
+        # push!(evs_xx, expval_LR(ll, rr, ComplexF64[0,1,1,0], ComplexF64[0,1,1,0], tp))
+        # push!(evs_zz, expval_LR(ll, rr, ComplexF64[1,0,0,-1], ComplexF64[1,0,0,-1], tp))
+
+        # push!(evs_eps, expval_en_density(ll, rr, tp))
 
         push!(chis, maxlinkdim(ll))
         push!(overlaps, overlapLR)
@@ -293,13 +303,3 @@ function extend_tmps_cone_alt(ll_in::MPS, rr_in::MPS,
 
 end
 
-
-function gpu_run_cone() 
-    @info "CUDA not loaded" 
-end
-function gpu_truncate_sweep() end
-function gpu_truncate_sweep!() end
-function gpu_expval_LR() end
-function gpu_expval_LL_sym() end
-function cpu_expval_LR() end
-function gpu_run_cone_svd() end

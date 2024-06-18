@@ -104,3 +104,27 @@ function expval_en_density(ll::MPS, rr::MPS, tp::tmpo_params)
 
 end
 
+
+function compute_expvals(ll::AbstractMPS, rr::AbstractMPS, op_list::Vector{String}, tp::tmpo_params)
+
+    if op_list[1] == "all"
+        op_list = ["X", "Z", "XX", "ZZ", "eps"]
+    end
+
+    allevs = Dict()
+
+    for op in op_list
+        if op == "X"
+            println("X")
+            allevs["X"] = expval_LR(ll, rr, ComplexF64[0,1,1,0], tp)
+        elseif op == "Z"
+            println("Z")
+            allevs["Z"] = expval_LR(ll, rr, ComplexF64[1,0,0,-1], tp)
+        elseif op == "eps"
+            println("eps")
+            allevs["eps"] = expval_en_density(ll, rr, tp)
+        end
+    end
+
+    return allevs
+end

@@ -19,6 +19,8 @@ include("pparams.jl")
 include("ctruncate.jl")
 include("ceigen.jl")
 
+include("utils.jl")
+
 include("matrix_utils.jl")
 include("itensor_utils.jl")
 include("mps_utils.jl")
@@ -31,7 +33,7 @@ include("gen_svdeig_symm.jl")
 
 include("bench_data.jl")
 
-
+export mergedicts!
 
 # from pparams
 export pparams, ppm_params, trunc_params, model_params, tmpo_params
@@ -70,5 +72,6 @@ export
     symm_oeig,
     mytrunc_svd,
     mytrunc_eig
+
 
 end
