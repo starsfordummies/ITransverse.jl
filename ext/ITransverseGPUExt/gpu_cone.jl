@@ -25,7 +25,37 @@ function gpu_extend_tmps_cone(ll::AbstractMPS, rr::AbstractMPS,
     tmpo = NDTensors.cu(swapprime(build_ham_folded_tMPO(tp, op_R, time_sites), 0, 1, "Site"))
     psi_R = gpu_apply_extend(tmpo, rr)
 
+    ll, rr = gpu_truncate_sweep(psi_L,psi_R, cutoff=truncp.cutoff, chi_max=truncp.maxbondim)
+    
+    #gen_renyi2 = generalized_renyi_entropy(ll, rr, 2, normalize=true)
+
+
+    return ll,rr
+
+end
+
+
+
+function gpu_extend_tmps_cone_aggr(ll::AbstractMPS, rr::AbstractMPS, 
+    op_L::Vector{ComplexF64}, op_R::Vector{ComplexF64}, 
+    tp::tmpo_params,
+    truncp::trunc_params)
+
+    time_sites = siteinds("S=3/2", length(ll)+1)
+    time_sites= addtags(time_sites, "time_fold")
+
+    tmpo = NDTensors.cu(build_ham_folded_tMPO(tp, op_L, time_sites))
+
+    #println("check: " , length(tmpo), length(ll), length(rr))
+
+    ll = gpu_apply_extend(tmpo, ll)
+
+    tmpo = NDTensors.cu(swapprime(build_ham_folded_tMPO(tp, op_R, time_sites), 0, 1, "Site"))
+    ll = gpu_apply_extend(tmpo, rr)
+
+
     GC.gc(true)
+    CUDA.memory_status()
 
     ll, rr = gpu_truncate_sweep!(psi_L,psi_R, cutoff=truncp.cutoff, chi_max=truncp.maxbondim)
     
@@ -35,6 +65,7 @@ function gpu_extend_tmps_cone(ll::AbstractMPS, rr::AbstractMPS,
     return ll,rr
 
 end
+
 
 
 function gpu_apply_extend(A::MPO, ψ::AbstractMPS, close_op::Vector = ComplexF64[1,0,0,0])
@@ -112,9 +143,9 @@ function ITransverse.gpu_run_cone(psi::AbstractMPS,
         llwork = deepcopy(ll)
 
         # if we're worried about symmetry, evolve separately L and R 
-        ll,_ = gpu_extend_tmps_cone(llwork, rr, Id, op, tp, truncp)
+        ll,_ = gpu_extend_tmps_cone_aggr(llwork, rr, Id, op, tp, truncp)
 
-        _,rr = gpu_extend_tmps_cone(llwork, rr, op, Id, tp, truncp)
+        _,rr = gpu_extend_tmps_cone_aggr(llwork, rr, op, Id, tp, truncp)
 
         overlapLR = overlap_noconj(ll,rr)
 
