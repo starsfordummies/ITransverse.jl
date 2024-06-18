@@ -1,4 +1,4 @@
-function build_H_ising_parallel_field(sites, mp::mpdel_params)
+function build_H_ising_parallel_field(sites, mp::model_params)
     build_H_ising_parallel_field(sites, mp.JXX, mp.hz, mp.λx)
 end
 
