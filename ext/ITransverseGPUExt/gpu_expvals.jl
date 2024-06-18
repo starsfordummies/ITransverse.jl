@@ -74,10 +74,11 @@ end
 
 function gpu_expval_en_density(ll::MPS, rr::MPS, tp::tmpo_params)
 
-    time_sites = siteinds(ll)
+    time_sites_L = siteinds(ll)
+    time_sites_R = siteinds(rr)
 
-    tMPO1, li1, ri1 = build_folded_open_tMPO(tp, time_sites)
-    tMPO2, li2, ri2 = build_folded_open_tMPO(tp, time_sites)
+    tMPO1, li1, ri1 = build_folded_open_tMPO(tp, time_sites_L)
+    tMPO2, li2, ri2 = build_folded_open_tMPO(tp, time_sites_R)
 
     rho0 = (tp.init_state) * (tp.init_state')
     tMPO1[end] *= ITensor(rho0, ri1)
@@ -92,7 +93,7 @@ function gpu_expval_en_density(ll::MPS, rr::MPS, tp::tmpo_params)
     os += tp.mp.λx/2,  "X",1,"I",2
 
     #ϵ_op = ITensor(os, temp_s, temp_s')
-    ϵ_op = MPO(os, temp_s)
+    ϵ_op = NDTensors.cu(MPO(os, temp_s))
     cs1 = combiner(temp_s[1], temp_s[1]')
     cs2 = combiner(temp_s[2], temp_s[2]')
     ϵ_op[1] *= cs1 
@@ -100,29 +101,22 @@ function gpu_expval_en_density(ll::MPS, rr::MPS, tp::tmpo_params)
     ϵ_op[1] *= delta(combinedind(cs1), li1)
     ϵ_op[2] *= delta(combinedind(cs2), li2)
 
-    tMPO_eps = applys(tMPO2, tMPO1)
-    tMPO_eps[1] *= delta(li2',li2)
-    tMPO_eps[1] *= ϵ_op[1]
-    tMPO_eps[1] *= ϵ_op[2]
+    LO = applys(NDTensors.cu(tMPO1), ll)
+    OR = applys(NDTensors.cu(tMPO2), rr) # todo swap indices for non-symmetric MPOs
 
-    #@show inds(tMPO_eps[1])
+    insert!(LO.data, 1, ϵ_op[1])
+    insert!(OR.data, 1, ϵ_op[2])
 
-    tMPO_ids = applys(tMPO2, tMPO1)
-    tMPO_ids[1] *= delta(li2',li2)
+    ev_LOOR = overlap_noconj(LO, OR)
 
-    tMPO_ids[1] *= ITensor(ComplexF64[1,0,0,1], li1)
-    tMPO_ids[1] *= ITensor(ComplexF64[1,0,0,1], li2)
+    deleteat!(LO.data,1)
+    deleteat!(OR.data,1)
 
-    # Only difference with CPU version 
-    tMPO_ids = NDTensors.cu(tMPO_ids)
-    tMPO_eps = NDTensors.cu(tMPO_eps)
+    LO[1] *= ITensor(ComplexF64[1,0,0,1], li1)
+    OR[1] *= ITensor(ComplexF64[1,0,0,1], li2)
 
     #normalization 
-    LOO = applys(tMPO_ids, ll)
-    ev_L11R = overlap_noconj(LOO, rr)
-
-    LOO = applys(tMPO_eps, ll)
-    ev_LOOR = overlap_noconj(LOO, rr)
+    ev_L11R = overlap_noconj(LO, OR)
 
     return ev_LOOR/ev_L11R
 
@@ -139,13 +133,13 @@ function gpu_compute_expvals(ll::AbstractMPS, rr::AbstractMPS, op_list::Vector{S
 
     for op in op_list
         if op == "X"
-            println("X")
+            #println("X")
             allevs["X"] = gpu_expval_LR(ll, rr, ComplexF64[0,1,1,0], tp)
         elseif op == "Z"
-            println("Z")
+            #println("Z")
             allevs["Z"] = gpu_expval_LR(ll, rr, ComplexF64[1,0,0,-1], tp)
         elseif op == "eps"
-            println("eps")
+            #println("eps")
             allevs["eps"] = gpu_expval_en_density(ll, rr, tp)
         end
     end
