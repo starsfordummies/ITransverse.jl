@@ -30,8 +30,6 @@ ITensors.op(::OpName"τplusτdag",::SiteType"S=1") =
  1 1 0]
 
 ITensors.state(::StateName"+", ::SiteType"S=1") = [1,1,1]/sqrt(3)
-ITensors.state(::StateName"↑", ::SiteType"S=1") = [1,0,0]
-ITensors.state(::StateName"↓", ::SiteType"S=1") = [0,0,1]
 
 
 ITensors.state(::StateName"Up", ::SiteType"S1_Z3") = [1,0,0]

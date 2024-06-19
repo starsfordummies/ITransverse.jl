@@ -1,4 +1,4 @@
-using ITensors, ITensorMPS, JLD2, Dates
+using ITensors, ITensorMPS, JLD2
 using Revise
 using Plots
 
@@ -7,7 +7,8 @@ using ITransverse
 function main()
 
     JXX = 1.0  
-    hz = 0.5
+    hz = 1.05
+    gx = 0.5
 
     dt = 0.1
 
@@ -34,8 +35,8 @@ function main()
 
     #time_sites = siteinds("S=3/2", 1)
 
-    mp = model_params("S=1/2", 1.0, 1.05, 0.5, dt)
-    tp = tmpo_params("S=1/2", "S=1/2", build_expH_ising_parallel_field_murg, mp, dt, nbeta, init_state)
+    mp = model_params("S=1/2", JXX, hz, gx, dt)
+    tp = tmpo_params("S=1/2", "S=1/2", build_expH_ising_parallel_field_murg, mp, nbeta, init_state)
 
     # mp = model_params("S=1/2", JXX, hz, 0.0, dt)
     # tp = tmpo_params("S=1/2", "S=1/2", build_expH_ising_murg, mp, dt, nbeta, init_state)

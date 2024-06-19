@@ -1,6 +1,7 @@
 # Custom param structures for Ising-Potts models
 # and for power methods/ truncations etc 
 
+""" This is old and should be superseded soon"""
 struct pparams
     JXX::Float64
     hz::Float64
@@ -17,16 +18,29 @@ struct model_params
     dt::Float64
 end
 
+# allow for changes on the fly of params 
+model_params(x::model_params; 
+    JXX=x.JXX, 
+    hz=x.hz, 
+    λx=x.λx, 
+    dt=x.dt) = model_params(x.phys_space, JXX, hz, λx, dt)
+
 struct tmpo_params
     time_phys_space::String
     virt_space::String
     expH_func::Function
     mp::model_params
-    dt::Float64
     nbeta::Int64
     init_state::Vector{ComplexF64}
+   
 end
 
+ # allow for changes on the fly of params
+tmpo_params(x::tmpo_params; 
+    expH_func=x.expH_func, 
+    mp=x.model_params,
+    nbeta=x.model,
+    init_state=x.init_state) = tmpo_params(x.time_phys_space, x.virt_space, expH_func, mp, nbeta, init_state)
 
 
 struct ppm_params

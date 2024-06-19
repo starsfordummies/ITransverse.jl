@@ -88,17 +88,6 @@ export rho2,
     diagonalize_rtm_sym_gauged
 
  
-
-
-
-# from symm_decompositions.jl
-#export symm_svd, symm_oeig
-
-
-# include("models/ising.jl")
-# include("models/potts.jl")
-# include("models/xxzmodel.jl")
-
 include("ChainModels/ChainModels.jl")
 using .ChainModels
 
@@ -164,10 +153,6 @@ include("lightcone/expvals_lr.jl")
 export expval_LR
 
 include("lightcone/cone.jl")
-
-export evolve_cone,
- init_cone_ising
-
 
 export init_cone, run_cone
 

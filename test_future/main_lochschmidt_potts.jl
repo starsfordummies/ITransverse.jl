@@ -12,7 +12,7 @@ else
 end
 
 using Plots
-using ITensors, FileIO, JLD2, Dates
+using ITensors, FileIO, JLD2
 
 using ITransverse
 
@@ -125,12 +125,6 @@ end
 
 end
 
-
-ITensors.space(::SiteType"S=3") = 7
-ITensors.state(::StateName"↑", ::SiteType"S=3") = [1, 0, 0, 0, 0, 0, 0]
-ITensors.state(::StateName"+", ::SiteType"S=3") = [1,1,1,1,1,1,1]/sqrt(7)
-
-ITensors.state(::StateName"+", ::SiteType"S=1") = [1,1,1]/sqrt(3)
 
 
 main()

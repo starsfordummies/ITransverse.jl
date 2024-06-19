@@ -187,7 +187,7 @@ function ITransverse.gpu_run_cone(psi::AbstractMPS,
             jldsave("cp_cone_$(length(ll))_chi_$(chis[end]).jld2"; llw, rrw, chis, expvals, entropies, infos)
         end
      
-        push!(ts, length(ll)*tp.dt)
+        push!(ts, length(ll)*tp.mp.dt)
         next!(p; showvalues = [(:Info,"[$(dt)] χ=$(maxlinkdim(ll)), (L|R) = $overlapLR " )])
 
     end

@@ -1,7 +1,7 @@
 using ITensors, JLD2
 using ITransverse
 
-function main_build_ising_loschmidt_ents(Tstart::Int, Tend::Int, nbeta::Int, Tstep::Int=1)
+function main_build_ising_loschmidt_ents(Tstart::Int, Tend::Int, nbeta::Int; Tstep::Int=1)
 
     JXX = 1.0
     hz = 1.0
@@ -52,7 +52,7 @@ function main_build_ising_loschmidt_ents(Tstart::Int, Tend::Int, nbeta::Int, Tst
         println("Initial state $init_state  => quench @ J=$JXX , h=$hz ")
 
         mpo_L, start_mps = build_ising_fw_tMPO_regul_beta(build_expH_ising_murg, JXX, hz, dt, nbeta, time_sites, init_state)
-
+        
         ll_murg_s, ds2s_murg_s = powermethod_sym(start_mps, mpo_L, pm_params)
 
         push!(ll_murgs, ll_murg_s)
@@ -61,7 +61,7 @@ function main_build_ising_loschmidt_ents(Tstart::Int, Tend::Int, nbeta::Int, Tst
         curr_T = ts
 
 
-        if ts % 2 == 0
+        if ts % 20 == 0
             jldsave(out_filename; nbeta, dt, ll_murgs, ds2s, params, pm_params, curr_T, allts)
         end
 

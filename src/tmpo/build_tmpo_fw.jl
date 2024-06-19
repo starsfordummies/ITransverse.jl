@@ -87,7 +87,17 @@ function build_fw_tMPO_regul_beta(eH::MPO, eHi::MPO,
 
 end
 
+# TODO WIP
+function build_fw_tMPO_regul_beta(tp::tmpo_params,
+    time_sites::Vector{<:Index})
 
+    eH = build_expH(tp)
+    eH = tp.build_expH_function(tp.space_sites, tp.JXX, tp.hz, tp.dt)
+    eHi = tp.build_expH_function(tp.space_sites, tp.JXX, tp.hz, -im*(tp.dt))
+
+    
+
+end
 """ Returns (tMPO, tMPS) pair. """
 function build_ising_fw_tMPO_regul_beta( build_expH_function::Function,
     JXX::Real, hz::Real, 
