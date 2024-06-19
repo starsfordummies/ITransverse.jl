@@ -4,7 +4,6 @@
 function vn_entanglement_entropy_cut(psi::MPS, cut::Int)
 
     orthogonalize!(psi, cut)
-    #println(norm(psi))
 
     if cut == 1
         _,S,_ = svd(psi[cut], (siteind(psi,cut)))
@@ -30,14 +29,14 @@ function vn_entanglement_entropy(psi::MPS)
 
     workpsi = normalize(psi)
 
-    SvNs = Vector{Float64}()
+    ents_vn = Vector{Float64}()
 
     for icut=1:length(workpsi)-1
         Si = vn_entanglement_entropy_cut(workpsi, icut)
-        push!(SvNs, Si)
+        push!(ents_vn, Si)
     end
 
-    return SvNs
+    return ents_vn
 end
 
 
@@ -75,19 +74,19 @@ end
 
 
 """ Computes the nth Renyi entanglement entropy of an MPS psi at all links, 
-returns a vector of floats containing the VN entropies 
+returns a vector of floats containing the entropies 
 """
 function renyi_entanglement_entropy(psi::MPS, nren::Int=2)
 
     workpsi = normalize(psi)
 
-    SvNs = Vector{Float64}()
+    ents_renyi = Vector{Float64}()
 
     for icut=1:length(workpsi)-1
         Si = renyi_entanglement_entropy_cut(workpsi, icut, nren)
-        push!(SvNs, Si)
+        push!(ents_renyi, Si)
     end
 
-    return SvNs
+    return ents_renyi
 end
 

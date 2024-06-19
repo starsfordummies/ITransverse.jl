@@ -1,12 +1,8 @@
 using ITensors
 using Plots
 using LsqFit
-plotlyjs()
 
-include("../models/potts.jl")
-include("../power_method/compute_entropies.jl")
-include("../ground_state/iten_dmrg_entropy_observer.jl")
-
+using ITransverse 
 
 function gs_potts(N::Int, ff::Real, use_symmetric::Bool)
 

@@ -55,11 +55,6 @@ function pinvten(a::ITensor, check::Bool=true)
     return ainv
 end
 
-""" TOOD WIP"""
-function nonzero_elements(A::ITensor)
-    return 0
-end
-
 
 function symmetrize(at::ITensor)
     if ndims(at) != 2
@@ -121,3 +116,7 @@ function check_symmetry_itensor(T::ITensor, inds_to_permute)
 
 end
 
+""" TOOD WIP"""
+function nonzero_elements(A::ITensor)
+    return 0
+end

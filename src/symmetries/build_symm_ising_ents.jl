@@ -1,24 +1,4 @@
-using ITensors, JLD2, Dates
-#using Infiltrator
-
-if Base.Sys.islinux()
-    println("On linux - setting MKL and 8 threads")
-    using MKL
-    using LinearAlgebra
-
-    BLAS.set_num_threads(8)  # 8 threads seems to be a sweet spot
-
-else
-    using LinearAlgebra
-end
-
-
-# include("../power_method/utils.jl")
-# include("../models/ising.jl")
-# include("../tmpo/build_tmpo.jl")
-# include("../power_method/compute_entropies.jl")
-# include("../truncations/sweeps_trunc.jl")
-# include("../power_method/power_method.jl")
+using ITensors, ITensorMPS, JLD2
 
 using ITransverse
 

@@ -1,5 +1,6 @@
 """
-init_cone_ising => seed_cone_left =>
+#! This should be superseded by more general build_tMPO for a generic Hamiltonian
+
 """
 
 """ Initializes lightcone for Ising"""

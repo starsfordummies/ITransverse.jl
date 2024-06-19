@@ -1,19 +1,16 @@
-
 """
-Power method for SYMMETRIC case: takes as input a single MPS |L>,
-    applies the in_mpo O and optimizes the overlap (LO|OL) , where LO is *not* conjugated
+Power method for *symmetric* case: takes as input a single MPS |L>,
+    applies the `in_mpo` O and optimizes the overlap (LO|OL) , where LO is *not* conjugated
 
 Truncation params are in pm_params
 """
 function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::ppm_params)
 
-    
     itermax = pm_params.itermax
     cutoff = pm_params.cutoff
     maxbondim = pm_params.maxbondim
     converged_ds2 = pm_params.ds2_converged
     method = pm_params.ortho_method
-
 
     # normalize the vector to get a good starting point?
 
@@ -27,13 +24,9 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::ppm_params)
     p = Progress(itermax; showspeed=true)  #barlen=40
     p = Progress(itermax; desc="L=$(length(ll)), cutoff=$(cutoff), maxbondim=$(pm_params.maxbondim))", showspeed=true) 
 
-
-    maxbondim = 10
+    maxbondim = 20
 
     for jj = 1:itermax
-
-        # maxbondim += 2
-        # maxbondim = minimum([maxbondim,pm_params.maxbondim])
 
         if pm_params.increase_chi
             maxbondim += 2
@@ -45,24 +38,9 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::ppm_params)
         # Note that ITensors does the apply on the MPS/MPO legs with the SAME label, eg. p-p 
         # and then unprimes the p' leg. 
         
-        #OpsiL = apply(in_mpo, ll,  alg="naive", truncate=false)
-        #ll, sjj = truncate_normalize_sweep_sym(OpsiL, svd_cutoff=SVD_cutoff, chi_max=maxbondim)
-
-        ll = apply(in_mpo, ll,  alg="naive", truncate=false)
+        ll = applys(in_mpo, ll)
         sjj = truncate_normalize_sweep_sym!(ll, svd_cutoff=cutoff, chi_max=maxbondim, method=method)
         
-        #@show linkinds(ll)
-
-
-        #newInds = ["v" => "l=$i" for i in 1:length(ll)-1]
-        #replacetags!(ll, "v" => "Link", newInds... )
-        # TODO not implemented yet 
-        #sjj = truncate_normalize_sweep_sym_ite!(ll, svd_cutoff=cutoff, chi_max=maxbondim)
-
-        #@show length(sprevs)
-        #@show sjj
-        #@show length(sjj)
-
         ds2 = norm(sprevs - sjj)
         push!(ds2s, ds2)
         sprevs = sjj
@@ -75,10 +53,7 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::ppm_params)
             templot =  plot(real(sjj),label=jj,legend=:outertopright)
         end
 
-        #next!(p; showvalues = [(:jj,jj), (:ds2,ds2), (:chi,(maxlinkdim(ll)))])
         next!(p; showvalues = [(:Info,"[$(jj)] ds2=$(ds2), chi=$(maxlinkdim(ll))" )])
-
-        #next!(p; showvalues = ["ds2= $ds2, chimax=$(maxlinkdim(ll))"])
 
         # TODO: this is costly - maybe not necessary if all we care for is convergence
         #sjj = generalized_entropy_symmetric(ll)
@@ -88,11 +63,6 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::ppm_params)
         if pm_params.plot_s
             show(plot(real(sjj),label=jj,legend=:outertopright))
         end
-
-
-        # this maybe helps keeping memory usage low on cluster(?)
-        # https://itensor.discourse.group/t/large-amount-of-memory-used-when-dmrg-runs-on-cluster/1045/4
-        #GC.gc()
 
 
         if ds2 < converged_ds2
@@ -206,7 +176,7 @@ end
 """
 Power method using SVD compression: takes as input a single MPS |L>,
     applies O and optimizes the overlap <LObar|OL>  (ie. LO conjugate) - in practice 
-    this is the standard truncation using SVDs/RDMs
+    this is the standard truncation using SVDs/RDMs, or the standard temporal entropy 
 
 Truncation params are in pm_params
 """
@@ -221,19 +191,12 @@ function powermethod_sym_rdm(in_mps::MPS, in_mpo::MPO, pm_params::Dict)
 
     ll = normalize(in_mps)
 
-    # should we also normalize the MPO !!?
-    #normalize!(in_mpo)
-
-
     ds2s = [0.]
     ds2 = fill(0., length(in_mps)-1)
     sprevs = fill(1., length(in_mps)-1)
 
     for jj in range(1,itermax)
 
-        # Note that ITensors does the apply on the MPS/MPO legs with the SAME label, eg. p-p 
-        # and then unprimes the p' leg. 
-        
         ll = apply(in_mpo, ll,  alg="naive" , truncate=true, cutoff=SVD_cutoff, maxim=maxbondim)
 
         sjj = vn_entanglement_entropy(ll)

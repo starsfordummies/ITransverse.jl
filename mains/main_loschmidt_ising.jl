@@ -1,92 +1,74 @@
-using Revise
-using ITensors, JLD2, Dates
-using LinearAlgebra
-using Plots
-using LsqFit
-
+using ITensors, JLD2
 using ITransverse
 
+function main_build_ising_loschmidt_ents(Tstart::Int, Tend::Int, nbeta::Int, Tstep::Int=1)
+
+    JXX = 1.0
+    hz = 1.0
+
+    dt = 0.1
+
+    zero_state = Vector{ComplexF64}([1, 0])
+    plus_state = Vector{ComplexF64}([1 / sqrt(2), 1 / sqrt(2)])
+
+    init_state = plus_state
+    #init_state = zero_state
 
 
-ITensors.enable_debug_checks()
-
-function test_los(Tstart::Int; method::String="SVD")
-
-JXX = 1.0  
-hz = 1.0
-
-dt = 0.1
-
-nbeta = 2
-
-zero_state = Vector{ComplexF64}([1,0])
-plus_state = Vector{ComplexF64}([1/sqrt(2),1/sqrt(2)])
-
-init_state = plus_state
+    SVD_cutoff = 1e-24
+    maxbondim = 140
+    itermax = 800
+    verbose = false
+    ds2_converged = 1e-6
 
 
-SVD_cutoff = 1e-10
-maxbondim = 120
-itermax = 500
-verbose=false
-ds2_converged = 1e-4
 
-#params = Dict("JXX" => JXX , "hz" => hz, "dt" => dt, "nbeta" => nbeta, "init_state" => init_state)
-#pm_params = Dict(:itermax => itermax, :SVD_cutoff=> SVD_cutoff, :maxbondim => maxbondim, :verbose => false)
+    params = pparams(JXX, hz, dt, nbeta, init_state)
+    pm_params = ppm_params(itermax, SVD_cutoff, maxbondim, verbose, ds2_converged)
+
+    out_filename = "out_ents_ising_plus_hp_b$nbeta" * ".jld2"
 
 
-params = pparams(JXX, hz, dt, nbeta, init_state)
-pm_params = ppm_params(itermax, SVD_cutoff, maxbondim, verbose, ds2_converged, true, false, method)
+    ll_murgs = Vector{MPS}()
 
-out_filename = "out_ents_ising_" * Dates.format(now(), "yymmdd_HHMM") * ".jld2"
-
-ll_murg_s = MPS()
-
-ds2s = Vector{Float64}[]
+    ds2s = Vector{Float64}[]
 
 
-Ntime_steps = Tstart
-Nsteps = Ntime_steps +2*nbeta
-time_sites =  addtags(siteinds("S=1/2", Nsteps; conserve_qns = false), "time")
+    Ntime_steps = Tstart
+    Nsteps = Ntime_steps + 2 * nbeta
+    time_sites = addtags(siteinds("S=1/2", Nsteps; conserve_qns=false), "time")
+
+    allts = Tstart:Tstep:Tend
+
+    for ts = Tstart:Tstep:Tend
+
+        Ntime_steps = ts
+        Nsteps = Ntime_steps + 2 * nbeta
+
+        time_sites = addtags(siteinds("S=1/2", Nsteps; conserve_qns=false), "time")
 
 
-start_mps = productMPS(time_sites,"+");
+        println("Optimizing for $ts timesteps + $nbeta imag steps ")
+        println("Initial state $init_state  => quench @ J=$JXX , h=$hz ")
 
-mpo_L = build_ising_tMPO_regul_beta(build_expH_ising_murg, JXX, hz, dt, nbeta, time_sites, init_state)
-#ll_dmrg = dmrg(mpo_L, start_mps, nsweeps=10, ishermitian=false, eigsolve_which_eigenvalue=:LR, outputlevel=3)
+        mpo_L, start_mps = build_ising_fw_tMPO_regul_beta(build_expH_ising_murg, JXX, hz, dt, nbeta, time_sites, init_state)
 
-ll_murg_s, ds2s_murg_s  = powermethod_sym(start_mps, mpo_L, pm_params)
+        ll_murg_s, ds2s_murg_s = powermethod_sym(start_mps, mpo_L, pm_params)
 
-leading_eig = inner(conj(ll_murg_s'), mpo_L, ll_murg_s)
+        push!(ll_murgs, ll_murg_s)
+        push!(ds2s, ds2s_murg_s)
 
-# silly extra check so we can see that (LTTR) = lambda^2 (LR)
-OL = apply(mpo_L, ll_murg_s,  alg="naive", truncate=false)
-leading_sq = overlap_noconj(OL, OL)
+        curr_T = ts
 
-normalization = overlap_noconj(ll_murg_s,ll_murg_s)
-println(ds2s_murg_s)
 
-return ll_murg_s, leading_eig, leading_sq, normalization
-#,  ll_dmrg
+        if ts % 2 == 0
+            jldsave(out_filename; nbeta, dt, ll_murgs, ds2s, params, pm_params, curr_T, allts)
+        end
+
+    end
 
 end
 
+main_build_ising_loschmidt_ents(30, 50, 2)
 
-allens = []
-allens2 = []
-norms = []
-for jj = 24:1:40
-    _, en, en2, norm = test_los(jj, method="SVDold")
-    push!(allens, en)
-    push!(allens2, en2)
-    push!(norms, norm)
-    _, en, en2, norm = test_los(jj, method="SVD")
-    push!(allens, en)
-    push!(allens2, en2)
-    push!(norms, norm)
-    _, en, en2, norm = test_los(jj, method="EIG")
-    push!(allens, en)
-    push!(allens2, en2)
-    push!(norms, norm)
-end
 

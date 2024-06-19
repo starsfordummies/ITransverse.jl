@@ -1,9 +1,7 @@
 using ITensors
 using Plots: plot, plot!
 
-include("../models/xxzmodel.jl")
-include("../power_method/compute_entropies.jl")
-
+using ITransverse
 
 function gs_xxz(N::Int, do_symmetric::Bool)
 

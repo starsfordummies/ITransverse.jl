@@ -1,6 +1,15 @@
+# Folded space 1/2 x 1/2 -> 3/2
 ITensors.space(::SiteType"S=3/2") = 4
 ITensors.state(::StateName"↑", ::SiteType"S=3/2") = [1, 0, 0, 0]
 ITensors.state(::StateName"+", ::SiteType"S=3/2") = [1/2, 1/2, 1/2, 1/2]
+
+
+# For Potts 
+ITensors.space(::SiteType"S=3") = 7
+ITensors.state(::StateName"↑", ::SiteType"S=3") = [1, 0, 0, 0, 0, 0, 0]
+ITensors.state(::StateName"↓", ::SiteType"S=3") = [0, 0, 0, 0, 0, 0, 1]
+
+ITensors.state(::StateName"+", ::SiteType"S=3") = [1,1,1,1,1,1,1]/sqrt(7)
 
 
 """ Builds the (bulk) tensor for the *folded* time MPO

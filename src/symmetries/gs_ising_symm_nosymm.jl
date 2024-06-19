@@ -1,9 +1,7 @@
 using ITensors
 using Plots: plot,plot!
 
-include("../models/ising.jl")
-include("../power_method/compute_entropies.jl")
-
+using ITransverse 
 
 function gs_ising(N::Int, symmetric::Bool)
 

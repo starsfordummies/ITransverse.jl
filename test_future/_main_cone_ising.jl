@@ -1,3 +1,5 @@
+#! This should be superseded by more general build_tMPO for a generic Hamiltonian
+
 using ITensors, JLD2, Dates
 using Revise
 using Plots
