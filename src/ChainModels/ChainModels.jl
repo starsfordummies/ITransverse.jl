@@ -1,10 +1,6 @@
 module ChainModels
 
 using ITensors, ITensorMPS
-#using ..IGensors: symm_svd
-
-# include("../myutils/myutils.jl")
-# #using .MyUtils
 
 using ..ITenUtils
 
@@ -28,7 +24,8 @@ export build_H_ising_manual,
     build_expH
     
 # from ising_parallel.jl
-export  build_expH_ising_parallel_field, build_expH_ising_parallel_field_murg
+export  build_expH_ising_parallel_field,
+ build_expH_ising_parallel_field_murg
 
 #from potts.jl
 export build_H_potts_manual,
