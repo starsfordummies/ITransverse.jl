@@ -1,4 +1,3 @@
-
 using Revise
 using LinearAlgebra, ITensors, JLD2, Dates, Plots
 
@@ -24,7 +23,7 @@ function main()
 
     SVD_cutoff = 1e-14
     maxbondim = 120
-    itermax = 500
+    itermax = 1
     verbose=false
     ds2_converged=1e-6
 
@@ -40,6 +39,7 @@ function main()
     evs_x2 = []
     evs_z2 = []
 
+    ev0s = []
 
     evs_xs = []
     evs_zs = []
@@ -49,7 +49,7 @@ function main()
     leftvecs = []
     ds2s = []
 
-    ts = 5:5:60
+    ts = 2:1:10
 
     genVNs = [] 
 
@@ -63,30 +63,32 @@ function main()
         #test_mps = productMPS(time_sites,"+")
         #test_mps = productMPS(time_sites,"↑")
 
-        init_mps = build_ising_folded_tMPS(build_expH_ising_murg, params, time_sites)
+        init_mps = ITransverse.build_ising_folded_tMPS(build_expH_ising_murg, params, time_sites)
 
-        mpo_X = build_ising_folded_tMPO(build_expH_ising_murg, params, sigX, time_sites)
-        mpo_Z = build_ising_folded_tMPO(build_expH_ising_murg, params, sigZ, time_sites)
-        mpo_1 = build_ising_folded_tMPO(build_expH_ising_murg, params, Id, time_sites)
+        mpo_X = ITransverse.build_ising_folded_tMPO(build_expH_ising_murg, params, sigX, time_sites)
+        mpo_Z = ITransverse.build_ising_folded_tMPO(build_expH_ising_murg, params, sigZ, time_sites)
+        mpo_1 = ITransverse.build_ising_folded_tMPO(build_expH_ising_murg, params, Id, time_sites)
 
 
         #ll, rr, lO, Or, ds2_pm, dns  = powermethod(init_mps, mpo_1, mpo_X, pm_params) # kwargs)
         ll, rr, lO, Or, vals, deltas  = pm_all(init_mps, mpo_1, mpo_X, pm_params) # kwargs)
+        #ll, rr, lO, Or, vals, deltas  = pm_svd(init_mps, mpo_1, mpo_X, pm_params) # kwargs)
 
-        @info "Checking (l|Or)"
-        ITransverse.check_gencan_left_phipsi(ll,Or)
 
-        @info "Checking (lO|r)"
-        ITransverse.check_gencan_left_phipsi(lO,rr)
+        # @info "Checking (l|Or)"
+        # ITransverse.check_gencan_left_phipsi(ll,Or)
 
-        genVN = generalized_entropy(ll, Or)
+        # @info "Checking (lO|r)"
+        # ITransverse.check_gencan_left_phipsi(lO,rr)
 
-        renyi2 = generalized_renyi_entropy(ll,Or, 2)
-        renyi2alt = generalized_renyi_entropy(ll,Or, 2; normalize=true)
+        # genVN = generalized_entropy(ll, Or)
 
-        push!(genVNs, genVN)
-        push!(renyi2s, renyi2)
-        push!(renyi2alts,renyi2alt)
+        # renyi2 = generalized_renyi_entropy(ll,Or, 2)
+        # renyi2alt = generalized_renyi_entropy(ll,Or, 2; normalize=true)
+
+        # push!(genVNs, genVN)
+        # push!(renyi2s, renyi2)
+        # push!(renyi2alts,renyi2alt)
 
         llalt, ds2_pm  = powermethod_Lonly(init_mps, mpo_1, mpo_X, pm_params) 
 
@@ -97,6 +99,7 @@ function main()
         #sleep(10)
 
         ev0 = overlap_noconj(ll, rr)
+        push!(ev0s, ev0)
 
         lz = apply(mpo_Z, ll, alg="naive", truncate=false)
         lx = apply(mpo_X, ll, alg="naive", truncate=false)
@@ -104,6 +107,7 @@ function main()
 
         evz = overlap_noconj(lz, rr)
         evx = overlap_noconj(lx, rr)
+        
         ev1 = overlap_noconj(lid, rr)
 
 
@@ -150,8 +154,16 @@ function main()
 
     end
 
-    evs = Dict("evs_x" => evs_x, "evs_z" => evs_z, "evs_x2" => evs_x2, "evs_z2" => evs_z2, 
-                "evs_xs" => evs_xs, "evs_zs" => evs_zs, "evs_x2s" => evs_x2s, "evs_z2s" => evs_z2s)
+    evs = Dict(
+        "evs0" => ev0s,
+        "evs_x" => evs_x, 
+        "evs_z" => evs_z,
+        "evs_x2" => evs_x2, 
+        "evs_z2" => evs_z2, 
+        "evs_xs" => evs_xs,
+        "evs_zs" => evs_zs, 
+        "evs_x2s" => evs_x2s, 
+        "evs_z2s" => evs_z2s)
 
     ents = Dict("genVNs" => genVNs, "renyi2s" => renyi2s, "renyi2alts" => renyi2alts)
 

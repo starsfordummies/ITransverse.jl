@@ -7,7 +7,7 @@ using ITransverse
 function main()
 
     JXX = 1.0  
-    hz = 0.4
+    hz = 0.5
 
     dt = 0.1
 
@@ -24,21 +24,21 @@ function main()
 
     init_state = plus_state
 
-    cutoff = 1e-24
-    maxbondim = 100
+    cutoff = 1e-14
+    maxbondim = 200
     ortho_method = "SVD"
 
     truncp = trunc_params(cutoff, maxbondim, ortho_method)
 
-    Nsteps = 20
+    Nsteps = 30
 
     #time_sites = siteinds("S=3/2", 1)
 
-    # mp = model_params("S=1/2", JXX, hz, 0.4, dt)
-    # tp = tmpo_params("S=1/2", "S=1/2", build_expH_ising_parallel_field_murg, mp, dt, nbeta, init_state)
+    mp = model_params("S=1/2", 1.0, 1.05, 0.5, dt)
+    tp = tmpo_params("S=1/2", "S=1/2", build_expH_ising_parallel_field_murg, mp, dt, nbeta, init_state)
 
-    mp = model_params("S=1/2", JXX, hz, 0.0, dt)
-    tp = tmpo_params("S=1/2", "S=1/2", build_expH_ising_murg, mp, dt, nbeta, init_state)
+    # mp = model_params("S=1/2", JXX, hz, 0.0, dt)
+    # tp = tmpo_params("S=1/2", "S=1/2", build_expH_ising_murg, mp, dt, nbeta, init_state)
 
 
     c0 = init_cone(tp)
@@ -56,7 +56,7 @@ end
 
 psi, psiR, chis, expvals, entropies, infos = main()
 
-resu = ITransverse.resume_cone("cp_cone.jld2", 10)
+#resu = ITransverse.resume_cone("cp_cone.jld2", 10)
 
 
 

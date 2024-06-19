@@ -1,12 +1,9 @@
-include("../initialize.jl")
-
 using Revise
 using ITensors, JLD2, Dates
 using LinearAlgebra
 using Plots
 using LsqFit
 
-#include("../itransverse.jl")
 using ITransverse
 
 
@@ -93,19 +90,3 @@ for jj = 24:1:40
     push!(norms, norm)
 end
 
-
-# func1(t, p) = p[1] .+ p[2]./t 
-# func2(t, p) = p[1] .+ p[2]./t .+ p[3]./t.^2 
-
-# p0_1 = [1., 1.]
-# p0_2 = [1., 1., 1.]
-
-# #fit1 = curve_fit(func1, range(20,100), log.(abs.(allens)), p0_1)
-# fit2 = curve_fit(func2, range(20,100), log.(abs.(allens)), p0_2)
-
-# scatter(log.(abs.(allens)))
-# #plot!(func1(range(20,130), fit1.param))
-# plot!(func2(range(20,130), fit2.param))
-
-# println(fit2.param)
-# 0.5 * π/24
