@@ -12,7 +12,7 @@ function gpu_extend_tmps_cone_sym_svd(ll::AbstractMPS,
     insert!(ll.data, 1, psin)
     replace_siteinds!(ll, time_sites)
 
-    ll = apply(tmpo, ll, cutoff=truncp.cutoff)
+    ll = apply(tmpo, ll, cutoff=truncp.cutoff, maxdim=truncp.maxbondim)
 
     return ll
 
@@ -34,8 +34,13 @@ function ITransverse.gpu_run_cone_svd(psi::MPS,
 
     Id = ComplexF64[1,0,0,1]
 
-    evs_x = []
-    evs_z = []
+    which_evs = ["X","Z","eps"]
+    expvals = Dict()
+    for op in which_evs
+        expvals[op] = []
+    end
+
+
     chis = []
     overlaps = []
     vn_ents = []
@@ -44,7 +49,6 @@ function ITransverse.gpu_run_cone_svd(psi::MPS,
     ts = [] 
 
     entropies = Dict(:genr2L => gen_r2sL, :genr2R => gen_r2sR, :vn => vn_ents)
-    expvals = Dict(:evs_x => evs_x, :evs_z => evs_z, :overlaps => overlaps)
     infos = Dict(:ts => ts, :truncp => truncp, :tp => tp, :op => Id)
 
 
@@ -62,8 +66,11 @@ function ITransverse.gpu_run_cone_svd(psi::MPS,
         #TODO  renormalize by overlap ?
         ll = ll * sqrt(1/overlapLR)
 
-        push!(evs_x, gpu_expval_LL_sym(ll, ComplexF64[0,1,1,0], tp))
-        push!(evs_z, gpu_expval_LL_sym(ll, ComplexF64[1,0,0,-1], tp))
+        # push!(evs_x, gpu_expval_LL_sym(ll, ComplexF64[0,1,1,0], tp))
+        # push!(evs_z, gpu_expval_LL_sym(ll, ComplexF64[1,0,0,-1], tp))
+
+        evs_computed = gpu_compute_expvals(ll, ll, ["all"], tp)
+        mergedicts!(expvals, evs_computed)
 
         push!(chis, maxlinkdim(ll))
         push!(overlaps, overlapLR)
