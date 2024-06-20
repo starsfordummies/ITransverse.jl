@@ -3,8 +3,8 @@ using ITensors
 using ITransverse
 using Test
 
-
-@info "Testing power method"
+#! TODO There is stuff to be checked here on hte environments / canonical forms ... 
+@testset "Testing power method" begin
 
 
 zero_state = Vector{ComplexF64}([1,0])
@@ -26,7 +26,6 @@ itermax = 100
 verbose=false
 ds2_converged=1e-6
 
-params = pparams(JXX, hz, dt, nbeta, init_state)
 pm_params = ppm_params(itermax, SVD_cutoff, maxbondim, verbose, ds2_converged)
 
 sigX = ComplexF64[0,1,1,0]
@@ -44,8 +43,7 @@ mpo_1 = build_folded_tMPO(tp, Id, time_sites)
 mpo_X = build_folded_tMPO(tp, sigX, time_sites)
 
 
-# TODO update this 
-init_mps = ITransverse.build_ising_folded_tMPS(build_expH_ising_murg, params, time_sites)
+init_mps = build_folded_left_tMPS(tp, time_sites)
 
 ll, rr, lO, Or, vals, deltas  = pm_all(init_mps, mpo_1, mpo_X, pm_params) # kwargs)
 llalt, ds2_pm  = powermethod_Lonly(init_mps, mpo_1, mpo_X, pm_params) 
@@ -55,3 +53,5 @@ ev2 = expval_LR(llalt,llalt, sigX, tp)
 
 @test abs(ev1 - ITransverse.ITenUtils.bench_X_04_plus[Nsteps]) < 0.002
 @test abs(ev2 - ITransverse.ITenUtils.bench_X_04_plus[Nsteps]) < 0.002
+
+end
