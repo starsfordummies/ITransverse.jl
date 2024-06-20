@@ -1,3 +1,5 @@
+using Test
+
 @info "Running all tests"
 
 @testset "$(@__DIR__)" begin
