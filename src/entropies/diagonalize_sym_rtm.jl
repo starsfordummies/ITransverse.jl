@@ -12,7 +12,7 @@ Diagonalize RTM for a *symmetric* environment (psiL,psiL)
 
     `
 """
-function gen_symm_diagonalize_rtm(psiL::MPS, cut::Int; bring_left_gen::Bool=false)
+function diagonalize_rtm_left_gen_sym(psiL::MPS, cut::Int; bring_left_gen::Bool=false)
 
     @assert cut > 1 
     @assert cut < length(psiL)
@@ -60,7 +60,7 @@ Generalized entropy for a *symmetric* environment (psiL,psiL)
     Assuming we're in LEFT GENERALIZED canonical form 
     Returns a list of vectors of eigenvalues, one for each cut 
 """
-function gen_symm_diagonalize_rtm(psiL::MPS; bring_left_gen::Bool=false)
+function diagonalize_rtm_left_gen_sym(psiL::MPS; bring_left_gen::Bool=false)
 
     # we can enforce to bring it in left symmetric gen. canonical form 
     if bring_left_gen
@@ -114,20 +114,20 @@ end
 Bring psi in generalized RIGHT symmetric canonical form,
 then contract LEFT enviroments and diagonalize them.
 Returns an array of arrays containing the eigenvalues of the RTM for each cut """
-function diagonalize_rtm_sym_gauged(psi::MPS; normalize_factor::Number=1.0)
+function diagonalize_rtm_right_gen_sym(psi::MPS; bring_right_gen::Bool=false, normalize_factor::Number=1.0)
 
     mpslen = length(psi)
 
-    psi_gauged = gen_canonical_right(psi)
-
     psi_gauged = psi_gauged/normalize_factor
 
+    if bring_right_gen
+        psi_gauged = gen_canonical_right(psi)
+    end
 
     lenv= ITensor(1.)
     s = siteinds(psi_gauged)
 
     eigs_rho = []
-    eigs_rho_check = []
 
     for jj in 1:mpslen-1
 
@@ -141,24 +141,7 @@ function diagonalize_rtm_sym_gauged(psi::MPS; normalize_factor::Number=1.0)
 
         push!(eigs_rho, vals)
 
-        if mpslen - jj < 4
-            renv = ITensor(1.)
-            for kk in mpslen:-1:jj+1
-                renv *= psi_gauged[kk]
-                renv *= psi_gauged[kk]'
-            end
-
-            rtm_full = lenv * renv
-            vals_full, _ = eigen(rtm_full, inds(rtm_full,plev=0), inds(rtm_full,plev=1))
-
-            push!(eigs_rho_check, vals_full)
-        end
-
     end
     
-    return eigs_rho, eigs_rho_check 
+    return eigs_rho
 end
-
-
-
-

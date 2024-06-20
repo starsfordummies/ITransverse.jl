@@ -156,8 +156,3 @@ function build_entropies(spectra::Vector)
     return entropies
 end
 
-
-function build_entropies(psiL::MPS; bring_left_gen::Bool=false)
-    spectra = gen_symm_diagonalize_rtm(psiL, bring_left_gen=bring_left_gen)
-    return build_entropies(spectra)
-end

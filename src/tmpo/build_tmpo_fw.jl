@@ -88,16 +88,14 @@ function build_fw_tMPO_regul_beta(eH::MPO, eHi::MPO,
 end
 
 """ Returns (tMPO, tMPS) pair. """
-function build_fw_tMPO_regul_beta(tp::tmpo_params,
-    time_sites::Vector{<:Index})
+function build_fw_tMPO_regul_beta(tp::tmpo_params, time_sites::Vector{<:Index})
 
     eH = build_expH(tp)
     eHi = build_expHim(tp)
 
     match_siteinds!(eH, eHi)
 
-    build_fw_tMPO_regul_beta(eH, eHi, 
-    tp.init_state, tp.nbeta, time_sites)
+    build_fw_tMPO_regul_beta(eH, eHi, tp.init_state, tp.nbeta, time_sites)
 end
 
 

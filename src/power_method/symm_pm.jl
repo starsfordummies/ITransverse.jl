@@ -1,8 +1,7 @@
 """
 Power method for *symmetric* case: takes as input a single MPS |L>,
-    applies the `in_mpo` O and optimizes the overlap (LO|OL) , where LO is *not* conjugated
-
-Truncation params are in pm_params
+    applies the `in_mpo` O and optimizes the overlap (LO|OL) , where LO is *not* conjugated.
+    Works eg. for Loschmidt echo type setups, where `in_mpo` is the transfer matrix 
 """
 function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::ppm_params)
 

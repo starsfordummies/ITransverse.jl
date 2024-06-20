@@ -90,10 +90,19 @@ function generalized_entropy_symmetric(psiL::MPS, bring_left_gen::Bool=false)
 end
 
 
+""" TODO these two are the same! """
+
 function generalized_entropy_symmetric_new(psiL::MPS, bring_left_gen::Bool=false)
  
-    eigenvalues = gen_symm_diagonalize_rtm(psiL; bring_left_gen)
+    eigenvalues = diagonalize_rtm_left_gen_sym(psiL; bring_left_gen)
     gen_ents = build_entropies(eigenvalues)
     return gen_ents
     
+end
+
+
+
+function build_entropies(psiL::MPS; bring_left_gen::Bool=false)
+    spectra = diagonalize_rtm_left_gen_sym(psiL, bring_left_gen=bring_left_gen)
+    return build_entropies(spectra)
 end

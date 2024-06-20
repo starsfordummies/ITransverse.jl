@@ -40,13 +40,12 @@ end
 
 
 
-function renyi_entanglement_entropy_cut(psi::MPS, cut::Int, nren::Int)
+function renyi_entanglement_entropy_cut(psi::MPS, cut::Int, αr::Int)
 
     S_ren = 0.0
 
-    if nren == 1  # VN entropy
+    if αr == 1  # VN entropy
         S_ren = vn_entanglement_entropy_cut(psi, cut)
-
     else  # Renyi n
             
         orthogonalize!(psi, cut)
@@ -61,7 +60,7 @@ function renyi_entanglement_entropy_cut(psi::MPS, cut::Int, nren::Int)
         sum_sN = 0.0
         for n=1:dim(S, 1)
             p = S[n,n]^2
-            sum_sN += p^n
+            sum_sN += p^αr
         end
         S_ren = -log(sum_sN)
 
