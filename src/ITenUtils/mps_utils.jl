@@ -57,28 +57,30 @@ function sim!(psi::MPS)
 end
 
 
-""" Returns an MPS which is a copy of the 2nd argument
+""" Given `mps1` and `mps2`, returns a copy of `mps2`
 with physical indices matching those of the first one
-TODO CHECK IS THIS THE SAME AS REPLACE_SITEINDS? """
-function match_mps_indices(mps1::MPS, mps2::MPS)
-    @assert length(mps1) == length(mps2)
-    mps3 = copy(mps2)
-    for (ii, Bi) in enumerate(mps2)
-        mps3[ii] = Bi * delta(siteind(mps2,ii), siteind(mps1,ii))
-    end
-
-    return mps3
+"""
+function match_siteinds(mps1::MPS, mps2::MPS)
+    replace_siteinds(mps2, siteinds(mps1))
 end
 
-""" Changes inplace the phys indices of the 2nd argument
-matching those of the first one"""
-function match_mps_indices!(mps1::MPS, mps2::MPS)
-    @assert length(mps1) == length(mps2)
-    for ii in eachindex(mps2)
-        mps2[ii] = mps2[ii] * delta(siteind(mps2,ii), siteind(mps1,ii))
+""" Given `mps1` and `mps2`, replaces `mps2` siteinds with those of `mps1`
+"""
+function match_siteinds!(mps1::MPS, mps2::MPS)
+    replace_siteinds!(mps2, siteinds(mps1))
+end
+
+function match_siteinds!(mpo1::MPO, mpo2::MPO)
+    for j in eachindex(mpo1)
+        sold = siteind(mpo2,j)
+        snew = siteinds(mpo1,j)
+        replaceinds!(mpo2[j], sold' => snew')
+        replaceinds!(mpo2[j], sold => snew)
     end
 end
 
+
+""" TODO have a look at this if we can do better """
 function extend_mps(in_mps::MPS, new_sites)
 
     new_mps = deepcopy(in_mps)

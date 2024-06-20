@@ -46,7 +46,8 @@ export myrMPS,
     normbyfactor,
     sim,
     sim!,
-    applys
+    applys,
+    match_siteinds!
     # check_diag_matrix, 
     # check_id_matrix,
     # isid
