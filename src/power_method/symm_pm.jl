@@ -38,7 +38,7 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::ppm_params)
         # and then unprimes the p' leg. 
         
         ll = applys(in_mpo, ll)
-        sjj = truncate_normalize_sweep_sym!(ll, svd_cutoff=cutoff, chi_max=maxbondim, method=method)
+        sjj = truncate_normalize_sweep_sym!(ll, cutoff=cutoff, chi_max=maxbondim, method=method)
         
         ds2 = norm(sprevs - sjj)
         push!(ds2s, ds2)

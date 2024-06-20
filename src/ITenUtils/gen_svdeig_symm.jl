@@ -130,20 +130,21 @@ function symm_svd(M::Matrix; maxdim=nothing, cutoff=nothing, use_absolute_cutoff
     #sq_z = sqrt.(Diagonal(diag(z)))
     # If z is diagonal, just invert its diag 
     diagz = Diagonal(diag(z))
-    # TODO this is a hack to enforce sqrt of diagonal matrix even when it's only approx diagonal
-    if norm(z - diagz) < 1e-10
+
+    if norm(z - diagz) < 1e-8
         sq_z = diagz^0.5
     else
         sq_z = z^0.5
     end
 
     # sq_z should be symmetric 
-    if norm(sq_z - transpose(sq_z))/norm(sq_z) > 1e-8
+    if norm(sq_z - transpose(sq_z))/norm(sq_z) > 1e-6
+        #println("fff")
         @error "sqrt(z) not symmetric? "
-        @show norm(z - transpose(z))
-        @show norm(z - Diagonal(diag(z)))
-        @show norm(sq_z - transpose(sq_z)), norm(sq_z - transpose(sq_z))/norm(sq_z)
-        @show z 
+        # @show norm(z - transpose(z))
+        # @show norm(z - Diagonal(diag(z)))
+        # @show norm(sq_z - transpose(sq_z)), norm(sq_z - transpose(sq_z))/norm(sq_z)
+        # @show z 
     end
 
     #uz = u * Diagonal(transpose(sq_z))
