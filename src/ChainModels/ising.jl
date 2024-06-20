@@ -352,9 +352,6 @@ end
 """ Prescription a la Murg for exp(-i*H*dt) Ising  - gives symmetric MPO matrices
 Convention H = -( JXX + hZ )
 """
-function build_expH_ising_murg(sites::Vector{<:Index}, p::pparams)
-    build_expH_ising_murg(sites, p.JXX, p.hz, p.dt)
-end
 
 function build_expH_ising_murg(p::model_params)
     

@@ -11,6 +11,7 @@ include("potts.jl")
 include("xxzmodel.jl")
 
 export  build_expH, build_expHim
+
 # from ising.jl
 export build_H_ising_manual,
     build_H_ising, 
