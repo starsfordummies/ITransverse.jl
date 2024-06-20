@@ -15,7 +15,7 @@ struct model_params
     JXX::Float64
     hz::Float64
     λx::Float64
-    dt::Float64
+    dt::ComplexF64
 end
 
 # allow for changes on the fly of params 
