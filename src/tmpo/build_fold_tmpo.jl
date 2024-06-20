@@ -111,8 +111,14 @@ function build_folded_left_tMPS(eH::MPO, init_state::Vector, time_sites)
     return tMPS
 
 end
+function build_folded_left_tMPS(tp::tmpo_params,
+    time_sites::Vector{<:Index})
 
+    eH = build_expH(tp)
 
+    #@info "using $(build_expH_function)"
+    build_folded_left_tMPS(eH, tp.init_state, time_sites)
+end
 
 """ Builds *rotated* and *folded* MPO for a generic(hopefully) Hamiltonian, defined on `time_sites`.
 Closed with `fold_op` on the *left* and `init_state` to the *right*. 
@@ -240,6 +246,16 @@ return tMPO, left_open_link, right_open_link
 
 end
 
+
+
+
+
+
+
+
+##################################
+# Extras - non -mainstream stuff #
+##################################
 
 """ Alternative mode to build folded tMPO, is likely a bit slower than the other """
 function build_folded_tMPO_from_open(eH_space::MPO, init_state::Vector, fold_op::Vector, time_sites::Vector{<:Index})
