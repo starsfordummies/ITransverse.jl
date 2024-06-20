@@ -157,9 +157,8 @@ include("lightcone/cone.jl")
 
 export init_cone, run_cone
 
+include("ext_functions.jl")
 
-include("empty_extensions.jl")
-# GPU but I really don't know 
 export gpu_run_cone, 
 gpu_run_cone_svd,
 gpu_truncate_sweep,
@@ -168,6 +167,8 @@ gpu_expval_LR,
 cpu_expval_LR,
 gpu_expval_LL_sym,
 gpu_compute_expvals
+
+export plotr,ploti,plotri 
 
 
 end #module ITransverse

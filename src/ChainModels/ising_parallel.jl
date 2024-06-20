@@ -111,15 +111,3 @@ function build_expH_ising_parallel_field_murg(p::model_params)
     build_expH_ising_parallel_field_murg(space_sites, p.JXX, p.hz, p.λx, p.dt)
 
 end
-
-
-function build_expH(p::tmpo_params)
-    p.expH_func(p.mp)
-end
-
-""" Exp(-τH) for imaginary time evolution """
-function build_expHim(p::tmpo_params)
-    mp = model_params(p.mp, dt = -im*p.dt)
-    p.expH_func(mp)
-
-end

@@ -1,3 +1,4 @@
+""" Functions which should be overloaded by extensions (ugly)""" 
 
 function plot_matrix end
 function plotr end 
