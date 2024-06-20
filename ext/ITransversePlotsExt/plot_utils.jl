@@ -14,11 +14,11 @@ function ITransverse.plot_matrix(a::ITensor)
     plot_matrix(matrix(a))
 end
 
-function ITransverse.plotr(a::Array)
+function ITransverse.plotr(a::Array; label::String="")
     plot(real(a), label="Re($(label))")
 end
 
-function ITransverse.ploti(a::Array)
+function ITransverse.ploti(a::Array; label::String="")
     plot(imag(a), label="Im($(label))")
 end
 
