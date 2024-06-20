@@ -63,8 +63,6 @@ plot(real(expect(psiGS,"ΣplusΣdag")))
 scatter!(real(expect(psiGS_s, "ΣplusΣdag")))
 
 
-#inner(psiGS,match_mps_indices(psiGS,psiGS_s))
-    
 plot(S_of_ll)
 scatter!(S_of_ll_s)
 # # # Fit - parameters are 1) central charge 2) offset 
