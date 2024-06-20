@@ -48,11 +48,15 @@ function main_debug_pm()
 
     JXX = 1.0  
     hz = 0.4
+    gx = 0.0
     dt = 0.1
 
     nbeta=0
 
     init_state = plus_state
+
+    mp = model_params("S=1/2", JXX, hz, gx, dt)
+    tp = tmpo_params("S=1/2", "S=1/2", build_expH_ising_parallel_field_murg, mp, nbeta, init_state)
 
     SVD_cutoff = 1e-20
     maxbondim = 100
@@ -62,7 +66,6 @@ function main_debug_pm()
     verbose=false
     ds2_converged=1e-6
 
-    params = pparams(JXX, hz, dt, nbeta, init_state)
     pm_params = ppm_params(itermax, SVD_cutoff, maxbondim, verbose, ds2_converged)
 
     sigX = ComplexF64[0,1,1,0]
@@ -76,13 +79,19 @@ function main_debug_pm()
  
     time_sites = siteinds("S=3/2", Nsteps)
 
-    init_mps = ITransverse.build_ising_folded_tMPS(build_expH_ising_murg, params, time_sites)
+    init_mps = build_folded_left_tMPS(tp, time_sites)
+    mpo_X = build_folded_tMPO(tp, sigX, time_sites)
+    mpo_Z = build_folded_tMPO(tp, sigZ, time_sites)
+    mpo_I = build_folded_tMPO(tp, Id, time_sites)
 
-    mpo_X = ITransverse.build_ising_folded_tMPO(build_expH_ising_murg, params, sigX, time_sites)
-    mpo_Z = ITransverse.build_ising_folded_tMPO(build_expH_ising_murg, params, sigZ, time_sites)
-    mpo_1 = ITransverse.build_ising_folded_tMPO(build_expH_ising_murg, params, Id, time_sites)
 
-    ll, rr, lO, Or, dSs, ents_during_pm = pm_debug(init_mps, mpo_1, mpo_Z, pm_params) # kwargs)
+    # init_mps = ITransverse.build_ising_folded_tMPS(build_expH_ising_murg, params, time_sites)
+
+    # mpo_X = ITransverse.build_ising_folded_tMPO(build_expH_ising_murg, params, sigX, time_sites)
+    # mpo_Z = ITransverse.build_ising_folded_tMPO(build_expH_ising_murg, params, sigZ, time_sites)
+    # mpo_1 = ITransverse.build_ising_folded_tMPO(build_expH_ising_murg, params, Id, time_sites)
+
+    ll, rr, lO, Or, dSs, ents_during_pm = pm_debug(init_mps, mpo_I, mpo_Z, pm_params) # kwargs)
 
     #ll, rr, lO, Or = pm_debug(init_mps, mpo_1, mpo_X, pm_params) # kwargs)
 
@@ -94,19 +103,19 @@ function main_debug_pm()
 
     #@show ll.llim, ll.rlim, lO.llim, Or.llim
 
-    L1R = overlap_noconj(ll, apply(mpo_1, rr,  alg="naive", truncate=false))
-    LOR = overlap_noconj(ll, apply(mpo_X, rr,  alg="naive", truncate=false))
+    L1R = overlap_noconj(ll, applys(mpo_I, rr))
+    LOR = overlap_noconj(ll, applys(mpo_X, rr))
 
     ev = LOR/L1R
 
-    L11R = overlap_noconj(apply(swapprime(mpo_1, 0, 1, "Site"), ll, alg="naive",truncate=false), apply(mpo_1, rr,  alg="naive",truncate=false))
+    L11R = overlap_noconj(apply(swapprime(mpo_1, 0, 1, "Site"), ll, alg="naive",truncate=false), apply(mpo_I, rr,  alg="naive",truncate=false))
     L1OR = overlap_noconj(apply(swapprime(mpo_1, 0, 1, "Site"), ll, alg="naive",truncate=false), apply(mpo_X, rr, alg="naive", truncate=false))
     
     L111R = overlap_noconj(apply(swapprime(mpo_1, 0, 1, "Site"), ll, alg="naive",truncate=false), 
-                           apply(mpo_1, apply(mpo_1, rr,  alg="naive",truncate=false),  alg="naive",truncate=false))
+                           apply(mpo_1, apply(mpo_I, rr,  alg="naive",truncate=false),  alg="naive",truncate=false))
 
-    L1O1R = overlap_noconj(apply(swapprime(mpo_1, 0, 1, "Site"), ll, alg="naive",truncate=false),
-                          apply(mpo_1, apply(mpo_X, rr, alg="naive", truncate=false),  alg="naive",truncate=false))
+    L1O1R = overlap_noconj(apply(swapprime(mpo_I, 0, 1, "Site"), ll, alg="naive",truncate=false),
+                          apply(mpo_I, apply(mpo_X, rr, alg="naive", truncate=false),  alg="naive",truncate=false))
 
     ev2 = L1OR/L11R
 
