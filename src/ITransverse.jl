@@ -62,6 +62,8 @@ include("entropies/gen_form_checks.jl")
 
 include("entropies/entropies.jl")
 include("entropies/gen_entropies.jl")
+include("entropies/gen_sym_entropies.jl")
+include("entropies/diagonalize_sym_rtm.jl")
 include("entropies/compute_rho2.jl")
 #include("entropies/ent_segment.jl")
 
