@@ -240,7 +240,7 @@ function run_cone(psi::MPS,
         end
 
         push!(vn_ents, ent)
-        push!(ts, length(ll)*tp.dt)
+        push!(ts, length(ll)*tp.mp.dt)
 
         next!(p; showvalues = [(:Info,"[$(length(ll))] χ=$(maxlinkdim(ll)), (L|R) = $overlapLR " )])
 

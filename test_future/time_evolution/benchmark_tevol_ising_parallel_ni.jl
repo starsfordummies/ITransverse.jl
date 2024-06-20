@@ -4,20 +4,20 @@ using ITransverse
 using ITransverse: build_expH_ising_parallel_field_murg
 #using .IGensors
 
-N = 40      # System size
+N = 50      # System size
 
 # number of time steps
-nSteps = 20
+nSteps = 50
 
 
 JXX = 1.0   # spin x -- spin x coupling
 hz = 1.05   # local magnetic field in z direction
-gx = 0
+gx = 0.5
 
 dt = 0.1  # time step
 
-SVD_cutoff = 1e-10   # cutoff for singular vaulues smaller than SVD_cutoff
-maxbondim = 300       # maximum bond dimension allowed
+SVD_cutoff = 1e-14   # cutoff for singular vaulues smaller than SVD_cutoff
+maxbondim = 800       # maximum bond dimension allowed
 
 # define local degrees of freedom
 sites = siteinds("S=1/2", N; conserve_qns = false)
@@ -32,7 +32,7 @@ ev_tebdO2 = []
 ev_tebdmurg = []
 ev_tdvp = []
 
-Ut = build_expH_ising_parallel_field_murg(sites, JXX, hz, dt)
+Ut = build_expH_ising_parallel_field_murg(sites, mp)
 
 println("Apply murg")
 psi_u3 = deepcopy(psi_prod)
@@ -45,7 +45,7 @@ end
 
 psi_u4 = random_mps(sites)
 
-Hisipar = build_H_ising_parallel_field(sites, JXX, hz)
+Hisipar = build_H_ising_parallel_field(sites, mp)
 
 println("TDVP autoMPO isi")
 psi_tdvp1 = tdvp(

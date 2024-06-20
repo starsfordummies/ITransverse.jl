@@ -1,8 +1,8 @@
-function build_H_ising_parallel_field(sites, mp::model_params)
+function build_H_ising_parallel_field(sites::Vector{<:Index}, mp::model_params)
     build_H_ising_parallel_field(sites, mp.JXX, mp.hz, mp.λx)
 end
 
-function build_H_ising_parallel_field(sites, JXX::Real, hz::Real, λx::Real)
+function build_H_ising_parallel_field(sites::Vector{<:Index}, JXX::Real, hz::Real, λx::Real)
 
     # Input operator terms which define a Hamiltonian
     N = length(sites)
@@ -99,6 +99,11 @@ function build_expH_ising_parallel_field_murg(
 
 end
 
+function build_expH_ising_parallel_field_murg(s::Vector{<:Index}, p::model_params)
+    
+    build_expH_ising_parallel_field_murg(s, p.JXX, p.hz, p.λx, p.dt)
+
+end
 
 function build_expH_ising_parallel_field_murg(p::model_params)
     
