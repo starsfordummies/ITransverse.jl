@@ -87,11 +87,11 @@ By doing first a Right sweep to standard (right-orthogonal) canonical form
 followed by a Left sweep with truncation on the generalized SVs 
 returns L_ortho, ents_sites
 """
-function truncate_normalize_sweep_sym!(left_mps::MPS; svd_cutoff::Float64, chi_max::Int, method::String)
+function truncate_normalize_sweep_sym!(left_mps::MPS; cutoff::Float64, chi_max::Int, method::String)
 
     mpslen = length(left_mps)
 
-    orthogonalize!(left_mps,1) # orthogonalize! should NOT normalize MPS 
+    orthogonalize!(left_mps,1)
 
     #CHECK: does this help ?
     #normalize_gen!(left_mps)
@@ -108,7 +108,8 @@ function truncate_normalize_sweep_sym!(left_mps::MPS; svd_cutoff::Float64, chi_m
 
     for ii = 1:mpslen-1
 
-        Ai = noprime(XUinv * left_mps[ii])
+        #Ai = noprime(XUinv * left_mps[ii])
+        Ai = XUinv * left_mps[ii]
 
         left_env *= Ai
 
@@ -119,7 +120,7 @@ function truncate_normalize_sweep_sym!(left_mps::MPS; svd_cutoff::Float64, chi_m
         #left_env *= delta(siteind(left_mps,ii),siteind(left_mps,ii)')
 
         if method == "SVDold"
-            U,S = symmetric_svd_arr(left_env, svd_cutoff=svd_cutoff, chi_max=chi_max)
+            U,S = symmetric_svd_arr(left_env, svd_cutoff=cutoff, chi_max=chi_max)
 
             sqS = sqrt.(diag(S))
             isqS = sqS.^(-1)
@@ -128,25 +129,18 @@ function truncate_normalize_sweep_sym!(left_mps::MPS; svd_cutoff::Float64, chi_m
             XUinv = diag_itensor(sqS.storage.data, inds(S)) * U
 
         elseif method == "SVD"
-            F = symm_svd(left_env, ind(left_env,1), cutoff=svd_cutoff, maxdim=chi_max)
+            F = symm_svd(left_env, ind(left_env,1), cutoff=cutoff, maxdim=chi_max)
             U = F.U
             S = F.S
 
             sqS = S.^(0.5)
             isqS = sqS.^(-1)
             
-            #@assert inds(S) ==  inds(isqS)
- 
-            #XU = dag(U) * diag_itensor(isqS.storage.data, inds(S))
             XU = dag(U) * isqS
             XUinv = sqS * U
 
-            # test = dag(U) * U' * delta(F.u, F.u')
-
-            # isid(XU * prime(XUinv,"CMB"))
-
         elseif method == "EIG"
-            F = symm_oeig(left_env, ind(left_env,1), cutoff=svd_cutoff)
+            F = symm_oeig(left_env, ind(left_env,1); cutoff)
             #@show dump(F)
             U = F.V
             S = F.D
@@ -170,11 +164,11 @@ function truncate_normalize_sweep_sym!(left_mps::MPS; svd_cutoff::Float64, chi_m
         #left_mps[ii] = left_mps[ii] / norm_gen(left_mps[ii])
 
         # ??
-        left_env *= replaceprime(XU * XU', 2=>0)  # TODO CHECK should I care about symmetry here ? 
-        #left_env =  left_mps[ii] * prime(left_mps[ii], uniqueind(XU, Ai))
+        #left_env *= replaceprime(XU * XU', 2=>0)  # TODO CHECK should I care about symmetry here ? 
+   
+        left_env *= XU
+        left_env *= XU'
 
-        #@show S
-        #@show sum(S)
         push!(ents_sites, log(sum(S)))
     end
 
@@ -497,6 +491,6 @@ Just bring the MPS to generalized *right* canonical form without truncating (as 
 TODO should use chi_min here to make sure ! 
 """
 function gen_canonical_right(in_mps::MPS)
-    psi_gen, ents = sweep_sym_ortho_right(in_mps; cutoff=1e-20, chi_max=2*maxlinkdim(in_mps))
+    psi_gen, _ = sweep_sym_ortho_right(in_mps; cutoff=1e-20, chi_max=2*maxlinkdim(in_mps))
     return psi_gen
 end

@@ -10,7 +10,7 @@ function ctruncate!(
     use_relative_cutoff=nothing,
 )
 
-@info "ctruncate"
+#@info "ctruncate"
   mindim = replace_nothing(mindim, 1)
   maxdim = replace_nothing(maxdim, length(P))
   #cutoff = replace_nothing(cutoff, typemin(eltype(P)))
