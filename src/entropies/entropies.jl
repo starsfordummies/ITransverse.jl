@@ -1,6 +1,7 @@
 
-""" Computes the Von Neumann entanglement entropy of an MPS `psi` at a given `cut` """
-function vn_entanglement_entropy_cut(psi::MPS, cut::Int)
+""" Computes the Von Neumann entanglement entropy of an MPS `psi` at a given `cut` 
+It is a (!) function cause we orthogonalize along the way .. """
+function vn_entanglement_entropy_cut!(psi::MPS, cut::Int)
 
     orthogonalize!(psi, cut)
 
@@ -31,7 +32,7 @@ function vn_entanglement_entropy(psi::MPS)
     ents_vn = Vector{Float64}()
 
     for icut=1:length(workpsi)-1
-        Si = vn_entanglement_entropy_cut(workpsi, icut)
+        Si = vn_entanglement_entropy_cut!(workpsi, icut)
         push!(ents_vn, Si)
     end
 
@@ -40,12 +41,14 @@ end
 
 
 
-function renyi_entanglement_entropy_cut(psi::MPS, cut::Int, αr::Int)
+function renyi_entanglement_entropy_cut(in_psi::MPS, cut::Int, αr::Int)
 
     S_ren = 0.0
 
+    psi = normalize(in_psi)
+
     if αr == 1  # VN entropy
-        S_ren = vn_entanglement_entropy_cut(psi, cut)
+        S_ren = vn_entanglement_entropy_cut!(psi, cut)
     else  # Renyi n
             
         orthogonalize!(psi, cut)

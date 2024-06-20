@@ -63,7 +63,7 @@ include("entropies/compute_rho2.jl")
 
 
 #from compute_entropies.jl
-export vn_entanglement_entropy_cut, 
+export vn_entanglement_entropy_cut!, 
     vn_entanglement_entropy, 
     renyi_entanglement_entropy_cut, 
     renyi_entanglement_entropy,
