@@ -16,13 +16,13 @@ function gpu_extend_tmps_cone(ll::AbstractMPS, rr::AbstractMPS,
     time_sites = siteinds("S=3/2", length(ll)+1)
     time_sites= addtags(time_sites, "time_fold")
 
-    tmpo = NDTensors.cu(build_ham_folded_tMPO(tp, op_L, time_sites))
+    tmpo = NDTensors.cu(build_folded_tMPO(tp, op_L, time_sites))
 
     #println("check: " , length(tmpo), length(ll), length(rr))
 
     psi_L = gpu_apply_extend(tmpo, ll)
 
-    tmpo = NDTensors.cu(swapprime(build_ham_folded_tMPO(tp, op_R, time_sites), 0, 1, "Site"))
+    tmpo = NDTensors.cu(swapprime(build_folded_tMPO(tp, op_R, time_sites), 0, 1, "Site"))
     psi_R = gpu_apply_extend(tmpo, rr)
 
     ll, rr = gpu_truncate_sweep(psi_L,psi_R, cutoff=truncp.cutoff, chi_max=truncp.maxbondim)
@@ -44,13 +44,13 @@ function gpu_extend_tmps_cone_aggr(ll::AbstractMPS, rr::AbstractMPS,
     time_sites = siteinds("S=3/2", length(ll)+1)
     time_sites= addtags(time_sites, "time_fold")
 
-    tmpo = NDTensors.cu(build_ham_folded_tMPO(tp, op_L, time_sites))
+    tmpo = NDTensors.cu(build_folded_tMPO(tp, op_L, time_sites))
 
     #println("check: " , length(tmpo), length(ll), length(rr))
 
     ll = gpu_apply_extend(tmpo, ll)
 
-    tmpo = NDTensors.cu(swapprime(build_ham_folded_tMPO(tp, op_R, time_sites), 0, 1, "Site"))
+    tmpo = NDTensors.cu(swapprime(build_folded_tMPO(tp, op_R, time_sites), 0, 1, "Site"))
     rr = gpu_apply_extend(tmpo, rr)
 
 

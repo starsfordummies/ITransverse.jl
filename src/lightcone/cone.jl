@@ -68,13 +68,13 @@ function extend_tmps_cone(ll::MPS, rr::MPS,
     time_sites = siteinds("S=3/2", length(ll)+1)
     time_sites= addtags(time_sites, "time_fold")
 
-    tmpo = build_ham_folded_tMPO(tp, op_L, time_sites)
+    tmpo = build_folded_tMPO(tp, op_L, time_sites)
 
     #println("check: " , length(tmpo), length(ll), length(rr))
 
     psi_L = apply_extend(tmpo, ll)
 
-    tmpo = swapprime(build_ham_folded_tMPO(tp, op_R, time_sites), 0, 1, "Site")
+    tmpo = swapprime(build_folded_tMPO(tp, op_R, time_sites), 0, 1, "Site")
     psi_R = apply_extend(tmpo, rr)
 
     # ! CHECK CAN WE EVER HAVE LINKS (L) != LINKS (R) ??? WHY DOES EIGEN FAIL??
@@ -278,14 +278,14 @@ function extend_tmps_cone_alt(ll_in::MPS, rr_in::MPS,
     time_sites = siteinds("S=3/2", length(ll)+1)
     time_sites= addtags(time_sites, "time_fold")
 
-    tmpo = build_ham_folded_tMPO(tp, op_L, time_sites)
+    tmpo = build_folded_tMPO(tp, op_L, time_sites)
 
     psin = ITensor(ComplexF64[1,0,0,0], siteind(tmpo,1))
     insert!(ll.data, 1, psin)
     replace_siteinds!(ll, siteinds(tmpo))
     psi_L = apply(tmpo, ll, alg="naive", truncate=false)
 
-    tmpo = swapprime(build_ham_folded_tMPO(tp, op_R, time_sites), 0, 1, "Site")
+    tmpo = swapprime(build_folded_tMPO(tp, op_R, time_sites), 0, 1, "Site")
     psin = ITensor(ComplexF64[1,0,0,0], siteind(tmpo,1))
     insert!(rr.data, 1, psin)
     replace_siteinds!(rr, siteinds(tmpo))

@@ -4,14 +4,14 @@ function expval_LR(ll::MPS, rr::MPS, op::Vector{ComplexF64}, tp::tmpo_params)
     fold_id = ComplexF64[1,0,0,1]
 
     time_sites = siteinds(ll)
-    tmpo = build_ham_folded_tMPO(tp, fold_id, time_sites)
+    tmpo = build_folded_tMPO(tp, fold_id, time_sites)
     psi1L = applys(tmpo, ll)
 
     time_sites = siteinds(rr)
-    tmpo = swapprime(build_ham_folded_tMPO(tp, op, time_sites), 0, 1, "Site")
+    tmpo = swapprime(build_folded_tMPO(tp, op, time_sites), 0, 1, "Site")
     psiOR = applys(tmpo, rr)
 
-    tmpo = swapprime(build_ham_folded_tMPO(tp, fold_id, time_sites), 0, 1, "Site")
+    tmpo = swapprime(build_folded_tMPO(tp, fold_id, time_sites), 0, 1, "Site")
     psi1R = applys(tmpo, rr)
 
 
@@ -28,21 +28,21 @@ function expval_LR(ll::MPS, rr::MPS, opL::Vector{ComplexF64}, opR::Vector{Comple
     fold_id = ComplexF64[1,0,0,1]
 
     time_sites = siteinds(ll)
-    tmpo = build_ham_folded_tMPO(tp,  opL, time_sites)
+    tmpo = build_folded_tMPO(tp,  opL, time_sites)
     psi_L = applys(tmpo, ll)
 
     time_sites = siteinds(rr)
-    tmpo = swapprime(build_ham_folded_tMPO(tp, opR, time_sites), 0, 1, "Site")
+    tmpo = swapprime(build_folded_tMPO(tp, opR, time_sites), 0, 1, "Site")
     psi_R = applys(tmpo, rr)
 
     ev_LOOR = overlap_noconj(psi_L,psi_R)
 
     time_sites = siteinds(ll)
-    tmpo = build_ham_folded_tMPO(tp,  fold_id, time_sites)
+    tmpo = build_folded_tMPO(tp,  fold_id, time_sites)
     psi_L = applys(tmpo, ll)
 
     time_sites = siteinds(rr)
-    tmpo = swapprime(build_ham_folded_tMPO(tp, fold_id, time_sites), 0, 1, "Site")
+    tmpo = swapprime(build_folded_tMPO(tp, fold_id, time_sites), 0, 1, "Site")
     psi_R = applys(tmpo, rr)
 
     ev_L11R = overlap_noconj(psi_L,psi_R)

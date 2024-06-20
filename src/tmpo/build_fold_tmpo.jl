@@ -4,7 +4,7 @@ ITensors.state(::StateName"↑", ::SiteType"S=3/2") = [1, 0, 0, 0]
 ITensors.state(::StateName"+", ::SiteType"S=3/2") = [1/2, 1/2, 1/2, 1/2]
 
 
-# For Potts 
+# For Potts 1 x 1 = 3  (: 
 ITensors.space(::SiteType"S=3") = 7
 ITensors.state(::StateName"↑", ::SiteType"S=3") = [1, 0, 0, 0, 0, 0, 0]
 ITensors.state(::StateName"↓", ::SiteType"S=3") = [0, 0, 0, 0, 0, 0, 1]
@@ -117,7 +117,8 @@ end
 """ Builds *rotated* and *folded* MPO for a generic(hopefully) Hamiltonian, defined on `time_sites`.
 Closed with `fold_op` on the *left* and `init_state` to the *right*. 
 """
-function build_ham_folded_tMPO(tp::tmpo_params,
+# TODO rename to build_folded_tMPO without ham .. 
+function build_folded_tMPO(tp::tmpo_params,
     fold_op::AbstractVector,
     time_sites::Vector{<:Index})
 
@@ -239,7 +240,9 @@ return tMPO, left_open_link, right_open_link
 
 end
 
-function build_folded_tMPO_new(eH_space::MPO, init_state::Vector, fold_op::Vector, time_sites::Vector{<:Index})
+
+""" Alternative mode to build folded tMPO, is likely a bit slower than the other """
+function build_folded_tMPO_from_open(eH_space::MPO, init_state::Vector, fold_op::Vector, time_sites::Vector{<:Index})
     
     tMPO, left_open, right_open = build_folded_open_tMPO(eH_space, time_sites)
 
@@ -255,6 +258,12 @@ return tMPO
 
 end
 
+function build_folded_tMPO_from_open(tp::tmpo_params, fold_op_tensor::Vector, time_sites::Vector{<:Index})
+    
+    eH = build_expH(tp)
+    build_folded_tMPO_from_open(eH, tp.init_state, fold_op_tensor, time_sites)
+
+end
 
 
 

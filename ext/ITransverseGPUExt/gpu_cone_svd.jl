@@ -6,7 +6,7 @@ function gpu_extend_tmps_cone_sym_svd(ll::AbstractMPS,
     time_sites = siteinds("S=3/2", length(ll)+1)
     time_sites= addtags(time_sites, "time_fold")
 
-    tmpo = NDTensors.cu(build_ham_folded_tMPO(tp, op_L, time_sites))
+    tmpo = NDTensors.cu(build_folded_tMPO(tp, op_L, time_sites))
 
     psin = NDTensors.cu(ITensor(ComplexF64[1,0,0,0], siteind(tmpo,1)))
     insert!(ll.data, 1, psin)

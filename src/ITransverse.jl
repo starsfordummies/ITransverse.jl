@@ -127,9 +127,8 @@ export
      build_ising_folded_tMPS,
      build_folded_tMPO_regul_beta, 
      build_folded_left_tMPS,
-     build_ham_folded_tMPO,
-     build_folded_open_tMPO,
-     build_folded_tMPO_new
+     build_folded_tMPO,
+     build_folded_open_tMPO
 
 
 include("power_method/pm.jl")
