@@ -84,13 +84,6 @@ function main_debug_pm()
     mpo_Z = build_folded_tMPO(tp, sigZ, time_sites)
     mpo_I = build_folded_tMPO(tp, Id, time_sites)
 
-
-    # init_mps = ITransverse.build_ising_folded_tMPS(build_expH_ising_murg, params, time_sites)
-
-    # mpo_X = ITransverse.build_ising_folded_tMPO(build_expH_ising_murg, params, sigX, time_sites)
-    # mpo_Z = ITransverse.build_ising_folded_tMPO(build_expH_ising_murg, params, sigZ, time_sites)
-    # mpo_1 = ITransverse.build_ising_folded_tMPO(build_expH_ising_murg, params, Id, time_sites)
-
     ll, rr, lO, Or, dSs, ents_during_pm = pm_debug(init_mps, mpo_I, mpo_Z, pm_params) # kwargs)
 
     #ll, rr, lO, Or = pm_debug(init_mps, mpo_1, mpo_X, pm_params) # kwargs)

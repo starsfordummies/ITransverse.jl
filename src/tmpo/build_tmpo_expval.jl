@@ -2,8 +2,15 @@
     with initial state `init_state`, for a given `eH` MPO of the (unrotated) exp(H)
     and `time_sites`, which should have *even* length. 
     The structure is 
-    `psi0*-W*-W*-W*--OP--W-W-W-psi0 `
+    `
+            |  |  |       | | |
+      psi0*-W*-W*-W*--OP--W-W-W-psi0 
+            |  |  |       | | |
+    `
 """
+
+""" TODO NEED TO UPDATE EVERYTHING TO NEW """ 
+
 function build_expval_tMPO(eH::MPO, init_state::AbstractArray, operator::AbstractArray, time_sites::Vector{<:Index})
      #! need to check if this works 
     #@warn "Experimental - need to check"

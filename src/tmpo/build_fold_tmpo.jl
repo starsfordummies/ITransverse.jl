@@ -123,7 +123,6 @@ end
 """ Builds *rotated* and *folded* MPO for a generic(hopefully) Hamiltonian, defined on `time_sites`.
 Closed with `fold_op` on the *left* and `init_state` to the *right*. 
 """
-# TODO rename to build_folded_tMPO without ham .. 
 function build_folded_tMPO(tp::tmpo_params,
     fold_op::AbstractVector,
     time_sites::Vector{<:Index})

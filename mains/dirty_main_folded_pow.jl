@@ -27,7 +27,6 @@ function main()
     verbose=false
     ds2_converged=1e-6
 
-    params = pparams(JXX, hz, dt, nbeta, init_state)
     pm_params = ppm_params(itermax, SVD_cutoff, maxbondim, verbose, ds2_converged)
 
     sigX = ComplexF64[0,1,1,0]
@@ -63,12 +62,11 @@ function main()
         #test_mps = productMPS(time_sites,"+")
         #test_mps = productMPS(time_sites,"↑")
 
-        init_mps = ITransverse.build_ising_folded_tMPS(build_expH_ising_murg, params, time_sites)
-
-        mpo_X = ITransverse.build_ising_folded_tMPO(build_expH_ising_murg, params, sigX, time_sites)
-        mpo_Z = ITransverse.build_ising_folded_tMPO(build_expH_ising_murg, params, sigZ, time_sites)
-        mpo_1 = ITransverse.build_ising_folded_tMPO(build_expH_ising_murg, params, Id, time_sites)
-
+        
+        init_mps = build_folded_left_tMPS(tp, time_sites)
+        mpo_X = build_folded_tMPO(tp, sigX, time_sites)
+        mpo_Z = build_folded_tMPO(tp, sigZ, time_sites)
+        mpo_1 = build_folded_tMPO(tp, Id, time_sites)
 
         #ll, rr, lO, Or, ds2_pm, dns  = powermethod(init_mps, mpo_1, mpo_X, pm_params) # kwargs)
         ll, rr, lO, Or, vals, deltas  = pm_all(init_mps, mpo_1, mpo_X, pm_params) # kwargs)

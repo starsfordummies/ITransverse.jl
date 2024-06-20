@@ -171,13 +171,13 @@ function compute_expvals(ll::AbstractMPS, rr::AbstractMPS, op_list::Vector{Strin
 
     for op in op_list
         if op == "X"
-            println("X")
+            #println("X")
             allevs["X"] = expval_LR(ll, rr, ComplexF64[0,1,1,0], tp)
         elseif op == "Z"
-            println("Z")
+            #println("Z")
             allevs["Z"] = expval_LR(ll, rr, ComplexF64[1,0,0,-1], tp)
         elseif op == "eps"
-            println("eps")
+            #println("eps")
             allevs["eps"] = expval_en_density(ll, rr, tp)
         end
     end

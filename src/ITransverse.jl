@@ -18,12 +18,6 @@ using ProgressMeter
 include("ITenUtils/ITenUtils.jl")
 using .ITenUtils
 
-# # from pparams.jl
-export pparams, 
-    ppm_params, 
-    trunc_params, 
-    model_params, 
-    tmpo_params
 
 # #from utils.jl
 export myrMPS, 
@@ -94,7 +88,11 @@ export rho2,
 include("ChainModels/ChainModels.jl")
 using .ChainModels
 
-export pparams, ppm_params, trunc_params
+export ppm_params, 
+    trunc_params, 
+    model_params, 
+    tmpo_params
+
 export build_expH_ising_murg, 
 build_expH_potts_murg, 
 build_expH_potts_symmetric_svd,

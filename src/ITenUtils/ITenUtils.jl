@@ -36,7 +36,7 @@ include("bench_data.jl")
 export mergedicts!
 
 # from pparams
-export pparams, ppm_params, trunc_params, model_params, tmpo_params
+export ppm_params, trunc_params, model_params, tmpo_params
 
 #from utils.jl
 export myrMPS, 
@@ -48,9 +48,6 @@ export myrMPS,
     sim!,
     applys,
     match_siteinds!
-    # check_diag_matrix, 
-    # check_id_matrix,
-    # isid
 
 
 # moreutils.jl
