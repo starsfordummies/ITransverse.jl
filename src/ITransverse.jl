@@ -55,7 +55,7 @@ export truncate_sweep_keep_lenv, truncate_sweep_aggressive_normalize
 export  truncate_normalize_sweep_sym,
     truncate_normalize_sweep_sym!,
     truncate_normalize_sweep_sym_right,
-    gen_canonical_left
+    gen_canonical_left, gen_canonical_right
 
 
 include("entropies/gen_form_checks.jl")
