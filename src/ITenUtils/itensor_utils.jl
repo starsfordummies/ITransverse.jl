@@ -56,9 +56,9 @@ function pinvten(a::ITensor, check::Bool=true)
 end
 
 
-function symmetrize(at::ITensor; tol=1e-6)
+function symmetrize(a::ITensor; tol=1e-6)
 
-    if ndims(at) != 2
+    if ndims(a) != 2
         @error("Not a matrix")
     end
     if size(a,1) != size(a,2)
@@ -66,12 +66,12 @@ function symmetrize(at::ITensor; tol=1e-6)
     end
 
     ia = inds(a)
-    iasw = replaceinds(at, ia, reverse(ia))
-    if norm(a - iasw)/norm(a) > tol
+    atr = replaceinds(at, ia, reverse(ia))
+    if norm(a - atr)/norm(a) > tol
         @warn("Matrix not symmetric, symmetrizing")
     end
 
-    return (a + iasw)/2
+    return (a + atr)/2
   
 end
 
