@@ -66,7 +66,7 @@ function symmetrize(a::ITensor; tol=1e-6)
     end
 
     ia = inds(a)
-    atr = replaceinds(at, ia, reverse(ia))
+    atr = replaceinds(a, ia, reverse(ia))
     if norm(a - atr)/norm(a) > tol
         @warn("Matrix not symmetric, symmetrizing")
     end
