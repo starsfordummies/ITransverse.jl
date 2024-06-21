@@ -56,8 +56,9 @@ function check_id_matrix(m::Matrix, cutoff::Float64=1e-8)
 end
 
 
-""" Symmetrizes a matrix to improve numerical stability (throws an error if it's not too symetric to begin with) """
-    function symmetrize(a::AbstractMatrix, tol::Float64=1e-6)
+""" Symmetrizes a matrix to improve numerical stability (throws an error if it's not too symetric to begin with)
+    TODO This fails for GPU matrices?!  """
+    function symmetrize(a::Matrix, tol::Float64=1e-6)
         if size(a,1) != size(a,2)
             @error("Not square")
         end
