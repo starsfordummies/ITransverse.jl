@@ -186,7 +186,7 @@ function symm_svd(a::ITensor, linds; cutoff=nothing, maxdim=nothing)
     iL = combinedind(cL)
     iR = combinedind(cR)
 
-    ac.tensor = symmetrize(ac.tensor)
+    ac = symmetrize(ac)
 
     # u * s * vd ≈ a 
     u,s,vd, spec = svd(ac, iL; cutoff, maxdim)
