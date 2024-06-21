@@ -60,6 +60,7 @@ fiten = svd(m, ind(m,1); cutoff)
 m = ITensor(hermitianpart(matrix(m)), inds(m))
 cutoff = 1e-5
 
+# TODO Check truncation are not exactly the same..
 fmy, spec =  mytrunc_eig(Matrix(matrix(m)); cutoff)
 fiten = eigen(m, ind(m,1), ind(m,2); cutoff)
 @test fmy.values ≈ diag(fiten.D)

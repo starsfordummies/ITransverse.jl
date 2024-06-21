@@ -2,7 +2,8 @@
     MPS
 
 A finite size matrix product state type.
-Keeps track of the orthogonality center.
+Keeps track of the orthogonality center
+And the generalized ortho center (if we think of generalized symmetric ortho forms)
 """
 mutable struct gMPS <: AbstractMPS
   data::Vector{ITensor}
