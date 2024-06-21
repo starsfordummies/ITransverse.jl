@@ -1,9 +1,7 @@
-
 """  
 Recall how Julia/ITensors SVD conventions work
 
 For Julia arrays,
-
 U, S, V = svd(M)  # => M = U * Diagonal(S) * V'  [conj transpose!]
 
 but to build an SVD object, we pass it V' as argument, ie 
@@ -74,19 +72,12 @@ function mytrunc_svd(
         MV = MV[:, 1:dS]
     end
 
-    rec_M = MU * Diagonal(MS) * MV'
+    #rec_M = MU * Diagonal(MS) * MV'
 
     #@show isapprox(rec_M, M, rtol=cutoff)
     #@show norm(rec_M - M)/norm(M)
     #@show truncerr, truncerr^0.5
 
-    # hacky but
-#     if isnothing(cutoff)
-#         cutoff = 1e-14
-#    end
-    # if LinearAlgebra.norm2(rec_M - M)/LinearAlgebra.norm2(M) > cutoff && size(MS,1) < maxdim
-    #     @warn("SVD decomp maybe not accurate, norm error $(norm(rec_M - M)/norm(M)) > $(sqrt(truncerr))")
-    # end
 
     # # ! TODO CHECK: Do we need to put MV or conj(transpose(MV) here??
     return SVD(MU,MS,MV'), spec
@@ -113,13 +104,14 @@ Remember that the cutoff is applied to the sum of the squares of the singular va
 the norm error on the truncated object is ~ sqrt(cutoff)
 F = symm_svd(M) ; F.U * Diagonal(F.S) * transpose(F.U) ≈ M # true
 """
-function symm_svd(M::AbstractMatrix; maxdim=nothing, cutoff=nothing, use_absolute_cutoff=nothing, use_relative_cutoff=nothing)
+function symm_svd(M::Matrix; maxdim=nothing, cutoff=nothing, use_absolute_cutoff=nothing, use_relative_cutoff=nothing)
 
     M = symmetrize(M) #inclues check 
 
     F, spec = mytrunc_svd(M; maxdim, cutoff, use_absolute_cutoff, use_relative_cutoff)
     u,s,v = F
     
+    #u,s,v = svd(M; maxdim, cutoff, use_absolute_cutoff, use_relative_cutoff)
 
     #@show isapprox(u*Diagonal(s)*vd, M)
     #@show isapprox(u*Diagonal(s)*conj(transpose(vd)), M)
@@ -136,6 +128,11 @@ function symm_svd(M::AbstractMatrix; maxdim=nothing, cutoff=nothing, use_absolut
     else
         sq_z = z^0.5
     end
+
+    @show u 
+    @show v
+    @show z
+    @show sq_z
 
     # sq_z should be symmetric 
     if norm(sq_z - transpose(sq_z))/norm(sq_z) > 1e-6
@@ -175,107 +172,64 @@ end
 
 
 
-""" Eigenvalue of matrix M with truncation. Returns Eigen() struct and spectrum
-The cutoff is applied to the sum of the abs() of the eigenvalues, so that 
-the norm error on the truncated object is ~ sqrt(cutoff) """
-function mytrunc_eig(
-    M::AbstractMatrix;
-    maxdim=nothing,
-    mindim=1,
-    cutoff=nothing,
-    use_absolute_cutoff=nothing,
-    use_relative_cutoff=true,
-) 
 
-DM, VM = eigen(M)
 
-# Sort by largest to smallest eigenvalues
-p = sortperm(DM; by=abs, rev = true)
-DM = DM[p]
-VM = VM[:,p]
+""" New version trying to avoid having to go through trunc_svd.. """
+function symm_svd(a::ITensor, linds; cutoff=nothing, maxdim=nothing)
+    rinds = uniqueinds(a, linds)
 
-if any(!isnothing, (maxdim, cutoff))
-  #println("TRUNCATING @ $maxdim, $cutoff, last eig  = $(DM[end]) ")
-  truncerr, _ = ctruncate!( # ) NDTensors.truncate!!(
-    DM; mindim, maxdim, cutoff, use_absolute_cutoff, use_relative_cutoff
-  )
-  dD = length(DM)
-  if dD < size(VM, 2)
-    VM = VM[:, 1:dD]
-  end
-else
-  #println("**NOT**TRUNCATING @ $maxdim, $cutoff,  last eig  = $(DM[end])  ")
-  dD = length(DM)
-  truncerr = 0.0
+    cL = combiner(linds)
+    cR = combiner(rinds)
+
+    ac = a * cL * cR
+
+    iL = combinedind(cL)
+    iR = combinedind(cR)
+
+    ac.tensor = symmetrize(ac.tensor)
+
+    # u * s * vd ≈ a 
+    u,s,vd, spec = svd(ac, iL; cutoff, maxdim)
+   
+    index_u = commonind(u,s)
+    index_v = commonind(vd,s)
+
+    #@show matrix(u)
+    #@show matrix(vd)
+    #@show u * s * vd ≈ ac
+
+    z = noprime(dag(u) * vd' * delta(iL, iR'))
+
+    #@show inds(z)
+    # Z could still be block-diagonal. 
+    # What is the safest way to invert it ? With SVD it doens't work so well,
+    # maybe with eigenvalue decomp since it's symmetric? 
+    # zvals, zvecs = eigen(z, index_u, index_v)
+    # @info zvecs * zvals * dag(zvecs)' ≈ z
+    # sq_z = zvecs * sqrt.(zvals) * dag(zvecs)
+
+    # Best way is probably still to rely on Schur decomposition from Julia's matrix utils !? 
+    sq_z = ITensor(sqrt(matrix(z)), inds(z))
+
+
+    #@show matrix(z)
+    #@show matrix(sq_z)
+
+    u *= sq_z 
+    uT = u * delta(iL, iR) 
+
+    u *= delta(index_u, index_v)
+    u *= dag(cL)
+    uT *= dag(cR)
+  
+    return ITensors.TruncSVD(u,s,uT, spec, index_u, index_v)
 end
-
-# TODO it seems that truncate!! can return complex truncerr for corner cases
-spec = 0
-try
-  spec = Spectrum(abs.(DM), abs(truncerr))
-catch e
-  @error("not good, $e, $(abs.(DM)), $truncerr")
-end
-
-
-# TODO this doesn't work with inv() when there's truncation and VM is not square
-# we could try pinv() but is it as good ? 
-
-#M_rec = VM * Diagonal(DM) * inv(VM)
-
-# norm_err = norm(M_rec-M)/norm(M)
-# if norm_err > 1e-6
-#     @warn("EIG decomp maybe not accurate, norm error $norm_err")
-# end
-
-return Eigen(DM, VM), spec
-
-end
-
-function symm_oeig(M::AbstractMatrix; maxdim=nothing, cutoff=nothing, use_absolute_cutoff=nothing, use_relative_cutoff=nothing)
-
-    M = symmetrize(M)
-    F, spec = mytrunc_eig(M; maxdim, cutoff, use_absolute_cutoff, use_relative_cutoff)
-    #dump(F)
-    vals = F.values
-    vecs = F.vectors
-
-    Z = transpose(vecs) * vecs
-
-    # TODO this is a hack to enforce sqrt of diagonal matrix even when it's only approx diagonal
-    diagz = Diagonal(diag(Z))
-
-    if norm(Z - diagz) < 1e-10
-        isq_z = diagz^-0.5
-    else
-        isq_z = Z^(-0.5)
-    end
-    O = vecs*isq_z
-
-    M_rec = O * Diagonal(vals) * transpose(O)
-
-    norm_err = norm(M_rec-M)/norm(M)
-
-    if !isnothing(cutoff)
-        if norm_err > sqrt(cutoff) 
-            @warn("Ortho/EIG decomp maybe not accurate, norm error $norm_err (cutoff = $cutoff) sqrt=$(sqrt(cutoff))")
-        else
-            @debug("Ortho/EIG decomp with norm error $(norm_err) < $(sqrt(cutoff)), [norm = $(norm(M))| normS = $(norm(vals))]")
-        end
-    else
-        @warn "No cutoff given"
-    end
-
-
-    return Eigen(vals, O), spec, norm_err
-end
-
 
 
 
 """ When called on ITensors, `symm_svd` returns a single `TruncSVD` object
 """ 
-function symm_svd(a::ITensor, linds; cutoff=nothing, maxdim=nothing)
+function symm_svd_old(a::ITensor, linds; cutoff=nothing, maxdim=nothing)
     rinds = uniqueinds(a, linds)
 
     cL = combiner(linds)
@@ -308,23 +262,3 @@ function symm_svd(a::ITensor; cutoff=nothing, maxdim=nothing)
 
 end
 
-
-""" When called on ITensors, `symm_oeig`` returns a single `TruncEigen` object""" 
-function symm_oeig(a::ITensor, linds; cutoff=nothing, maxdim=nothing)
-    rinds = uniqueinds(a, linds)
-
-    cL = combiner(linds)
-    cR = combiner(rinds)
-    am = matrix(a * cL * cR)
-
-    F, spec, norm_err = symm_oeig(am; cutoff, maxdim)
-    D = F.values
-    Om = F.vectors
-
-    eigind = Index(size(F.values,1), tags="eig_sym")
-    D = diag_itensor(D, eigind, eigind')
-    O = ITensor(Om, combinedind(cL), eigind) * dag(cL)
-    Ot = ITensor(permutedims(Om,(2,1)), eigind', combinedind(cR)) * dag(cR)
-
-    return ITensors.TruncEigen(D, O, Ot, spec, eigind, eigind')
-end

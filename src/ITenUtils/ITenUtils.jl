@@ -26,8 +26,8 @@ include("itensor_utils.jl")
 include("mps_utils.jl")
 
 # Symmetric SVD/EIG decompositions
-include("gen_svdeig_symm.jl")
-
+include("svd_sym.jl")
+include("eig_sym.jl")
 
 #include("symmsvd_iten.jl")
 
