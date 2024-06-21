@@ -20,7 +20,7 @@ TruncSVD has no field Vt
 
 """ SVD of matrix M with truncation. Returns SVD() object and spectrum """
 function mytrunc_svd(
-        M::Matrix;
+        M::AbstractMatrix;
         maxdim=nothing,
         mindim=nothing,
         cutoff=nothing,
@@ -93,7 +93,7 @@ function mytrunc_svd(
 
 end
 
-function check_mytrunc_svd(f::SVD, M::Matrix, cutoff::Float64)
+function check_mytrunc_svd(f::SVD, M::AbstractMatrix, cutoff::Float64)
 
     rec_M = f.U * Diagonal(f.S) * f.V'
     delta_norm2 = LinearAlgebra.norm2(rec_M - M)/LinearAlgebra.norm2(M) 
@@ -113,7 +113,7 @@ Remember that the cutoff is applied to the sum of the squares of the singular va
 the norm error on the truncated object is ~ sqrt(cutoff)
 F = symm_svd(M) ; F.U * Diagonal(F.S) * transpose(F.U) ≈ M # true
 """
-function symm_svd(M::Matrix; maxdim=nothing, cutoff=nothing, use_absolute_cutoff=nothing, use_relative_cutoff=nothing)
+function symm_svd(M::AbstractMatrix; maxdim=nothing, cutoff=nothing, use_absolute_cutoff=nothing, use_relative_cutoff=nothing)
 
     M = symmetrize(M) #inclues check 
 
@@ -154,7 +154,7 @@ function symm_svd(M::Matrix; maxdim=nothing, cutoff=nothing, use_absolute_cutoff
 
     # hacky but 
     if isnothing(cutoff)
-         cutoff = 1e-14
+         cutoff = eps(Float64)
     end
     if isnothing(maxdim)
         maxdim = size(M,1)
@@ -179,7 +179,7 @@ end
 The cutoff is applied to the sum of the abs() of the eigenvalues, so that 
 the norm error on the truncated object is ~ sqrt(cutoff) """
 function mytrunc_eig(
-    M::Matrix;
+    M::AbstractMatrix;
     maxdim=nothing,
     mindim=1,
     cutoff=nothing,
@@ -232,7 +232,7 @@ return Eigen(DM, VM), spec
 
 end
 
-function symm_oeig(M::Matrix; maxdim=nothing, cutoff=nothing, use_absolute_cutoff=nothing, use_relative_cutoff=nothing)
+function symm_oeig(M::AbstractMatrix; maxdim=nothing, cutoff=nothing, use_absolute_cutoff=nothing, use_relative_cutoff=nothing)
 
     M = symmetrize(M)
     F, spec = mytrunc_eig(M; maxdim, cutoff, use_absolute_cutoff, use_relative_cutoff)
@@ -266,26 +266,6 @@ function symm_oeig(M::Matrix; maxdim=nothing, cutoff=nothing, use_absolute_cutof
         @warn "No cutoff given"
     end
 
-
-#   # # TODO this can cause err ??
-#   # isqZ = ITensor()
-#   # try 
-#   #   isqZ = ITensor(pinv(matrix(Z), atol=1e-14)^0.5, inds(Z))
-#   # catch e 
-#   #   @show(inds(Z))
-#   #   @show(matrix(Z))
-#   #   @show(pinv(matrix(Z)))
-#   #   @show(pinv(matrix(Z))^0.5)
-#   #   isqZ = ITensor(pinv(matrix(Z))^0.5, inds(Z))
-#   # end
-  
-#   isqZ = ITensor(pinv(matrix(Z), atol=1e-14)^0.5, inds(Z))
-
-#   Ot = F.Vt * isqZ 
-#     norm_err = norm(a_rec-arr_a)/norm(arr_a)
-#     if norm_err > 1e-6
-#         @warn("AT/SVD decomp maybe not accurate, norm error $norm_err")
-#     end
 
     return Eigen(vals, O), spec, norm_err
 end
