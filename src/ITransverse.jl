@@ -18,6 +18,7 @@ using ProgressMeter
 include("ITenUtils/ITenUtils.jl")
 using .ITenUtils
 
+export sqrt 
 
 # #from utils.jl
 export myrMPS, 

@@ -1,3 +1,4 @@
+using .ITenUtils: check_diag_matrix
 
 """ Builds a random symmetric ITensor of size `(n,n)`
 """
@@ -28,7 +29,13 @@ function isid(a::ITensor, cutoff::Float64=1e-8)
     @assert ndims(a) == 2
 
     check_id_matrix(matrix(a), cutoff)
- 
+end
+
+
+function isdiag(a::ITensor, cutoff::Float64=1e-8)
+    @assert ndims(a) == 2
+
+    check_diag_matrix(matrix(a), cutoff)
 end
 
 

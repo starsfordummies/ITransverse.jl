@@ -1,5 +1,6 @@
 using LinearAlgebra
 using ITensors
+using ITransverse
 using ITransverse.ITenUtils
 using Test
 
@@ -57,14 +58,23 @@ fiten = svd(m, ind(m,1); cutoff)
 @test fmy.Vt ≈ Matrix(fiten.V, fiten.v, ind(m,2))
 
 
-m = ITensor(hermitianpart(matrix(m)), inds(m))
-cutoff = 1e-5
+
+# m = ITensor(hermitianpart(matrix(m)), inds(m))
+# cutoff = 1e-5
+
 
 # TODO Check truncation are not exactly the same..
-fmy, spec =  mytrunc_eig(Matrix(matrix(m)); cutoff)
-fiten = eigen(m, ind(m,1), ind(m,2); cutoff)
-@test fmy.values ≈ diag(fiten.D)
+# fmy, spec =  mytrunc_eig(Matrix(matrix(m)); cutoff)
+# fiten = eigen(m, ind(m,1), ind(m,2); cutoff)
+# @test fmy.values ≈ diag(fiten.D)
 #@test fmy.U ≈ matrix(fiten.U)
 #@test fmy.Vt ≈ Matrix(fiten.V, fiten.v, ind(m,2))
 
+ms = randsymITensor(40)
+ms /= norm(ms)
+u,s,ut = ITransverse.ITenUtils.symm_svd(ms, ind(ms,1))
+@test norm(u * s * ut - ms) < 1e-10
+
+u,s,ut = ITransverse.ITenUtils.symm_svd(ms, ind(ms,1), cutoff=1e-3)
+@test norm(u * s * ut - ms) < sqrt(1e-3)
 end

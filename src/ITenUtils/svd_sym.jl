@@ -209,8 +209,10 @@ function symm_svd(a::ITensor, linds; cutoff=nothing, maxdim=nothing)
     # sq_z = zvecs * sqrt.(zvals) * dag(zvecs)
 
     # Best way is probably still to rely on Schur decomposition from Julia's matrix utils !? 
-    sq_z = ITensor(sqrt(matrix(z)), inds(z))
+    sq_z = sqrt(z) # ITensor(sqrt(matrix(z)), inds(z))
 
+    # TODO for GPU aware code : check if z is diagonal -> do on GPU
+    # otherwise, bring back to CPU, do it here and bring back to GPU
 
     #@show matrix(z)
     #@show matrix(sq_z)

@@ -33,6 +33,11 @@ include("eig_sym.jl")
 
 include("bench_data.jl")
 
+include("sqrt_itensor.jl")
+
+export sqrt
+
+
 export mergedicts!
 
 # from pparams
