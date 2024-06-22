@@ -26,7 +26,7 @@ end
 
 """ Checks if a matrix is diagonal within a given cutoff
 """
-function check_diag_matrix(d::Matrix, cutoff::Float64=1e-6)
+function check_diag_matrix(d::AbstractMatrix, cutoff::Float64=1e-6)
     delta_diag = norm(d - Diagonal(d))/norm(d)
     if delta_diag > cutoff
         println("Warning, matrix non diagonal: $delta_diag")
