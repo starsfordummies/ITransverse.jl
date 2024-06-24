@@ -60,16 +60,17 @@ Generalized entropy for a *symmetric* environment (psiL,psiL)
     Assuming we're in LEFT GENERALIZED canonical form 
     Returns a list of vectors of eigenvalues, one for each cut 
 """
-function diagonalize_rtm_left_gen_sym(psiL::MPS; bring_left_gen::Bool=false)
+function diagonalize_rtm_left_gen_sym(psiL::MPS; bring_left_gen::Bool=false, normalize_factor::Number=1.0)
 
+    psi_gauged = psiL/normalize_factor
     # we can enforce to bring it in left symmetric gen. canonical form 
     if bring_left_gen
-        psiL = gen_canonical_left(psiL)
+        psi_gauged = gen_canonical_left(psi_gauged)
     end
 
-    mpslen = length(psiL)
+    mpslen = length(psi_gauged)
 
-    overlap = overlap_noconj(psiL,psiL)
+    overlap = overlap_noconj(psi_gauged,psi_gauged)
     if abs(1-overlap) > 1e-4
         @warn "overlap not 1: $(overlap)"
     end
@@ -78,11 +79,11 @@ function diagonalize_rtm_left_gen_sym(psiL::MPS; bring_left_gen::Bool=false)
 
     right_env = ITensor(1.)
 
-    psiR = prime(linkinds, psiL)
+    psiR = prime(linkinds, psi_gauged)
 
     # Start from the right 
     for ii = mpslen:-1:2
-        Ai = psiL[ii]
+        Ai = psi_gauged[ii]
         Bi = psiR[ii]
 
         right_env = Ai * right_env 
@@ -118,7 +119,7 @@ function diagonalize_rtm_right_gen_sym(psi::MPS; bring_right_gen::Bool=false, no
 
     mpslen = length(psi)
 
-    psi_gauged = psi_gauged/normalize_factor
+    psi_gauged = psi/normalize_factor
 
     if bring_right_gen
         psi_gauged = gen_canonical_right(psi)

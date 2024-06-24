@@ -1,4 +1,4 @@
-""" Compute the generalized renyi2 entropy by contracting left and right MPS"""
+""" Compute tr(τₜ^2) by contracting left and right MPS"""
 function rtm2_contracted(psi::MPS, phi::MPS; normalize_factor::Number=1.0)
     r2s = []
     for jj in eachindex(psi)[1:end-1]
@@ -9,19 +9,19 @@ function rtm2_contracted(psi::MPS, phi::MPS; normalize_factor::Number=1.0)
 end
 
 """ At a given cut, we can compute tr(τₜ^2) as the contraction
-(up-down arrows denote looped-over contracted inds)
+(asterisks denote contracted inds, ie. we trace over topmost with lowmost inds)
 
-      ^  ^  ^ 
+      *  *  * 
       |  |  |
 o--o--o--o--o  |phi>
 |  |      
-*--*--*--*--*  <psi|
+□--□--□--□--□  <psi|
       |  |  |
 o--o--o--o--o  |phi>
 |  |      
-*--*--*--*--*  <psi|
+□--□--□--□--□  <psi|
       |  |  | 
-      V  V  V
+      *  *  *
 """
 
 function rtm2_contracted(psi::MPS, phi::MPS, cut::Int; normalize_factor::Number=1.0)
