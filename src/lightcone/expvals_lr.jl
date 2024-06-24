@@ -5,15 +5,18 @@ function expval_LR(ll::MPS, rr::MPS, op::Vector{ComplexF64}, tp::tmpo_params)
 
     fold_id = ComplexF64[1,0,0,1]
 
+    time_sites = siteinds(rr)
     tmpo = swapprime(build_folded_tMPO(tp, fold_id, time_sites), 0, 1, "Site")
     psi1R = applys(tmpo, rr)
 
-    time_sites = siteinds(rr)
+    L1R = overlap_noconj(ll,psi1R)
+
     tmpo = swapprime(build_folded_tMPO(tp, op, time_sites), 0, 1, "Site")
     psiOR = applys(tmpo, rr)
 
-    LOR = overlap_noconj(psi1L,rr)
-    L1R = overlap_noconj(psi1L,rr)
+    LOR = overlap_noconj(ll,psiOR)
+
+
 
     return LOR/L1R
 
@@ -85,7 +88,7 @@ It may be more flexible """
 function expval_LR_open(ll::MPS, rr::MPS, ops::MPO, tp::tmpo_params)
 
     # TODO allow for longer MPOs (longer lists of local ops)
-    
+
     @assert length(ops) == 2
 
     time_sites_L = siteinds(ll)
