@@ -111,7 +111,7 @@ end
 
 
 
-""" For a state psi, build the symmetric RTM <psibar|psi>,
+""" Given `psi` MPS, build the symmetric RTM <psibar|psi>:
 Bring psi in generalized RIGHT symmetric canonical form,
 then contract LEFT enviroments and diagonalize them.
 Returns an array of arrays containing the eigenvalues of the RTM for each cut """
@@ -128,7 +128,12 @@ function diagonalize_rtm_right_gen_sym(psi::MPS; bring_right_gen::Bool=false, no
     lenv= ITensor(1.)
     s = siteinds(psi_gauged)
 
-    eigs_rho = []
+    eigs_rtm_t = []
+
+
+    # if abs(sum(eigss) - 1.) > 0.01
+    #     @warn "RTM not well normalized? Σeigs-1=$(abs(sum(eigss) - 1.)) "
+    # end
 
     for jj in 1:mpslen-1
 
@@ -138,11 +143,11 @@ function diagonalize_rtm_right_gen_sym(psi::MPS; bring_right_gen::Bool=false, no
 
         @assert ndims(lenv) == 2 
 
-        vals, vecs = eigen(lenv, ind(lenv,1), ind(lenv,2))
-
-        push!(eigs_rho, vals)
+        eigss, _ = eigen(lenv, inds(lenv)[1],inds(lenv)[2])
+        
+        push!(eigs_rtm_t, diag(matrix(eigss)))
 
     end
     
-    return eigs_rho
+    return eigs_rtm_t
 end

@@ -1,8 +1,8 @@
 using ITensors.Adapt: adapt
 
-function truncate_normalize_sweep_sym(left_mps::MPS; svd_cutoff::Float64, chi_max::Int, method::String)
+function truncate_normalize_sweep_sym(left_mps::MPS; cutoff::Float64, chi_max::Int, method::String)
     l = deepcopy(left_mps)
-    truncate_normalize_sweep_sym!(l; svd_cutoff, chi_max, method)
+    truncate_normalize_sweep_sym!(l; cutoff, chi_max, method)
     #@show linkinds(l)
     return l 
 end
@@ -13,13 +13,14 @@ end
 Symmetric case: Truncates a single MPS optimizing overlap (L|L) (no conj)
 By doing first a Right sweep to standard (right-orthogonal) canonical form 
 followed by a Left sweep with truncation on the generalized SVs 
-returns L_ortho, ents_sites
+returns L_ortho (in generalized symmetric *left* canonical form) normalized to (L|L)=1
+and ents_sites = log(sum(σ_i)) for each site
 """
 function truncate_normalize_sweep_sym!(left_mps::MPS; cutoff::Float64, chi_max::Int, method::String)
 
-    XUinv= ITensor(1.)
-    left_env = ITensor(1.)
-    Ai = ITensor(1.)
+    XUinv= ITensor(eltype(left_mps[1]), 1.)
+    left_env = ITensor(eltype(left_mps[1]), 1.)
+    #Ai = ITensor(eltype(left_mps[1]), 1.)
 
     mpslen = length(left_mps)
 
@@ -34,9 +35,10 @@ function truncate_normalize_sweep_sym!(left_mps::MPS; cutoff::Float64, chi_max::
         Ai = XUinv * left_mps[ii]
 
         left_env *= Ai
-
         left_env *= Ai'
-        left_env *= delta(s[ii],s[ii]')
+        left_env *= delta(eltype(Ai), s[ii],s[ii]')
+
+        # TODO normalization of left_envs here ? 
 
         if method == "SVD"
             F = symm_svd(left_env, ind(left_env,1), cutoff=cutoff, maxdim=chi_max)
@@ -115,29 +117,31 @@ end
 
 
 """ Bring the MPS to symmetric right generalized canonical form """
-function sweep_sym_ortho_right(psi::MPS; cutoff::Real=1e-12, chi_max::Int=100)
+function truncate_normalize_rsweep_sym(psi::MPS; cutoff::Real=1e-12, chi_max::Int=100, method::String)
 
     mpslen = length(psi)
 
     # bring to LEFT standard canonical form 
     psi_ortho = orthogonalize(psi, mpslen)
-    s = siteinds(psi_ortho)
+    s = siteinds(psi)
 
-    XUinv= ITensor(1.)
-    renv = ITensor(1.)
+    XUinv= ITensor(eltype(psi[1]),1.)
+    right_env = ITensor(eltype(psi[1]),1.)
 
-    ents_sites = Vector{Float64}()
+    ents_sites = ComplexF64[]
 
     for ii = mpslen:-1:2
         Ai = XUinv * psi_ortho[ii]
 
-        renv *= Ai
-        renv *= Ai'
-        renv *= delta(s[ii], s[ii]')
+        right_env *= Ai
+        right_env *= Ai'
+        right_env *= delta(eltype(Ai), s[ii], s[ii]')
 
-        @assert order(renv) == 2
+        # TODO normalize right_env here ?
 
-        F = symm_oeig(renv, ind(renv,1); cutoff)
+        @assert order(right_env) == 2
+
+        F = symm_oeig(right_env, ind(right_env,1); cutoff)
         #@show dump(F)
         U = F.V
         S = F.D
@@ -150,10 +154,10 @@ function sweep_sym_ortho_right(psi::MPS; cutoff::Real=1e-12, chi_max::Int=100)
 
         psi_ortho[ii] = Ai * XU
 
-        renv *= XU 
-        renv *= XU' 
+        right_env *= XU 
+        right_env *= XU' 
 
-        #push!(ents_sites, log(sum(S)))
+        push!(ents_sites, log(sum(S)))
     end
 
     # the last one 
@@ -164,7 +168,7 @@ function sweep_sym_ortho_right(psi::MPS; cutoff::Real=1e-12, chi_max::Int=100)
     
     @assert order(overlap) == 0 
     # normalize overlap to 1 at each step 
-    psi_ortho[1] =  An
+    psi_ortho[1] =  An /sqrt(scalar(overlap))
 
 
     return psi_ortho, ents_sites
@@ -180,7 +184,7 @@ Just bring the MPS to generalized *left* canonical form without truncating (as f
 """
 function gen_canonical_left(in_mps::MPS)
     temp = deepcopy(in_mps)
-    return truncate_normalize_sweep_sym(temp; svd_cutoff=1e-14, chi_max=2*maxlinkdim(in_mps), method="EIG")
+    return truncate_normalize_sweep_sym(temp; cutoff=1e-20, chi_max=2*maxlinkdim(in_mps), method="EIG")
 end
 
 """
@@ -188,6 +192,6 @@ Just bring the MPS to generalized *right* canonical form without truncating (as 
 TODO should use chi_min here to make sure ! 
 """
 function gen_canonical_right(in_mps::MPS)
-    psi_gen, _ = sweep_sym_ortho_right(in_mps; cutoff=1e-20, chi_max=2*maxlinkdim(in_mps))
+    psi_gen, _ = truncate_normalize_rsweep_sym(in_mps; cutoff=1e-20, chi_max=2*maxlinkdim(in_mps), method="EIG")
     return psi_gen
 end
