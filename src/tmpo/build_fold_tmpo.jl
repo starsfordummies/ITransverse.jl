@@ -206,6 +206,7 @@ return tMPO
 
 end
 
+
 function build_folded_open_tMPO(tp::tmpo_params,
     time_sites::Vector{<:Index})
 
@@ -215,6 +216,10 @@ function build_folded_open_tMPO(tp::tmpo_params,
 
 end
 
+""" Builds a folded tMPO with an *open* additional leg at the top (ie. where the operator insertion would go)
+and at the bottom (where the initial state). 
+Returns the tMPO and the indices of the open legs: the `left_open_link` (for the operator side)
+and `right_open_link` (for the initial state side), for better handling further operations"""
 function build_folded_open_tMPO(eH_space::MPO, time_sites::Vector{<:Index})
     
     @assert length(eH_space) == 3
