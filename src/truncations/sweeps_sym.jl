@@ -26,7 +26,7 @@ function truncate_normalize_sweep_sym!(left_mps::MPS; cutoff::Float64, chi_max::
 
     orthogonalize!(left_mps,1)
 
-    ents_sites = [] 
+    ents_sites = ComplexF64[] 
 
     s = siteinds(left_mps)
 
