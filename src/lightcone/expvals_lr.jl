@@ -1,5 +1,31 @@
-""" Build exp value <L|O|R> for a single operator `op` """
+""" Build exp value <L|O|R> for a single operator `op`.
+ In order to avoid normalization issues, we build both <L|OR> and <L|1R> overlaps, 
+ the exp value is given by <L|OR>/<L|1R> """
 function expval_LR(ll::MPS, rr::MPS, op::Vector{ComplexF64}, tp::tmpo_params)
+
+    fold_id = ComplexF64[1,0,0,1]
+
+    tmpo = swapprime(build_folded_tMPO(tp, fold_id, time_sites), 0, 1, "Site")
+    psi1R = applys(tmpo, rr)
+
+    time_sites = siteinds(rr)
+    tmpo = swapprime(build_folded_tMPO(tp, op, time_sites), 0, 1, "Site")
+    psiOR = applys(tmpo, rr)
+
+    LOR = overlap_noconj(psi1L,rr)
+    L1R = overlap_noconj(psi1L,rr)
+
+    return LOR/L1R
+
+end
+
+
+""" Build exp value <L|O|R> for a single operator `op` 
+in a symmetric way, by building both <L1|OR> and <L1|1R> overlaps, 
+ the exp value is given by <L1|OR>/<L1|1R>. 
+ This should really be equivalent to `expval_LR`, but could be useful for checks if 
+ we are not sure whether our L and R vectors are well converged. """
+function expval_LR_twocol(ll::MPS, rr::MPS, op::Vector{ComplexF64}, tp::tmpo_params)
 
     fold_id = ComplexF64[1,0,0,1]
 
@@ -22,7 +48,7 @@ function expval_LR(ll::MPS, rr::MPS, op::Vector{ComplexF64}, tp::tmpo_params)
 
 end
 
-# Version with 2 operators
+""" Build exp value <L|opLopR|R> for a pair of local operator `opL` and `opR` """ 
 function expval_LR(ll::MPS, rr::MPS, opL::Vector{ComplexF64}, opR::Vector{ComplexF64}, tp::tmpo_params)
 
     fold_id = ComplexF64[1,0,0,1]
