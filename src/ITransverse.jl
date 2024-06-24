@@ -89,6 +89,8 @@ export rho2,
 include("ChainModels/ChainModels.jl")
 using .ChainModels
 
+export ising_tp
+
 export ppm_params, 
     trunc_params, 
     model_params, 

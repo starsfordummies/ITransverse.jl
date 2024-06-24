@@ -42,4 +42,7 @@ export build_H_XXZ_manual,
     build_expH_XXZ_murg,
     build_expH_XXZZ_murg_from_ising
 
+export ising_tp
+
+
 end

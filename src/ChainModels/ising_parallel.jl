@@ -111,3 +111,9 @@ function build_expH_ising_parallel_field_murg(p::model_params)
     build_expH_ising_parallel_field_murg(space_sites, p.JXX, p.hz, p.λx, p.dt)
 
 end
+
+
+# quick defaults for parallel field Ising, for playing around
+ising_tp() = tmpo_params("S=1/2", "S=1/2", 
+build_expH_ising_parallel_field_murg, 
+model_params("S=1/2", 1.0, 0.4, 0.0, 0.1), 0, [1/sqrt(2),1/sqrt(2)])
