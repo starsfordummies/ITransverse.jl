@@ -1,7 +1,7 @@
 using ITensors, JLD2
 using ITransverse
 
-function main_build_ising_loschmidt_ents(Tstart::Int, Tend::Int, nbeta::Int; Tstep::Int=1)
+function main_ising_loschmidt(Tstart::Int, Tend::Int, nbeta::Int; Tstep::Int=1)
 
     JXX = 1.0
     hz = 1.0
@@ -75,4 +75,4 @@ function main_build_ising_loschmidt_ents(Tstart::Int, Tend::Int, nbeta::Int; Tst
 
 end
 
-main_build_ising_loschmidt_ents(40, 70, 2)
+main_ising_loschmidt(40, 70, 2)

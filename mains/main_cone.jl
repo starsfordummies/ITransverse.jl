@@ -4,7 +4,7 @@ using Plots
 
 using ITransverse
 
-function main()
+function main_cone()
 
     JXX = 1.0  
     hz = 1.05
@@ -55,7 +55,7 @@ function main()
 
 end
 
-psi, psiR, chis, expvals, entropies, infos = main()
+psi, psiR, chis, expvals, entropies, infos = main_come()
 
 #resu = ITransverse.resume_cone("cp_cone.jld2", 10)
 
