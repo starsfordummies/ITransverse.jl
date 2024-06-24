@@ -17,3 +17,18 @@ function build_expHim(p::tmpo_params)
     p.expH_func(mp)
 
 end
+
+
+
+function build_H_id(sites)
+
+    N = length(sites)
+    os = OpSum()
+
+    for j in 1:N
+        os += 1/N, "Id", j
+    end
+
+    # Convert these terms to an MPO tensor network
+    return MPO(os, sites)
+end
