@@ -148,7 +148,7 @@ function build_entropies(spectra::Vector)
                 vn -= p * log(p)
                 r2 += p^2
                 r12 += p^0.5
-                r14 += p%0.25
+                r14 += p^0.25
             end
         end
         push!(vns, vn)
