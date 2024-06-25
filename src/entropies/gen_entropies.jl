@@ -140,6 +140,8 @@ function build_entropies(spectra::Vector)
     for eigss in spectra
         vn = 0.
         r2 = 0.
+        r12 = 0.
+        r14 = 0.
         for n in eachindex(eigss)
             p = eigss[n]       # I don't think we need the ^2 here 
             if abs(p) > 1e-15
