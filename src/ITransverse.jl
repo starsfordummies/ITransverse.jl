@@ -32,8 +32,8 @@ export myrMPS,
     # check_id_matrix,
     # isid
 
-include("IGensors/src/IGensors.jl")
-using .IGensors
+# include("IGensors/src/IGensors.jl")
+# using .IGensors
 
 
 include("truncations/sweeps.jl")
@@ -64,10 +64,8 @@ include("entropies/compute_rho2.jl")
 
 
 #from compute_entropies.jl
-export vn_entanglement_entropy_cut!, 
-    vn_entanglement_entropy, 
-    renyi_entanglement_entropy_cut, 
-    renyi_entanglement_entropy,
+export vn_entanglement_entropy!, 
+    renyi_entanglement_entropy!,
     generalized_entropy_symmetric_cut, 
     generalized_entropy_symmetric, 
     #generalized_entropy_cut,

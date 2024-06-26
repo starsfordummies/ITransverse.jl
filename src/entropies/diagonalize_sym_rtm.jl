@@ -1,5 +1,5 @@
 """
-Diagonalize RTM for a *symmetric* environment (psiL,psiL)
+Diagonalize RTM for a *symmetric* environment (psiL,psiL) at a given `cut`
     Assuming we're in LEFT GENERALIZED SYMMETRIC canonical form, we build *right* environments 
     for the RTM and diagonalize them:
 
@@ -63,6 +63,7 @@ Generalized entropy for a *symmetric* environment (psiL,psiL)
 function diagonalize_rtm_left_gen_sym(psiL::MPS; bring_left_gen::Bool=false, normalize_factor::Number=1.0)
 
     psi_gauged = psiL/normalize_factor
+    
     # we can enforce to bring it in left symmetric gen. canonical form 
     if bring_left_gen
         psi_gauged = gen_canonical_left(psi_gauged)

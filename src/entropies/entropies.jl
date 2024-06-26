@@ -1,7 +1,7 @@
 
 """ Computes the Von Neumann entanglement entropy of an MPS `psi` at a given `cut` 
-It is a (!) function cause we orthogonalize along the way .. """
-function vn_entanglement_entropy_cut!(psi::MPS, cut::Int)
+It is a (!) function cause we orthogonalize along the way, gauging `psi` """
+function vn_entanglement_entropy!(psi::MPS, cut::Int)
 
     orthogonalize!(psi, cut)
 
@@ -25,7 +25,7 @@ end
 """ Computes the Von Neumann entanglement entropy of an MPS `psi` at all links, 
 returns a vector of floats containing the VN entropies 
 """
-function vn_entanglement_entropy(psi::MPS)
+function vn_entanglement_entropy!(psi::MPS)
 
     workpsi = normalize(psi)
 
@@ -41,7 +41,7 @@ end
 
 
 
-function renyi_entanglement_entropy_cut(in_psi::MPS, cut::Int, αr::Int)
+function renyi_entanglement_entropy!(in_psi::MPS, cut::Int, αr::Int)
 
     S_ren = 0.0
 
@@ -78,7 +78,7 @@ end
 S_α = -log(sum λ^α), where λ are the eigenvalues of the RDM (=SV^2 ).
 returns a vector of floats containing the entropies 
 """
-function renyi_entanglement_entropy(psi::MPS, α::Int=2)
+function renyi_entanglement_entropy!(psi::MPS, α::Int=2)
 
     workpsi = normalize(psi)
 
