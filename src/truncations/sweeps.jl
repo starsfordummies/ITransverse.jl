@@ -219,8 +219,3 @@ function truncate_normalize_sweep_LR(left_mps::MPS, right_mps::MPS; method::Stri
     return L_ortho, R_ortho, ents_sites
 
 end
-
-
-
-
-

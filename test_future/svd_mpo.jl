@@ -23,19 +23,7 @@ println(ss)
 
 # Now with sigmas 
 
-
 sites_potts =  siteinds("S=1", 10; conserve_qns = false)
-#addtags(time_sites, "time"
-
-sig=ITensors.op(::OpName"Σ",::SiteType"S=1") =
-[exp(2*im*pi/3)     0        0 
- 0           exp(4*im*pi/3)  0 
- 0                 0         1]
-
-sigdag=ITensors.op(::OpName"Σdag",::SiteType"S=1") =
-[exp(-2*im*pi/3)   0         0 
- 0         exp(-4*im*pi/3)   0 
- 0           0               1]
 
 
 s5 = op("Σ",sites_potts,5)
@@ -48,21 +36,22 @@ ss56d = s5 * s6d
 ss5d6 = s5d * s6 
 
 e1 = exp(ss56d)
-e2 =  exp(ss56d+  ss5d6)
+e2 =  exp(ss56d + ss5d6)
 
 jjj=inds(e1)
 
 uu,ss,vdd = svd(e1, [jjj[1],jjj[3]])
 
-println(diag(ss))
+@show(diag(ss))
 
 
 uu,ss,vdd = svd(e2, [jjj[1],jjj[3]])
 
-println(diag(ss))
-e2
+@show(diag(ss))
+#e2
 
-dd, vv = eigen(e2, [jjj[1],jjj[3]], [jjj[2],jjj[4]], ishermitian=true, sortby= x->-abs(x), cutoff=1e-12) 
+dd, vv = eigen(e2, [jjj[1],jjj[3]], [jjj[2],jjj[4]], ishermitian=true, cutoff=1e-12) 
 
-
-e1
+@show(dd)
+# sortby= x->-abs(x),
+#e1
