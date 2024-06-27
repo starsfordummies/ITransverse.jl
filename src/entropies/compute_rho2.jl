@@ -47,8 +47,8 @@ function rtm2_contracted(psi::MPS, phi::MPS, cut::Int; normalize_factor::Number=
     #replace_siteinds!(phi, siteinds(psi))
     match_siteinds!(psi, phi)
 
-    left = ITensor(eltype(psi),1.)
-    right = ITensor(eltype(psi),1.)
+    left = ITensor(eltype(psi[1]),1.)
+    right = ITensor(eltype(psi[1]),1.)
 
     ind_cut_psi = linkind(psi, cut)
     ind_cut_phi = linkind(phi, cut)
@@ -70,7 +70,7 @@ function rtm2_contracted(psi::MPS, phi::MPS, cut::Int; normalize_factor::Number=
     #@info "1: $(inds(tr_rho2))"
     tr_rho2 *= right
     #@info "2: $(inds(tr_rho2))"
-    tr_rho2 *= prime(left1)
+    tr_rho2 *= prime(left)
     #@info "3: $(inds(tr_rho2))"
     tr_rho2 *= swapprime(right, 1=>0) 
     

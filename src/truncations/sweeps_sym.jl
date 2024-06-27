@@ -121,7 +121,7 @@ function truncate_normalize_rsweep_sym(psi::MPS; cutoff::Real=1e-12, chi_max::In
 
     mpslen = length(psi)
 
-    # bring to LEFT standard canonical form 
+    # first bring to LEFT standard canonical form 
     psi_ortho = orthogonalize(psi, mpslen)
     s = siteinds(psi)
 
@@ -142,7 +142,7 @@ function truncate_normalize_rsweep_sym(psi::MPS; cutoff::Real=1e-12, chi_max::In
         @assert order(right_env) == 2
 
         F = symm_oeig(right_env, ind(right_env,1); cutoff)
-        #@show dump(F)
+
         U = F.V
         S = F.D
 
@@ -165,9 +165,9 @@ function truncate_normalize_rsweep_sym(psi::MPS; cutoff::Real=1e-12, chi_max::In
 
     overlap = An * An 
 
-    
     @assert order(overlap) == 0 
-    # normalize overlap to 1 at each step 
+
+    # normalize overlap to 1 at the *final* tensor 
     psi_ortho[1] =  An /sqrt(scalar(overlap))
 
 

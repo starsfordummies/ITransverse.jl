@@ -111,8 +111,7 @@ function build_folded_left_tMPS(eH::MPO, init_state::Vector, time_sites)
     return tMPS
 
 end
-function build_folded_left_tMPS(tp::tmpo_params,
-    time_sites::Vector{<:Index})
+function build_folded_left_tMPS(tp::tmpo_params, time_sites::Vector{<:Index})
 
     eH = build_expH(tp)
 
@@ -261,15 +260,36 @@ end
 # Extras - non -mainstream stuff #
 ##################################
 
-""" Alternative mode to build folded tMPO, is likely a bit slower than the other """
-function build_folded_tMPO_from_open(eH_space::MPO, init_state::Vector, fold_op::Vector, time_sites::Vector{<:Index})
+""" Alternative mode to build folded tMPO, for Nt time steps we build
+a Nt+2 sites long MPO, with the top site with the operator (with trivial virtual legs if it's a one-site op)
+and the bottom with the initial DM (also with trival legs if it's a product state)
+
+ """
+ function new_folded_tMPO(eH_space::MPO, init_state_it::ITensor, fold_op_it::ITensor, time_sites::Vector{<:Index})
+    
+    @assert ndims(init_state_it) == 3 
+    @assert ndims(fold_op_it) == 3
+
+    tMPO, left_open, right_open = build_folded_open_tMPO(eH_space, time_sites)
+
+    insert!(tMPO.data, 1, fold_op_it)
+    push!(tMPO.data, init_state_it)
+    
+return tMPO
+
+end
+
+function new_folded_tMPO(eH_space::MPO, init_state::Vector, fold_op::Vector, time_sites::Vector{<:Index})
     
     tMPO, left_open, right_open = build_folded_open_tMPO(eH_space, time_sites)
 
-    fold_op_tensor = ITensor((fold_op), left_open)
 
-    fold_psi0 = (init_state) * (init_state')
-    init_state_tensor = ITensor(fold_psi0, right_open)
+    trivial_ind = Index(1,"trivial,op")
+    fold_op_tensor = ITensor((fold_op), trivial_ind, left_open, trivial_ind')
+
+    trivial_ind = Index(1,"trivial,op")
+    rho0 = (init_state) * (init_state')
+    init_state_tensor = ITensor(rho0, trivial_ind, right_open, trivial_ind')
 
     tMPO[1] *= fold_op_tensor 
     tMPO[end] *= init_state_tensor
@@ -278,10 +298,10 @@ return tMPO
 
 end
 
-function build_folded_tMPO_from_open(tp::tmpo_params, fold_op_tensor::Vector, time_sites::Vector{<:Index})
+function new_folded_tMPO(tp::tmpo_params, fold_op_tensor::Vector, time_sites::Vector{<:Index})
     
     eH = build_expH(tp)
-    build_folded_tMPO_from_open(eH, tp.init_state, fold_op_tensor, time_sites)
+    new_folded_tMPO(eH, tp.init_state, fold_op_tensor, time_sites)
 
 end
 

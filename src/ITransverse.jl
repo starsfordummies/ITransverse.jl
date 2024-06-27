@@ -40,6 +40,8 @@ export myrMPS,
 include("truncations/sweeps.jl")
 include("truncations/alt_sweeps.jl")
 include("truncations/sweeps_sym.jl")
+include("truncations/gen_form_checks.jl")
+
 
 #from sweeps.jl
 export truncate_normalize_sweep, 
@@ -54,7 +56,6 @@ export  truncate_normalize_sweep_sym,
     gen_canonical_left, gen_canonical_right
 
 
-include("entropies/gen_form_checks.jl")
 
 include("entropies/entropies.jl")
 include("entropies/gen_entropies.jl")
@@ -75,7 +76,7 @@ export vn_entanglement_entropy!,
     build_entropies
 
 # from gen_form_checks
-export check_gencan_left_phipsi
+export check_gencan_left, check_gencan_right
 
 # from compute_rho2.jl
 export rho2, 

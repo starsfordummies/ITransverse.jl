@@ -154,11 +154,6 @@ function run_cone(psi::MPS,
 
     Id = ComplexF64[1,0,0,1]
 
-    evs_x = []
-    evs_xx = []
-    evs_z = []
-    evs_zz = []
-    evs_eps = []
     chis = []
     overlaps = []
     vn_ents = []
@@ -174,13 +169,6 @@ function run_cone(psi::MPS,
         expvals[op] = []
     end
 
-    # expvals = Dict(
-    #     :evs_x => evs_x, 
-    #     :evs_z => evs_z, 
-    #     :evs_zz => evs_zz, 
-    #     :evs_xx => evs_xx,
-    #     :evs_eps => evs_eps,
-    #     :overlaps => overlaps)
 
     infos = Dict(:ts => ts, :truncp => truncp, :tp => tp, :op => op)
 
@@ -220,13 +208,6 @@ function run_cone(psi::MPS,
         evs_computed = compute_expvals(ll, rr, ["all"], tp)
         mergedicts!(expvals, evs_computed)
 
-        # push!(evs_x, expval_LR(ll, rr, ComplexF64[0,1,1,0], tp))
-        # push!(evs_z, expval_LR(ll, rr, ComplexF64[1,0,0,-1], tp))
-
-        # push!(evs_xx, expval_LR(ll, rr, ComplexF64[0,1,1,0], ComplexF64[0,1,1,0], tp))
-        # push!(evs_zz, expval_LR(ll, rr, ComplexF64[1,0,0,-1], ComplexF64[1,0,0,-1], tp))
-
-        # push!(evs_eps, expval_en_density(ll, rr, tp))
 
         push!(chis, maxlinkdim(ll))
         push!(overlaps, overlapLR)

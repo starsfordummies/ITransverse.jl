@@ -1,6 +1,6 @@
 
 """ Check that two MPS are in (generalized-symmetric) *left* canonical form """
-function check_gencan_left_phipsi(psi::MPS, phi::MPS, verbose::Bool=false)
+function check_gencan_left(psi::MPS, phi::MPS; verbose::Bool=false)
 
     is_left_gencan = true
     @assert length(psi) == length(phi)
@@ -42,7 +42,7 @@ end
 
 """ Check that two MPS are in (generalized-symmetric) *right* canonical form
 TODO not implemented yet  """
-function check_gencan_right_phipsi(psi::MPS, phi::MPS, verbose::Bool=false)
+function check_gencan_right(psi::MPS, phi::MPS; verbose::Bool=false)
 
     is_right_gencan = true 
 
