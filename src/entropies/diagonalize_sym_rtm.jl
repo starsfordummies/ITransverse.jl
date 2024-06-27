@@ -123,7 +123,7 @@ function diagonalize_rtm_right_gen_sym(psi::MPS; bring_right_gen::Bool=false, no
     psi_gauged = psi/normalize_factor
 
     if bring_right_gen
-        psi_gauged = gen_canonical_right(psi)
+        psi_gauged = gen_canonical_right(psi_gauged)
     end
 
     lenv= ITensor(1.)
