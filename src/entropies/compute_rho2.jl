@@ -1,4 +1,5 @@
-""" Compute tr(τₜ^2) by contracting left and right MPS"""
+""" Compute tr(τₜ^2) the trace of the reduced transition matrices at the various cuts,
+ by contracting left and right MPS (see also below) """
 function rtm2_contracted(psi::MPS, phi::MPS; normalize_factor::Number=1.0)
     r2s = []
     for jj in eachindex(psi)[1:end-1]
@@ -25,18 +26,15 @@ o--o--o--o--o  |phi>
 """
 
 function rtm2_contracted(psi::MPS, phi::MPS, cut::Int; normalize_factor::Number=1.0)
+
+    # valid cuts go from 1 to L-1
     @assert cut < length(psi)
     @assert cut > 0
 
 
     phi = deepcopy(phi)
 
-    # we can do it here or at the end ..
-    # if normalize
-    #     phi = phi/overlap_noconj(phi,psi)
-    # end
     phi = phi/normalize_factor
-
 
     replace_siteinds!(phi, siteinds(psi))
 

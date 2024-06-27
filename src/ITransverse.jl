@@ -27,7 +27,8 @@ export myrMPS,
     check_symmetry_itensor,
     applys,
     isid,
-    mergedicts!
+    mergedicts!,
+    merge_siteinds!
     # check_diag_matrix, 
     # check_id_matrix,
     # isid
