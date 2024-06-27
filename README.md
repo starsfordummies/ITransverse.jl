@@ -58,36 +58,38 @@ after defining our tMPS it may be useful to think of "rotating" the network by 9
 old virtual indices of the MPO as new _temporal physical_ indices. In the same way, we can relabel the physical 
 (spatial) indices as _temporal virtual_ indices.
 
-More specifically, our current conventions (mostly for historical reasons and possibly subject to change, though that would likely result in massive code breaking) is the following:
+More specifically, our current convention is the following:
 
-We rotate our space vectors to the left by 90°, ie 
+We rotate our space vectors to the *right* by 90°, ie 
 
 ```
-    |p'               |R                 |p'new
+    |p'               |L                 |p'new
     |                 |                  |
-L---o---R   ==>   p'---o---p   =  Lnew---o---Rnew
+L---o---R   ==>   p---o---p'   =  Lnew---o---Rnew
     |                 |                  |
-    |p                |L                 |pnew
+    |p                |R                |pnew
 ```
 
 so the index renaming convention is 
 
 ``` 
 (old)   (new)
- L    ->  p
- R    ->  p'
- p    ->  R
- p'   ->  L
+ L    ->  p'
+ R    ->  p
+ p    ->  L
+ p'   ->  R
 ```
 
 
-For building the tMPO, we contract with the operator `fold_op` on the *left*
-and the initial state `init_state` on the *right*, ie. 
+For building the tMPO, we contract with the operator `fold_op` on the *right*
+and the initial state `init_state` on the *left*, ie. 
 
 ```
               p'
          |    |    |    |
-[op] X==(W)==(W)==(W)==(W)==o [in]
+[in] X==(W)==(W)==(W)==(W)==o [op]
          |    |    |    |
               p
+
+------------------------------>time
 ```
