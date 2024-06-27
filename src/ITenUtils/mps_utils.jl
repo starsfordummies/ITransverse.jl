@@ -36,27 +36,6 @@ function overlap_noconj_manual(ll::MPS, rr::MPS, approx_real::Bool=false)
 end
 
 
-function ITensors.sim(psi::MPS)
-    phi = deepcopy(psi)
-    sim!(phi)
-    return phi
-end    
-
-function sim!(psi::MPS)
-    replace_siteinds!(psi, sim(siteinds(psi)))
-    ll = linkinds(psi)
-    sl = sim(ll)
-
-    replaceind!(psi[1], ll[1], sl[1])
-    for ii in eachindex(psi)[2:end-1]
-        replaceind!(psi[ii], ll[ii-1], sl[ii-1])
-        replaceind!(psi[ii], ll[ii], sl[ii])
-    end
-    replaceind!(psi[end], ll[end], sl[end])
-
-end
-
-
 """ Given `mps1` and `mps2`, returns a copy of `mps2`
 with physical indices matching those of the first one
 """
@@ -70,6 +49,7 @@ function match_siteinds!(mps1::MPS, mps2::MPS)
     replace_siteinds!(mps2, siteinds(mps1))
 end
 
+""" Given two MPOs, replaces the siteinds of the *second* with those of the first """
 function match_siteinds!(mpo1::MPO, mpo2::MPO)
     for j in eachindex(mpo1)
         sold = siteind(mpo2,j)

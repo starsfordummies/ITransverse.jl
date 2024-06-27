@@ -49,8 +49,6 @@ export myrMPS,
     check_symmetry_itensor_mpo, 
     check_symmetry_itensor,
     normbyfactor,
-    sim,
-    sim!,
     applys,
     match_siteinds!
 
