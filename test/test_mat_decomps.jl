@@ -4,7 +4,7 @@ using ITransverse
 using ITransverse.ITenUtils
 using Test
 
-@testset "Testing IGensors symmetric SVD/EIG" begin
+@testset "Testing symmetric SVD/EIG" begin
 
 
 a = 1. + 0.1im
@@ -45,7 +45,7 @@ f, spec = symm_oeig(m; cutoff)
 @test norm(m - f.vectors * Diagonal(f.values) * transpose(f.vectors)) < sqrt(cutoff)
 
 
-@info "Testing IGensors mytrunc_svd VS ITensors truncated svd()"
+@info "Testing mytrunc_svd VS ITensors truncated svd()"
 
 m = randITensor_decayspec(40)
 m = 1234*m
