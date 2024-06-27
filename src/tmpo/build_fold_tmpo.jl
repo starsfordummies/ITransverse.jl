@@ -13,13 +13,10 @@ ITensors.state(::StateName"+", ::SiteType"S=3") = [1,1,1,1,1,1,1]/sqrt(7)
 
 
 """ Builds the (bulk) tensor for the *folded* time MPO
-Returns the *unrotated* indices as well, wL, wR, p, p' """
+Returns the *unrotated* indices as well: vL, vR, p, p' """
 function build_WWc(eH_space)
 
     _, Wc, _ = eH_space.data
-
-    # TODO better symmetry checks maybe
-    #check_symmetry_itensor_mpo(Wc) # , (wL,wR), (space_p',space_p))
 
     space_p = siteind(eH_space,2)
 
@@ -256,9 +253,6 @@ end
 
 
 
-##################################
-# Extras - non -mainstream stuff #
-##################################
 
 """ Alternative mode to build folded tMPO, for Nt time steps we build
 a Nt+2 sites long MPO, with the top site with the operator (with trivial virtual legs if it's a one-site op)
