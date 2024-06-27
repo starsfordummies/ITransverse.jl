@@ -1,5 +1,7 @@
-""" Compute tr(τₜ^2) the trace of the reduced transition matrices at the various cuts,
- by contracting left and right MPS (see also below) """
+""" Given two MPS `<psi` and `|phi>`, 
+computes tr(τₜ^2) the trace of the reduced transition matrices |phi><psi| at the various cuts,
+ by contracting left and right MPS (see also below). The normalization must be given 
+ via `normalization_factor` """
 function rtm2_contracted(psi::MPS, phi::MPS; normalize_factor::Number=1.0)
     r2s = []
     for jj in eachindex(psi)[1:end-1]
@@ -23,6 +25,12 @@ o--o--o--o--o  |phi>
 □--□--□--□--□  <psi|
       |  |  | 
       *  *  *
+
+We do this by building the left and right blocks 
+
+o--o--
+|  |      = 
+□--□--
 """
 
 function rtm2_contracted(psi::MPS, phi::MPS, cut::Int; normalize_factor::Number=1.0)
@@ -36,37 +44,35 @@ function rtm2_contracted(psi::MPS, phi::MPS, cut::Int; normalize_factor::Number=
 
     phi = phi/normalize_factor
 
-    replace_siteinds!(phi, siteinds(psi))
+    #replace_siteinds!(phi, siteinds(psi))
+    match_siteinds!(psi, phi)
 
-    left1 = ITensor(1.)
-    right1 = ITensor(1.)
+    left = ITensor(eltype(psi),1.)
+    right = ITensor(eltype(psi),1.)
 
     ind_cut_psi = linkind(psi, cut)
     ind_cut_phi = linkind(phi, cut)
     
     for jj = 1:cut
-        left1 *= psi[jj] 
-        left1 *= phi[jj]
+        left *= psi[jj] 
+        left *= phi[jj]
     end
-
-    left2 = prime(left1)
 
     for jj = length(psi):-1:cut+1
-        right1 *= psi[jj]
-        right1 *= phi[jj]
+        right *= psi[jj]
+        right *= phi[jj]
     end
 
-    right1 = prime(right1, ind_cut_psi)
-    right2 = swapprime(right1, 1=>0)    
+    right = prime(right, ind_cut_psi)
     
-    #this is already trace(rho^2)
-    tr_rho2 = left1
+    #trace(rho^2) is just the product left * right * left * right as depicted above
+    tr_rho2 = left
     #@info "1: $(inds(tr_rho2))"
-    tr_rho2 *= right1 
+    tr_rho2 *= right
     #@info "2: $(inds(tr_rho2))"
-    tr_rho2 *= left2 
+    tr_rho2 *= prime(left1)
     #@info "3: $(inds(tr_rho2))"
-    tr_rho2 *= right2
+    tr_rho2 *= swapprime(right, 1=>0) 
     
     return scalar(tr_rho2)
 end
@@ -85,12 +91,12 @@ function rho2(eigenvalues::ITensor)
     return r2
 end
 
-function rho2(eigenvalues::Vector)
+function rho2(eigenvalues::Vector{Number})
     r2 = sum(eigenvalues .* eigenvalues)
 end
 
 
-function rho2_eigen(all_eigenvalues::Vector)
+function rho2(all_eigenvalues::Vector{Vector})
     r2s = []
     for eigenvalues in all_eigenvalues
          push!(r2s, sum(eigenvalues .* eigenvalues))
@@ -187,5 +193,3 @@ function rtm2_sym_gauged(psi::MPS, normalize_factor::Number=1.0)
     
     return r2s, r2s_check 
 end
-
-
