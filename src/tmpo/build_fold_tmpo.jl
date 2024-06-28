@@ -162,14 +162,6 @@ end
 
 function folded_tMPO(tp::tmpo_params, time_sites::Vector{<:Index};
      init_state = tp.bl, fold_op = tp.tr)
- 
-    # if isnothing(init_state) 
-    #      init_state = tp.bl 
-    # end 
-
-    # if isnothing(fold_op) 
-    #     fold_op = tp.tr 
-    # end
 
     eH = build_expH(tp)
     folded_tMPO(eH, init_state, fold_op, time_sites)
@@ -183,10 +175,9 @@ end
 
 """ Builds folded initial guess for left tMPS 
 by picking the left (spatial) edges of the MPO """
-function build_folded_left_tMPS(eH::MPO, init_state::Vector, time_sites)
+function build_folded_left_tMPS(eH::MPO, init_state::Vector{<:Number}, time_sites::Vector{<:Index})
 
     Nsteps = length(time_sites)
-    # TODO for the Right one it would be the same, but with (wL, p, ps) and do the same basically.. 
 
     Wl = eH[1]
 
@@ -247,7 +238,5 @@ function build_folded_left_tMPS(tp::tmpo_params, time_sites::Vector{<:Index})
     eH = build_expH(tp)
 
     #@info "using $(build_expH_function)"
-    build_folded_left_tMPS(eH, tp.init_state, time_sites)
+    build_folded_left_tMPS(eH, tp.bl, time_sites)
 end
-
-
