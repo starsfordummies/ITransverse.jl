@@ -3,17 +3,10 @@ module ITransverse
 using JLD2
 using LinearAlgebra
 using NDTensors
-using ITensors, ITensorMPS
+using ITensors
+using ITensorMPS
 using ProgressMeter
 
-
-# pkg_dir() = joinpath(dirname(pathof(@__MODULE__)), "..")
-
-# function _parse_project_toml(field::String)
-#     return Pkg.TOML.parsefile(joinpath(pkg_dir(), "Project.toml"))[field]
-# end
-
-# version() = VersionNumber(_parse_project_toml("version"))
 
 include("ITenUtils/ITenUtils.jl")
 using .ITenUtils
@@ -37,10 +30,10 @@ export myrMPS,
 # using .IGensors
 
 
-include("truncations/sweeps.jl")
-include("truncations/alt_sweeps.jl")
-include("truncations/sweeps_sym.jl")
-include("truncations/gen_form_checks.jl")
+include("sweeps/sweeps.jl")
+include("sweeps/alt_sweeps.jl")
+include("sweeps/sweeps_sym.jl")
+include("sweeps/gen_form_checks.jl")
 
 
 #from sweeps.jl
