@@ -16,6 +16,8 @@ model_params(x::model_params;
     λx=x.λx, 
     dt=x.dt) = model_params(x.phys_space, JXX, hz, λx, dt)
 
+
+
 struct tmpo_params
     expH_func::Function
     mp::model_params

@@ -135,6 +135,5 @@ function epsilon_brick_ising(tp::tmpo_params)
 end
 
 # quick defaults for parallel field Ising, for playing around
-ising_tp() = tmpo_params("S=1/2", "S=1/2", 
-build_expH_ising_parallel_field_murg, 
+ising_tp() = tmpo_params(build_expH_ising_parallel_field_murg, 
 model_params("S=1/2", 1.0, 0.4, 0.0, 0.1), 0, [1/sqrt(2),1/sqrt(2)])
