@@ -45,8 +45,10 @@ The 2D network associated with the time evolution of a quantum chain is
 |          |  |  |  |  |  |  |  |
 |          o--o--o--o--o--o--o--o  U(dt)
 |          |  |  |  |  |  |  |  |
-|---->     o--o--o--o--o--o--o--o  |psi0>
-   x
+|          o--o--o--o--o--o--o--o  |psi0>
+|
+|------------------------------------->   x
+
 ```
 
 
@@ -92,4 +94,18 @@ and the initial state `init_state` on the *left*, ie.
               p
 
 ------------------------------>time
+```
+
+With our rotation, the MPS with the physical legs is the "right" part of the network, |R>,
+which we depict with the legs pointing upwards
+
+```
+^
+|          |  |  |  |  |  |  |  |
+|          o--o--o--o--o--o--o--o  TM
+|          |  |  |  |  |  |  |  |
+|          o--o--o--o--o--o--o--o  |R>
+|
+|------------------------------------------>
+                       
 ```
