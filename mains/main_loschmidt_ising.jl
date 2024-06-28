@@ -23,7 +23,7 @@ function main_ising_loschmidt(Tstart::Int, Tend::Int, nbeta::Int; Tstep::Int=1)
     ds2_converged = 1e-6
 
 
-    pm_params = ppm_params(;itermax, cutoff, maxbondim, verbose, ds2_converged, ortho_method="EIG")
+    pm_params = pm_params(;itermax, cutoff, maxbondim, verbose, ds2_converged, ortho_method="EIG")
 
     mp = model_params("S=1/2", JXX, hz, gx, dt)
     tp = tmpo_params("S=1/2", "S=1/2", build_expH_ising_parallel_field_murg, mp, nbeta, init_state)

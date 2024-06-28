@@ -32,7 +32,7 @@ function main_debug_pm()
     verbose=false
     ds2_converged=1e-6
 
-    pm_params = ppm_params(itermax, SVD_cutoff, maxbondim, verbose, ds2_converged)
+    pm_params = pm_params(itermax, SVD_cutoff, maxbondim, verbose, ds2_converged)
 
     sigX = ComplexF64[0,1,1,0]
     sigZ = ComplexF64[1,0,0,-1]
@@ -89,7 +89,7 @@ end
 
 
 
-function pm_debug(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::ppm_params)
+function pm_debug(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::pm_params)
 
     itermax = pm_params.itermax
     cutoff = pm_params.cutoff
@@ -275,7 +275,7 @@ end
 
 
 
-function pm_debug_svd(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::ppm_params)
+function pm_debug_svd(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::pm_params)
 
     itermax = pm_params.itermax
     cutoff = pm_params.cutoff

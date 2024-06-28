@@ -94,7 +94,7 @@ end
 
 
 """ Latest PM """
-function pm_new(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::ppm_params)
+function pm_new(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::pm_params)
 
     itermax = pm_params.itermax
     cutoff = pm_params.cutoff
@@ -180,7 +180,7 @@ end
 
 
 """ Latest PM """
-function pm_new_svd(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::ppm_params)
+function pm_new_svd(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::pm_params)
 
     itermax = pm_params.itermax
     cutoff = pm_params.cutoff

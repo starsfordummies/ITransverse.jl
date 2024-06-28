@@ -26,7 +26,7 @@ verbose=false
 ds2_converged = 1e-4
 
 params = pparams(JXX, hz, dt, nbeta, init_state)
-pm_params = ppm_params(itermax, SVD_cutoff, maxbondim, verbose, ds2_converged)
+pm_params = pm_params(itermax, SVD_cutoff, maxbondim, verbose, ds2_converged)
 
 ll_murg_s = MPS()
 

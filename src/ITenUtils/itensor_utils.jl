@@ -83,6 +83,18 @@ function symmetrize(a::ITensor; tol=1e-6)
 end
 
 
+function symmetrize2(a::ITensor; tol=1e-6)
+
+    if ndims(a) != 2
+        @error("Not a matrix")
+    end
+    if size(a,1) != size(a,2)
+        @error "Not square matrix! Size is $(size(a))"
+    end
+
+    return (a + swapinds(a, inds(a)))/2
+end
+
 """checks whether an MPO tensor is symmetric """
 function check_symmetry_itensor_mpo(T::ITensor)
     (space_p1, space_p) = inds(T, "Site")

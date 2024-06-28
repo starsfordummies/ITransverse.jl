@@ -91,7 +91,7 @@ using .ChainModels
 
 export ising_tp
 
-export ppm_params, 
+export pm_params, 
     trunc_params, 
     model_params, 
     tmpo_params

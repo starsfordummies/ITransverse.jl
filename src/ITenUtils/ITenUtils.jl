@@ -41,7 +41,7 @@ export sqrt
 export mergedicts!
 
 # from pparams
-export ppm_params, trunc_params, model_params, tmpo_params
+export pm_params, trunc_params, model_params, tmpo_params
 
 #from utils.jl
 export myrMPS, 

@@ -11,7 +11,7 @@ Power method
 
 Truncation params are in pm_params
 """
-function powermethod_both(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::ppm_params; flip_R::Bool=false)
+function powermethod_both(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::pm_params; flip_R::Bool=false)
 
     itermax = pm_params.itermax
     cutoff = pm_params.cutoff
@@ -91,7 +91,7 @@ end
 
 
 """ Power method with convergence criterion based on overlap <Lprevious step|L> """
-function powermethod_converge_norm(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::ppm_params; flip_R::Bool=false)
+function powermethod_converge_norm(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::pm_params; flip_R::Bool=false)
 
     itermax = pm_params.itermax
     cutoff = pm_params.cutoff
@@ -151,7 +151,7 @@ end
 
 
 """ Power method with convergence criterion based on overlap <Lprevious step|L> """
-function powermethod_converge_eig(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::ppm_params; flip_R::Bool=false)
+function powermethod_converge_eig(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::pm_params; flip_R::Bool=false)
 
     itermax = pm_params.itermax
     cutoff = pm_params.cutoff
@@ -230,7 +230,7 @@ The algorithm makes *two* updates, first it computes <L1|OR> and updates <Lnew|,
 
 Truncation params are in pm_params
 """
-function powermethod(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::ppm_params)
+function powermethod(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::pm_params)
 
     itermax = pm_params.itermax
     cutoff = pm_params.cutoff
@@ -344,14 +344,14 @@ function powermethod(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::ppm_p
 end
 
 # backward compatibility
-function powermethod_fold(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::ppm_params)
-    powermethod(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::ppm_params)
+function powermethod_fold(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::pm_params)
+    powermethod(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::pm_params)
 end
 
 
 
 """ Same as powermethod but only update L, assuming symmetry (L| = |R) """
-function powermethod_Lonly(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::ppm_params)
+function powermethod_Lonly(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::pm_params)
 
     itermax = pm_params.itermax
     cutoff = pm_params.cutoff
@@ -441,7 +441,7 @@ end
 
 """ same as powermethod() but we try to be more flexible on convergence criteria
 """
-function powermethod_conv(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::ppm_params)
+function powermethod_conv(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::pm_params)
 
     itermax = pm_params.itermax
     cutoff = pm_params.cutoff
@@ -548,7 +548,7 @@ end
 
 
 """ Same as powermethod() but returns extended info on convergence (so it's a bit slower) """
-function pm_all(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::ppm_params)
+function pm_all(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::pm_params)
 
     itermax = pm_params.itermax
     cutoff = pm_params.cutoff
@@ -684,7 +684,7 @@ end
 
 
 """ power method truncating on SVD (so working on temporal entanglement <L|L> ) """
-function pm_svd(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::ppm_params)
+function pm_svd(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::pm_params)
 
     itermax = pm_params.itermax
     cutoff = pm_params.cutoff
