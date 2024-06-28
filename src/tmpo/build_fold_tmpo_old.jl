@@ -108,7 +108,6 @@ function build_folded_left_tMPS(eH::MPO, init_state::Vector, time_sites)
     return tMPS
 
 end
-
 function build_folded_left_tMPS(tp::tmpo_params, time_sites::Vector{<:Index})
 
     eH = build_expH(tp)
@@ -117,49 +116,107 @@ function build_folded_left_tMPS(tp::tmpo_params, time_sites::Vector{<:Index})
     build_folded_left_tMPS(eH, tp.init_state, time_sites)
 end
 
+""" Builds *rotated* and *folded* MPO for a generic(hopefully) Hamiltonian, defined on `time_sites`.
+Closed with `fold_op` on the *left* and `init_state` to the *right*. 
+"""
+function build_folded_tMPO(tp::tmpo_params,
+    fold_op::AbstractVector,
+    time_sites::Vector{<:Index})
 
+    eH = build_expH(tp)
 
+    #@info "using $(build_expH_function)"
+    build_folded_tMPO(eH, tp.init_state, fold_op, time_sites)
+
+end
 
 
 
 """ Build a *rotated and folded* TMPO associated with exp. value starting from eH tensors of U=exp(iHt) 
 (defined as a regular spatial MPO on space indices). tMPO is defined on `time_sites`
 
-We rotate our space vectors to the *right by 90°, ie 
+We rotate our space vectors to the left by 90°, ie 
 
 ```
-   |p'             |L
-L--o--R   =>   p--o--p'
-   |p              |R
+   |p'             |R
+L--o--R   =>   p'--o--p 
+   |p              |L
 ```
 
-and contract with  the initial state `init_state` on the *left* and the operator `fold_op` on the *right*
+and contract with the operator `fold_op` on the *left*
+and the initial state `init_state` on the *right*, ie.
 
 ````
-            p'
-        |   |   |   |
-[rho0]=(W)=(W)=(W)=(W)=X [=operator]
-        |   |   |   |
-            p
+           p'
+       |   |   |   |
+[op]X=(W)=(W)=(W)=(W)=o [in]
+       |   |   |   |
+           p
 ````
 """
+function build_folded_tMPO(eH_space::MPO, init_state::Vector, fold_op::Vector, time_sites::Vector{<:Index})
+    
+    @assert length(eH_space) == 3
+
+    Nsteps = length(time_sites)
+
+    WWc, iCwL, iCwR, iCp, iCps = build_WWc(eH_space)
+
+    #@info "checking folded WWc symmetries"
+    #check_symmetry_itensor_mpo(WWc, iCwL, iCwR, iCps, iCp) 
+
+    fold_op_tensor = ITensor((fold_op), iCps)
+
+    fold_psi0 = (init_state) * (init_state')
+    init_state_tensor = ITensor(fold_psi0, iCp)
 
 
-function folded_open_tMPO(tp::tmpo_params,
+    # define the links of the rotated MPO 
+    rot_links = [Index( dim(iCp) , "Link,rotl=$ii") for ii in 1:(Nsteps - 1)]
+
+    # Start building the tMPO
+    tMPO = MPO(Nsteps)
+
+    # First site: Contract with operator (iCps index) and rotate the other indices
+    tMPO[1] = WWc * fold_op_tensor 
+    tMPO[1] *= delta(iCwL, time_sites[1]) 
+    tMPO[1] *= delta(iCwR, time_sites[1]') 
+    tMPO[1] *= delta(iCp, rot_links[1])  
+
+    # Rotate indices and fill the MPO
+    for ii = 2:Nsteps-1
+        tMPO[ii] = WWc
+        tMPO[ii] *= delta(iCwL, time_sites[ii])
+        tMPO[ii] *= delta(iCwR, time_sites[ii]') 
+        tMPO[ii] *= delta(iCp, rot_links[ii]) 
+        tMPO[ii] *= delta(iCps, rot_links[ii-1]) 
+    end
+
+    # Close final tensor with initial state on iCp and rotate other inds
+    tMPO[end] = WWc * init_state_tensor
+    tMPO[end] *= delta(iCwL, time_sites[end]) 
+    tMPO[end] *= delta(iCwR, time_sites[end]') 
+    tMPO[end] *= delta(iCps, rot_links[end])  
+
+return tMPO
+
+end
+
+
+function build_folded_open_tMPO(tp::tmpo_params,
     time_sites::Vector{<:Index})
 
     eH = build_expH(tp)
 
-    folded_open_tMPO(eH, time_sites)
+    build_folded_open_tMPO(eH, time_sites)
 
 end
 
-""" Builds a folded tMPO with rotated indices
-and an *open* additional leg at the top (ie. where the operator insertion would go)
+""" Builds a folded tMPO with an *open* additional leg at the top (ie. where the operator insertion would go)
 and at the bottom (where the initial state). 
-Returns the tMPO and the indices of the open legs: the `left_open_link` (for the initial DM side)
-and `right_open_link` (for the operator side), for better handling further operations"""
-function folded_open_tMPO(eH_space::MPO, time_sites::Vector{<:Index})
+Returns the tMPO and the indices of the open legs: the `left_open_link` (for the operator side)
+and `right_open_link` (for the initial state side), for better handling further operations"""
+function build_folded_open_tMPO(eH_space::MPO, time_sites::Vector{<:Index})
     
     @assert length(eH_space) == 3
 
@@ -171,15 +228,15 @@ function folded_open_tMPO(eH_space::MPO, time_sites::Vector{<:Index})
     rot_links = [Index( dim(iCp) , "Link,rotl=$ii") for ii in 1:(Nsteps + 1)]
 
     # Start building the tMPO
-    tMPO = MPO(Nsteps+2)
+    tMPO = MPO(Nsteps)
 
     # Rotate indices and fill the MPO
     for ii = 1:Nsteps
-        tMPO[ii+1] = WWc
-        tMPO[ii+1] *= delta(iCwR, time_sites[ii])
-        tMPO[ii+1] *= delta(iCwL, time_sites[ii]') 
-        tMPO[ii+1] *= delta(iCps, rot_links[ii]) 
-        tMPO[ii+1] *= delta(iCp, rot_links[ii+1]) 
+        tMPO[ii] = WWc
+        tMPO[ii] *= delta(iCwL, time_sites[ii])
+        tMPO[ii] *= delta(iCwR, time_sites[ii]') 
+        tMPO[ii] *= delta(iCp, rot_links[ii]) 
+        tMPO[ii] *= delta(iCps, rot_links[ii+1]) 
     end
 
     left_open_link = rot_links[1]
@@ -202,11 +259,12 @@ a Nt+2 sites long MPO, with the top site with the operator (with trivial virtual
 and the bottom with the initial DM (also with trival legs if it's a product state)
 
  """
- function folded_tMPO(open_tMPO::MPO, init_state_it::ITensor, fold_op_it::ITensor, time_sites::Vector{<:Index})
+ function new_folded_tMPO(eH_space::MPO, init_state_it::ITensor, fold_op_it::ITensor, time_sites::Vector{<:Index})
     
     @assert ndims(init_state_it) == 3 
     @assert ndims(fold_op_it) == 3
-    @assert length(open_tMPO) == length(time_sites)+2
+
+    tMPO, left_open, right_open = build_folded_open_tMPO(eH_space, time_sites)
 
     insert!(tMPO.data, 1, fold_op_it)
     push!(tMPO.data, init_state_it)
@@ -215,9 +273,10 @@ return tMPO
 
 end
 
-function folded_tMPO(eH_space::MPO, init_state::Vector, fold_op::Vector, time_sites::Vector{<:Index})
+function new_folded_tMPO(eH_space::MPO, init_state::Vector, fold_op::Vector, time_sites::Vector{<:Index})
     
     tMPO, left_open, right_open = build_folded_open_tMPO(eH_space, time_sites)
+
 
     trivial_ind = Index(1,"trivial,op")
     fold_op_tensor = ITensor((fold_op), trivial_ind, left_open, trivial_ind')
@@ -233,10 +292,10 @@ return tMPO
 
 end
 
-function folded_tMPO(tp::tmpo_params, init_state::Vector, fold_op::Vector, time_sites::Vector{<:Index})
+function new_folded_tMPO(tp::tmpo_params, fold_op_tensor::Vector, time_sites::Vector{<:Index})
     
     eH = build_expH(tp)
-    folded_tMPO(eH, tp.init_state, fold_op_tensor, time_sites)
+    new_folded_tMPO(eH, tp.init_state, fold_op_tensor, time_sites)
 
 end
 

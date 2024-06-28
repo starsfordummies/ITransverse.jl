@@ -104,7 +104,6 @@ build_expH_ising_parallel_field_murg
 
 
 include("tmpo/build_tmpo_fw.jl")
-include("tmpo/build_tmpo_expval.jl")
 
 #from build_tmpo_[fw|expval].jl
 export
