@@ -22,7 +22,8 @@ struct tmpo_params
     expH_func::Function
     mp::model_params
     nbeta::Int64
-    init_state::Vector{ComplexF64}
+    bl::Vector{ComplexF64}  # bottom -> left(rotated)
+    tr::Vector{ComplexF64}  # top -> right(rotated)
 end
 
  # allow for changes on the fly of params
@@ -30,28 +31,28 @@ tmpo_params(x::tmpo_params;
     expH_func=x.expH_func, 
     mp=x.model_params,
     nbeta=x.model,
-    init_state=x.init_state) = tmpo_params(expH_func, mp, nbeta, init_state)
+    bl=x.bl, tr = x.tr) = tmpo_params(expH_func, mp, nbeta, bl, tr)
 
-
-struct pm_params
-    itermax::Int64
-    cutoff::Float64
-    maxbondim::Int64
-    ds2_converged::Float64
-    increase_chi::Bool
-    ortho_method::String
-
-    function pm_params(; itermax::Int64 = 400, cutoff::Float64=1e-12, maxbondim::Int64=100, 
-        ds2_converged::Float64=1e-5, increase_chi::Bool=false, ortho_method::String="SVD")
-        return new(itermax, cutoff, maxbondim, ds2_converged, increase_chi, ortho_method)
-    end
-
-end
 
 struct trunc_params
     cutoff::Float64
     maxbondim::Int64
     ortho_method::String
+
+    trunc_params() = new(1e-10, 100, "SVD")
+end
+
+struct pm_params
+    truncp::trunc_params
+    itermax::Int64
+    ds2_converged::Float64
+    increase_chi::Bool
+
+    function pm_params(; truncp=trunc_params(), itermax::Int=200,
+        ds2_converged::Float64=1e-5, increase_chi::Bool=false)
+        return new(truncp, itermax, ds2_converged, increase_chi)
+    end
+
 end
 
  

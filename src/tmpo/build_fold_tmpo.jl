@@ -1,19 +1,3 @@
-# Folded space 1/2 x 1/2 -> 3/2
-ITensors.space(::SiteType"S=3/2") = 4
-ITensors.state(::StateName"↑", ::SiteType"S=3/2") = [1, 0, 0, 0]
-ITensors.state(::StateName"+", ::SiteType"S=3/2") = [1/2, 1/2, 1/2, 1/2]
-
-
-# For Potts 1 x 1 = 3  (: 
-ITensors.space(::SiteType"S=3") = 7
-ITensors.state(::StateName"↑", ::SiteType"S=3") = [1, 0, 0, 0, 0, 0, 0]
-ITensors.state(::StateName"↓", ::SiteType"S=3") = [0, 0, 0, 0, 0, 0, 1]
-
-ITensors.state(::StateName"+", ::SiteType"S=3") = [1,1,1,1,1,1,1]/sqrt(7)
-
-
-
-
 """ Contracts the two edges of an MPO, making a new MPO with length (N-2) """
 function contract_edges!(TT::MPO)
     llen = length(TT)
@@ -73,8 +57,6 @@ end
 
 
 
-
-
 """ Build a *rotated and folded* TMPO associated with exp. value starting from eH tensors of U=exp(iHt) 
 (defined as a regular spatial MPO on space indices). tMPO is defined on `time_sites`
 
@@ -89,11 +71,11 @@ L--o--R   =>    p--o--p'
 and contract with  the initial state `init_state` on the *left* and the operator `fold_op` on the *right*
 
 ````
-            p'
-        |   |   |   |
-[rho0]=(W)=(W)=(W)=(W)=X [=operator]
-        |   |   |   |
-            p
+             p'
+         |   |   |   |
+[rho0]==(W)=(W)=(W)=(W)==[operator]
+         |   |   |   |
+             p
 ````
 """
 
@@ -141,29 +123,12 @@ function folded_open_tMPO(eH_space::MPO, time_sites::Vector{<:Index})
     tMPO[1] = ITensor(eltype(WWc)[1,0,0,1] , t1, rot_links[1], t1')
     tMPO[end] = ITensor(eltype(WWc)[1,0,0,1] , tend, rot_links[end], tend')
 
-return tMPO 
+    return tMPO 
 
 end
 
 
 
-""" Build folded tMPO, for Nt time steps we build
-a Nt+2 sites long MPO, with the top site with the operator (with trivial virtual legs if it's a one-site op)
-and the bottom with the initial DM (also with trival legs if it's a product state)
-
- """
- function folded_tMPO!(tMPO::MPO, init_state_tensor::ITensor, fold_op_tensor::ITensor, time_sites::Vector{<:Index})
-    
-    @assert length(tMPO) == length(time_sites)+2
-
-    tMPO.data[1] = init_state_tensor
-    tMPO.data[end] = fold_op_tensor
-
-    contract_edges!(tMPO)
-    
-return tMPO
-
-end
 
 """ Simple case, we feed an initial state and a fold_operator as (folded) vectors 
 and build the folded tMPO from those"""
@@ -178,16 +143,28 @@ function folded_tMPO(eH_space::MPO, init_state::Vector, fold_op::Vector, time_si
     init_state_tensor = ITensor(rho0, inds(tMPO[1])...)
     fold_op_tensor = ITensor(fold_op, inds(tMPO[end])...)
 
-    folded_tMPO!(tMPO, init_state_tensor, fold_op_tensor, time_sites)
+    tMPO.data[1] = bl_tensor
+    tMPO.data[end] = tr_tensor
 
-return tMPO
+    contract_edges!(tMPO)
+
+    return tMPO
 
 end
 
-function folded_tMPO(tp::tmpo_params, fold_op::Vector, time_sites::Vector{<:Index})
+function folded_tMPO(tp::tmpo_params, time_sites::Vector{<:Index})
     
     eH = build_expH(tp)
+    init_state = tp.bl
+    fold_op = tp.tr
     folded_tMPO(eH, tp.init_state, fold_op, time_sites)
+
+end
+
+function folded_tMPO(tp::tmpo_params, init_state::Vector{Number}, fold_op::Vector{Number}, time_sites::Vector{<:Index})
+    
+    eH = build_expH(tp)
+    folded_tMPO(eH, init_state, fold_op, time_sites)
 
 end
 

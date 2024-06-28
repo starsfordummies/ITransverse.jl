@@ -1,48 +1,51 @@
 
 
-""" Seeds the *left* light cone temporal MPS given `tmpo_params`
-builds a (length 1) tMPS. The initial state goes to the *right* """
+""" Initializes the light cone folded and rotated temporal MPS |R> given `tmpo_params`
+builds a (length 1) tMPS with a single tensor with one (time,physical) open leg.
+After rotation, initial state goes to the *left*."""
 function init_cone(p::tmpo_params)
 
     eH = p.expH_func(p.mp)
-    cone_mps = init_cone(eH, p.init_state)
+    cone_mps = init_cone(eH, p.top_right)
 
     return cone_mps
 
 end
 
-function init_cone(eH::MPO, init_state::Vector{ComplexF64})
+function init_cone(eH_space::MPO, init_state::Vector{ComplexF64})
     
-    Wl = eH[1]
+    Wr = eH_space[3]
 
-    iL, iR = linkinds(eH)
-    iP1 = siteind(eH, 1)
-    iP2 = siteind(eH, 2) 
+    ilink = linkind(eH_space,2)
+    iphys = siteind(eH_space,3)
 
-    WWl = Wl * dag(prime(Wl,2))
+    #fold 
+    WWr = Wr * dag(prime(Wr,2))
 
-    # Combine indices appropriately 
-    CwR = combiner(iL,iL''; tags="cwR")
-    # we flip the p<>* legs on the backwards, shouldn't be necessary if we have p<>p*
-    Cp = combiner(iP1,iP1'''; tags="cp")
-    Cps = combiner(iP1',iP1''; tags="cps")
+    # Combine inds 
+    Cv = combiner(ilink,ilink''; tags="cwR")
+    # we flip the p<>* legs on the backwards tensors for the folding
+    Cp = combiner(iphys',iphys''; tags="cp")
 
-    WWl = WWl * CwR * Cp * Cps
 
-    # (in rotated indices, we trace to the left and contract with the initial state to the right 
-    WWl_L = WWl * dag(Cps) * delta(iP1',iP1'')
+    # (in rotated indices, we trace to the right and contract with the initial state to the left
+    WWr *= delta(iphys,iphys''')
+    WWr *= Cv 
+    Wwr *= Cp
 
-    fold_init_state = init_state * init_state'
-    init_tensor = ITensor(fold_init_state, combinedind(Cp))
+    rho0 = init_state * init_state'
+    init_tensor = ITensor(rho0, combinedind(Cp))
 
-    WWl_LR = WWl_L * init_tensor
+    WWr = WWr * init_tensor
 
     tMPS = MPS(1)
 
+    # TODO make this more generic
     time_sites = siteinds("S=3/2", 1)
+
     time_sites= addtags(time_sites, "time_fold")
 
-    tMPS[1] = WWl_LR * delta(combinedind(CwR), time_sites[1]) 
+    tMPS[1] = WWr * delta(combinedind(Cv), time_sites[1]) 
 
 return tMPS
 
