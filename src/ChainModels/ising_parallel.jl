@@ -1,8 +1,8 @@
-function build_H_ising_parallel_field(sites::Vector{<:Index}, mp::model_params)
-    build_H_ising_parallel_field(sites, mp.JXX, mp.hz, mp.λx)
+function build_H_ising(sites::Vector{<:Index}, mp::model_params)
+    build_H_ising(sites, mp.JXX, mp.hz, mp.λx)
 end
 
-function build_H_ising_parallel_field(sites::Vector{<:Index}, JXX::Real, hz::Real, λx::Real)
+function build_H_ising(sites::Vector{<:Index}, JXX::Real, hz::Real, λx::Real)
 
     # Input operator terms which define a Hamiltonian
     N = length(sites)
@@ -28,7 +28,7 @@ end
 """ Prescription a la Murg for exp(-i*H*dt) Ising transverse+parallel
 Convention H = -( JXX + gzZ + λxX )
 """
-function build_expH_ising_parallel_field_murg(
+function build_expH_ising_murg(
     sites::Vector{<:Index},
     JXX::Real,
     gz::Real,
@@ -99,16 +99,16 @@ function build_expH_ising_parallel_field_murg(
 
 end
 
-function build_expH_ising_parallel_field_murg(s::Vector{<:Index}, p::model_params)
+function build_expH_ising_murg(s::Vector{<:Index}, p::model_params)
     
-    build_expH_ising_parallel_field_murg(s, p.JXX, p.hz, p.λx, p.dt)
+    build_expH_ising_murg(s, p.JXX, p.hz, p.λx, p.dt)
 
 end
 
-function build_expH_ising_parallel_field_murg(p::model_params)
+function build_expH_ising_murg(p::model_params)
     
     space_sites = siteinds(p.phys_space, 3; conserve_qns = false)
-    build_expH_ising_parallel_field_murg(space_sites, p.JXX, p.hz, p.λx, p.dt)
+    build_expH_ising_murg(space_sites, p.JXX, p.hz, p.λx, p.dt)
 
 end
 
@@ -135,5 +135,5 @@ function epsilon_brick_ising(tp::tmpo_params)
 end
 
 # quick defaults for parallel field Ising, for playing around
-ising_tp() = tmpo_params(build_expH_ising_parallel_field_murg, 
+ising_tp() = tmpo_params(build_expH_ising_murg, 
 model_params("S=1/2", 1.0, 0.4, 0.0, 0.1), 0, [1/sqrt(2),1/sqrt(2)])
