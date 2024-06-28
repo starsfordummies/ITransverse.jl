@@ -1,5 +1,5 @@
 """ Quick random MPS for playing around """
-function myrMPS(len::Int=40, chi::Int=50)
+function quick_mps(len::Int=40, chi::Int=50)
     s = siteinds("S=1/2", len)
     p = random_mps(ComplexF64, s, linkdims=chi)
 
@@ -189,6 +189,11 @@ function normbyfactor(psi::AbstractMPS, factor::Number )
 end
 
 """ Shorthand for simple apply with naive algorithm and no truncation """
-function applys(O::MPO, psi::AbstractMPS)
+function applyn(O::MPO, psi::AbstractMPS)
     apply(O, psi, alg="naive", truncate=false)
+end
+
+""" Shorthand for apply with no truncation + swap indices """
+function applyns(O::MPO, psi::AbstractMPS)
+    apply(swapprime(O, 0, 1, "Site"), psi, alg="naive", truncate=false)
 end

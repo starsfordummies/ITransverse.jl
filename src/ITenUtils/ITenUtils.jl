@@ -43,12 +43,13 @@ export mergedicts!
 export pm_params, trunc_params, model_params, tmpo_params
 
 #from utils.jl
-export myrMPS, 
+export quick_mps, 
     overlap_noconj, 
     check_symmetry_itensor_mpo, 
     check_symmetry_itensor,
     normbyfactor,
-    applys,
+    applyn,
+    applyns,
     match_siteinds!
 
 

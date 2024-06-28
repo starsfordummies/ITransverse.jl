@@ -7,12 +7,12 @@ function expval_LR(ll::MPS, rr::MPS, op::Vector{ComplexF64}, tp::tmpo_params)
 
     time_sites = siteinds(rr)
     tmpo = swapprime(build_folded_tMPO(tp, fold_id, time_sites), 0, 1, "Site")
-    psi1R = applys(tmpo, rr)
+    psi1R = applyn(tmpo, rr)
 
     L1R = overlap_noconj(ll,psi1R)
 
     tmpo = swapprime(build_folded_tMPO(tp, op, time_sites), 0, 1, "Site")
-    psiOR = applys(tmpo, rr)
+    psiOR = applyn(tmpo, rr)
 
     LOR = overlap_noconj(ll,psiOR)
 
@@ -34,14 +34,14 @@ function expval_LR_twocol(ll::MPS, rr::MPS, op::Vector{ComplexF64}, tp::tmpo_par
 
     time_sites = siteinds(ll)
     tmpo = build_folded_tMPO(tp, fold_id, time_sites)
-    psi1L = applys(tmpo, ll)
+    psi1L = applyn(tmpo, ll)
 
     time_sites = siteinds(rr)
     tmpo = swapprime(build_folded_tMPO(tp, op, time_sites), 0, 1, "Site")
-    psiOR = applys(tmpo, rr)
+    psiOR = applyn(tmpo, rr)
 
     tmpo = swapprime(build_folded_tMPO(tp, fold_id, time_sites), 0, 1, "Site")
-    psi1R = applys(tmpo, rr)
+    psi1R = applyn(tmpo, rr)
 
 
     L1OR = overlap_noconj(psi1L,psiOR)
@@ -58,21 +58,21 @@ function expval_LR(ll::MPS, rr::MPS, opL::Vector{ComplexF64}, opR::Vector{Comple
 
     time_sites = siteinds(ll)
     tmpo = build_folded_tMPO(tp,  opL, time_sites)
-    psi_L = applys(tmpo, ll)
+    psi_L = applyn(tmpo, ll)
 
     time_sites = siteinds(rr)
     tmpo = swapprime(build_folded_tMPO(tp, opR, time_sites), 0, 1, "Site")
-    psi_R = applys(tmpo, rr)
+    psi_R = applyn(tmpo, rr)
 
     ev_LOOR = overlap_noconj(psi_L,psi_R)
 
     time_sites = siteinds(ll)
     tmpo = build_folded_tMPO(tp,  fold_id, time_sites)
-    psi_L = applys(tmpo, ll)
+    psi_L = applyn(tmpo, ll)
 
     time_sites = siteinds(rr)
     tmpo = swapprime(build_folded_tMPO(tp, fold_id, time_sites), 0, 1, "Site")
-    psi_R = applys(tmpo, rr)
+    psi_R = applyn(tmpo, rr)
 
     ev_L11R = overlap_noconj(psi_L,psi_R)
 
@@ -104,8 +104,8 @@ function expval_LR_open(ll::MPS, rr::MPS, ops::MPO, tp::tmpo_params)
     ϵ_op[1] *= delta(combinedind(cs1), li1)
     ϵ_op[2] *= delta(combinedind(cs2), li2)
 
-    LO = applys(tMPO1, ll)
-    OR = applys(tMPO2, rr) # todo swap indices for non-symmetric MPOs
+    LO = applyn(tMPO1, ll)
+    OR = applyn(tMPO2, rr) # todo swap indices for non-symmetric MPOs
 
     insert!(LO.data, 1, ϵ_op[1])
     insert!(OR.data, 1, ϵ_op[2])
@@ -144,8 +144,8 @@ function expval_en_density(ll::MPS, rr::MPS, tp::tmpo_params)
     ϵ_op[1] *= delta(siteind(ϵ_op,1), li1)
     ϵ_op[2] *= delta(siteind(ϵ_op,2), li2)
 
-    LO = applys(tMPO1, ll)
-    OR = applys(tMPO2, rr) # todo swap indices for non-symmetric MPOs
+    LO = applyn(tMPO1, ll)
+    OR = applyn(tMPO2, rr) # todo swap indices for non-symmetric MPOs
 
     insert!(LO.data, 1, ϵ_op[1])
     insert!(OR.data, 1, ϵ_op[2])
@@ -197,7 +197,7 @@ function expval_en_density_old(ll::MPS, rr::MPS, tp::tmpo_params)
     ϵ_op[1] *= delta(combinedind(cs1), li1)
     ϵ_op[2] *= delta(combinedind(cs2), li2)
 
-    TTop = applys(tMPO2, tMPO1)
+    TTop = applyn(tMPO2, tMPO1)
     TTop[1] *= delta(li2',li2)
 
     tMPO_eps = deepcopy(TTop)
@@ -205,7 +205,7 @@ function expval_en_density_old(ll::MPS, rr::MPS, tp::tmpo_params)
     tMPO_eps[1] *= ϵ_op[1]
     tMPO_eps[1] *= ϵ_op[2]
 
-    LOO = applys(tMPO_eps, ll)
+    LOO = applyn(tMPO_eps, ll)
     ev_LOOR = overlap_noconj(LOO, rr)
 
 
@@ -214,7 +214,7 @@ function expval_en_density_old(ll::MPS, rr::MPS, tp::tmpo_params)
     tMPO_11[1] *= ITensor(ComplexF64[1,0,0,1], li2)
 
     #normalization 
-    L11 = applys(tMPO_11, ll)
+    L11 = applyn(tMPO_11, ll)
     ev_L11R = overlap_noconj(L11, rr)
 
     return ev_LOOR/ev_L11R

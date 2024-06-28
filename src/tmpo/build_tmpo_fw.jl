@@ -10,8 +10,9 @@ The structure built (Loschmidt style is)
              (nbeta)               (nbeta)
 ```
  """
-function build_fw_tMPO_regul_beta(eH::MPO, eHi::MPO, 
-    init_state::Vector{ComplexF64}, 
+function build_fw_tMPO(eH::MPO, eHi::MPO, 
+    init_state::Vector{Number}, 
+    fin_state::Vector{Number},
     nbeta::Int, 
     time_sites::Vector{<:Index})
 
@@ -26,10 +27,7 @@ function build_fw_tMPO_regul_beta(eH::MPO, eHi::MPO,
     Wl, Wc, _ = eH.data
     Wl_im, Wc_im, _ = eHi.data
 
-    # with the noprime I should be sure that I'm not picking the p' even if I messed up index
-    # space_p = noprime(siteinds(eH)[2][2])
-    # @show noprime(siteinds(eH)[2][2])
-    # @show siteinds(eH)
+    
     space_p = siteind(eH,2)
     space2_p = siteind(eH,1)
 
@@ -45,9 +43,6 @@ function build_fw_tMPO_regul_beta(eH::MPO, eHi::MPO,
 
     rot_links = [Index(dim(ivL), "Link,rotl=$ii") for ii in 1:(Nsteps - 1)]
     rot_links2 = sim(rot_links)
-
-    # For Lochschmidt
-    fin_state = init_state
 
 
     init_tensor = ITensor(init_state, space_p)
@@ -88,74 +83,13 @@ function build_fw_tMPO_regul_beta(eH::MPO, eHi::MPO,
 end
 
 """ Returns (tMPO, tMPS) pair. """
-function build_fw_tMPO_regul_beta(tp::tmpo_params, time_sites::Vector{<:Index})
+function build_fw_tMPO(tp::tmpo_params, time_sites::Vector{<:Index})
 
     eH = build_expH(tp)
     eHi = build_expHim(tp)
 
     match_siteinds!(eH, eHi)
 
-    build_fw_tMPO_regul_beta(eH, eHi, tp.init_state, tp.nbeta, time_sites)
-end
-
-
-""" OLD Ising, should be superseded by `build_fw_tMPO_regul_beta`
-Returns (tMPO, tMPS) pair. """
-function build_ising_fw_tMPO_regul_beta( build_expH_function::Function,
-    JXX::Real, hz::Real, 
-    dt::Number, 
-    nbeta::Int, 
-    time_sites::Vector{<:Index},
-    init_state::Vector{ComplexF64})
-
-    space_sites = siteinds("S=1/2", 3; conserve_qns = false)
-
-    # Real time evolution
-    eH = build_expH_function(space_sites, JXX, hz, dt)
-    # Imaginary time evolution
-    eHi = build_expH_function(space_sites, JXX, hz, -im*dt)
-
-    build_fw_tMPO_regul_beta(eH, eHi, init_state, nbeta, time_sites)
-
-end
-
-
-
-function build_potts_fw_tMPO_regul_beta( build_expH_function::Function,
-    JXX::Real, 
-    f::Real, 
-    dt::Number, 
-    nbeta::Int,
-    time_sites::Vector{<:Index},
-    init_state::Vector{ComplexF64})
-
-    space_sites = siteinds("S=1", 3; conserve_qns = false)
-
-    # Real time evolution
-    eH = build_expH_function(space_sites, JXX, f, dt)
-    # Imaginary time evolution
-    eHi = build_expH_function(space_sites, JXX, f, -im*dt)
-
-    build_fw_tMPO_regul_beta(eH, eHi, init_state, nbeta, time_sites)
-
-end
-
-
-function build_xxmodel_fw_tMPO_regul_beta( build_expH_function::Function,
-    JXX::Real, 
-    dt::Number, 
-    nbeta::Int,
-    time_sites::Vector{<:Index},
-    init_state::Vector{ComplexF64})
-
-    space_sites = siteinds("S=1/2", 3; conserve_qns = false)
-
-    # Real time evolution
-    eH = build_expH_function(space_sites, JXX, dt)
-    # Imaginary time evolution
-    eHi = build_expH_function(space_sites, JXX, -im*dt)
-
-    build_fw_tMPO_regul_beta(eH, eHi, init_state, nbeta, time_sites)
-
+    build_fw_tMPO(eH, eHi, tp.init_state, tp.init_state, tp.nbeta, time_sites)
 end
 

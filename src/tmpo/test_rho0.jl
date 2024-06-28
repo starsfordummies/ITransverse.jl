@@ -43,7 +43,7 @@ push!(s_ext, space_link)
 
 psi0 = random_mps(s_ext)
 
-opsi = applys(top, psi0)  # error, mismatched lengths! 
+opsi = applyn(top, psi0)  # error, mismatched lengths! 
 
 insert!(psi0.data, 1, ITensor(1.))
 
@@ -57,7 +57,7 @@ insert!(top2.data, 1, op)
 siteinds(top2)
 linkinds(top2)
 
-applys(top2, top)
+applyn(top2, top)
 
 
 test1 = MPS()

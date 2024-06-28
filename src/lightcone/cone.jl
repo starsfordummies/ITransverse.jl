@@ -1,5 +1,3 @@
-
-
 """ Initializes the light cone folded and rotated temporal MPS |R> given `tmpo_params`
 builds a (length 1) tMPS with a single tensor with one (time,physical) open leg.
 After rotation, initial state goes to the *left*."""
@@ -12,7 +10,7 @@ function init_cone(tp::tmpo_params)
 
 end
 
-function init_cone(eH_space::MPO, init_state::Vector{ComplexF64})
+function init_cone(eH_space::MPO, init_state::Vector{<:Number})
     
     Wr = eH_space[3]
 
@@ -47,7 +45,7 @@ function init_cone(eH_space::MPO, init_state::Vector{ComplexF64})
 
     tMPS[1] = WWr * delta(combinedind(Cv), time_sites[1]) 
 
-return tMPS
+    return tMPS
 
 end
 
@@ -63,21 +61,21 @@ extends the time MPO and the left-right tMPS by optimizing
 Returns the updated left-right tMPS 
 """
 function extend_tmps_cone(ll::MPS, rr::MPS, 
-    op_L::Vector{Number}, op_R::Vector{Number}, 
+    op_L::Vector{<:Number}, op_R::Vector{<:Number}, 
     tp::tmpo_params,
     truncp::trunc_params,
     compute_r2::Bool=false)
 
-    time_sites = siteinds(dim(siteind(cone1,1)), length(ll)+1)
+    time_sites = siteinds(dim(siteind(ll,1)), length(ll)+1)
     time_sites= addtags(time_sites, "time_fold")
 
-    tmpo = build_folded_tMPO(tp, op_L, time_sites)
+    tmpo = folded_tMPO(tp, time_sites; fold_op=op_L)
 
     #println("check: " , length(tmpo), length(ll), length(rr))
 
     psi_L = apply_extend(tmpo, ll)
 
-    tmpo = swapprime(build_folded_tMPO(tp, op_R, time_sites), 0, 1, "Site")
+    tmpo = swapprime(folded_tMPO(tp, time_sites; fold_op=op_R), 0, 1, "Site")
     psi_R = apply_extend(tmpo, rr)
 
     # ! CHECK CAN WE EVER HAVE LINKS (L) != LINKS (R) ??? WHY DOES EIGEN FAIL??

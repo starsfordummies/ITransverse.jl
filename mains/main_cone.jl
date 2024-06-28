@@ -1,4 +1,5 @@
 using ITensors, ITensorMPS, JLD2
+using ITransverse.ITenUtils
 using Revise
 using Plots
 
@@ -36,7 +37,7 @@ function main_cone()
     #time_sites = siteinds("S=3/2", 1)
 
     mp = model_params("S=1/2", JXX, hz, gx, dt)
-    tp = tmpo_params("S=1/2", "S=1/2", build_expH_ising_parallel_field_murg, mp, nbeta, init_state)
+    tp = tmpo_params(build_expH_ising_murg, mp, nbeta, init_state, [1,0,0,1])
 
     # mp = model_params("S=1/2", JXX, hz, 0.0, dt)
     # tp = tmpo_params("S=1/2", "S=1/2", build_expH_ising_murg, mp, dt, nbeta, init_state)
@@ -55,7 +56,7 @@ function main_cone()
 
 end
 
-psi, psiR, chis, expvals, entropies, infos = main_come()
+psi, psiR, chis, expvals, entropies, infos = main_cone()
 
 #resu = ITransverse.resume_cone("cp_cone.jld2", 10)
 

@@ -5,16 +5,16 @@ function ITransverse.gpu_expval_LR(ll::MPS, rr::MPS, op::Vector{ComplexF64}, tp:
 
     time_sites = siteinds(ll)
     tmpo = NDTensors.cu(build_folded_tMPO(tp,  fold_id, time_sites))
-    psi_L = applys(tmpo, ll)
+    psi_L = applyn(tmpo, ll)
 
     time_sites = siteinds(rr)
     tmpo = NDTensors.cu(swapprime(build_folded_tMPO(tp, op, time_sites), 0, 1, "Site"))
-    psi_R = applys(tmpo, rr)
+    psi_R = applyn(tmpo, rr)
 
     ev_LOR = overlap_noconj(psi_L,psi_R)
 
     tmpo = NDTensors.cu(swapprime(build_folded_tMPO(tp, fold_id, time_sites), 0, 1, "Site"))
-    psi_R = applys(tmpo, rr)
+    psi_R = applyn(tmpo, rr)
 
     ev_L1R = overlap_noconj(psi_L,psi_R)
     ev = ev_LOR/ev_L1R
@@ -32,16 +32,16 @@ function ITransverse.cpu_expval_LR(ll::MPS, rr::MPS, op::Vector{ComplexF64}, tp:
 
     time_sites = siteinds(llc)
     tmpo = build_folded_tMPO(tp, fold_id, time_sites)
-    psi_L = applys(tmpo, llc)
+    psi_L = applyn(tmpo, llc)
 
     time_sites = siteinds(rrc)
     tmpo = swapprime(build_folded_tMPO(tp, op, time_sites), 0, 1, "Site")
-    psi_R = applys(tmpo, rrc)
+    psi_R = applyn(tmpo, rrc)
 
     ev_LOR = overlap_noconj(psi_L,psi_R)
 
     tmpo = swapprime(build_folded_tMPO(tp, fold_id, time_sites), 0, 1, "Site")
-    psi_R = applys(tmpo, rrc)
+    psi_R = applyn(tmpo, rrc)
 
     ev_L1R = overlap_noconj(psi_L,psi_R)
     ev = ev_LOR/ev_L1R
@@ -58,10 +58,10 @@ function ITransverse.gpu_expval_LL_sym(ll::MPS, op::Vector{ComplexF64}, tp::tmpo
 
     time_sites = siteinds(ll)
     tmpo = NDTensors.cu(build_folded_tMPO(tp,  fold_id, time_sites))
-    psi_L = applys(tmpo, ll)
+    psi_L = applyn(tmpo, ll)
 
     tmpo = NDTensors.cu(swapprime(build_folded_tMPO(tp, op, time_sites), 0, 1, "Site"))
-    psi_R = applys(tmpo, ll)
+    psi_R = applyn(tmpo, ll)
 
     ev_LOR = overlap_noconj(psi_L,psi_R)
     ev_L1R = overlap_noconj(psi_L,psi_L)
@@ -101,8 +101,8 @@ function gpu_expval_en_density(ll::MPS, rr::MPS, tp::tmpo_params)
     ϵ_op[1] *= delta(combinedind(cs1), li1)
     ϵ_op[2] *= delta(combinedind(cs2), li2)
 
-    LO = applys(NDTensors.cu(tMPO1), ll)
-    OR = applys(NDTensors.cu(tMPO2), rr) # todo swap indices for non-symmetric MPOs
+    LO = applyn(NDTensors.cu(tMPO1), ll)
+    OR = applyn(NDTensors.cu(tMPO2), rr) # todo swap indices for non-symmetric MPOs
 
     insert!(LO.data, 1, ϵ_op[1])
     insert!(OR.data, 1, ϵ_op[2])

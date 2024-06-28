@@ -39,7 +39,7 @@ struct trunc_params
     maxbondim::Int64
     ortho_method::String
 
-    trunc_params() = new(1e-10, 100, "SVD")
+    #trunc_params() = new(1e-10, 100, "SVD")
 end
 
 struct pm_params

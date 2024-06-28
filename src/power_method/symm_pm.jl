@@ -37,7 +37,7 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::pm_params)
         # Note that ITensors does the apply on the MPS/MPO legs with the SAME label, eg. p-p 
         # and then unprimes the p' leg. 
         
-        ll = applys(in_mpo, ll)
+        ll = applyn(in_mpo, ll)
         sjj = truncate_normalize_sweep_sym!(ll, cutoff=cutoff, chi_max=maxbondim, method=method)
         
         ds2 = norm(sprevs - sjj)
