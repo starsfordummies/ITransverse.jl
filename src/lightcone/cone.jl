@@ -3,10 +3,10 @@
 """ Initializes the light cone folded and rotated temporal MPS |R> given `tmpo_params`
 builds a (length 1) tMPS with a single tensor with one (time,physical) open leg.
 After rotation, initial state goes to the *left*."""
-function init_cone(p::tmpo_params)
+function init_cone(tp::tmpo_params)
 
-    eH = p.expH_func(p.mp)
-    cone_mps = init_cone(eH, p.top_right)
+    eH = tp.expH_func(tp.mp)
+    cone_mps = init_cone(eH, tp.bl)
 
     return cone_mps
 
@@ -31,7 +31,7 @@ function init_cone(eH_space::MPO, init_state::Vector{ComplexF64})
     # (in rotated indices, we trace to the right and contract with the initial state to the left
     WWr *= delta(iphys,iphys''')
     WWr *= Cv 
-    Wwr *= Cp
+    WWr *= Cp
 
     rho0 = init_state * init_state'
     init_tensor = ITensor(rho0, combinedind(Cp))
@@ -41,7 +41,7 @@ function init_cone(eH_space::MPO, init_state::Vector{ComplexF64})
     tMPS = MPS(1)
 
     # TODO make this more generic
-    time_sites = siteinds("S=3/2", 1)
+    time_sites = siteinds(dim(combinedind(Cv)), 1)
 
     time_sites= addtags(time_sites, "time_fold")
 
@@ -63,12 +63,12 @@ extends the time MPO and the left-right tMPS by optimizing
 Returns the updated left-right tMPS 
 """
 function extend_tmps_cone(ll::MPS, rr::MPS, 
-    op_L::Vector{ComplexF64}, op_R::Vector{ComplexF64}, 
+    op_L::Vector{Number}, op_R::Vector{Number}, 
     tp::tmpo_params,
     truncp::trunc_params,
     compute_r2::Bool=false)
 
-    time_sites = siteinds("S=3/2", length(ll)+1)
+    time_sites = siteinds(dim(siteind(cone1,1)), length(ll)+1)
     time_sites= addtags(time_sites, "time_fold")
 
     tmpo = build_folded_tMPO(tp, op_L, time_sites)

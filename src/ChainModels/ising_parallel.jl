@@ -136,4 +136,4 @@ end
 
 # quick defaults for parallel field Ising, for playing around
 ising_tp() = tmpo_params(build_expH_ising_murg, 
-model_params("S=1/2", 1.0, 0.4, 0.0, 0.1), 0, [1/sqrt(2),1/sqrt(2)])
+model_params("S=1/2", 1.0, 0.4, 0.0, 0.1), 0, [1/sqrt(2),1/sqrt(2)], [1,0,0,1])

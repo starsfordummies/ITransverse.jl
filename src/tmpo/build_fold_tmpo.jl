@@ -129,22 +129,29 @@ end
 
 
 
-
 """ Simple case, we feed an initial state and a fold_operator as (folded) vectors 
 and build the folded tMPO from those"""
-function folded_tMPO(eH_space::MPO, init_state::Vector, fold_op::Vector, time_sites::Vector{<:Index})
+function folded_tMPO(eH_space::MPO, init_state::Vector{<:Number}, fold_op::Vector{<:Number}, time_sites::Vector{<:Index})
     
-    rho0 = (init_state) * (init_state')
+    rho0 = init_state 
+
     tMPO = folded_open_tMPO(eH_space, time_sites)
 
-    @assert length(rho0) == linkdims(tMPO)[1]
+    if length(init_state) != linkdims(tMPO)[1]  # we already have a folded 
+        if length(init_state) == linkdims(tMPO)[1] ÷ 2
+            rho0 = (init_state) * (init_state')
+        else
+            @error "Dimension of init_state is $(length(init_state)) vs linkdim $(linkdims(tMPO)[1])"
+        end
+    end
+    
     @assert length(fold_op) == linkdims(tMPO)[end]
 
     init_state_tensor = ITensor(rho0, inds(tMPO[1])...)
     fold_op_tensor = ITensor(fold_op, inds(tMPO[end])...)
 
-    tMPO.data[1] = bl_tensor
-    tMPO.data[end] = tr_tensor
+    tMPO.data[1] = init_state_tensor
+    tMPO.data[end] = fold_op_tensor
 
     contract_edges!(tMPO)
 
@@ -152,17 +159,18 @@ function folded_tMPO(eH_space::MPO, init_state::Vector, fold_op::Vector, time_si
 
 end
 
-function folded_tMPO(tp::tmpo_params, time_sites::Vector{<:Index})
-    
-    eH = build_expH(tp)
-    init_state = tp.bl
-    fold_op = tp.tr
-    folded_tMPO(eH, tp.init_state, fold_op, time_sites)
 
-end
+function folded_tMPO(tp::tmpo_params, time_sites::Vector{<:Index};
+     init_state = nothing, fold_op = nothing)
+ 
+    if isnothing(init_state) 
+         init_state = tp.bl 
+    end 
 
-function folded_tMPO(tp::tmpo_params, init_state::Vector{Number}, fold_op::Vector{Number}, time_sites::Vector{<:Index})
-    
+    if isnothing(fold_op) 
+        fold_op = tp.tr 
+    end
+
     eH = build_expH(tp)
     folded_tMPO(eH, init_state, fold_op, time_sites)
 
