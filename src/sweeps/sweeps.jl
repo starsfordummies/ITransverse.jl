@@ -1,26 +1,23 @@
 """ Basic truncate sweep: first brings to regular RIGHT ortho form,
 then performs a LEFT generalized canonical sweep with SVD/EIG truncation """
-function truncate_sweep(left_mps::MPS, right_mps::MPS; method::String, cutoff::Real, chi_max::Int)
+
+function truncate_lsweep(right_mps::MPS, left_mps::MPS; method::String, cutoff::Real, chi_max::Int)
 
     mpslen = length(left_mps)
 
-    #@show ortho_lims(left_mps)
-    L_ortho = orthogonalize(left_mps,  1)
     R_ortho = orthogonalize(right_mps, 1)
-    #@show ortho_lims(L_ortho)
+    L_ortho = orthogonalize(left_mps,  1)
 
+    XUinv, XVinv, left_env = (ITensor(1.), ITensor(1.), ITensor(1.)) 
 
-    XUinv, XVinv, deltaS = (ITensor(1.), ITensor(1.), ITensor(1.)) 
-
-    ents_sites = Vector{ComplexF64}()
+    ents_sites = ComplexF64[]
 
     # Left gen.can. sweep with truncation 
     for ii = 1:mpslen-1
         Ai = XUinv * L_ortho[ii]
         Bi = XVinv * R_ortho[ii] 
 
-        # Generalized canonical - no complex conjugation!
-        left_env = Ai * deltaS 
+        left_env *= Ai 
         left_env *= Bi 
 
         @assert order(left_env) == 2
@@ -44,14 +41,12 @@ function truncate_sweep(left_mps::MPS, right_mps::MPS; method::String, cutoff::R
             XU = (Uinv*delta(ind_v, ind_u) * delta(link_v, link_u) ) * isqS  
             XUinv = sqS * U
 
-            XV = (U * delta( ind_v, ind_u)*delta( link_v, link_u )) * isqS # same as [p]inv(Vdag) * isqS ?
+            XV = (U * delta( ind_v, ind_u)*delta( link_v, link_u )) * isqS 
             #XV = (U * delta( inds(Vdag, "v"), inds(U, "u"))*delta( inds(Vdag, "Link"), inds(U, "Link"))) * isqS # same as [p]inv(Vdag) * isqS ?
             XVinv = sqS * Uinv
 
         elseif method == "SVD" 
             
-            #U,S,Vdag = svd(left_env, ind(left_env,1); cutoff=cutoff^2, maxdim=chi_max, use_absolute_cutoff=true)
-            #U,S,Vdag = svd(left_env, ind(left_env,1); cutoff=nothing, maxdim=chi_max, use_absolute_cutoff=true)
             U,S,Vdag = svd(left_env, ind(left_env,1); cutoff, maxdim=chi_max)
 
 
@@ -69,13 +64,9 @@ function truncate_sweep(left_mps::MPS, right_mps::MPS; method::String, cutoff::R
             throw(ArgumentError("need to specify method EIG|SVD - current method=$method"))
         end
 
-        deltaS = delta(inds(S))
-
         L_ortho[ii] = Ai * XU  
         R_ortho[ii] = Bi * XV
 
-        #! This could be nasty if we have imaginary stuff...
-        #! should not be a problem for SVDs though
         push!(ents_sites, log(sum(S)))
       
     end
@@ -91,6 +82,8 @@ function truncate_sweep(left_mps::MPS, right_mps::MPS; method::String, cutoff::R
 end
 
 
+
+
 """
 Truncates optimizing the overlap (L|R), returns new L and R in generalized orthogonal form 
 and (an estimate for) the gen. entropy at each site.
@@ -101,55 +94,45 @@ then we build environments L|R from the *left* and truncate on their SVDs (or EI
 
 So this can be seen as a "RL: Right(can)Left(gen)" sweep 
 """
-function truncate_normalize_sweep(left_mps::MPS, right_mps::MPS, truncp::trunc_params)
-    truncate_normalize_sweep(left_mps, right_mps, method=truncp.ortho_method, cutoff=truncp.cutoff, chi_max=truncp.maxbondim)
+
+
+function truncate_normalize_rsweep(right_mps::MPS, left_mps::MPS, truncp::trunc_params)
+    truncate_rsweep(right_mps, left_mps, method=truncp.ortho_method, cutoff=truncp.cutoff, chi_max=truncp.maxbondim)
+    LR =  overlap_noconj(right_mps,left_mps)
+    right_mps[1] /= sqrt(LR)
+    left_mps[1] /= sqrt(LR)
 end
 
-function truncate_normalize_sweep(left_mps::MPS, right_mps::MPS; method::String, cutoff::Real, chi_max::Int)
-
-    L_ortho, R_ortho, ents_sites, gen_overlap = truncate_sweep(left_mps, right_mps; method, cutoff, chi_max)
-
-    L_ortho = normbyfactor(L_ortho, sqrt(gen_overlap))
-    R_ortho = normbyfactor(R_ortho, sqrt(gen_overlap))
-
-    return L_ortho, R_ortho, ents_sites
-
-end
-
-
-""" sweep for generalized truncation, Left(Can)> then <Right(Gen) """
-function truncate_normalize_sweep_LR(left_mps::MPS, right_mps::MPS; method::String, svd_cutoff::Real, chi_max::Int)
+""" Brings to right generalized canonical form two MPS, truncating along the way if necessary """
+function truncate_rsweep(right_mps::MPS, left_mps::MPS; method::String, cutoff::Real, chi_max::Int)
 
     mpslen = length(left_mps)
 
-    L_ortho = orthogonalize(left_mps, mpslen, normalize=false)
     R_ortho = orthogonalize(right_mps,mpslen, normalize=false)
+    L_ortho = orthogonalize(left_mps, mpslen, normalize=false)
 
-    XUinv, XVinv, deltaS = (ITensor(1.), ITensor(1.), ITensor(1.)) 
-
-    # if method == "EIG"
-    #     ents_sites = Vector{ComplexF64}()
-    # else
-    #     ents_sites = Vector{Float64}()
-    # end
+    XUinv, XVinv, right_env = (ITensor(1.), ITensor(1.), ITensor(1.)) 
     
-    ents_sites = Vector{Float64}()
-
+    ents_sites = ComplexF64[]
 
     # Start from the *right* side 
     for ii in mpslen:-1:2
-        Ai = XUinv * L_ortho[ii]
-        Bi = XVinv * R_ortho[ii] 
+        Ai = XUinv * R_ortho[ii]
+        Bi = XVinv * L_ortho[ii] 
 
         # No complex conjugation 
-        right_env = deltaS * Ai 
-        right_env = right_env * Bi 
+        right_env *= Ai 
+        right_env *= Bi 
+
+        rnorm = norm(right_env)
+        right_env /= rnorm
+        
 
         @assert order(right_env) == 2
 
         if method == "EIG"
 
-            U, S, Vdag, trunc_err = eigtrunc(left_env, svd_cutoff, chi_max)
+            U, S, Vdag, trunc_err = eigtrunc(right_env, cutoff, chi_max)
 
             sqS = sqrt.(S)
             isqS = sqS.^(-1)
@@ -162,7 +145,7 @@ function truncate_normalize_sweep_LR(left_mps::MPS, right_mps::MPS; method::Stri
 
             
         else # default to SVD
-            U,S,Vdag = svd(right_env, inds(right_env)[1], cutoff=svd_cutoff, maxdim= chi_max)
+            U,S,Vdag = svd(right_env, inds(right_env)[1]; cutoff=cutoff, maxdim=chi_max)
 
             sqS = sqrt.(S)
             isqS = sqS.^(-1)
@@ -175,47 +158,18 @@ function truncate_normalize_sweep_LR(left_mps::MPS, right_mps::MPS; method::Stri
 
         end 
 
-
-
-        deltaS = delta(inds(S))
-
         # Set updated matrices
-        L_ortho[ii] = Ai * XU  
-        R_ortho[ii] = Bi * XV
+        R_ortho[ii] = Ai * XU  
+        L_ortho[ii] = Bi * XV
 
-        #println(S)
-        # compute some "effective entropy" using the SVs here
-        # gen_ent_cut = 0.
-        # for n=1:dim(S,1)
-        #     p = S[n,n]        # I don't think we need the ^2 here 
-        #     gen_ent_cut -= p * log(p)
-        # end
-
-        # Eg renyi 2 should be cheap? just for convergence - always abs() even if it's complex 
-        #gen_ent_cut = sum(abs2.(S)/(norm(S)^2))
-        #push!(ents_sites, gen_ent_cut)
-
-        # TODO gotta do it the other way round 
         push!(ents_sites, log(sum(S)))
-
 
     end
 
     # the last two 
-    A1 = XUinv * L_ortho[1]
-    B1 = XVinv * R_ortho[1]
+    R_ortho[1] = XUinv * R_ortho[1]
+    L_ortho[1] = XVinv * L_ortho[1]
 
-    overlap = deltaS * ( A1 * B1 ) 
-
-    
-    @assert order(overlap) == 0 
-    # normalize overlap to 1 at each step 
-    L_ortho[1] =  A1 /sqrt(overlap[1])
-    R_ortho[1] =  B1 /sqrt(overlap[1])
-
-    #println("div by overlap $(overlap)")
-    #println(complex(overlap))
-
-    return L_ortho, R_ortho, ents_sites
+    return R_ortho, L_ortho, ents_sites
 
 end
