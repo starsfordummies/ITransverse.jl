@@ -161,15 +161,15 @@ end
 
 
 function folded_tMPO(tp::tmpo_params, time_sites::Vector{<:Index};
-     init_state = nothing, fold_op = nothing)
+     init_state = tp.bl, fold_op = tp.tr)
  
-    if isnothing(init_state) 
-         init_state = tp.bl 
-    end 
+    # if isnothing(init_state) 
+    #      init_state = tp.bl 
+    # end 
 
-    if isnothing(fold_op) 
-        fold_op = tp.tr 
-    end
+    # if isnothing(fold_op) 
+    #     fold_op = tp.tr 
+    # end
 
     eH = build_expH(tp)
     folded_tMPO(eH, init_state, fold_op, time_sites)
