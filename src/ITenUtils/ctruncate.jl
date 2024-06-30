@@ -1,6 +1,13 @@
 """ My modification of ITensors' truncate!() allowing for complex values. 
 We truncate on the absolute value of the spectrum
 """
+
+#function ctruncate!!(::Type{<:Array}, P::AbstractArray; kwargs...)
+function ctruncate!!(P::AbstractArray; kwargs...)
+  truncerr, docut = ctruncate!(P; kwargs...)
+  return P, truncerr, docut
+end
+
 function ctruncate!(
     P::AbstractVector;
     mindim=nothing,
@@ -88,4 +95,3 @@ function ctruncate!(
   resize!(P, n)
     return truncerr, docut
 end
-

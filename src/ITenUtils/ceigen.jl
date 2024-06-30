@@ -1,3 +1,6 @@
+using .ITenUtils: ctruncate!, ctruncate!!
+
+
 """ Overriding ITensor's eigen() when we're dealing with complex matrices?"""
 function LinearAlgebra.eigen(
   T::DenseTensor{ElT,2,IndsT};
@@ -20,16 +23,13 @@ function LinearAlgebra.eigen(
   @info "ceigen"
   DM, VM = eigen(expose(matrixT))
 
-  # Sort by largest to smallest eigenvalues
+  # Sort by largest (by absolute value) to smallest eigenvalues
   p = sortperm(DM; by=abs, rev = true)
   DM = DM[p]
   VM = VM[:,p]
 
   if any(!isnothing, (maxdim, cutoff))
-    #println("TRUNCATING @ $maxdim, $cutoff, last eig  = $(DM[end]) ")
-    DM, truncerr, _ = truncate!!(
-      DM; mindim, maxdim, cutoff, use_absolute_cutoff, use_relative_cutoff
-    )
+    DM, truncerr, _ = ctruncate!!( DM; mindim, maxdim, cutoff, use_absolute_cutoff, use_relative_cutoff)
     dD = length(DM)
     if dD < size(VM, 2)
       VM = VM[:, 1:dD]
