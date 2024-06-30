@@ -55,53 +55,51 @@ end
 One step of the light cone algorithm: takes left and right tMPS ll, rr,
 the time MPO and the operator O
 extends the time MPO and the left-right tMPS by optimizing 
-1) the overlap (ll1|Orr)  -> save new ll
-2) the overlap (llO|1rr)  -> save new rr  (in case non symmetric)
+1) the overlap (L1|OR)  -> save new L
+2) the overlap (LO|1R)  -> save new R  (in case non symmetric)
 
 Returns the updated left-right tMPS 
 """
-function extend_tmps_cone(ll::MPS, rr::MPS, 
-    op_L::Vector{<:Number}, op_R::Vector{<:Number}, 
+function extend_tmps_cone(rr::MPS, ll::MPS, 
+    op_R::Vector{<:Number}, op_L::Vector{<:Number}, 
     tp::tmpo_params,
     truncp::trunc_params,
     compute_r2::Bool=false)
 
-    time_sites = siteinds(dim(siteind(ll,1)), length(ll)+1)
-    time_sites= addtags(time_sites, "time_fold")
+    push!(time_sites, Index(dim(time_sites[1]), tags="Site,time_fold,n=$(length(time_sites)+1)")) 
 
-    tmpo = folded_tMPO(tp, time_sites; fold_op=op_L)
+    tmpo = folded_tMPO(tp, time_sites; fold_op=op_R)
 
-    #println("check: " , length(tmpo), length(ll), length(rr))
+    psi_R = apply_extend(tmpo, rr)
+
+    tmpo = swapprime(folded_tMPO(tp, time_sites; fold_op=op_L), 0, 1, "Site")
 
     psi_L = apply_extend(tmpo, ll)
 
-    tmpo = swapprime(folded_tMPO(tp, time_sites; fold_op=op_R), 0, 1, "Site")
-    psi_R = apply_extend(tmpo, rr)
-
     # ! CHECK CAN WE EVER HAVE LINKS (L) != LINKS (R) ??? WHY DOES EIGEN FAIL??
-    ll, rr, ents = truncate_normalize_sweep(psi_L,psi_R, truncp)
+    rr, ll, ents = truncate_normalize_sweep(psi_R,psi_L, truncp)
     
     gen_renyi2 = [0.]
     if compute_r2
         gen_renyi2 = generalized_renyi_entropy(ll, rr, 2, normalize=true)
     end
 
-    return ll,rr, gen_renyi2 # ents
+    return rr, ll, gen_renyi2 # ents
 
 end
 
 
-""" Extends MPS ψ to the *left* by one site by applying the MPO A on top,
+""" Extends MPS ψ to the *right* by one site by applying the MPO A on top,
 Returns a new MPS which is the extension of ψ (extended to the left), with siteinds matching those of A
-The p' leg of the MPO on the first site is closed by a `close_op` vector 
+The p' leg of the MPO on the last site is closed by a `close_op` vector 
 ```
-      | | | | | | |
- (op)-o-o-o-o-o-o-o-(in)
-      v | | | | | |
+        | | | | | | |
+ [rho0]-o-o-o-o-o-o-o--[op]
+        | | | | | | V
         o-o-o-o-o-o
 ``` 
 """
-function apply_extend(A::MPO, ψ::MPS, close_op::Vector = ComplexF64[1,0,0,0])
+function apply_extend(A::MPO, ψ::MPS, close_op::Vector{<:Number} = ComplexF64[1,0,0,0])
 
     A = sim(linkinds, A)
     ψ = sim(linkinds, ψ)
