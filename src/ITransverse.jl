@@ -95,7 +95,9 @@ build_expH_potts_murg,
 build_expH_potts_symmetric_svd,
 build_expH_ising_parallel_field_murg
 
+include("tmpo/build_ww.jl")
 
+export build_WWl, build_WWc, build_WWr
 
 include("tmpo/build_tmpo_fw.jl")
 
@@ -123,8 +125,8 @@ export
      #build_ising_folded_tMPS,
      build_folded_tMPO_regul_beta, 
      build_folded_left_tMPS,
-     build_folded_tMPO,
-     build_folded_open_tMPO
+     folded_tMPO,
+     folded_open_tMPO
 
 
 include("power_method/pm.jl")
