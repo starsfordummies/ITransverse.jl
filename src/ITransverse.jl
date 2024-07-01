@@ -97,7 +97,7 @@ build_expH_ising_parallel_field_murg
 
 include("tmpo/build_ww.jl")
 
-export build_WWl, build_WWc, build_WWr
+export rotate_90clockwise, FoldtMPOBlocks, build_WWl, build_WWc, build_WWr, build_WW
 
 include("tmpo/build_tmpo_fw.jl")
 
