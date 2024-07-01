@@ -1,8 +1,58 @@
 
+"""
+We rotate our space vectors to the *right* by 90°, ie 
+
+```
+   |p'             |L
+L--o--R   =>    p--o--p'
+   |p              |R
+```
+"""
+
+function rotate_90clockwise(W::ITensor; L=nothing, R=nothing, P=nothing, Ps=nothing)
+    
+    #xLtP = Index(dim(L),"time,site")
+    xPtR = Index(dim(P),"time,virtR")
+    xPstL = Index(dim(P),"time,virtL")
+
+    if !isnothing(L)
+        xLtP = Index(dim(L),"time,site")
+        W *= delta(L, xLtP')
+        if !isnothing(R)
+            W *= delta(R, xLtP)
+        end
+    elseif !isnothing(R)
+        xLtP = Index(dim(R),"time,site")
+        W *= delta(R, xLtP)
+    end
+
+    W *= delta(Ps, xPtR)
+    W *= delta(P, xPstL)
+
+    return W
+end
+
+
+function build_WW(tp::tmpo_params)
+    eH = build_expH(tp)
+    WWc, iCwL, iCwR, iCp, iCps = build_WWc(eH)
+    WWl, iCwR, iCp, iCps = build_WWl(eH)
+    WWr, iCwL, iCp, iCps = build_WWr(eH)
+
+    return WWl, WWc, WWr
+end
+
+    
 
 """ Builds the bulk tensor for the *folded* time MPO
 Returns the *unrotated* combined indices as well: vL, vR, p, p' """
-function build_WWc(eH_space)
+
+function build_WWc(tp::tmpo_params)
+    eH = build_expH(tp)
+    WWc, iCwL, iCwR, iCp, iCps = build_WWc(eH)
+end
+
+function build_WWc(eH_space::MPO)
 
     _, Wc, _ = eH_space.data
 
@@ -33,7 +83,7 @@ function build_WWc(eH_space)
 end
 
 """ Builds folded unrotated right edge tensor of the network """ 
-function build_WWr(eH_space)
+function build_WWr(eH_space::MPO)
 
     _, _, Wr = eH_space.data
 
@@ -63,11 +113,11 @@ end
 
 
 """ Builds folded unrotated right edge tensor of the network """ 
-function build_WWl(eH_space)
+function build_WWl(eH_space::MPO)
 
     Wl, _, _ = eH_space.data
 
-    space_p = siteind(eH_space,3)
+    space_p = siteind(eH_space,1)
 
     (vR, _) = linkinds(eH_space)
 
@@ -81,7 +131,7 @@ function build_WWl(eH_space)
     Cps = combiner(space_p',space_p''; tags="cps")
     Cp = combiner(space_p,space_p'''; tags="cp")
 
-    WWr = WWr * CvR * Cp * Cps
+    WWl = WWl * CvR * Cp * Cps
 
     #Return indices as well
     iCvR = combinedind(CvR)
@@ -93,28 +143,40 @@ end
 
 
 
+struct FoldtMPOBlocks
+    WWl::ITensor
+    WWc::ITensor
+    WWr::ITensor
+    rho0::ITensor
 
-"""
-We rotate our space vectors to the *right* by 90°, ie 
+    function FoldtMPOBlocks(tp::tmpo_params, init_state::Vector{<:Number} = tp.bl) 
 
-```
-   |p'             |L
-L--o--R   =>    p--o--p'
-   |p              |R
-```
-"""
+        WWl, WWc, WWr = build_WW(tp::tmpo_params)
 
-function rotate_90clock(W::ITensor, L=nothing, R=nothing, P=nothing, Ps=nothing)
-    @assert dim(L) == dim(R)
-    xLtP = Index(dim(L),"time,site")
-    xPtR = Index(dim(P),"time,virtR")
-    xPstL = Index(dim(P),"time,virtL")
+        R, P, Ps = inds(WWl)
+        WWl = rotate_90clockwise(WWl; R,P,Ps)
+        L, R, P, Ps = inds(WWc)
+        WWc = rotate_90clockwise(WWc; L,R,P,Ps)
+        L, P, Ps = inds(WWr)
+        WWr = rotate_90clockwise(WWr; L,P,Ps)
+
+        # Match the inds of all three tensors FIXME do we want this? 
+        il = (Index(1), inds(WWl)...) 
+        WWl = replaceinds(WWl, il, inds(WWc))
+        ir = (ind(WWr,1), Index(1), ind(WWr,2),ind(WWr,3))
+        WWr = replaceinds(WWr, ir, inds(WWc))
+
+        if length(init_state) == dim(P)
+            rho0 = ITensor(init_state, Index(dim(P),"virt,time,rho0"))
+        elseif length(init_state) == dim(P) ÷ 2
+            rho0 = (init_state) * (init_state')
+            rho0 = ITensor(rho0, Index(dim(P),"virt,time,rho0"))
+        else
+            @error "Dimension of init_state is $(length(init_state)) vs linkdim $(dim(P))"
+            rho0 = ITensor(1)
+        end
+        return new(WWl, WWc, WWr, rho0)
+    end
 
 
-    W *= delta(L, xLtP)
-    W *= delta(R, xLtP')
-    W *= delta(P, xPtR)
-    W *= delta(Ps, xPstL)
-
-    return W
 end

@@ -23,8 +23,6 @@ end
 
 
 
-
-
 """ Build a *rotated and folded* TMPO associated with exp. value starting from eH tensors of U=exp(iHt) 
 (defined as a regular spatial MPO on space indices). tMPO is defined on `time_sites`
 
@@ -58,17 +56,15 @@ and contract with  the initial state `init_state` on the *left* and the operator
 
 function folded_open_tMPO(tp::tmpo_params, time_sites::Vector{<:Index})
 
-    eH = build_expH(tp)
-    folded_open_tMPO(eH, time_sites)
+    WWc = build_WWc(tp)
+    folded_open_tMPO(WWc, time_sites)
 end
 
-function folded_open_tMPO(eH_space::MPO, time_sites::Vector{<:Index})
+function folded_open_tMPO(WWc::ITensor, time_sites::Vector{<:Index})
     
-    @assert length(eH_space) == 3
-
     Nsteps = length(time_sites)
 
-    WWc, iCwL, iCwR, iCp, iCps = build_WWc(eH_space)
+    iCwL, iCwR, iCp, iCps = inds(WWc)
 
     # define the links of the rotated MPO 
     rot_links = [Index( dim(iCp) , "Link,rotl=$(ii-1)") for ii in 1:(Nsteps + 1)]
@@ -97,26 +93,15 @@ end
 
 
 
-""" Simple case, we feed an initial state and a fold_operator as (folded) vectors 
-and build the folded tMPO from those"""
-function folded_tMPO(eH_space::MPO, init_state::Vector{<:Number}, fold_op::Vector{<:Number}, time_sites::Vector{<:Index})
+""" Given an initial state and a fold_operator as (folded) vectors, build the folded tMPO from those"""
+function folded_tMPO(b::FoldtMPOBlocks, fold_op::ITensor, ts::Vector{<:Index})
     
-    rho0 = init_state 
+    tMPO = folded_open_tMPO(b.WWc, ts)
 
-    tMPO = folded_open_tMPO(eH_space, time_sites)
-
-    if length(init_state) != linkdims(tMPO)[1]  # we already have a folded 
-        if length(init_state) == linkdims(tMPO)[1] ÷ 2
-            rho0 = (init_state) * (init_state')
-        else
-            @error "Dimension of init_state is $(length(init_state)) vs linkdim $(linkdims(tMPO)[1])"
-        end
-    end
-    
     @assert length(fold_op) == linkdims(tMPO)[end]
 
-    init_state_tensor = ITensor(rho0, inds(tMPO[1])...)
-    fold_op_tensor = ITensor(fold_op, inds(tMPO[end])...)
+    init_state_tensor = ITensor(b.rho0.tensor.storage, inds(tMPO[1]))
+    fold_op_tensor = ITensor(fold_op, inds(tMPO[end]))
 
     tMPO.data[1] = init_state_tensor
     tMPO.data[end] = fold_op_tensor
@@ -128,81 +113,114 @@ function folded_tMPO(eH_space::MPO, init_state::Vector{<:Number}, fold_op::Vecto
 end
 
 
-function folded_tMPO(tp::tmpo_params, time_sites::Vector{<:Index};
-     init_state = tp.bl, fold_op = tp.tr)
+# function folded_tMPO(tp::tmpo_params, time_sites::Vector{<:Index};
+#      init_state = tp.bl, fold_op = tp.tr)
 
-    eH = build_expH(tp)
-    folded_tMPO(eH, init_state, fold_op, time_sites)
+#     tMPO_blocks = FoldtMPOBlocks(tp, init_state)
+#     folded_tMPO(tMPO_blocks, fold_op, time_sites)
 
-end
-
-
+# end
 
 
 
-
-""" Builds folded initial guess for left tMPS 
-by picking the left (spatial) edges of the MPO """
-function build_folded_left_tMPS(eH::MPO, init_state::Vector{<:Number}, time_sites::Vector{<:Index})
-
-    Nsteps = length(time_sites)
-
-    Wl = eH[1]
-
-    p = siteind(eH,1)
-    ps = p'
-    wR = linkind(eH,1)
-    
-    # Build W Wdagger - put double prime on Wlonj for safety
-    WWl = Wl * dag(prime(Wl,2))
-    # Combine indices appropriately 
-    CwR = combiner(wR,wR''; tags="cwR")
-    # we flip the p<>* legs on the backwards, shouldn't be necessary since should always have p<>p*
-    Cp = combiner(p,ps''; tags="cp")
-    Cps = combiner(ps,p''; tags="cps")
-
-    WWl = WWl * CwR * Cp * Cps
-
-    rot_phys = time_sites
-    rot_links = [Index(4, "Link,rotl=$ii") for ii in 1:(Nsteps - 1)]
-
-    #init_state = [1, 0] 
-    #fold_init_state = outer(init_state, init_state) 
-    fold_init_state = init_state * init_state' 
-
-
-    fold_op = ComplexF64[1, 0, 0, 1]
-
-    iCwR = ind(CwR,1)
-    iCp = ind(Cp,1)
-    iCps = ind(Cps,1)
-
-
-    # I already prime them the other way round so it's easier to contract them
-    init_tensor = ITensor(fold_init_state, iCp)
-    fin_tensor = ITensor(fold_op, iCps)
-
-
-    first_tensor = (fin_tensor * WWl) * delta(iCwR, rot_phys[1])* delta(iCp, rot_links[1]) 
-
-    list_mps = [first_tensor]
-
-    for ii in range(2,Nsteps-1)
-        push!(list_mps, WWl * delta(iCwR, rot_phys[ii]) * delta(iCp, rot_links[ii-1]) * delta(iCps, rot_links[ii]) )
+function folded_tMPO(b::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::Vector{<:Number} = [1,0,0,1])
+    oo = MPO(fill(b.WWc, length(ts)))
+    s, sp, r, l = inds(b.WWc)
+    ll = [Index(dim(r),"Link,time_fold,l=$(ii-1)") for ii in 1:length(ts)+1]
+    for ii in eachindex(oo)
+        newinds = (ts[ii],ts[ii]',ll[ii+1],ll[ii])
+        oo[ii] = replaceinds(oo[ii], inds(b.WWc), newinds)
+        # oo[ii] *= delta(s,ts[ii])
+        # oo[ii] *= delta(sp,ts[ii]')
+        # oo[ii] *= delta(r,ll[ii+1])
+        # oo[ii] *= delta(l,ll[ii])
     end
 
-    last_tensor = (init_tensor * WWl) * delta(iCwR, rot_phys[Nsteps]) * delta(iCps, rot_links[Nsteps-1] )
+    oo[1] *= b.rho0 * delta(ind(b.rho0,1), ll[1])
+    oo[end] *= ITensor(fold_op, ll[end])
 
-    push!(list_mps, last_tensor)
-
-    tMPS = MPS(list_mps)
-
-    return tMPS
+    return oo
 
 end
 
-function build_folded_left_tMPS(tp::tmpo_params, time_sites::Vector{<:Index})
+function folded_tMPO_L(b::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::Vector{<:Number} = [1,0,0,1])
+    oo = MPO(fill(b.WWc, length(ts)))
+    oo[end] = b.WWl
+    #s, sp, r, l = inds(b.WWc)
+    ll = [Index(dim(r),"Link,time_fold,l=$(ii-1)") for ii in 1:length(ts)+1]
+    for ii in eachindex(oo)
+        newinds = (ts[ii],ts[ii]',ll[ii+1],ll[ii])
+        oo[ii] = replaceinds(oo[ii], inds(b.WWc), newinds)
+        # oo[ii] *= delta(s,ts[ii])
+        # oo[ii] *= delta(sp,ts[ii]')
+        # oo[ii] *= delta(r,ll[ii+1])
+        # oo[ii] *= delta(l,ll[ii])
+    end
 
-    eH = build_expH(tp)
-    build_folded_left_tMPS(eH, tp.bl, time_sites)
+    oo[1] *= b.rho0 * delta(ind(b.rho0,1), ll[1])
+    oo[end] *= ITensor(fold_op, ll[end])
+
+    return oo
+
+end
+
+
+function folded_tMPO_R(b::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::Vector{<:Number} = [1,0,0,1])
+    oo = MPO(fill(b.WWc, length(ts)))
+    oo[end] = b.WWr
+    #s, sp, r, l = inds(b.WWc)
+    ll = [Index(dim(r),"Link,time_fold,l=$(ii-1)") for ii in 1:length(ts)+1]
+    for ii in eachindex(oo)
+        newinds = (ts[ii],ts[ii]',ll[ii+1],ll[ii])
+        oo[ii] = replaceinds(oo[ii], inds(b.WWc), newinds)
+        # oo[ii] *= delta(s,ts[ii])
+        # oo[ii] *= delta(sp,ts[ii]')
+        # oo[ii] *= delta(r,ll[ii+1])
+        # oo[ii] *= delta(l,ll[ii])
+    end
+
+    oo[1] *= b.rho0 * delta(ind(b.rho0,1), ll[1])
+    oo[end] *= ITensor(fold_op, ll[end])
+
+    return oo
+
+end
+
+
+
+function folded_left_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index})
+    psi = MPS(fill(b.WWl, length(ts)))
+    s, r, l = inds(b.WWl)
+    ll = [Index(dim(r),"Link,time_fold,l=$(ii-1)") for ii in 1:length(ts)+1]
+    for ii in eachindex(psi)
+        newinds = (ts[ii],ll[ii+1],ll[ii])
+        psi[ii] = replaceinds(psi[ii], inds(b.WWl), newinds)
+        # psi[ii] *= delta(s,ts[ii])
+        # psi[ii] *= delta(r,ll[ii+1])
+        # psi[ii] *= delta(l,ll[ii])
+    end
+
+    psi[1] *= b.rho0 * delta(ind(b.rho0,1), ll[1])
+    psi[end] *= ITensor([1,0,0,1], ll[end])
+
+    return psi 
+end
+
+
+function folded_right_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index})
+    psi = MPS(fill(b.WWr, length(ts)))
+    s, r, l = inds(b.WWr)
+    ll = [Index(dim(r),"Link,time_fold,l=$(ii-1)") for ii in 1:length(ts)+1]
+    for ii in eachindex(psi)
+        newinds = (ts[ii],ll[ii+1],ll[ii])
+        psi[ii] = replaceinds(psi[ii], inds(b.WWr), newinds)
+        # psi[ii] *= delta(s,ts[ii])
+        # psi[ii] *= delta(r,ll[ii+1])
+        # psi[ii] *= delta(l,ll[ii])
+    end
+
+    psi[1] *= b.rho0 * delta(ind(b.rho0,1), ll[1])
+    psi[end] *= ITensor([1,0,0,1], ll[end])
+
+    return psi 
 end
