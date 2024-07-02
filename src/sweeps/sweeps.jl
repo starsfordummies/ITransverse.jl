@@ -81,6 +81,7 @@ function truncate_rsweep(right_mps::MPS, left_mps::MPS; cutoff::Real, chi_max::I
 
     mpslen = length(left_mps)
 
+    # first bring to left canonical form 
     R_ortho = orthogonalize(right_mps, mpslen, normalize=false)
     L_ortho = orthogonalize(left_mps,  mpslen, normalize=false)
 
@@ -111,6 +112,9 @@ function truncate_rsweep(right_mps::MPS, left_mps::MPS; cutoff::Real, chi_max::I
 
         XV = dag(Vdag) * isqS
         XVinv = sqS * Vdag
+
+        right_env *= XU
+        right_env *= XV
 
         # Set updated matrices
         R_ortho[ii] = Ai * XU  
