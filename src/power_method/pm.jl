@@ -215,7 +215,7 @@ end
 
 
 """ Same as powermethod but only update L, assuming symmetry (L| = |R) """
-function powermethod_Lonly(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::PMParams)
+function powermethod_Ronly(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::PMParams)
 
     itermax = pm_params.itermax
     converged_ds2 = pm_params.ds2_converged
@@ -305,11 +305,12 @@ end
 
 
 """ power method truncating on SVD (so working on temporal entanglement <L|L> ) """
-function pm_svd(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::PMParams)
+function powermethod_svd(in_mps::MPS, in_mpo_1::MPO, pm_params::PMParams)
 
     itermax = pm_params.itermax
-    cutoff = pm_params.cutoff
-    maxbondim = pm_params.maxbondim
+
+    cutoff = pm_params.trunc_params.cutoff
+    maxbondim = pm_params.trunc_params.maxbondim
 
     converged_ds2 = pm_params.ds2_converged
 

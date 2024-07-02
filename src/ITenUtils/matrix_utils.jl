@@ -26,19 +26,26 @@ end
 
 """ Checks if a matrix is diagonal within a given cutoff
 """
-function check_diag_matrix(d::AbstractMatrix, cutoff::Float64=1e-6)
+
+function check_diag_matrix(d::AbstractMatrix, cutoff::Float64=1e-8)
+
+    isdiag = true
+
     delta_diag = norm(d - Diagonal(d))/norm(d)
     if delta_diag > cutoff
-        println("Warning, matrix non diagonal: $delta_diag")
-        return false
+        println("Warning, matrix non diagonal: Δ=$delta_diag")
+        isdiag = false
     end
-    return true
+    return isdiag
 end
 
 
 """ Check if a matrix is identity within a given cutoff 
 """
 function check_id_matrix(m::Matrix, cutoff::Float64=1e-8)
+
+    is_id_matrix = true 
+
     if size(m,1) == size(m,2)
         delta_diag = norm(m - I(size(m,1)))/norm(m)
         if delta_diag > cutoff
@@ -46,13 +53,14 @@ function check_id_matrix(m::Matrix, cutoff::Float64=1e-8)
             if norm(m./m[1,1] - I(size(m,1)))/norm(m) < cutoff
                 @info("But proportional to identity, factor $(m[1,1])")
             end
-            return false
+            is_id_matrix = false
         end
-        return true
     else
         @error ("Not even square? $(size(d))")
-        return false
+        is_id_matrix = false
     end
+
+    return is_id_matrix
 end
 
 

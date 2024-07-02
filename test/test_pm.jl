@@ -21,42 +21,41 @@ using Test
 
     sigX = ComplexF64[0,1,1,0]
 
-    evs = [] 
-    evssym = []
-
-    ts = 10:50:60
-
     b = FoldtMPOBlocks(tp)
 
-    for Nsteps in ts
+    Nsteps = 40
 
-        time_sites = siteinds(4, Nsteps)
+    time_sites = siteinds(4, Nsteps)
 
-        
-        init_mps = folded_right_tMPS(b, time_sites)
-        mpo_X = folded_tMPO(b, time_sites, sigX)
-        mpo_1 = folded_tMPO(b, time_sites)
+    
+    init_mps = folded_right_tMPS(b, time_sites)
 
-        rr, ll, ds2_pm  = powermethod(init_mps, mpo_1, mpo_X, pm_params) # kwargs)
-        #ll, rr, lO, Or, vals, deltas  = pm_all(init_mps, mpo_1, mpo_X, pm_params) # kwargs)
-        #ll, rr, lO, Or, vals, deltas  = pm_svd(init_mps, mpo_1, mpo_X, pm_params) # kwargs)
+    mpo_X = folded_tMPO(b, time_sites, sigX)
+    mpo_1 = folded_tMPO(b, time_sites)
 
-        ev = compute_expvals(ll, rr, ["X"], b)
+    ll, rr, ds2_pm  = powermethod(init_mps, mpo_1, mpo_X, pm_params) # kwargs)
+    #ll, rr, lO, Or, vals, deltas  = pm_all(init_mps, mpo_1, mpo_X, pm_params) # kwargs)
+    #ll, rr, lO, Or, vals, deltas  = pm_svd(init_mps, mpo_1, mpo_X, pm_params) # kwargs)
 
-        rralt, ds2_pm  = powermethod_Lonly(init_mps, mpo_1, mpo_X, pm_params) 
+    ev = compute_expvals(ll, rr, ["X"], b)
 
-        evsym = compute_expvals(rralt, rralt, ["X"], b)
+    rralt, ds2_pm  = powermethod_Ronly(init_mps, mpo_1, mpo_X, pm_params) 
 
-        push!(evs, ev)
-        push!(evssym, evsym)
+    evsym = compute_expvals(rralt, rralt, ["X"], b)
 
-    end
+    rr_te, ds2_pm  = powermethod_svd(init_mps, mpo_1, pm_params) 
 
-    ev1 = evs[end]["X"]
-    ev2 = evssym[end]["X"]
+    ev_te = compute_expvals(rr_te, rr_te, ["X"], b)
+
+
+    ev1 = ev["X"]
+    ev2 = evsym["X"]
+    ev3 = ev_te["X"]
  
     @test abs(ev1 - ev2) < 1e-8
+    @test abs(ev1 - ev3) < 1e-8
     @test abs(ev1 - ITransverse.ITenUtils.bench_X_04_plus[ts[end]]) < 0.001
     @test abs(ev2 - ITransverse.ITenUtils.bench_X_04_plus[ts[end]]) < 0.001
+    @test abs(ev3 - ITransverse.ITenUtils.bench_X_04_plus[ts[end]]) < 0.001
 
 end
