@@ -1,52 +1,62 @@
 using LinearAlgebra
+using Revise
+
 using ITensors
 using ITransverse
 using Test
 
-#! TODO There is stuff to be checked here on the environments / canonical forms ... 
 @testset "Testing power method" begin
 
-tp = ising_tp()
+    tp = ising_tp()
 
-SVD_cutoff = 1e-14
-maxbondim = 120
-itermax = 100
-verbose=false
-ds2_converged=1e-6
+    cutoff = 1e-20
+    maxbondim = 120
+    itermax = 100
+    verbose=false
+    ds2_converged=1e-6
 
-pm_params = ppm_params(itermax, SVD_cutoff, maxbondim, verbose, ds2_converged)
+    truncp = trunc_params(cutoff, maxbondim, "SVD")
 
-sigX = ComplexF64[0,1,1,0]
-sigZ = ComplexF64[1,0,0,-1]
-Id = ComplexF64[1,0,0,1]
+    pm_params = PMParams(truncp, itermax, ds2_converged, true)
 
-Nsteps = 30
+    sigX = ComplexF64[0,1,1,0]
 
-time_sites = siteinds("S=3/2", Nsteps)
+    evs = [] 
+    evssym = []
 
+    ts = 10:50:60
 
-mpo_1 = build_folded_tMPO(tp, Id, time_sites)
-mpo_X = build_folded_tMPO(tp, sigX, time_sites)
+    b = FoldtMPOBlocks(tp)
 
+    for Nsteps in ts
 
-init_mps = build_folded_left_tMPS(tp, time_sites)
+        time_sites = siteinds(4, Nsteps)
 
-ll, rr, lO, Or, vals, deltas  = pm_all(init_mps, mpo_1, mpo_X, pm_params) # kwargs)
-llalt, ds2_pm  = powermethod_Lonly(init_mps, mpo_1, mpo_X, pm_params) 
+        
+        init_mps = folded_right_tMPS(b, time_sites)
+        mpo_X = folded_tMPO(b, time_sites, sigX)
+        mpo_1 = folded_tMPO(b, time_sites)
 
-ev1 = expval_LR(ll, rr, sigX, tp)
-ev2 = expval_LR(llalt,llalt, sigX, tp)
+        rr, ll, ds2_pm  = powermethod(init_mps, mpo_1, mpo_X, pm_params) # kwargs)
+        #ll, rr, lO, Or, vals, deltas  = pm_all(init_mps, mpo_1, mpo_X, pm_params) # kwargs)
+        #ll, rr, lO, Or, vals, deltas  = pm_svd(init_mps, mpo_1, mpo_X, pm_params) # kwargs)
 
-@test abs(ev1 - ev2) < 1e-6
-@test abs(ev1 - ITransverse.ITenUtils.bench_X_04_plus[Nsteps]) < 0.002
-@test abs(ev2 - ITransverse.ITenUtils.bench_X_04_plus[Nsteps]) < 0.002
+        ev = compute_expvals(ll, rr, ["X"], b)
 
+        rralt, ds2_pm  = powermethod_Lonly(init_mps, mpo_1, mpo_X, pm_params) 
 
-ev1 = expval_LR(ll, rr, sigZ, tp)
-ev2 = expval_LR(llalt,llalt, sigZ, tp)
+        evsym = compute_expvals(rralt, rralt, ["X"], b)
 
-@test abs(ev1 - ev2) < 1e-6
-@test abs(ev1 - ITransverse.ITenUtils.bench_Z_04_plus[Nsteps]) < 0.002
-@test abs(ev2 - ITransverse.ITenUtils.bench_Z_04_plus[Nsteps]) < 0.002
+        push!(evs, ev)
+        push!(evssym, evsym)
+
+    end
+
+    ev1 = evs[end]["X"]
+    ev2 = evssym[end]["X"]
+ 
+    @test abs(ev1 - ev2) < 1e-8
+    @test abs(ev1 - ITransverse.ITenUtils.bench_X_04_plus[ts[end]]) < 0.001
+    @test abs(ev2 - ITransverse.ITenUtils.bench_X_04_plus[ts[end]]) < 0.001
 
 end
