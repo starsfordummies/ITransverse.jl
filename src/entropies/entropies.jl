@@ -25,14 +25,14 @@ end
 """ Computes the Von Neumann entanglement entropy of an MPS `psi` at all links, 
 returns a vector of floats containing the VN entropies 
 """
-function vn_entanglement_entropy!(psi::MPS)
+function vn_entanglement_entropy(psi::MPS)
 
     workpsi = normalize(psi)
 
     ents_vn = Vector{Float64}()
 
     for icut=1:length(workpsi)-1
-        Si = vn_entanglement_entropy_cut!(workpsi, icut)
+        Si = vn_entanglement_entropy!(workpsi, icut)
         push!(ents_vn, Si)
     end
 
