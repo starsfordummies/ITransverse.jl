@@ -54,12 +54,6 @@ function truncate_lsweep(right_mps::MPS, left_mps::MPS; cutoff::Real, chi_max::I
 end
 
 
-function truncate_normalize_lsweep(right_mps::MPS, left_mps::MPS, truncp::trunc_params)
-    truncate_lsweep(right_mps, left_mps, cutoff=truncp.cutoff, chi_max=truncp.maxbondim)
-    LR =  overlap_noconj(right_mps,left_mps)
-    right_mps[end] /= sqrt(LR)
-    left_mps[end] /= sqrt(LR)
-end
 
 
 
@@ -80,7 +74,7 @@ So this can be seen as a "RL: Right(can)Left(gen)" sweep
 Returns updated R, L and effective entropies calculated form the SVD of the environments """
 function truncate_rsweep(right_mps::MPS, left_mps::MPS; cutoff::Real, chi_max::Int)
 
-    mpslen = length(left_mps)
+    mpslen = length(right_mps)
 
     # first bring to left canonical form 
     R_ortho = orthogonalize(right_mps, mpslen, normalize=false)
@@ -97,9 +91,6 @@ function truncate_rsweep(right_mps::MPS, left_mps::MPS; cutoff::Real, chi_max::I
 
         right_env *= Ai 
         right_env *= Bi 
-
-
-        #@show norm(right_env)
 
         rnorm = norm(right_env)
 
@@ -133,7 +124,7 @@ function truncate_rsweep(right_mps::MPS, left_mps::MPS; cutoff::Real, chi_max::I
 
     end
 
-    # the last two 
+    # the final two
     R_ortho[1] = XUinv * R_ortho[1]
     L_ortho[1] = XVinv * L_ortho[1]
 
@@ -142,9 +133,21 @@ function truncate_rsweep(right_mps::MPS, left_mps::MPS; cutoff::Real, chi_max::I
 end
 
 
+
+function truncate_normalize_lsweep(right_mps::MPS, left_mps::MPS, truncp::trunc_params)
+    ll, rr, ee = truncate_lsweep(right_mps, left_mps, cutoff=truncp.cutoff, chi_max=truncp.maxbondim)
+    LR =  overlap_noconj(ll,rr)
+    rr[end] /= sqrt(LR)
+    ll[end] /= sqrt(LR)
+    
+    return rr,ll, [e./sum(e) for e in ee]
+end
+
 function truncate_normalize_rsweep(right_mps::MPS, left_mps::MPS, truncp::trunc_params)
-    truncate_rsweep(right_mps, left_mps, cutoff=truncp.cutoff, chi_max=truncp.maxbondim)
-    LR =  overlap_noconj(right_mps,left_mps)
-    right_mps[1] /= sqrt(LR)
-    left_mps[1] /= sqrt(LR)
+    rr, ll, ee = truncate_rsweep(right_mps, left_mps, cutoff=truncp.cutoff, chi_max=truncp.maxbondim)
+    LR =  overlap_noconj(rr,ll)
+    rr[1] /= sqrt(LR)
+    ll[1] /= sqrt(LR)
+
+    return rr, ll, [e./sum(e) for e in ee]
 end
