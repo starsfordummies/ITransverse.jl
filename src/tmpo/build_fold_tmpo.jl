@@ -57,8 +57,27 @@ and contract with  the initial state `init_state` on the *left* and the operator
 function folded_open_tMPO(tp::tmpo_params, time_sites::Vector{<:Index})
 
     WWc = build_WWc(tp)
-    folded_open_tMPO(WWc, time_sites)
+    folded_open_tMPO(WWc[1], time_sites)
 end
+
+""" Given building blocks and time_sites, returns an MPO with two extra sites (one on each side), 
+allowing to insert arbitrary operators at a later stage"""
+function folded_open_tMPO(b::FoldtMPOBlocks, ts::Vector{<:Index})
+
+    oo = MPO(fill(b.WWc, length(ts)))
+    ri = ind(b.WWc,3)
+    ll = [Index(dim(ri),"Link,time_fold,l=$(ii-1)") for ii in 1:length(ts)+1]
+    for ii in eachindex(oo)
+        newinds = (ts[ii],ts[ii]',ll[ii+1],ll[ii])
+        oo[ii] = replaceinds(oo[ii], inds(b.WWc), newinds)
+    end
+
+    pushfirst!(oo.data, ITensor([1,0,0,1], ll[1]))
+    push!(oo.data , ITensor([1,0,0,1], ll[end]))
+
+    return oo
+end
+
 
 function folded_open_tMPO(WWc::ITensor, time_sites::Vector{<:Index})
     
@@ -144,10 +163,11 @@ function folded_tMPO(b::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::Vector{<:N
 
 end
 
+""" Builds a folded tMPO extended by one site to the top (ie. end) with the tensor WWl """
 function folded_tMPO_L(b::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::Vector{<:Number} = [1,0,0,1])
     oo = MPO(fill(b.WWc, length(ts)))
     oo[end] = b.WWl
-    ri, = ind(b.WWc,3)
+    ri = ind(b.WWc,3)
     ll = [Index(dim(ri),"Link,time_fold,l=$(ii-1)") for ii in 1:length(ts)+1]
     for ii in eachindex(oo)
         newinds = (ts[ii],ts[ii]',ll[ii+1],ll[ii])
