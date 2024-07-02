@@ -149,6 +149,7 @@ struct FoldtMPOBlocks
     WWc::ITensor
     WWr::ITensor
     rho0::ITensor
+    tp::tmpo_params
 
     function FoldtMPOBlocks(tp::tmpo_params, init_state::Vector{<:Number} = tp.bl) 
 
@@ -178,7 +179,7 @@ struct FoldtMPOBlocks
             rho0 = ITensor(0)
         end
 
-        return new(WWl, WWc, WWr, rho0)
+        return new(WWl, WWc, WWr, rho0, tp)
     end
 
 

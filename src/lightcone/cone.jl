@@ -2,7 +2,7 @@
 builds a (length n) tMPS with a single tensor with one (time,physical) open leg.
 After rotation, initial state goes to the *left*."""
 
-function init_cone_n(tp::tmpo_params, n::Int=3)
+function init_cone(tp::tmpo_params, n::Int=3)
 
     b = FoldtMPOBlocks(tp)
 
@@ -22,6 +22,28 @@ function init_cone_n(tp::tmpo_params, n::Int=3)
 end
 
 
+""" Given an MPO A and a MPS ψ with length(A) = length(ψ)+1, 
+Extends MPS ψ to the *right* by one site by applying the MPO,
+Returns a new MPS which is the extension of ψ, with siteinds matching those of A
+```
+        | | | | | |  |
+ [rho0]-o-o-o-o-o-o--o--[op]
+        | | | | | |  V
+        o-o-o-o-o-o
+``` 
+"""
+function apply_extend(A::MPO, ψ::MPS)
+
+    ψc = deepcopy(ψ)
+    push!(ψc.data, ITensor(1))
+    ψc = applyn(A, ψc)
+    return ψc
+end
+
+
+
+
+
 
 """
 One step of the light cone algorithm: takes left and right tMPS ll, rr,
@@ -34,19 +56,23 @@ Returns the updated left-right tMPS
 """
 function extend_tmps_cone(rr::MPS, ll::MPS, 
     op_R::Vector{<:Number}, op_L::Vector{<:Number}, 
-    tp::tmpo_params,
+    b::FoldtMPOBlocks,
     truncp::trunc_params,
     compute_r2::Bool=false)
 
-    time_sites = siteinds(rr)
 
-    push!(time_sites, Index(dim(time_sites[1]), tags="Site,time_fold,n=$(length(time_sites)+1)")) 
+    #b = FoldtMPOBlocks(tp)
 
-    tmpo = folded_tMPO(tp, time_sites; fold_op=op_R)
-    tmpo = extend_tmpo()
+    ts = siteinds(rr)
+    time_dim = dim(b.WWc,1)
+    push!(ts, Index(time_dim, tags="Site,n=$(length(ll)+1),time_fold"))
+
+    tmpo = folded_tMPO_R(b, ts, op_R)
+
     psi_R = apply_extend(tmpo, rr)
 
-    tmpo = swapprime(folded_tMPO(tp, time_sites; fold_op=op_L), 0, 1, "Site")
+    tmpo = folded_tMPO_L(b, ts, op_L) 
+    # =swapprime(folded_tMPO(tp, time_sites; fold_op=op_L), 0, 1, "Site")
 
     psi_L = apply_extend(tmpo, ll)
 
@@ -59,26 +85,6 @@ function extend_tmps_cone(rr::MPS, ll::MPS,
 
     return rr, ll, gen_renyi2 # ents
 
-end
-
-
-""" Extends MPS ψ to the *right* by one site by applying the MPO A on top,
-Returns a new MPS which is the extension of ψ, with siteinds matching those of A
-The p' leg of the MPO on the last site is closed by a `close_op` vector 
-```
-        | | | | | |  |
- [rho0]-o-o-o-o-o-o--o--[op]
-        | | | | | |  V
-        o-o-o-o-o-o
-``` 
-"""
-
-function apply_extend(A::MPO, ψ::MPS)
-
-    ψc = deepcopy(ψ)
-    push!(ψc.data, ITensor(1))
-    ψc = applyn(A, ψc)
-    return ψc
 end
 
 
@@ -116,18 +122,19 @@ function run_cone(psi::MPS,
 
     infos = Dict(:ts => ts, :truncp => truncp, :tp => tp, :op => op)
 
+    b = FoldtMPOBlocks(tp)
 
     p = Progress(nsteps; desc="[cone] $cutoff=$(truncp.cutoff), maxbondim=$(truncp.maxbondim)), method=$(truncp.ortho_method)", showspeed=true) 
 
-    for dt = 1:nsteps
+    for dt = length(psi):nsteps
         
         # Original should work 
         llwork = deepcopy(ll)
         # if we're worried about symmetry, evolve separately L and R 
-        ll,_, ents = extend_tmps_cone(llwork, rr, Id, op, tp, truncp)
+        ll,_, ents = extend_tmps_cone(llwork, rr, Id, op, b, truncp)
         push!(gen_r2sL, ents)
 
-        _,rr, ents = extend_tmps_cone(llwork, rr, op, Id, tp, truncp)
+        _,rr, ents = extend_tmps_cone(llwork, rr, op, Id, b, truncp)
         push!(gen_r2sR, ents)
 
 
@@ -137,7 +144,7 @@ function run_cone(psi::MPS,
         ll = ll * sqrt(1/overlapLR)
         rr = rr * sqrt(1/overlapLR)
 
-        evs_computed = compute_expvals(ll, rr, ["all"], tp)
+        evs_computed = compute_expvals(ll, rr, ["all"], b)
         mergedicts!(expvals, evs_computed)
 
 

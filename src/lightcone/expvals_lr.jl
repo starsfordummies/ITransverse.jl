@@ -1,11 +1,7 @@
 """ Build exp value <L|O|R> for a single operator `op`.
  In order to avoid normalization issues, we build both <L|OR> and <L|1R> overlaps, 
  the exp value is given by <L|OR>/<L|1R> """
-function expval_LR(ll::MPS, rr::MPS, op::Vector{<:Number}, tp::tmpo_params)
-
-    b = FoldtMPOBlocks(tp)
-
-    #fold_id = ComplexF64[1,0,0,1]
+function expval_LR(ll::MPS, rr::MPS, op::Vector{<:Number}, b::FoldtMPOBlocks)
 
     time_sites = siteinds(rr)
     tmpo = swapprime(folded_tMPO(b, time_sites), 0, 1, "Site")
@@ -52,8 +48,7 @@ function expval_LR_twocol(ll::MPS, rr::MPS, op::Vector{ComplexF64}, tp::tmpo_par
 end
 
 """ Build exp value <L|opLopR|R> for a pair of local operator `opL` and `opR` """ 
-function expval_LR(ll::MPS, rr::MPS, opL::Vector{ComplexF64}, opR::Vector{ComplexF64}, tp::tmpo_params)
-    b = FoldtMPOBlocks(tp)
+function expval_LR(ll::MPS, rr::MPS, opL::Vector{ComplexF64}, opR::Vector{ComplexF64}, b::FoldtMPOBlocks)
 
     time_sites = siteinds(ll)
     tmpo = folded_tMPO(b, time_sites, opL)
@@ -84,7 +79,7 @@ end
 We pass the list of local operators to compute as a (regular) MPO, 
 which we contract to the top of the tMPO 
 It may be more flexible """
-function expval_LR_open(ll::MPS, rr::MPS, ops::MPO, tp::tmpo_params)
+function expval_LR_open(ll::MPS, rr::MPS, ops::MPO, b::FoldtMPOBlocks)
 
     # TODO allow for longer MPOs (longer lists of local ops)
 
@@ -93,15 +88,20 @@ function expval_LR_open(ll::MPS, rr::MPS, ops::MPO, tp::tmpo_params)
     time_sites_L = siteinds(ll)
     time_sites_R = siteinds(rr)
 
-    tMPO1, li1, ri1 = build_folded_open_tMPO(tp, time_sites_L)
-    tMPO2, li2, ri2 = build_folded_open_tMPO(tp, time_sites_R)
+    tMPO1= folded_open_tMPO(b, time_sites_L)
+    tMPO2= folded_open_tMPO(b, time_sites_R)
 
-    rho0 = (tp.init_state) * (tp.init_state')
-    tMPO1[end] *= ITensor(rho0, ri1)
-    tMPO2[end] *= ITensor(rho0, ri2)
+    rho0 = b.rho0
+    tMPO1[1] = rho0 * delta(ind(rho0,1), linkind(tMPO1,1))
+    tMPO2[1] = rho0 * delta(ind(rho0,1), linkind(tMPO2,1))
  
-    ϵ_op[1] *= delta(combinedind(cs1), li1)
-    ϵ_op[2] *= delta(combinedind(cs2), li2)
+    e1 = ops[1]
+    e2 = ops[2]
+    e1 *= delta(siteind(ops,1), linkinds(tMPO1)[end])
+    e2 *= delta(siteind(ops,2), linkinds(tMPO2)[end])
+
+    pushfirst!(ll, ITensor(1))
+    push!(ll, ITensor(1))
 
     LO = applyn(tMPO1, ll)
     OR = applyn(tMPO2, rr) # todo swap indices for non-symmetric MPOs
@@ -114,8 +114,47 @@ function expval_LR_open(ll::MPS, rr::MPS, ops::MPO, tp::tmpo_params)
     deleteat!(LO.data,1)
     deleteat!(OR.data,1)
 
-    LO[1] *= ITensor(ComplexF64[1,0,0,1], li1)
-    OR[1] *= ITensor(ComplexF64[1,0,0,1], li2)
+    LO[1] *= ITensor(ComplexF64[1,0,0,1], linkinds(tMPO1)[end])
+    OR[1] *= ITensor(ComplexF64[1,0,0,1], linkinds(tMPO2)[end])
+
+    #normalization 
+    ev_L11R = overlap_noconj(LO, OR)
+
+    return ev_LOOR/ev_L11R
+
+end
+
+function expval_LR_ops(ll::MPS, rr::MPS, ops::MPO, b::FoldtMPOBlocks)
+
+    # TODO allow for longer MPOs (longer lists of local ops)
+
+    @assert length(ops) == 2
+
+    time_sites_L = siteinds(ll)
+    new_timesite = Index(dim(time_sites_L[end]))
+    push!(time_sites_L, new_timesite)
+    time_sites_R = siteinds(rr)
+    push!(time_sites_R, new_timesite)
+
+    tMPO1= folded_tMPO_L(b, time_sites_L)
+    tMPO2= folded_tMPO_R(b, time_sites_R)
+
+    e1 = ops[1] * delta(siteind(ops,1), linkinds(tMPO1)[end])
+    e2 = ops[2] * delta(siteind(ops,2), linkinds(tMPO2)[end])
+
+    tMPO1[end] = e1
+    tMPO2[end] = e2
+    
+    LO = apply_extend(tMPO1, ll)
+    OR = apply_extend(tMPO2, rr) # todo swap indices for non-symmetric MPOs
+
+    ev_LOOR = overlap_noconj(LO, OR)
+
+    LO[end-1] *= ITensor([1,0,0,1], linkinds(LO)[end])
+    OR[end-1] *= ITensor([1,0,0,1], linkinds(OR)[end])
+
+    pop!(LO.data)
+    pop!(OR.data)
 
     #normalization 
     ev_L11R = overlap_noconj(LO, OR)
@@ -127,35 +166,38 @@ end
 
 
 """ Compute exp value for energy density in Ising """
-function expval_en_density(ll::MPS, rr::MPS, tp::tmpo_params)
+function expval_en_density(ll::MPS, rr::MPS, b::FoldtMPOBlocks)
+
+    tp = b.tp
 
     time_sites_L = siteinds(ll)
     time_sites_R = siteinds(rr)
 
-    tMPO1, li1, ri1 = build_folded_open_tMPO(tp, time_sites_L)
-    tMPO2, li2, ri2 = build_folded_open_tMPO(tp, time_sites_R)
+    @show siteinds(ll)
+    @show siteinds(rr)
+    tMPO1 = folded_open_tMPO(b, time_sites_L)
+    tMPO2 = folded_open_tMPO(b, time_sites_R)
 
-    rho0 = (tp.init_state) * (tp.init_state')
-    tMPO1[end] *= ITensor(rho0, ri1)
-    tMPO2[end] *= ITensor(rho0, ri2)
+    tMPO1[1] = b.rho0 * delta(ind(b.rho0,1), linkind(tMPO1,1))
+    tMPO2[1] = b.rho0 * delta(ind(b.rho0,1), linkind(tMPO2,1))
 
     ϵ_op = ITransverse.ChainModels.epsilon_brick_ising(tp)
-    ϵ_op[1] *= delta(siteind(ϵ_op,1), li1)
-    ϵ_op[2] *= delta(siteind(ϵ_op,2), li2)
+    ϵ_op[1] *= delta(siteind(ϵ_op,1), linkinds(tMPO1)[end])
+    ϵ_op[2] *= delta(siteind(ϵ_op,2), linkinds(tMPO2)[end])
 
-    LO = applyn(tMPO1, ll)
-    OR = applyn(tMPO2, rr) # todo swap indices for non-symmetric MPOs
+    LO = apply_extend(tMPO1, ll)
+    OR = apply_extend(tMPO2, rr) # todo swap indices for non-symmetric MPOs
 
-    insert!(LO.data, 1, ϵ_op[1])
-    insert!(OR.data, 1, ϵ_op[2])
+    LO[end] = ϵ_op[1]
+    OR[end] = ϵ_op[2]
 
     ev_LOOR = overlap_noconj(LO, OR)
 
     deleteat!(LO.data,1)
     deleteat!(OR.data,1)
 
-    LO[1] *= ITensor(ComplexF64[1,0,0,1], li1)
-    OR[1] *= ITensor(ComplexF64[1,0,0,1], li2)
+    LO[end] *= ITensor(ComplexF64[1,0,0,1], linkinds(tMPO1)[end])
+    OR[end] *= ITensor(ComplexF64[1,0,0,1], linkinds(tMPO2)[end])
 
     #normalization 
     ev_L11R = overlap_noconj(LO, OR)
@@ -166,62 +208,7 @@ end
 
 
 
-""" TODO CHECK """
-function expval_en_density_old(ll::MPS, rr::MPS, tp::tmpo_params)
-
-    time_sites_L = siteinds(ll)
-    time_sites_R = siteinds(rr)
-
-    tMPO1, li1, ri1 = build_folded_open_tMPO(tp, time_sites_L)
-    tMPO2, li2, ri2 = build_folded_open_tMPO(tp, time_sites_L)
-
-    rho0 = (tp.init_state) * (tp.init_state')
-    tMPO1[end] *= ITensor(rho0, ri1)
-    tMPO2[end] *= ITensor(rho0, ri2)
-
-    temp_s = siteinds("S=1/2",2)
-    os = OpSum()
-    os += tp.mp.JXX, "X",1,"X",2
-    os += tp.mp.hz/2,  "I",1,"Z",2
-    os += tp.mp.hz/2,  "Z",1,"I",2
-    os += tp.mp.λx/2,  "I",1,"X",2
-    os += tp.mp.λx/2,  "X",1,"I",2
-
-    #ϵ_op = ITensor(os, temp_s, temp_s')
-    ϵ_op = MPO(os, temp_s)
-    cs1 = combiner(temp_s[1], temp_s[1]')
-    cs2 = combiner(temp_s[2], temp_s[2]')
-    ϵ_op[1] *= cs1 
-    ϵ_op[2] *= cs2 
-    ϵ_op[1] *= delta(combinedind(cs1), li1)
-    ϵ_op[2] *= delta(combinedind(cs2), li2)
-
-    TTop = applyn(tMPO2, tMPO1)
-    TTop[1] *= delta(li2',li2)
-
-    tMPO_eps = deepcopy(TTop)
-
-    tMPO_eps[1] *= ϵ_op[1]
-    tMPO_eps[1] *= ϵ_op[2]
-
-    LOO = applyn(tMPO_eps, ll)
-    ev_LOOR = overlap_noconj(LOO, rr)
-
-
-    tMPO_11 = TTop 
-    tMPO_11[1] *= ITensor(ComplexF64[1,0,0,1], li1)
-    tMPO_11[1] *= ITensor(ComplexF64[1,0,0,1], li2)
-
-    #normalization 
-    L11 = applyn(tMPO_11, ll)
-    ev_L11R = overlap_noconj(L11, rr)
-
-    return ev_LOOR/ev_L11R
-
-end
-
-
-function compute_expvals(ll::AbstractMPS, rr::AbstractMPS, op_list::Vector{String}, tp::tmpo_params)
+function compute_expvals(ll::AbstractMPS, rr::AbstractMPS, op_list::Vector{String}, b::FoldtMPOBlocks)
 
        # ! TODO To save time, split calculation L1R and L11R in separate function called only once - make also optional ..
 
@@ -234,13 +221,15 @@ function compute_expvals(ll::AbstractMPS, rr::AbstractMPS, op_list::Vector{Strin
     for op in op_list
         if op == "X"
             #println("X")
-            allevs["X"] = expval_LR(ll, rr, ComplexF64[0,1,1,0], tp)
+            allevs["X"] = expval_LR(ll, rr, [0,1,1,0], b)
         elseif op == "Z"
             #println("Z")
-            allevs["Z"] = expval_LR(ll, rr, ComplexF64[1,0,0,-1], tp)
+            allevs["Z"] = expval_LR(ll, rr, [1,0,0,-1], b)
         elseif op == "eps"
             #println("eps")
-            allevs["eps"] = expval_en_density(ll, rr, tp)
+            ϵ_op = ITransverse.ChainModels.epsilon_brick_ising(b.tp)
+            allevs["eps"] = expval_LR_ops(ll, rr, ϵ_op, b)
+            #allevs["eps"] = expval_en_density(ll, rr, b)
         else
             @warn "$(op) not implemented"
         end
