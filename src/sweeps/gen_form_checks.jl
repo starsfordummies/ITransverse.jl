@@ -1,8 +1,11 @@
-
 """ Check that two MPS are in (generalized-symmetric) *left* canonical form """
 function check_gencan_left(psi::MPS, phi::MPS; verbose::Bool=false)
 
+    mpslen = length(psi)
+
     is_left_gencan = true
+    is_left_s = Bool[]
+
     @assert length(psi) == length(phi)
 
     phi = match_siteinds(psi, sim(linkinds, phi))
@@ -11,68 +14,72 @@ function check_gencan_left(psi::MPS, phi::MPS; verbose::Bool=false)
         @info "Checking LEFT gen/sym form"
     end
     
-    if abs(overlap_noconj(psi,phi) - 1.) > 1e-7 || abs(1. - scalar(psi[end]*phi[end]*delta(linkinds(psi)[end],linkinds(phi)[end] ))) > 1e-7
-        println("overlap = $(overlap_noconj(psi,phi))), alt = $(scalar(psi[end]*phi[end]*delta(linkinds(psi)[end],linkinds(phi)[end] )))")
-    end
 
     # Start from the left 
     left_env = ITensor(1.)
-    for (ii, (Ai,Bi)) in enumerate(zip(psi[1:end-1], phi[1:end-1]))
-        left_env =  left_env * Ai
-        left_env = left_env * prime(Bi, commoninds(Bi,linkinds(phi)))    #* delta(wLa, wLb) )
+    for ii = 1:mpslen-1
+        left_env *= psi[ii]
+        left_env *= phi[ii]
         @assert order(left_env) == 2
-        if norm(array(left_env)- diagm(diag(array(left_env)))) > 0.1
-            @warn("[L]non-diag@[$ii]")
-            is_left_gencan = false
-        end
-        delta_norm = norm(array(left_env) - I(size(left_env)[1])) 
-        if delta_norm > 0.0001
-            @warn("[L]non-can@[$ii], $delta_norm")
-            @show array(left_env)
-            is_left_gencan = false
-        end
+        
+        is_left_gencan = check_diag_matrix(matrix(left_env))
+        is_left_gencan = check_id_matrix(matrix(left_env))
+
+        push!(is_left_s, is_left_gencan)
     end
+
     if verbose
-        @info("Done checking RIGHT gen/sym form")
+        @info("Done checking LEFT gen/sym form")
+    end
+
+    is_left_gencan = all(is_left_s)
+
+    if is_left_gencan
+        @info("overlap = $(overlap_noconj(psi,phi))), 
+        alt = $(scalar(psi[end]*phi[end]* left_env )))")
     end
     
     return is_left_gencan
 end
 
 
-""" Check that two MPS are in (generalized-symmetric) *right* canonical form
-TODO not implemented yet  """
+""" Check that two MPS are in (generalized-symmetric) *right* canonical form"""
 function check_gencan_right(psi::MPS, phi::MPS; verbose::Bool=false)
 
-    is_right_gencan = true 
+    mpslen = length(psi)
+
+    is_right_s = Bool[] 
+
+    # this should make that psi and phi have different linkinds but same siteinds
+    phi = match_siteinds(psi, sim(linkinds, phi))
 
     if verbose
         @info "Checking RIGHT gen/sym form"
     end
     
-    if abs(overlap_noconj(psi,phi) - 1.) > 1e-7 || abs(1. - scalar(psi[end]*phi[end]*delta(linkinds(psi)[end],linkinds(phi)[end] ))) > 1e-7
-        println("overlap = $(overlap_noconj(psi,phi))), alt = $(scalar(psi[end]*phi[end]*delta(linkinds(psi)[end],linkinds(phi)[end] )))")
-    end
 
     # Start from right side
     right_env = ITensor(1.)
-    for (ii, (Ai,Bi)) in enumerate(zip(psi[end:-1:1], phi[end:-1:1]))
-        right_env =  right_env * Ai
-        right_env = right_env * prime(Bi, commoninds(Bi,linkinds(phi)))    #* delta(wLa, wLb) )
+    for ii = mpslen:-1:2
+        right_env *= psi[ii]
+        right_env *= phi[ii]
+
         @assert order(right_env) == 2
-        if norm(array(right_env)- diagm(diag(array(right_env)))) > 0.1
-            @warn("[R]non-diag@[$ii]")
-            is_right_gencan = false
-        end
-        delta_norm = norm(array(right_env) - I(size(right_env)[1])) 
-        if delta_norm > 0.01
-            @warn("[R]non-can@[$ii], $delta_norm")
-            is_right_gencan = false
-        end
+
+        is_right_gencan = check_diag_matrix(matrix(right_env))
+        is_right_gencan = check_id_matrix(matrix(right_env))
+
+        push!(is_right_s, is_right_gencan)
     end
+
     if verbose
         @info("Done checking RIGHT gen/sym form")
     end
+
+    if all(is_right_s)
+        @info ("overlap = $(overlap_noconj(psi,phi))), 
+        alt = $(scalar(right_env * psi[1]*phi[1]))")
+    end
     
-    return is_right_gencan
+    return all(is_right_s)
 end
