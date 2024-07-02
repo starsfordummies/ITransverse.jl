@@ -82,8 +82,7 @@ using .ChainModels
 
 export ising_tp
 
-export pm_params, 
-    trunc_params, 
+export trunc_params, 
     model_params, 
     tmpo_params
 
@@ -129,6 +128,10 @@ export
      folded_tMPO_R,
      folded_right_tMPS,
      apply_extend
+    
+include("power_method/pm_params.jl")
+
+export PMParams
 
 include("power_method/pm.jl")
 include("power_method/symm_pm.jl")
@@ -149,7 +152,7 @@ export powermethod_sym,
 
 
 include("lightcone/expvals_lr.jl")
-export expval_LR
+export expval_LR, compute_expvals
 
 include("lightcone/cone.jl")
 

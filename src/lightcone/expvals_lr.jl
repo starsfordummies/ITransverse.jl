@@ -207,7 +207,8 @@ function expval_en_density(ll::MPS, rr::MPS, b::FoldtMPOBlocks)
 end
 
 
-
+""" Give as input Left and Right MPS, a list of operators to build and the FoldMPOBlocks.
+Returns a Dictionary with expectation values <L|O|R>/<L|1|R> """
 function compute_expvals(ll::AbstractMPS, rr::AbstractMPS, op_list::Vector{String}, b::FoldtMPOBlocks)
 
        # ! TODO To save time, split calculation L1R and L11R in separate function called only once - make also optional ..

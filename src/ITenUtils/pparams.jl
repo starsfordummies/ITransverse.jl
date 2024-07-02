@@ -39,21 +39,9 @@ struct trunc_params
     maxbondim::Int64
     ortho_method::String
 
-    #trunc_params() = new(1e-10, 100, "SVD")
 end
 
-struct pm_params
-    truncp::trunc_params
-    itermax::Int64
-    ds2_converged::Float64
-    increase_chi::Bool
-
-    function pm_params(; truncp=trunc_params(), itermax::Int=200,
-        ds2_converged::Float64=1e-5, increase_chi::Bool=false)
-        return new(truncp, itermax, ds2_converged, increase_chi)
-    end
-
-end
+trunc_params() = trunc_params(1e-10, 100, "SVD")
 
  
 

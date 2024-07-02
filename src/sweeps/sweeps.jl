@@ -76,7 +76,8 @@ So this can be seen as a "RL: Right(can)Left(gen)" sweep
 
 
 
-""" Brings to right generalized canonical form two MPS, truncating along the way if necessary """
+""" Brings to right generalized canonical form two MPS, truncating along the way if necessary.
+Returns updated R, L and effective entropies calculated form the SVD of the environments """
 function truncate_rsweep(right_mps::MPS, left_mps::MPS; cutoff::Real, chi_max::Int)
 
     mpslen = length(left_mps)
@@ -97,12 +98,20 @@ function truncate_rsweep(right_mps::MPS, left_mps::MPS; cutoff::Real, chi_max::I
         right_env *= Ai 
         right_env *= Bi 
 
+
+        #@show norm(right_env)
+
         rnorm = norm(right_env)
+
+        if rnorm > 1e6 || rnorm < 1e-6
+            @warn "Norm of environment is $(rnorm), watch for roundoff errs"
+        end
+
         right_env /= rnorm
         
         @assert order(right_env) == 2
 
-        U,S,Vdag = svd(right_env, inds(right_env)[1]; cutoff=cutoff, maxdim=chi_max)
+        U,S,Vdag = svd(right_env, ind(right_env,1); cutoff=cutoff, maxdim=chi_max)
 
         sqS = sqrt.(S)
         isqS = sqS.^(-1)

@@ -2,7 +2,7 @@ using Revise
 using ITensors, JLD2
 
 using ITransverse
-using ITransverse.ITenUtils
+#using ITransverse.ITenUtils
 
 ITensors.enable_debug_checks()
 
@@ -11,54 +11,55 @@ function main_folded_pm()
 
     tp = ising_tp()
 
-    SVD_cutoff = 1e-14
+    cutoff = 1e-14
     maxbondim = 120
     itermax = 100
     verbose=false
     ds2_converged=1e-6
 
-    pm_params = pm_params(itermax, SVD_cutoff, maxbondim, verbose, ds2_converged)
+    truncp = trunc_params(cutoff, maxbondim, "SVD")
+
+    pm_params = PMParams(truncp, itermax, ds2_converged, true)
 
     sigX = ComplexF64[0,1,1,0]
-    sigZ = ComplexF64[1,0,0,-1]
-    Id = ComplexF64[1,0,0,1]
+
+    evs = [] 
+    evssym = []
 
     leftvecs = []
     ds2s = []
 
     ts = 30:1:30
 
-    genVNs = [] 
-
-    renyi2s = []
-    renyi2alts = []
+    b = FoldtMPOBlocks(tp)
 
     for Nsteps in ts
 
-        time_sites = siteinds("S=3/2", Nsteps)
+        time_sites = siteinds(4, Nsteps)
 
         
-        init_mps = build_folded_left_tMPS(tp, time_sites)
-        mpo_X = build_folded_tMPO(tp, sigX, time_sites)
-        mpo_Z = build_folded_tMPO(tp, sigZ, time_sites)
-        mpo_1 = build_folded_tMPO(tp, Id, time_sites)
+        init_mps = folded_right_tMPS(b, time_sites)
+        mpo_X = folded_tMPO(b, time_sites, sigX)
+        mpo_1 = folded_tMPO(b, time_sites)
 
-        ll, rr, lO, Or, ds2_pm, dns  = powermethod(init_mps, mpo_1, mpo_X, pm_params) # kwargs)
+        rr, ll, ds2_pm  = powermethod(init_mps, mpo_1, mpo_X, pm_params) # kwargs)
         #ll, rr, lO, Or, vals, deltas  = pm_all(init_mps, mpo_1, mpo_X, pm_params) # kwargs)
         #ll, rr, lO, Or, vals, deltas  = pm_svd(init_mps, mpo_1, mpo_X, pm_params) # kwargs)
 
+        ev = compute_expvals(ll, rr, ["X"], b)
 
-        llalt, ds2_pm  = powermethod_Lonly(init_mps, mpo_1, mpo_X, pm_params) 
+        rralt, ds2_pm  = powermethod_Lonly(init_mps, mpo_1, mpo_X, pm_params) 
 
-        ev0 = overlap_noconj(ll, rr)
-        push!(ev0s, ev0)
+        evsym = compute_expvals(rralt, rralt, ["X"], b)
 
+        push!(evs, ev)
+        push!(evssym, evsym)
 
     end
 
-    return leftvecs, evs, ents, ds2s, ts 
+    return leftvecs, evs, evssym, ds2s, ts 
 end
 
 
 
-leftvecs, evs, ents, ds2s, ts= main_folded_pm()
+leftvecs, evs, evssym, ds2s, ts= main_folded_pm()
