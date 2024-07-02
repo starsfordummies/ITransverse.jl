@@ -123,11 +123,15 @@ include("tmpo/build_fold_tmpo.jl")
 export 
      #build_ising_folded_tMPO,  # superseded by build_ham_ ? 
      #build_ising_folded_tMPS,
-     build_folded_tMPO_regul_beta, 
-     build_folded_left_tMPS,
-     folded_tMPO,
-     folded_open_tMPO
+    #  build_folded_tMPO_regul_beta, 
+    #  build_folded_left_tMPS,
+    #  folded_tMPO,
+    #  folded_open_tMPO
 
+     folded_tMPO,
+     folded_tMPO_R,
+     folded_right_tMPS,
+     apply_extend
 
 include("power_method/pm.jl")
 include("power_method/symm_pm.jl")

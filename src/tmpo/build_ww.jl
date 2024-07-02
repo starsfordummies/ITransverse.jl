@@ -1,7 +1,7 @@
 
 """
 We rotate our space vectors to the *right* by 90°, ie 
-
+(L,R,P,P') => (P',P,R,L)
 ```
    |p'             |L
 L--o--R   =>    p--o--p'
@@ -33,6 +33,7 @@ function rotate_90clockwise(W::ITensor; L=nothing, R=nothing, P=nothing, Ps=noth
 end
 
 
+""" Convention we stick to for all the following: indices for tMPO WWl before rotations are  L, R, P, P' """
 function build_WW(tp::tmpo_params)
     eH = build_expH(tp)
     WWc, iCwL, iCwR, iCp, iCps = build_WWc(eH)
@@ -142,7 +143,7 @@ function build_WWl(eH_space::MPO)
 end
 
 
-
+""" Basic building blocks for the folded tMPS/tMPO, folded tensors of time evolution rotated 90deg clockwise"""
 struct FoldtMPOBlocks
     WWl::ITensor
     WWc::ITensor
@@ -166,6 +167,7 @@ struct FoldtMPOBlocks
         ir = (ind(WWr,1), Index(1), ind(WWr,2),ind(WWr,3))
         WWr = replaceinds(WWr, ir, inds(WWc))
 
+        # We can accept either an initial state or initial folded state (DM)
         if length(init_state) == dim(P)
             rho0 = ITensor(init_state, Index(dim(P),"virt,time,rho0"))
         elseif length(init_state) == dim(P) ÷ 2
@@ -173,8 +175,9 @@ struct FoldtMPOBlocks
             rho0 = ITensor(rho0, Index(dim(P),"virt,time,rho0"))
         else
             @error "Dimension of init_state is $(length(init_state)) vs linkdim $(dim(P))"
-            rho0 = ITensor(1)
+            rho0 = ITensor(0)
         end
+
         return new(WWl, WWc, WWr, rho0)
     end
 

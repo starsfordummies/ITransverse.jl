@@ -146,8 +146,8 @@ end
 function folded_tMPO_L(b::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::Vector{<:Number} = [1,0,0,1])
     oo = MPO(fill(b.WWc, length(ts)))
     oo[end] = b.WWl
-    #s, sp, r, l = inds(b.WWc)
-    ll = [Index(dim(r),"Link,time_fold,l=$(ii-1)") for ii in 1:length(ts)+1]
+    ri, = ind(b.WWc,3)
+    ll = [Index(dim(ri),"Link,time_fold,l=$(ii-1)") for ii in 1:length(ts)+1]
     for ii in eachindex(oo)
         newinds = (ts[ii],ts[ii]',ll[ii+1],ll[ii])
         oo[ii] = replaceinds(oo[ii], inds(b.WWc), newinds)
@@ -168,8 +168,8 @@ end
 function folded_tMPO_R(b::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::Vector{<:Number} = [1,0,0,1])
     oo = MPO(fill(b.WWc, length(ts)))
     oo[end] = b.WWr
-    #s, sp, r, l = inds(b.WWc)
-    ll = [Index(dim(r),"Link,time_fold,l=$(ii-1)") for ii in 1:length(ts)+1]
+    ri = ind(b.WWc,3)
+    ll = [Index(dim(ri),"Link,time_fold,l=$(ii-1)") for ii in 1:length(ts)+1]
     for ii in eachindex(oo)
         newinds = (ts[ii],ts[ii]',ll[ii+1],ll[ii])
         oo[ii] = replaceinds(oo[ii], inds(b.WWc), newinds)
