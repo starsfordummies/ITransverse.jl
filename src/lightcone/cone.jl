@@ -56,16 +56,10 @@ Returns the updated left-right tMPS
 """
 function extend_tmps_cone(rr::MPS, ll::MPS, 
     op_R::Vector{<:Number}, op_L::Vector{<:Number}, 
+    ts::Vector{<:Index},
     b::FoldtMPOBlocks,
     truncp::trunc_params,
     compute_r2::Bool=false)
-
-
-    #b = FoldtMPOBlocks(tp)
-
-    ts = siteinds(rr)
-    time_dim = dim(b.WWc,1)
-    push!(ts, Index(time_dim, tags="Site,n=$(length(ll)+1),time_fold"))
 
     tmpo = folded_tMPO_R(b, ts, op_R)
 
@@ -109,7 +103,7 @@ function run_cone(psi::MPS,
     vn_ents = []
     gen_r2sL = []
     gen_r2sR = []
-    ts = [] 
+    times = [] 
 
     entropies = Dict(:genr2L => gen_r2sL, :genr2R => gen_r2sR, :vn => vn_ents)
 
@@ -120,9 +114,11 @@ function run_cone(psi::MPS,
     end
 
 
-    infos = Dict(:ts => ts, :truncp => truncp, :tp => tp, :op => op)
+    infos = Dict(:times => times, :truncp => truncp, :tp => tp, :op => op)
 
     b = FoldtMPOBlocks(tp)
+    time_dim = dim(b.WWc,1)
+
 
     p = Progress(nsteps; desc="[cone] $cutoff=$(truncp.cutoff), maxbondim=$(truncp.maxbondim)), method=$(truncp.ortho_method)", showspeed=true) 
 
@@ -130,19 +126,23 @@ function run_cone(psi::MPS,
         
         # Original should work 
         llwork = deepcopy(ll)
+
+        ts = siteinds(ll)
+        push!(ts, Index(time_dim, tags="Site,n=$(length(ll)+1),time_fold"))
+
         # if we're worried about symmetry, evolve separately L and R 
-        ll,_, ents = extend_tmps_cone(llwork, rr, Id, op, b, truncp)
+        ll,_, ents = extend_tmps_cone(llwork, rr, Id, op, ts, b, truncp)
         push!(gen_r2sL, ents)
 
-        _,rr, ents = extend_tmps_cone(llwork, rr, op, Id, b, truncp)
+        _,rr, ents = extend_tmps_cone(llwork, rr, op, Id, ts, b, truncp)
         push!(gen_r2sR, ents)
 
 
         overlapLR = overlap_noconj(ll,rr)
 
         #TODO  renormalize by overlap ?
-        ll = ll * sqrt(1/overlapLR)
-        rr = rr * sqrt(1/overlapLR)
+        ll *= sqrt(1/overlapLR)
+        rr *= sqrt(1/overlapLR)
 
         evs_computed = compute_expvals(ll, rr, ["all"], b)
         mergedicts!(expvals, evs_computed)
@@ -151,16 +151,14 @@ function run_cone(psi::MPS,
         push!(chis, maxlinkdim(ll))
         push!(overlaps, overlapLR)
 
-        llc = deepcopy(ll)
-        orthogonalize!(llc,1)
-        ent = vn_entanglement_entropy(llc)
+        ent = vn_entanglement_entropy(ll)
 
         if save_cp && length(ll) > 50 && length(ll) % 20 == 0
             jldsave("cp_cone_$(length(ll))_chi_$(chis[end]).jld2"; psi, ll, rr, chis, expvals, entropies, infos)
         end
 
         push!(vn_ents, ent)
-        push!(ts, length(ll)*tp.mp.dt)
+        push!(times, length(ll)*tp.mp.dt)
 
         next!(p; showvalues = [(:Info,"[$(length(ll))] χ=$(maxlinkdim(ll)), (L|R) = $overlapLR " )])
 

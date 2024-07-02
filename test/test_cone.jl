@@ -23,18 +23,18 @@ plus_state = Vector{ComplexF64}([1/sqrt(2),1/sqrt(2)])
 
 init_state = plus_state
 
-cutoff = 1e-14
+cutoff = 1e-20
 maxbondim = 200
 ortho_method = "SVD"
 
 truncp = trunc_params(cutoff, maxbondim, ortho_method)
 
-Nsteps = 40
+Nsteps = 60
 
 #time_sites = siteinds("S=3/2", 1)
 
 mp = model_params("S=1/2", JXX, hz, gx, dt)
-tp = tmpo_params("S=1/2", "S=1/2", build_expH_ising_parallel_field_murg, mp, nbeta, init_state)
+tp = tmpo_params(build_expH_ising_murg, mp, nbeta, init_state, Id)
 
 # mp = model_params("S=1/2", JXX, hz, 0.0, dt)
 # tp = tmpo_params("S=1/2", "S=1/2", build_expH_ising_murg, mp, dt, nbeta, init_state)
@@ -47,4 +47,5 @@ c0 = init_cone(tp)
 
 psi, psiR, chis, expvals, entropies, infos = run_cone(c0, Nsteps, optimize_op, tp, truncp)
 
-@test abs(expvals["X"][end] - ITransverse.ITenUtils.bench_X_04_plus[length(psi)]) < 0.002
+@test abs(expvals["X"][end] - ITransverse.ITenUtils.bench_X_04_plus[length(psi)]) < 0.001
+
