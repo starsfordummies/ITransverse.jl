@@ -94,7 +94,7 @@ end
 
 
 """ Given an initial state and a fold_operator as (folded) vectors, build the folded tMPO from those"""
-function folded_tMPO(b::FoldtMPOBlocks, fold_op::ITensor, ts::Vector{<:Index})
+function folded_tMPO(b::FoldtMPOBlocks, ts::Vector{<:Index},  fold_op::ITensor)
     
     tMPO = folded_open_tMPO(b.WWc, ts)
 
@@ -122,11 +122,12 @@ end
 # end
 
 
-
+""" Given building blocks and time sites, builds folded tMPO associated with `fold_op`. 
+Defaults to closing with identity if no operator is specified"""
 function folded_tMPO(b::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::Vector{<:Number} = [1,0,0,1])
     oo = MPO(fill(b.WWc, length(ts)))
-    s, sp, r, l = inds(b.WWc)
-    ll = [Index(dim(r),"Link,time_fold,l=$(ii-1)") for ii in 1:length(ts)+1]
+    ri = ind(b.WWc,3)
+    ll = [Index(dim(ri),"Link,time_fold,l=$(ii-1)") for ii in 1:length(ts)+1]
     for ii in eachindex(oo)
         newinds = (ts[ii],ts[ii]',ll[ii+1],ll[ii])
         oo[ii] = replaceinds(oo[ii], inds(b.WWc), newinds)

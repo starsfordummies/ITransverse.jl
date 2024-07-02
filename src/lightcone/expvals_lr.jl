@@ -1,22 +1,22 @@
 """ Build exp value <L|O|R> for a single operator `op`.
  In order to avoid normalization issues, we build both <L|OR> and <L|1R> overlaps, 
  the exp value is given by <L|OR>/<L|1R> """
-function expval_LR(ll::MPS, rr::MPS, op::Vector{ComplexF64}, tp::tmpo_params)
+function expval_LR(ll::MPS, rr::MPS, op::Vector{<:Number}, tp::tmpo_params)
 
-    fold_id = ComplexF64[1,0,0,1]
+    b = FoldtMPOBlocks(tp)
+
+    #fold_id = ComplexF64[1,0,0,1]
 
     time_sites = siteinds(rr)
-    tmpo = swapprime(build_folded_tMPO(tp, fold_id, time_sites), 0, 1, "Site")
+    tmpo = swapprime(folded_tMPO(b, time_sites), 0, 1, "Site")
     psi1R = applyn(tmpo, rr)
 
     L1R = overlap_noconj(ll,psi1R)
 
-    tmpo = swapprime(build_folded_tMPO(tp, op, time_sites), 0, 1, "Site")
+    tmpo = swapprime(folded_tMPO(b, time_sites, op), 0, 1, "Site")
     psiOR = applyn(tmpo, rr)
 
     LOR = overlap_noconj(ll,psiOR)
-
-
 
     return LOR/L1R
 
@@ -53,25 +53,24 @@ end
 
 """ Build exp value <L|opLopR|R> for a pair of local operator `opL` and `opR` """ 
 function expval_LR(ll::MPS, rr::MPS, opL::Vector{ComplexF64}, opR::Vector{ComplexF64}, tp::tmpo_params)
-
-    fold_id = ComplexF64[1,0,0,1]
+    b = FoldtMPOBlocks(tp)
 
     time_sites = siteinds(ll)
-    tmpo = build_folded_tMPO(tp,  opL, time_sites)
+    tmpo = folded_tMPO(b, time_sites, opL)
     psi_L = applyn(tmpo, ll)
 
     time_sites = siteinds(rr)
-    tmpo = swapprime(build_folded_tMPO(tp, opR, time_sites), 0, 1, "Site")
+    tmpo = swapprime(folded_tMPO(b, time_sites, opR), 0, 1, "Site")
     psi_R = applyn(tmpo, rr)
 
     ev_LOOR = overlap_noconj(psi_L,psi_R)
 
     time_sites = siteinds(ll)
-    tmpo = build_folded_tMPO(tp,  fold_id, time_sites)
+    tmpo = folded_tMPO(b, time_sites)
     psi_L = applyn(tmpo, ll)
 
     time_sites = siteinds(rr)
-    tmpo = swapprime(build_folded_tMPO(tp, fold_id, time_sites), 0, 1, "Site")
+    tmpo = swapprime(folded_tMPO(b, time_sites), 0, 1, "Site")
     psi_R = applyn(tmpo, rr)
 
     ev_L11R = overlap_noconj(psi_L,psi_R)
