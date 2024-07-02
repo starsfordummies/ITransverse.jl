@@ -93,12 +93,13 @@ function truncate_rsweep(right_mps::MPS, left_mps::MPS; cutoff::Real, chi_max::I
         right_env *= Bi 
 
         rnorm = norm(right_env)
+        #@show ii, rnorm
 
         if rnorm > 1e6 || rnorm < 1e-6
             @warn "Norm of environment is $(rnorm), watch for roundoff errs"
         end
 
-        right_env /= rnorm
+        #right_env /= rnorm
         
         @assert order(right_env) == 2
 
