@@ -48,7 +48,7 @@ function main_folded_pm()
 
         ev = compute_expvals(ll, rr, ["X"], b)
 
-        rralt, ds2_pm  = powermethod_Lonly(init_mps, mpo_1, mpo_X, pm_params) 
+        rralt, ds2_pm  = powermethod_Ronly(init_mps, mpo_1, mpo_X, pm_params) 
 
         evsym = compute_expvals(rralt, rralt, ["X"], b)
 

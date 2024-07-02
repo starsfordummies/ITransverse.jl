@@ -49,3 +49,4 @@ psi, psiR, chis, expvals, entropies, infos = run_cone(c0, Nsteps, optimize_op, t
 
 @test abs(expvals["X"][end] - ITransverse.ITenUtils.bench_X_04_plus[length(psi)]) < 0.001
 
+@test check_gencan_right(psi::MPS, phi::MPS; verbose::Bool=false)

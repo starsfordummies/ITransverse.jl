@@ -141,7 +141,7 @@ export powermethod,
     powermethod_converge_norm,
     powermethod_converge_eig,
     powermethod_fold,
-    powermethod_Lonly,
+    powermethod_Ronly,
     pm_all,
     pm_svd
 

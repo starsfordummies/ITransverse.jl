@@ -54,7 +54,7 @@ extends the time MPO and the left-right tMPS by optimizing
 
 Returns the updated left-right tMPS 
 """
-function extend_tmps_cone(rr::MPS, ll::MPS, 
+function extend_tmps_cone(ll::MPS, rr::MPS, 
     op_R::Vector{<:Number}, op_L::Vector{<:Number}, 
     ts::Vector{<:Index},
     b::FoldtMPOBlocks,
@@ -77,7 +77,7 @@ function extend_tmps_cone(rr::MPS, ll::MPS,
         gen_renyi2 = generalized_renyi_entropy(ll, rr, 2, normalize=true)
     end
 
-    return rr, ll, gen_renyi2 # ents
+    return ll, rr, gen_renyi2 # ents
 
 end
 
@@ -124,18 +124,17 @@ function run_cone(psi::MPS,
 
     for dt = length(psi):nsteps
         
-        # Original should work 
-        llwork = deepcopy(ll)
+        rrwork = deepcopy(rr)
 
-        ts = siteinds(ll)
-        push!(ts, Index(time_dim, tags="Site,n=$(length(ll)+1),time_fold"))
+        ts = siteinds(rr)
+        push!(ts, Index(time_dim, tags="Site,n=$(length(rr)+1),time_fold"))
 
         # if we're worried about symmetry, evolve separately L and R 
-        ll,_, ents = extend_tmps_cone(llwork, rr, Id, op, ts, b, truncp)
-        push!(gen_r2sL, ents)
-
-        _,rr, ents = extend_tmps_cone(llwork, rr, op, Id, ts, b, truncp)
+        _,rr, ents = extend_tmps_cone(ll, rrwork, op, Id, ts, b, truncp)
         push!(gen_r2sR, ents)
+
+        ll,_, ents = extend_tmps_cone(ll, rrwork, Id, op, ts, b, truncp)
+        push!(gen_r2sL, ents)
 
 
         overlapLR = overlap_noconj(ll,rr)
