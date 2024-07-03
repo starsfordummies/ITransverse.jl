@@ -81,7 +81,7 @@ Returns updated R, L and effective entropies calculated form the SVD of the envi
 function truncate_rsweep(psi::MPS, phi::MPS; cutoff::Real, chi_max::Int)
 
     elt = eltype(psi[1])
-    mpslen = length(right_mps)
+    mpslen = length(psi)
 
     # first bring to left canonical form 
     psi_ortho = orthogonalize(psi, mpslen, normalize=false)
@@ -93,8 +93,8 @@ function truncate_rsweep(psi::MPS, phi::MPS; cutoff::Real, chi_max::Int)
 
     # Start from the *right* side 
     for ii in mpslen:-1:2
-        Ai = XUinv * R_ortho[ii]
-        Bi = XVinv * L_ortho[ii] 
+        Ai = XUinv * psi_ortho[ii]
+        Bi = XVinv * phi_ortho[ii] 
 
         right_env *= Ai 
         right_env *= Bi 

@@ -1,35 +1,80 @@
+using Revise
 using ITensors, ITensorMPS
 using ITransverse
 using Test
+
 
 """ Ideally here we'd like to truncate a left and a right MPS
 in order to optimize their overlap. How close are the resulting two 
 with respect to the original ones?
 """
 
-@testset "Test various truncations" begin
+chimaxs = 100
+sites = siteinds("S=1/2", 60)
+cut_sv = 1e-12
 
-chimaxs = 50
-sites = siteinds("S=1/2", 50)
-psiL = random_mps(ComplexF64, sites, linkdims=chimaxs)
+@testset "Left sweeps checks" begin
 
-# this is a hacky way to give an overlap ~ 1/sqrt(2)
-psiR = normalize(dag(psiL) + psiL)
+    psi = random_mps(ComplexF64, sites, linkdims=chimaxs)
 
-psiLc = deepcopy(psiL)
-psiRc = deepcopy(psiR)
+    # this is a hacky way to give an overlap ~ 1/sqrt(2)
+    psi = normalize(sum(psi, psi, maxdim=chimaxs, mindim=chimaxs))
+    phi = normalize(sum(dag(psi), psi, maxdim=chimaxs, mindim=chimaxs))
 
-l, r, s, overlap = truncate_sweep_aggressive_normalize(psiL, psiR, cutoff=1e-10, chi_max=chimaxs, method="SVD")
+    @test linkdims(psi) == linkdims(phi)
 
-# check if some inplace shenanigans have happened
-@show inner(psiL,psiLc)
-@show inner(psiR,psiRc)
+    @show overlap_noconj(psi,phi) # Should this be the maximum value (?)
 
-# How much did we truncate L and R ? 
-@show inner(psiL, l)/norm(l)
-@show inner(psiR, r)/norm(r)
+    psi_c = deepcopy(psi)
+    phi_c = deepcopy(phi)
 
-@show overlap_noconj(psiL,psiR) # This should be the maximum value!
-@show overlap_noconj(l,r)/norm(l)/norm(r)
+    psi_trunc, phi_trunc, s, ov = truncate_lsweep(psi, phi, cutoff=cut_sv, chi_max=chimaxs)
 
+    # test we don't mess up with data
+    @test inner(psi, psi_c) ≈ 1
+    @test inner(phi, phi_c) ≈ 1
+
+
+    @show linkdims(psi)
+    @show linkdims(psi_trunc)
+    @show norm(psiL)
+    @show norm(l)
+    @show inner(psi, psi_trunc)
+    @show inner(phi, phi_trunc)
+
+    @show overlap_noconj(l,r)/norm(l)/norm(r)
+
+end
+
+@testset "Right sweeps checks" begin
+
+    psi = random_mps(ComplexF64, sites, linkdims=chimaxs)
+
+    # this is a hacky way to give an overlap ~ 1/sqrt(2)
+    psi = normalize(sum(psi, psi, maxdim=chimaxs, mindim=chimaxs))
+    phi = normalize(sum(dag(psi), psi, maxdim=chimaxs, mindim=chimaxs))
+    
+    @test linkdims(psi) == linkdims(phi)
+    
+    @show overlap_noconj(psi,phi) # Should this be the maximum value (?)
+
+    psi_c = deepcopy(psi)
+    phi_c = deepcopy(phi)
+
+    psi_trunc, phi_trunc, s, ov = truncate_rsweep(psi, phi, cutoff=cut_sv, chi_max=chimaxs)
+    
+    # test we don't mess up with data
+    @test inner(psi, psi_c) ≈ 1
+    @test inner(phi, phi_c) ≈ 1
+    
+    @show linkdims(psi)
+    @show linkdims(psi_trunc)
+
+    @show norm(psiL)
+    @show norm(l)
+    @show inner(psi, psi_trunc)
+    @show inner(phi, phi_trunc)
+    
+    @show overlap_noconj(l,r)/norm(l)/norm(r)
+    
 end
