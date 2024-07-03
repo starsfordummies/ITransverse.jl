@@ -25,19 +25,19 @@ struct tmpo_params
     bl::Vector{<:Number}  # bottom -> left(rotated)
     tr::Vector{<:Number}  # top -> right(rotated)
 
-    tmpo_params(
+end
+
+tmpo_params(
     expH_func::Function,
     mp::model_params,
     nbeta::Int64,
-    bl::Vector{<:Number}) = new(expH_func, mp, nbeta, bl, [1,0,0,1])
-
-end
+    bl::Vector{<:Number}) = tmpo_params(expH_func, mp, nbeta, bl, [1,0,0,1])
 
  # allow for changes on the fly of params
 tmpo_params(x::tmpo_params; 
     expH_func::Function=x.expH_func, 
-    mp::model_params=x.model_params,
-    nbeta::Int64=x.model,
+    mp::model_params=x.mp,
+    nbeta::Int64=x.nbeta,
     bl::Vector{<:Number}=x.bl, tr::Vector{<:Number} = x.tr) = tmpo_params(expH_func, mp, nbeta, bl, tr)
 
 
