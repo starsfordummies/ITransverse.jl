@@ -119,7 +119,6 @@ function powermethod(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::PMPar
 
     ds2 = 0. 
     sprevs = fill(1., length(in_mps)-1)
-    normprev = 0.
 
     p = Progress(itermax; desc="[PM] L=$(length(ll)), cutoff=$(cutoff), maxbondim=$(maxbondim))", showspeed=true) 
 
@@ -130,12 +129,10 @@ function powermethod(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::PMPar
         # Enforce that the overlap is one before we truncate? 
         ll_work = normbyfactor(ll, sqrt(overlap_noconj(ll,rr)))
         rr_work = normbyfactor(rr, sqrt(overlap_noconj(ll,rr)))
-        #@show overlap_noconj(ll_work,rr_work)
 
         OpsiR = applyn(in_mpo_1, rr_work)
         OpsiL = applyns(in_mpo_X, ll_work)  
 
-        #ll, _r, sjj, overlap = truncate_sweep_keep_lenv(OpsiL, OpsiR, cutoff=cutoff, chi_max=maxbondim, method="SVD")
         rr, Ol, sjj = truncate_rsweep(OpsiR, OpsiL, cutoff=cutoff, chi_max=maxbondim)
 
         # Try to fix norms a bit so they're both as close to 1 as possible while retaining their overlap_noconj
@@ -168,20 +165,6 @@ function powermethod(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::PMPar
 
         ds2 = norm(sprevs - sjj)
 
-        # if jj > 10 && abs(ds2s[end-2] - ds2) < 1e-8
-        #     @warn "stuck? try making two steps"
-
-        #     OpsiL = apply(in_mpo_1, ll_work,  alg="naive", truncate=false)
-        #     OpsiL = apply(in_mpo_1, OpsiL,  alg="naive", truncate=false)
-        #     OpsiR = apply(swapprime(in_mpo_X, 0, 1, "Site"), rr_work,  alg="naive", truncate=false)  
-        #     ll, _r, sjj, overlap = truncate_sweep(OpsiL, OpsiR, cutoff=1e-40, chi_max=maxbondim, method="SVD")
-            
-        #     OpsiL = apply(in_mpo_X, ll_work,  alg="naive", truncate=false)
-        #     OpsiR = apply(swapprime(in_mpo_1, 0, 1, "Site"), rr_work,  alg="naive", truncate=false)  
-        #     OpsiR = apply(swapprime(in_mpo_1, 0, 1, "Site"), OpsiR,  alg="naive", truncate=false)  
-
-        #     _l, rr, _, overlap = truncate_sweep(OpsiL, OpsiR, cutoff=1e-40, chi_max=maxbondim, method="SVD")
-        # end
 
 
         push!(ds2s, ds2)
