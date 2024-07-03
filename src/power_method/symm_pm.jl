@@ -22,7 +22,7 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams)
     ds2 = 0. 
     sprevs = fill(1., length(in_mps)-1)
 
-    p = Progress(itermax; desc="L=$(length(in_mps)), cutoff=$(cutoff), maxbondim=$(maxbondim))", showspeed=true) 
+    p = Progress(itermax; desc="[Symmetric PM|$(ortho_method)] L=$(length(in_mps)), cutoff=$(cutoff), maxbondim=$(maxbondim))", showspeed=true) 
 
 
     maxbondim = 20 
@@ -40,7 +40,9 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams)
         # and then unprimes the p' leg. 
         
         if ortho_method == "RDM"
-            psi_ortho = apply(in_mpo, psi,  alg="naive" , truncate=true, cutoff=SVD_cutoff, maxim=maxbondim)
+            psi_ortho = apply(in_mpo, psi_ortho,  alg="naive" , truncate=true, cutoff=cutoff, maxdim=maxbondim)
+            overlap = overlap_noconj(psi_ortho, psi_ortho)
+            sjj = vn_entanglement_entropy(psi_ortho)
         else
             psi = applyn(in_mpo, psi_ortho)
             psi_ortho, sjj, overlap = truncate_rsweep_sym(psi, cutoff=cutoff, chi_max=maxbondim, method=ortho_method)
@@ -55,7 +57,7 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams)
         push!(ds2s, ds2)
         sprevs = sjj
 
-        next!(p; showvalues = [(:Info,"[$(jj)] ds2=$(ds2), chi=$(maxlinkdim(psi))" )])
+        next!(p; showvalues = [(:Info,"[$(jj)] ds2=$(ds2), chi=$(maxlinkdim(psi_ortho))" )])
 
         if ds2 < converged_ds2
             break
