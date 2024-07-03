@@ -54,12 +54,13 @@ extends the time MPO and the left-right tMPS by optimizing
 
 Returns the updated left-right tMPS 
 """
-function extend_tmps_cone(ll::MPS, rr::MPS, 
-    op_R::Vector{<:Number}, op_L::Vector{<:Number}, 
+function extend_tmps_cone(ll::MPS, op_L::Vector{<:Number}, op_R::Vector{<:Number}, rr::MPS, 
     ts::Vector{<:Index},
     b::FoldtMPOBlocks,
     truncp::trunc_params,
     compute_r2::Bool=false)
+
+    @assert length(ts) == length(ll)+1 
 
     tmpo = folded_tMPO_R(b, ts, op_R)
 
@@ -70,9 +71,9 @@ function extend_tmps_cone(ll::MPS, rr::MPS,
 
     psi_L = apply_extend(tmpo, ll)
 
-    rr, ll, ents = truncate_rsweep(psi_R,psi_L; cutoff=truncp.cutoff, chi_max=truncp.maxbondim)
+    ll, rr, ents, ov = truncate_rsweep(psi_L,psi_R; cutoff=truncp.cutoff, chi_max=truncp.maxbondim)
     
-    gen_renyi2 = [0.]
+    gen_renyi2 = ents
     if compute_r2
         gen_renyi2 = generalized_renyi_entropy(ll, rr, 2, normalize=true)
     end
@@ -127,15 +128,15 @@ function run_cone(psi::MPS,
         rrwork = deepcopy(rr)
 
         ts = siteinds(rr)
+        #Extend timesites by 1 
         push!(ts, Index(time_dim, tags="Site,n=$(length(rr)+1),time_fold"))
 
         # if we're worried about symmetry, evolve separately L and R 
-        _,rr, ents = extend_tmps_cone(ll, rrwork, op, Id, ts, b, truncp)
+        _,rr, ents = extend_tmps_cone(ll, op, Id, rrwork, ts, b, truncp)
         push!(gen_r2sR, ents)
 
-        ll,_, ents = extend_tmps_cone(ll, rrwork, Id, op, ts, b, truncp)
+        ll,_, ents = extend_tmps_cone(ll, Id, op, rrwork, ts, b, truncp)
         push!(gen_r2sL, ents)
-
 
         overlapLR = overlap_noconj(ll,rr)
 
@@ -143,7 +144,7 @@ function run_cone(psi::MPS,
         ll *= sqrt(1/overlapLR)
         rr *= sqrt(1/overlapLR)
 
-        evs_computed = compute_expvals(ll, rr, ["all"], b)
+        evs_computed = compute_expvals(ll, rr, which_evs, b)
         mergedicts!(expvals, evs_computed)
 
 

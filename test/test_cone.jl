@@ -23,6 +23,8 @@ plus_state = Vector{ComplexF64}([1/sqrt(2),1/sqrt(2)])
 
 init_state = plus_state
 
+@testset "Testing light cone for folded tMPO" begin
+
 cutoff = 1e-20
 maxbondim = 200
 ortho_method = "SVD"
@@ -34,7 +36,7 @@ Nsteps = 60
 #time_sites = siteinds("S=3/2", 1)
 
 mp = model_params("S=1/2", JXX, hz, gx, dt)
-tp = tmpo_params(build_expH_ising_murg, mp, nbeta, init_state, Id)
+tp = tmpo_params(build_expH_ising_murg, mp, nbeta, init_state)
 
 # mp = model_params("S=1/2", JXX, hz, 0.0, dt)
 # tp = tmpo_params("S=1/2", "S=1/2", build_expH_ising_murg, mp, dt, nbeta, init_state)
@@ -42,11 +44,10 @@ tp = tmpo_params(build_expH_ising_murg, mp, nbeta, init_state, Id)
 
 c0 = init_cone(tp)
 
-# TODO remember ev_ start at T=2dt actually (one already from init_cone)
-#c0, c0r, evs_x, evs_z, chis, overlaps, entropies= run_cone(c0, Nsteps, optimize_op, tp, truncp)
-
 psi, psiR, chis, expvals, entropies, infos = run_cone(c0, Nsteps, optimize_op, tp, truncp)
 
 @test abs(expvals["X"][end] - ITransverse.ITenUtils.bench_X_04_plus[length(psi)]) < 0.001
+@show(expvals["X"][end], ITransverse.ITenUtils.bench_X_04_plus[length(psi)])
 
-@test check_gencan_right(psi::MPS, phi::MPS; verbose::Bool=false)
+
+end

@@ -76,8 +76,13 @@ So this can be seen as a "RL: Right(can)Left(gen)" sweep
 
 
 
-""" Brings to right generalized canonical form two MPS, truncating along the way if necessary.
-Returns updated R, L and effective entropies calculated form the SVD of the environments """
+""" Brings to right generalized canonical form two MPS `psi` and `phi`, truncating along the way if necessary.
+Returns
+
+1) updated `psi`
+2) updated `phi` 
+3) effective entropies calculated form the SVD of the environments
+4) overlap (psi|phi) [without conjugating psi] """
 function truncate_rsweep(psi::MPS, phi::MPS; cutoff::Real, chi_max::Int)
 
     elt = eltype(psi[1])
