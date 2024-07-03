@@ -99,8 +99,8 @@ include("tmpo/build_tmpo_fw.jl")
 
 #from build_tmpo_[fw|expval].jl
 export
-    build_fw_tMPO_regul_beta, 
-    build_ising_fw_tMPO_regul_beta, 
+    fw_tMPO,
+    #build_ising_fw_tMPO_regul_beta, 
     #build_ising_fw_tMPO,
     #build_potts_fw_tMPO, 
     #build_xxmodel_fw_tMPO, 

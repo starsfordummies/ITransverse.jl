@@ -10,7 +10,7 @@ The structure built (Loschmidt style is)
              (nbeta)               (nbeta)
 ```
  """
-function build_fw_tMPO(eH::MPO, eHi::MPO, 
+function fw_tMPO(eH::MPO, eHi::MPO, 
     init_state::Vector{Number}, 
     fin_state::Vector{Number},
     nbeta::Int, 
@@ -48,6 +48,7 @@ function build_fw_tMPO(eH::MPO, eHi::MPO,
     init_tensor = ITensor(init_state, space_p)
     fin_tensor = ITensor(fin_state, space_p')
 
+    # Build tMPO, tMPS with rotation 90degrees 
     tMPO = MPO(Nsteps)
     tMPS = MPS(Nsteps)
 
@@ -83,13 +84,13 @@ function build_fw_tMPO(eH::MPO, eHi::MPO,
 end
 
 """ Returns (tMPO, tMPS) pair. """
-function build_fw_tMPO(tp::tmpo_params, time_sites::Vector{<:Index})
+function fw_tMPO(tp::tmpo_params, time_sites::Vector{<:Index})
 
     eH = build_expH(tp)
     eHi = build_expHim(tp)
 
     match_siteinds!(eH, eHi)
 
-    build_fw_tMPO(eH, eHi, tp.init_state, tp.init_state, tp.nbeta, time_sites)
+    fw_tMPO(eH, eHi, tp.init_state, tp.init_state, tp.nbeta, time_sites)
 end
 
