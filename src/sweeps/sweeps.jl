@@ -1,21 +1,27 @@
 """ Basic truncate sweep: first brings to regular RIGHT ortho form,
-then performs a LEFT generalized canonical sweep with SVD/EIG truncation """
+then performs a LEFT generalized canonical sweep with SVD/EIG truncation.
+Returns 
+1,2) copies of the two input MPS
+3) an effective entropy computed from the SV of the environments
+4) the overlap between the two 
+"""
 
-function truncate_lsweep(right_mps::MPS, left_mps::MPS; cutoff::Real, chi_max::Int)
+function truncate_lsweep(psi::MPS, phi::MPS; cutoff::Real, chi_max::Int)
 
-    mpslen = length(left_mps)
+    elt = eltype(psi[1])
+    mpslen = length(phi)
 
-    R_ortho = orthogonalize(right_mps, 1)
-    L_ortho = orthogonalize(left_mps,  1)
+    psi_ortho = orthogonalize(psi, 1)
+    phi_ortho = orthogonalize(phi, 1)
 
-    XUinv, XVinv, left_env = (ITensor(1.), ITensor(1.), ITensor(1.)) 
+    XUinv, XVinv, left_env = (ITensor(elt,1.), ITensor(elt,1.), ITensor(elt,1.)) 
 
     ents_sites = ComplexF64[]
 
     # Left gen.can. sweep with truncation 
     for ii = 1:mpslen-1
-        Ai = XUinv * L_ortho[ii]
-        Bi = XVinv * R_ortho[ii] 
+        Ai = XUinv * psi_ortho[ii]
+        Bi = XVinv * phi_ortho[ii] 
 
         left_env *= Ai 
         left_env *= Bi 
@@ -36,20 +42,20 @@ function truncate_lsweep(right_mps::MPS, left_mps::MPS; cutoff::Real, chi_max::I
         left_env *= XU
         left_env *= XV
 
-        L_ortho[ii] = Ai * XU  
-        R_ortho[ii] = Bi * XV
+        psi_ortho[ii] = Ai * XU  
+        phi_ortho[ii] = Bi * XV
 
         push!(ents_sites, log(sum(S)))
       
     end
 
     # the last two 
-    L_ortho[end] = XUinv * L_ortho[end]
-    R_ortho[end] = XVinv * R_ortho[end]
+    psi_ortho[end] = XUinv * psi_ortho[end]
+    phi_ortho[end] = XVinv * phi_ortho[end]
 
-    gen_overlap = scalar(left_env * ( L_ortho[end] *  R_ortho[end] ) )
+    gen_overlap = scalar(left_env * ( psi_ortho[end] *  phi_ortho[end] ) )
 
-    return L_ortho, R_ortho, ents_sites, gen_overlap
+    return psi_ortho, phi_ortho, ents_sites, gen_overlap
 
 end
 
@@ -72,15 +78,16 @@ So this can be seen as a "RL: Right(can)Left(gen)" sweep
 
 """ Brings to right generalized canonical form two MPS, truncating along the way if necessary.
 Returns updated R, L and effective entropies calculated form the SVD of the environments """
-function truncate_rsweep(right_mps::MPS, left_mps::MPS; cutoff::Real, chi_max::Int)
+function truncate_rsweep(psi::MPS, phi::MPS; cutoff::Real, chi_max::Int)
 
+    elt = eltype(psi[1])
     mpslen = length(right_mps)
 
     # first bring to left canonical form 
-    R_ortho = orthogonalize(right_mps, mpslen, normalize=false)
-    L_ortho = orthogonalize(left_mps,  mpslen, normalize=false)
+    psi_ortho = orthogonalize(psi, mpslen, normalize=false)
+    phi_ortho = orthogonalize(phi, mpslen, normalize=false)
 
-    XUinv, XVinv, right_env = (ITensor(1.), ITensor(1.), ITensor(1.)) 
+    XUinv, XVinv, right_env = (ITensor(elt, 1.), ITensor(elt, 1.), ITensor(elt, 1.)) 
     
     ents_sites = ComplexF64[]
 
@@ -118,37 +125,46 @@ function truncate_rsweep(right_mps::MPS, left_mps::MPS; cutoff::Real, chi_max::I
         right_env *= XV
 
         # Set updated matrices
-        R_ortho[ii] = Ai * XU  
-        L_ortho[ii] = Bi * XV
+        psi_ortho[ii] = Ai * XU  
+        phi_ortho[ii] = Bi * XV
 
         push!(ents_sites, log(sum(S)))
 
     end
 
     # the final two
-    R_ortho[1] = XUinv * R_ortho[1]
-    L_ortho[1] = XVinv * L_ortho[1]
+    psi_ortho[1] = XUinv * psi_ortho[1]
+    phi_ortho[1] = XVinv * phi_ortho[1]
 
-    return R_ortho, L_ortho, ents_sites
+    gen_overlap = scalar(right_env * ( phi_ortho[1] *  psi_ortho[1] ) )
+
+
+    return psi_ortho, phi_ortho, ents_sites, gen_overlap
 
 end
 
 
 
-function truncate_normalize_lsweep(right_mps::MPS, left_mps::MPS, truncp::trunc_params)
-    ll, rr, ee = truncate_lsweep(right_mps, left_mps, cutoff=truncp.cutoff, chi_max=truncp.maxbondim)
-    LR =  overlap_noconj(ll,rr)
-    rr[end] /= sqrt(LR)
-    ll[end] /= sqrt(LR)
+function truncate_normalize_lsweep(psi::MPS, phi::MPS, truncp::trunc_params)
+    psi_n, phi_n, ee, ov = truncate_lsweep(psi, phi, cutoff=truncp.cutoff, chi_max=truncp.maxbondim)
+    ov_alt =  overlap_noconj(psi_n,phi_n)
+    if abs(ov - ov_alt) > 0.1
+        @warn "Check canonical form!? $(ov) vs $(ov_alt)"
+    end
+    psi_n[end] /= sqrt(ov_alt)
+    phi_n[end] /= sqrt(ov_alt)
     
-    return rr,ll, [e./sum(e) for e in ee]
+    return psi_n, phi_n, [e./sum(e) for e in ee]
 end
 
-function truncate_normalize_rsweep(right_mps::MPS, left_mps::MPS, truncp::trunc_params)
-    rr, ll, ee = truncate_rsweep(right_mps, left_mps, cutoff=truncp.cutoff, chi_max=truncp.maxbondim)
-    LR =  overlap_noconj(rr,ll)
-    rr[1] /= sqrt(LR)
-    ll[1] /= sqrt(LR)
+function truncate_normalize_rsweep(psi::MPS, phi::MPS, truncp::trunc_params)
+    psi_n, phi_n, ee, ov = truncate_rsweep(psi, phi, cutoff=truncp.cutoff, chi_max=truncp.maxbondim)
+    ov_alt =  overlap_noconj(psi_n,phi_n)
+    if abs(ov - ov_alt) > 0.1
+        @warn "Check canonical form!? $(ov) vs $(ov_alt)"
+    end
+    psi_n[1] /= sqrt(ov_alt)
+    phi_n[1] /= sqrt(ov_alt)
 
-    return rr, ll, [e./sum(e) for e in ee]
+    return psi_n, phi_n, [e./sum(e) for e in ee]
 end
