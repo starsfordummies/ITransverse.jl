@@ -39,9 +39,14 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams)
         # Note that ITensors does the apply on the MPS/MPO legs with the SAME label, eg. p-p 
         # and then unprimes the p' leg. 
         
-        psi = applyn(in_mpo, psi_ortho)
-        psi_ortho, sjj, overlap = truncate_rsweep_sym(psi, cutoff=cutoff, chi_max=maxbondim, method=ortho_method)
-        
+        if ortho_method == "RDM"
+            psi_ortho = apply(in_mpo, psi,  alg="naive" , truncate=true, cutoff=SVD_cutoff, maxim=maxbondim)
+        else
+            psi = applyn(in_mpo, psi_ortho)
+            psi_ortho, sjj, overlap = truncate_rsweep_sym(psi, cutoff=cutoff, chi_max=maxbondim, method=ortho_method)
+        end
+            
+
         # Here it's actually important to normalize after each iteration 
         psi_ortho[1] /= sqrt(overlap)
         #@show overlap
@@ -66,55 +71,3 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams)
     return psi_ortho, ds2s
 
 end
-
-
-
-"""
-Power method using SVD compression: takes as input a single MPS |L>,
-    applies O and optimizes the overlap <LObar|OL>  (ie. LO conjugate) - in practice 
-    this is the standard truncation using SVDs/RDMs, or the standard temporal entropy 
-
-Truncation params are in pm_params
-"""
-function powermethod_sym_rdm(in_mps::MPS, in_mpo::MPO, pm_params::Dict)
-
-    
-    itermax = pm_params[:itermax]
-    SVD_cutoff = pm_params[:SVD_cutoff] 
-    maxbondim = pm_params[:maxbondim]
-
-    # normalize the vector to get a good starting point?
-
-    ll = normalize(in_mps)
-
-    ds2s = [0.]
-    ds2 = fill(0., length(in_mps)-1)
-    sprevs = fill(1., length(in_mps)-1)
-
-    for jj in range(1,itermax)
-
-        ll = apply(in_mpo, ll,  alg="naive" , truncate=true, cutoff=SVD_cutoff, maxim=maxbondim)
-
-        sjj = vn_entanglement_entropy(ll)
-
-        ds2 = norm(sprevs - sjj)
-        push!(ds2s, ds2)
-        sprevs = sjj
-
-        println("$(jj): => $(maxlinkdim(ll)) , ds2 = $(ds2), <L|R> = $(overlap_noconj(ll,ll))")
-
-
-        if ds2 < 1e-10
-            println("converged after $jj steps")
-        break
-
-    end
-
-    end
-
-
-    return ll, ds2s
-
-end
-
-
