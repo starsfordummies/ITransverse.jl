@@ -22,16 +22,24 @@ struct tmpo_params
     expH_func::Function
     mp::model_params
     nbeta::Int64
-    bl::Vector{ComplexF64}  # bottom -> left(rotated)
-    tr::Vector{ComplexF64}  # top -> right(rotated)
+    bl::Vector{<:Number}  # bottom -> left(rotated)
+    tr::Vector{<:Number}  # top -> right(rotated)
+
+    tmpo_params(
+    expH_func::Function,
+    mp::model_params,
+    nbeta::Int64,
+    bl::Vector{<:Number}) = new(expH_func, mp, nbeta, bl, [1,0,0,1])
+
 end
 
  # allow for changes on the fly of params
 tmpo_params(x::tmpo_params; 
-    expH_func=x.expH_func, 
-    mp=x.model_params,
-    nbeta=x.model,
-    bl=x.bl, tr = x.tr) = tmpo_params(expH_func, mp, nbeta, bl, tr)
+    expH_func::Function=x.expH_func, 
+    mp::model_params=x.model_params,
+    nbeta::Int64=x.model,
+    bl::Vector{<:Number}=x.bl, tr::Vector{<:Number} = x.tr) = tmpo_params(expH_func, mp, nbeta, bl, tr)
+
 
 
 struct trunc_params
