@@ -27,14 +27,12 @@ end
 """
 function isid(a::ITensor, cutoff::Float64=1e-8)
     @assert ndims(a) == 2
-
     check_id_matrix(matrix(a), cutoff)
 end
 
 
 function isdiag(a::ITensor, cutoff::Float64=1e-8)
     @assert ndims(a) == 2
-
     check_diag_matrix(matrix(a), cutoff)
 end
 

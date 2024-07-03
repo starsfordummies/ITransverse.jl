@@ -59,6 +59,18 @@ function match_siteinds!(mpo1::MPO, mpo2::MPO)
     end
 end
 
+function replace_linkinds!(psi::MPS, newtags::String="")
+    li = linkinds(psi)
+    newli = [removetags(l, tags(l)) for l in li]
+    newli2 = [addtags(newli[ii], newtags*"$ii") for ii in eachindex(newli)]
+    
+    for ii in eachindex(psi)
+        replaceinds!(psi[ii], li, newli2)
+    end
+
+    return newli2
+end
+
 
 """ TODO have a look at this if we can do better """
 function extend_mps(in_mps::MPS, new_sites)

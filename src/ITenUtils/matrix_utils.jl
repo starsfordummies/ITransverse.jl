@@ -33,7 +33,7 @@ function check_diag_matrix(d::AbstractMatrix, cutoff::Float64=1e-8)
 
     delta_diag = norm(d - Diagonal(d))/norm(d)
     if delta_diag > cutoff
-        println("Warning, matrix non diagonal: Δ=$delta_diag")
+        println("Warning, matrix non diagonal: Δ=$(delta_diag) [cutoff=$(cutoff)]")
         isdiag = false
     end
     return isdiag

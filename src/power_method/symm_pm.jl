@@ -40,8 +40,12 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams)
         # and then unprimes the p' leg. 
         
         psi = applyn(in_mpo, psi_ortho)
-        psi_ortho, sjj = truncate_rsweep_sym(psi, cutoff=cutoff, chi_max=maxbondim, method=ortho_method)
+        psi_ortho, sjj, overlap = truncate_rsweep_sym(psi, cutoff=cutoff, chi_max=maxbondim, method=ortho_method)
         
+        # Here it's actually important to normalize after each iteration 
+        psi_ortho[1] /= sqrt(overlap)
+        #@show overlap
+
         ds2 = norm(sprevs - sjj)
         push!(ds2s, ds2)
         sprevs = sjj
@@ -55,8 +59,10 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams)
 
     end
 
-    println("Stopped after $(length(ds2s)) steps, final ds^2 = $(ds2s[end]), chimax=$(maxlinkdim(ll))")
+    println("Stopped after $(length(ds2s)) steps, final ds^2 = $(ds2s[end]), chimax=$(maxlinkdim(psi_ortho))")
 
+    # nicer link labels
+    replace_linkinds!(psi_ortho, "Link,rotl=")
     return psi_ortho, ds2s
 
 end

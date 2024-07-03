@@ -50,7 +50,8 @@ export quick_mps,
     normbyfactor,
     applyn,
     applyns,
-    match_siteinds, match_siteinds!
+    match_siteinds, match_siteinds!,
+    replace_linkinds!
 
 
 # moreutils.jl

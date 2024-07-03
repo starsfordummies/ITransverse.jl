@@ -10,35 +10,34 @@ end
 
 
 """ 
-Symmetric case: Truncates a single MPS optimizing overlap (L|L) (no conj)
+Symmetric case: Truncates a single MPS optimizing overlap (psi (no conj) |psi)
 By doing first a Right sweep to standard (right-orthogonal) canonical form 
 followed by a Left sweep with truncation on the generalized SVs 
-returns L_ortho (in generalized symmetric *left* canonical form) normalized to (L|L)=1
+returns psi_ortho (in generalized symmetric *left* canonical form) normalized to (psi|psi)=1
 and ents_sites = log(sum(σ_i)) for each site
 """
-function truncate_normalize_sweep_sym!(left_mps::MPS; cutoff::Float64, chi_max::Int, method::String)
+function truncate_lsweep_sym(in_psi::MPS; cutoff::Float64, chi_max::Int, method::String)
 
-    XUinv= ITensor(eltype(left_mps[1]), 1.)
-    left_env = ITensor(eltype(left_mps[1]), 1.)
-    #Ai = ITensor(eltype(left_mps[1]), 1.)
+    elt = eltype(psi[1])
+    XUinv= ITensor(elt, 1.)
+    left_env = ITensor(elt, 1.)
 
-    mpslen = length(left_mps)
+    mpslen = length(psi)
 
-    orthogonalize!(left_mps,1)
+    psi = orthogonalize(in_psi,1)
 
     ents_sites = ComplexF64[] 
 
-    s = siteinds(left_mps)
+    s = siteinds(psi)
 
     for ii = 1:mpslen-1
 
-        Ai = XUinv * left_mps[ii]
+        Ai = XUinv * psi[ii]
 
         left_env *= Ai
         left_env *= Ai'
-        left_env *= delta(eltype(Ai), s[ii],s[ii]')
+        left_env *= delta(elt, s[ii],s[ii]')
 
-        # TODO normalization of left_envs here ? 
 
         if method == "SVD"
             F = symm_svd(left_env, ind(left_env,1), cutoff=cutoff, maxdim=chi_max)
@@ -64,7 +63,7 @@ function truncate_normalize_sweep_sym!(left_mps::MPS; cutoff::Float64, chi_max::
 
         end
 
-        left_mps[ii] =  Ai * XU
+        psi[ii] =  Ai * XU
 
         left_env *= XU
         left_env *= XU'
@@ -72,7 +71,7 @@ function truncate_normalize_sweep_sym!(left_mps::MPS; cutoff::Float64, chi_max::
         push!(ents_sites, log(sum(S)))
     end
 
-    An = XUinv * left_mps[mpslen]
+    An = XUinv * psi[mpslen]
 
     overlap = An * An 
 
@@ -81,25 +80,19 @@ function truncate_normalize_sweep_sym!(left_mps::MPS; cutoff::Float64, chi_max::
     end
 
     # normalize overlap to 1 on last matrix 
-    left_mps[mpslen] =  An /sqrt(scalar(overlap))
+    #psi[mpslen] =  An /sqrt(scalar(overlap))
 
 
-    @debug "Sweep done, normalization $(overlap_noconj(left_mps, left_mps))"
+    @debug "Sweep done, normalization $(overlap_noconj(psi, psi))"
 
-    noprime!(left_mps) # so bad 
+    noprime!(psi) # so bad 
     # At the end, better relabeling of indices 
-    for (ii,li) in enumerate(linkinds(left_mps))
+    for (ii,li) in enumerate(linkinds(psi))
         newlink = Index(dim(li), "Link,l=$ii")
-        left_mps[ii] *= delta(li, newlink)
-        left_mps[ii+1] *= delta(li, newlink)
-        #@show inds(left_mps[ii])
+        psi[ii] *= delta(li, newlink)
+        psi[ii+1] *= delta(li, newlink)
+        #@show inds(psi[ii])
     end
-
-    # for ii in eachindex(left_mps)
-    #     replacetags!(left_mps[ii], "v" => "Link,v=$ii")
-    # end
-
-    #@show linkinds(left_mps)
 
     return ents_sites
 
@@ -117,16 +110,17 @@ end
 
 
 """ Bring the MPS to symmetric right generalized canonical form """
-function truncate_normalize_rsweep_sym(psi::MPS; cutoff::Real=1e-12, chi_max::Int=100, method::String)
+function truncate_rsweep_sym(in_psi::MPS; cutoff, chi_max, method::String)
 
-    mpslen = length(psi)
+    mpslen = length(in_psi)
+    elt = eltype(in_psi[1])
+    s = siteinds(in_psi)
 
     # first bring to LEFT standard canonical form 
-    psi_ortho = orthogonalize(psi, mpslen)
-    s = siteinds(psi)
+    psi_ortho = orthogonalize(in_psi, mpslen)
 
-    XUinv= ITensor(eltype(psi[1]),1.)
-    right_env = ITensor(eltype(psi[1]),1.)
+    XUinv= ITensor(elt,1.)
+    right_env = ITensor(elt,1.)
 
     ents_sites = ComplexF64[]
 
@@ -135,22 +129,33 @@ function truncate_normalize_rsweep_sym(psi::MPS; cutoff::Real=1e-12, chi_max::In
 
         right_env *= Ai
         right_env *= Ai'
-        right_env *= delta(eltype(Ai), s[ii], s[ii]')
-
-        # TODO normalize right_env here ?
+        right_env *= delta(elt, s[ii], s[ii]')
 
         @assert order(right_env) == 2
 
-        F = symm_oeig(right_env, ind(right_env,1); cutoff)
+        if method == "SVD"
+            F = symm_svd(right_env, ind(right_env,1), cutoff=cutoff, maxdim=chi_max)
+            U = F.U
+            S = F.S
 
-        U = F.V
-        S = F.D
+            sqS = S.^(0.5)
+            isqS = sqS.^(-1)
+            
+            XU = dag(U) * isqS
+            XUinv = sqS * U
 
-        sqS = S.^(0.5)
-        isqS = sqS.^(-1)
+        elseif method == "EIG"
+            F = symm_oeig(right_env, ind(right_env,1); cutoff)
+            U = F.V
+            S = F.D
 
-        XU = U * isqS
-        XUinv = sqS * U
+            sqS = S.^(0.5)
+            isqS = sqS.^(-1)
+
+            XU = U * isqS
+            XUinv = sqS * U
+
+        end
 
         psi_ortho[ii] = Ai * XU
 
@@ -163,15 +168,13 @@ function truncate_normalize_rsweep_sym(psi::MPS; cutoff::Real=1e-12, chi_max::In
     # the last one 
     An = XUinv * psi_ortho[1]
 
-    overlap = An * An 
+    overlap = scalar(An * An)
 
-    @assert order(overlap) == 0 
-
-    # normalize overlap to 1 at the *final* tensor 
-    psi_ortho[1] =  An /sqrt(scalar(overlap))
+    # normalize overlap to 1 at the last tensor ?
+    psi_ortho[1] =  An # /sqrt(scalar(overlap))
 
 
-    return psi_ortho, ents_sites
+    return psi_ortho, ents_sites, overlap
 
 end
 

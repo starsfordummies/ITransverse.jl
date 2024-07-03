@@ -146,9 +146,7 @@ export powermethod,
     pm_svd
 
 
-export powermethod_sym,
-    powermethod_sym_norms,
-    powermethod_sym_rdm
+export powermethod_sym
 
 
 include("lightcone/expvals_lr.jl")

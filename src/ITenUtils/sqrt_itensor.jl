@@ -32,7 +32,7 @@ function Base.sqrt(a::ITensor, is::Tuple{<:Index, <:Index}=inds(a))
      #y = adapt(mapreduce(NDTensors.unwrap_array_type, promote_type, x), random_mps(s))
 
     # If the matrix 
-    if isdiag(a, 1e-10) # make back to diagonal and sqrt it
+    if isdiag(a, 1e-8) # make back to diagonal and sqrt it
         sq_a = diag_itensor(sqrt.(array(diag(a))), is)
     else # Schur decomp is not implemented on GPU
         a = NDTensors.cpu(a)
