@@ -45,7 +45,7 @@ function truncate_lsweep(psi::MPS, phi::MPS; cutoff::Real, chi_max::Int)
         psi_ortho[ii] = Ai * XU  
         phi_ortho[ii] = Bi * XV
 
-        push!(ents_sites, log(sum(S)))
+        push!(ents_sites, scalar(-S*log.(S)))
       
     end
 
@@ -128,7 +128,7 @@ function truncate_rsweep(psi::MPS, phi::MPS; cutoff::Real, chi_max::Int)
         psi_ortho[ii] = Ai * XU  
         phi_ortho[ii] = Bi * XV
 
-        push!(ents_sites, log(sum(S)))
+        push!(ents_sites, scalar(-S*log.(S)))
 
     end
 

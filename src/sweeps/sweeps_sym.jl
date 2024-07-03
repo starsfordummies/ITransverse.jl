@@ -68,7 +68,7 @@ function truncate_lsweep_sym(in_psi::MPS; cutoff::Float64, chi_max::Int, method:
         left_env *= XU
         left_env *= XU'
 
-        push!(ents_sites, log(sum(S)))
+        push!(ents_sites, scalar(-S*log.(S)))
     end
 
     An = XUinv * psi[mpslen]
@@ -162,7 +162,7 @@ function truncate_rsweep_sym(in_psi::MPS; cutoff, chi_max, method::String)
         right_env *= XU 
         right_env *= XU' 
 
-        push!(ents_sites, log(sum(S)))
+        push!(ents_sites, scalar(-S*log.(S)))
     end
 
     # the last one 
