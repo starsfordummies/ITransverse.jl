@@ -85,6 +85,12 @@ ITensors.op(::OpName"τplusτdag",::SiteType"S1_Z3") =
  """ Potts H MPO built with autoMPO 
  Convention is H = -J Σ Σdag - J Σdag Σ - f τplusτdag
  with Σ = diag(exp(2πi/3), exp(4πi/3), 1) 
+ and 
+```
+     001
+ τ = 100
+     010
+```
  """
 function build_H_potts(sites_potts, JJ::Real, ff::Real)
  

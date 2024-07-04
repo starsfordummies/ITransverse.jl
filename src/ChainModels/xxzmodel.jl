@@ -1,5 +1,4 @@
-ITensors.space(::SiteType"S=7/2") = 8
-
+""" TODO Haven't checked this in a while, tread with care"""
 function build_H_XXZ_manual(sites, JXX::Real, hz::Real )
     """ Builds manually (no autompo) H ising Hamiltonian, convention 
     H = -( JXX + hZ ) 
