@@ -20,7 +20,8 @@ function LinearAlgebra.eigen(
   end
 
   # so we know when it's being used 
-  @info "ceigen"
+  # @info "ceigen"
+  
   DM, VM = eigen(expose(matrixT))
 
   # Sort by largest (by absolute value) to smallest eigenvalues
