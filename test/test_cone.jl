@@ -33,13 +33,8 @@ truncp = trunc_params(cutoff, maxbondim, ortho_method)
 
 Nsteps = 60
 
-#time_sites = siteinds("S=3/2", 1)
-
 mp = model_params("S=1/2", JXX, hz, gx, dt)
 tp = tmpo_params(build_expH_ising_murg, mp, nbeta, init_state)
-
-# mp = model_params("S=1/2", JXX, hz, 0.0, dt)
-# tp = tmpo_params("S=1/2", "S=1/2", build_expH_ising_murg, mp, dt, nbeta, init_state)
 
 
 c0 = init_cone(tp)

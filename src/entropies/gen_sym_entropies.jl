@@ -1,36 +1,3 @@
-
-
-
-"""
-Generalized entropy for a *symmetric* environment (psiL,psiL)
-    at a given cut, assuming we're in *LEFT* mixed/generalized canonical form 
-"""
-function generalized_entropy_symmetric(psiL::MPS, cut::Int)
-
-    mpslen = length(psiL)
-    #links = linkinds(psiL)
-
-    right_env = 1. # ITensor(1.)
-
-    for ii = mpslen:-1:cut 
-        Ai = psiL[ii]
-        Bi = prime(Ai, "Link,v") # This is consistent with the label assigned by my algo for generalized canon form
-        right_env = Ai * right_env 
-        right_env = Bi * right_env 
-    
-    end
-    eigss, _ = eigen(right_env)
-
-    if abs(sum(eigss) - 1.) > 0.01
-        @warn "RTM not well normalized? Σeigs=1-$(abs(sum(eigss) - 1.)) "
-    end
-
-    gen_ent_cut = log(sum(eigss))
-
-    return gen_ent_cut
-    
-end
-
 """
 Generalized entropy for a *symmetric* environment (psiL,psiL)
     Assuming we're in LEFT GENERALIZED canonical form 

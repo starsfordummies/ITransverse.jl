@@ -109,9 +109,6 @@ end
 
 
 
-
-
-
 """ Given `psi` MPS, build the symmetric RTM <psibar|psi>:
 Bring psi in generalized RIGHT symmetric canonical form,
 then contract LEFT enviroments and diagonalize them.

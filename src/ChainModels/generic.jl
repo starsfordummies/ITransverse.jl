@@ -29,6 +29,5 @@ function build_H_id(sites)
         os += 1/N, "Id", j
     end
 
-    # Convert these terms to an MPO tensor network
     return MPO(os, sites)
 end
