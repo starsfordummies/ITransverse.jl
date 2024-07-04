@@ -35,15 +35,6 @@ cut_sv = 1e-12
     @test inner(phi, phi_c) ≈ 1
 
 
-    @show linkdims(psi)
-    @show linkdims(psi_trunc)
-    @show norm(psiL)
-    @show norm(l)
-    @show inner(psi, psi_trunc)
-    @show inner(phi, phi_trunc)
-
-    @show overlap_noconj(l,r)/norm(l)/norm(r)
-
 end
 
 @testset "Right sweeps checks" begin
@@ -51,8 +42,8 @@ end
     psi = random_mps(ComplexF64, sites, linkdims=chimaxs)
 
     # this is a hacky way to give an overlap ~ 1/sqrt(2)
-    psi = normalize(sum(psi, psi, maxdim=chimaxs, mindim=chimaxs))
-    phi = normalize(sum(dag(psi), psi, maxdim=chimaxs, mindim=chimaxs))
+    psi = normalize(add(psi, psi, maxdim=chimaxs, mindim=chimaxs))
+    phi = normalize(add(dag(psi), psi, maxdim=chimaxs, mindim=chimaxs))
     
     @test linkdims(psi) == linkdims(phi)
     
@@ -70,11 +61,10 @@ end
     @show linkdims(psi)
     @show linkdims(psi_trunc)
 
-    @show norm(psiL)
-    @show norm(l)
+    @show norm(psi)
+    @show norm(psi_trunc)
     @show inner(psi, psi_trunc)
     @show inner(phi, phi_trunc)
     
-    @show overlap_noconj(l,r)/norm(l)/norm(r)
     
 end

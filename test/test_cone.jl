@@ -31,7 +31,7 @@ ortho_method = "SVD"
 
 truncp = trunc_params(cutoff, maxbondim, ortho_method)
 
-Nsteps = 60
+Nsteps = 50
 
 mp = model_params("S=1/2", JXX, hz, gx, dt)
 tp = tmpo_params(build_expH_ising_murg, mp, nbeta, init_state)
