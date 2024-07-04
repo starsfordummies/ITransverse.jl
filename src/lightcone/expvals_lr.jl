@@ -181,7 +181,7 @@ function expval_en_density(ll::MPS, rr::MPS, b::FoldtMPOBlocks)
     tMPO1[1] = b.rho0 * delta(ind(b.rho0,1), linkind(tMPO1,1))
     tMPO2[1] = b.rho0 * delta(ind(b.rho0,1), linkind(tMPO2,1))
 
-    ϵ_op = ITransverse.ChainModels.epsilon_brick_ising(tp)
+    ϵ_op = ITransverse.ChainModels.epsilon_brick_ising(tp.mp)
     ϵ_op[1] *= delta(siteind(ϵ_op,1), linkinds(tMPO1)[end])
     ϵ_op[2] *= delta(siteind(ϵ_op,2), linkinds(tMPO2)[end])
 
@@ -228,7 +228,7 @@ function compute_expvals(ll::AbstractMPS, rr::AbstractMPS, op_list::Vector{Strin
             allevs["Z"] = expval_LR(ll, rr, [1,0,0,-1], b)
         elseif op == "eps"
             #println("eps")
-            ϵ_op = ITransverse.ChainModels.epsilon_brick_ising(b.tp)
+            ϵ_op = ITransverse.ChainModels.epsilon_brick_ising(b.tp.mp)
             allevs["eps"] = expval_LR_ops(ll, rr, ϵ_op, b)
             #allevs["eps"] = expval_en_density(ll, rr, b)
         else

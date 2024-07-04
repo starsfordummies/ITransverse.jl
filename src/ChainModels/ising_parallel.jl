@@ -114,15 +114,15 @@ end
 
 
 
-function epsilon_brick_ising(tp::tmpo_params)
+function epsilon_brick_ising(mp::model_params)
 
     temp_s = siteinds("S=1/2",2)
     os = OpSum()
-    os += tp.mp.JXX,   "X",1,"X",2
-    os += tp.mp.hz/2,  "I",1,"Z",2
-    os += tp.mp.hz/2,  "Z",1,"I",2
-    os += tp.mp.λx/2,  "I",1,"X",2
-    os += tp.mp.λx/2,  "X",1,"I",2
+    os += mp.JXX,   "X",1,"X",2
+    os += mp.hz/2,  "I",1,"Z",2
+    os += mp.hz/2,  "Z",1,"I",2
+    os += mp.λx/2,  "I",1,"X",2
+    os += mp.λx/2,  "X",1,"I",2
 
     #ϵ_op = ITensor(os, temp_s, temp_s')
     ϵ_op = MPO(os, temp_s)
@@ -134,6 +134,3 @@ function epsilon_brick_ising(tp::tmpo_params)
     return ϵ_op
 end
 
-# quick defaults for parallel field Ising, for playing around
-ising_tp() = tmpo_params(build_expH_ising_murg, 
-model_params("S=1/2", 1.0, 0.4, 0.0, 0.1), 0, [1/sqrt(2),1/sqrt(2)], [1,0,0,1])

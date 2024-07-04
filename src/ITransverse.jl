@@ -82,16 +82,20 @@ export rho2,
 include("ChainModels/ChainModels.jl")
 using .ChainModels
 
-export ising_tp
+export model_params
 
-export trunc_params, 
-    model_params, 
-    tmpo_params
+export trunc_params
 
 export build_expH_ising_murg, 
 build_expH_potts_murg, 
 build_expH_potts_symmetric_svd,
 build_expH_ising_parallel_field_murg
+
+include("tmpo/tmpo_params.jl")
+export tmpo_params, ising_tp
+
+include("tmpo/build_expH.jl")
+
 
 include("tmpo/build_ww.jl")
 

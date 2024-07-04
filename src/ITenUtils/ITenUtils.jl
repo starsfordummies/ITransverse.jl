@@ -40,7 +40,7 @@ export sqrt
 export mergedicts!
 
 # from pparams
-export trunc_params, model_params, tmpo_params
+export trunc_params
 
 #from utils.jl
 export quick_mps, 
