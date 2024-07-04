@@ -80,7 +80,7 @@ function symm_oeig(M::AbstractMatrix; maxdim=nothing, cutoff=nothing, use_absolu
     norm_err = norm(M_rec-M)/norm(M)
 
     if !isnothing(cutoff)
-        if norm_err > sqrt(cutoff) 
+        if norm_err > max(sqrt(cutoff), 1e-12)
             @warn("Ortho/EIG decomp maybe not accurate, norm error $norm_err (cutoff = $cutoff) sqrt=$(sqrt(cutoff))")
         else
             @debug("Ortho/EIG decomp with norm error $(norm_err) < $(sqrt(cutoff)), [norm = $(norm(M))| normS = $(norm(vals))]")

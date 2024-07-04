@@ -1,13 +1,5 @@
 using ITensors.Adapt: adapt
 
-function truncate_normalize_sweep_sym(left_mps::MPS; cutoff::Float64, chi_max::Int, method::String)
-    l = deepcopy(left_mps)
-    truncate_normalize_sweep_sym!(l; cutoff, chi_max, method)
-    #@show linkinds(l)
-    return l 
-end
-
-
 
 """ 
 Symmetric case: Truncates a single MPS optimizing overlap (psi (no conj) |psi)
@@ -18,21 +10,20 @@ and ents_sites = log(sum(σ_i)) for each site
 """
 function truncate_lsweep_sym(in_psi::MPS; cutoff::Float64, chi_max::Int, method::String)
 
-    elt = eltype(psi[1])
-    XUinv= ITensor(elt, 1.)
-    left_env = ITensor(elt, 1.)
+    elt = eltype(in_psi[1])
+    mpslen = length(in_psi)
 
-    mpslen = length(psi)
-
-    psi = orthogonalize(in_psi,1)
+    psi_ortho = orthogonalize(in_psi,1)
+    s = siteinds(psi_ortho)
 
     ents_sites = ComplexF64[] 
 
-    s = siteinds(psi)
+    XUinv= ITensor(elt, 1.)
+    left_env = ITensor(elt, 1.)
 
     for ii = 1:mpslen-1
 
-        Ai = XUinv * psi[ii]
+        Ai = XUinv * psi_ortho[ii]
 
         left_env *= Ai
         left_env *= Ai'
@@ -63,7 +54,7 @@ function truncate_lsweep_sym(in_psi::MPS; cutoff::Float64, chi_max::Int, method:
 
         end
 
-        psi[ii] =  Ai * XU
+        psi_ortho[ii] =  Ai * XU
 
         left_env *= XU
         left_env *= XU'
@@ -71,46 +62,28 @@ function truncate_lsweep_sym(in_psi::MPS; cutoff::Float64, chi_max::Int, method:
         push!(ents_sites, scalar(-S*log.(S)))
     end
 
-    An = XUinv * psi[mpslen]
+
+    An = XUinv * psi_ortho[end]
 
     overlap = An * An 
+
+    psi_ortho[end] = An
 
     if abs(scalar(overlap)) > 1e10 || abs(scalar(overlap)) < 1e-10
         @warn ("Careful! overlap overflowing? = $(scalar(overlap))")
     end
 
-    # normalize overlap to 1 on last matrix 
-    #psi[mpslen] =  An /sqrt(scalar(overlap))
+    @debug "Sweep done, normalization $(overlap_noconj(psi_ortho, psi_ortho))"
 
+    return psi_ortho, ents_sites, overlap
 
-    @debug "Sweep done, normalization $(overlap_noconj(psi, psi))"
-
-    noprime!(psi) # so bad 
-    # At the end, better relabeling of indices 
-    for (ii,li) in enumerate(linkinds(psi))
-        newlink = Index(dim(li), "Link,l=$ii")
-        psi[ii] *= delta(li, newlink)
-        psi[ii+1] *= delta(li, newlink)
-        #@show inds(psi[ii])
-    end
-
-    return ents_sites
-
-end
-
-
-
-function truncate_normalize_sweep_sym_ite!(left_mps::MPS; svd_cutoff::Real=1e-12, chi_max::Int=100, method="gen_one")
-    orthogonalize!(left_mps,1)
-    _, _, ents = orthogonalize_gen_ents!(left_mps, length(left_mps); cutoff=svd_cutoff, normalize=true, method)
-    return ents
 end
 
 
 
 
 """ Bring the MPS to symmetric right generalized canonical form """
-function truncate_rsweep_sym(in_psi::MPS; cutoff, chi_max, method::String)
+function truncate_rsweep_sym(in_psi::MPS; cutoff::Float64, chi_max::Int, method::String)
 
     mpslen = length(in_psi)
     elt = eltype(in_psi[1])
@@ -187,7 +160,8 @@ Just bring the MPS to generalized *left* canonical form without truncating (as f
 """
 function gen_canonical_left(in_mps::MPS)
     temp = deepcopy(in_mps)
-    return truncate_normalize_sweep_sym(temp; cutoff=1e-20, chi_max=2*maxlinkdim(in_mps), method="EIG")
+    psi_leftgencan, _, _ = truncate_lsweep_sym(temp; cutoff=1e-30, chi_max=2*maxlinkdim(in_mps), method="EIG")
+    return psi_leftgencan
 end
 
 """
@@ -195,6 +169,6 @@ Just bring the MPS to generalized *right* canonical form without truncating (as 
 TODO should use chi_min here to make sure ! 
 """
 function gen_canonical_right(in_mps::MPS)
-    psi_gen, _ = truncate_normalize_rsweep_sym(in_mps; cutoff=1e-20, chi_max=2*maxlinkdim(in_mps), method="EIG")
-    return psi_gen
+    psi_rightgencan, _, _ = truncate_rsweep_sym(in_mps; cutoff=1e-30, chi_max=2*maxlinkdim(in_mps), method="EIG")
+    return psi_rightgencan
 end
