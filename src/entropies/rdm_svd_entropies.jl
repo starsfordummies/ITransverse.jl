@@ -1,3 +1,28 @@
+function diagonalize_rdm(psi::MPS)
+
+    workpsi = normalize(psi)
+
+    evs_rho = Vector{Float64}[]
+
+    for icut=1:length(workpsi)-1
+        push!(evs_rho, diagonalize_rdm!(workpsi, icut))
+    end
+
+    return evs_rho
+end
+
+function diagonalize_rdm!(psi::MPS, cut::Int)
+
+    orthogonalize!(psi, cut)
+
+      _,S,_ = svd(psi[cut], (linkind(psi, cut-1), siteind(psi,cut)))
+      eigenvals_rho = S.^2 
+   
+      return array(diag(eigenvals_rho))
+end
+
+
+
 
 """ Computes the Von Neumann entanglement entropy of an MPS `psi` at a given `cut` 
 It is a (!) function cause we orthogonalize along the way, gauging `psi` """

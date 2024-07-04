@@ -14,7 +14,7 @@ using .ITenUtils
 export sqrt 
 
 # #from utils.jl
-export myrMPS, 
+export quick_mps, 
     overlap_noconj, 
     check_symmetry_itensor_mpo, 
     check_symmetry_itensor,
@@ -33,6 +33,7 @@ include("sweeps/sweeps_sym.jl")
 include("sweeps/gen_form_checks.jl")
 
 export truncate_lsweep, truncate_rsweep
+export truncate_lsweep_sym, truncate_rsweep_sym
 
 #from sweeps.jl
 export truncate_normalize_sweep, 
@@ -48,7 +49,7 @@ export  truncate_normalize_sweep_sym,
 
 
 
-include("entropies/entropies.jl")
+include("entropies/rdm_svd_entropies.jl")
 include("entropies/gen_entropies.jl")
 include("entropies/gen_sym_entropies.jl")
 include("entropies/diagonalize_sym_rtm.jl")
