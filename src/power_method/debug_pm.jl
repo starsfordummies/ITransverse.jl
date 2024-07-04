@@ -30,9 +30,9 @@ function main_debug_pm()
     itermax = 200
 
     verbose=false
-    ds2_converged=1e-6
+    eps_converged=1e-6
 
-    pm_params = pm_params(itermax, SVD_cutoff, maxbondim, verbose, ds2_converged)
+    pm_params = pm_params(itermax, SVD_cutoff, maxbondim, verbose, eps_converged)
 
     sigX = ComplexF64[0,1,1,0]
     sigZ = ComplexF64[1,0,0,-1]

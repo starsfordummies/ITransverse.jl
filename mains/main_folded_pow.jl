@@ -15,11 +15,11 @@ function main_folded_pm()
     maxbondim = 120
     itermax = 100
     verbose=false
-    ds2_converged=1e-6
+    eps_converged=1e-6
 
     truncp = trunc_params(cutoff, maxbondim, "SVD")
 
-    pm_params = PMParams(truncp, itermax, ds2_converged, true)
+    pm_params = PMParams(truncp, itermax, eps_converged, true)
 
     sigX = ComplexF64[0,1,1,0]
 

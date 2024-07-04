@@ -13,17 +13,17 @@ using Test
     maxbondim = 120
     itermax = 100
     verbose=false
-    ds2_converged=1e-6
+    eps_converged=1e-6
 
     truncp = trunc_params(cutoff, maxbondim, "SVD")
 
-    pm_params = PMParams(truncp, itermax, ds2_converged, true)
+    pm_params = PMParams(truncp, itermax, eps_converged, true, "RL")
 
     sigX = ComplexF64[0,1,1,0]
 
     b = FoldtMPOBlocks(tp)
 
-    Nsteps = 40
+    Nsteps = 60
 
     time_sites = siteinds(4, Nsteps)
 
@@ -33,29 +33,42 @@ using Test
     mpo_X = folded_tMPO(b, time_sites, sigX)
     mpo_1 = folded_tMPO(b, time_sites)
 
-    ll, rr, ds2_pm  = powermethod(init_mps, mpo_1, mpo_X, pm_params) # kwargs)
-    #ll, rr, lO, Or, vals, deltas  = pm_all(init_mps, mpo_1, mpo_X, pm_params) # kwargs)
-    #ll, rr, lO, Or, vals, deltas  = pm_svd(init_mps, mpo_1, mpo_X, pm_params) # kwargs)
+    pm_params = PMParams(truncp, itermax, eps_converged, true, "LR")
+    ll, rr, ds2_pm  = powermethod(init_mps, mpo_1, mpo_X, pm_params) 
 
     ev = compute_expvals(ll, rr, ["X"], b)
+    χ_LR = maxlinkdim(ll)
 
-    rralt, ds2_pm  = powermethod_Ronly(init_mps, mpo_1, mpo_X, pm_params) 
+    pm_params = PMParams(truncp, itermax, eps_converged, true, "R")
+    ll, rr, ds2_pm  = powermethod(init_mps, mpo_1, mpo_X, pm_params) 
 
-    evsym = compute_expvals(rralt, rralt, ["X"], b)
+    evsym = compute_expvals(ll, rr, ["X"], b)
+    χ_R = maxlinkdim(ll)
 
-    rr_te, ds2_pm  = powermethod_svd(init_mps, mpo_1, pm_params) 
+    truncp = trunc_params(sqrt(cutoff), maxbondim, "SVD")
+    pm_params = PMParams(truncp, itermax, eps_converged, true, "RTE")
+    ll, rr, ds2_pm  = powermethod(init_mps, mpo_1, mpo_X, pm_params) 
 
-    ev_te = compute_expvals(rr_te, rr_te, ["X"], b)
-
+    ev_te = compute_expvals(ll, rr, ["X"], b)
+    χ_RTE = maxlinkdim(ll)
 
     ev1 = ev["X"]
     ev2 = evsym["X"]
     ev3 = ev_te["X"]
+
+    final_time = length(ll)
+
+    Δ_LR = abs(ev1 - ITransverse.ITenUtils.bench_X_04_plus[final_time])
+    Δ_R  = abs(ev2 - ITransverse.ITenUtils.bench_X_04_plus[final_time])
+    Δ_RTE =abs(ev3 - ITransverse.ITenUtils.bench_X_04_plus[final_time])
  
     @test abs(ev1 - ev2) < 1e-8
-    @test abs(ev1 - ev3) < 1e-8
-    @test abs(ev1 - ITransverse.ITenUtils.bench_X_04_plus[ts[end]]) < 0.001
-    @test abs(ev2 - ITransverse.ITenUtils.bench_X_04_plus[ts[end]]) < 0.001
-    @test abs(ev3 - ITransverse.ITenUtils.bench_X_04_plus[ts[end]]) < 0.001
+    @test abs(ev1 - ev3) < 1e-3
+    @test Δ_LR < 0.001
+    @test Δ_R < 0.001
+    @test Δ_RTE < 0.001
+
+    @show χ_LR, χ_R, χ_RTE
+    @show Δ_LR, Δ_R, Δ_RTE
 
 end

@@ -7,13 +7,10 @@ Power method for *symmetric* case: takes as input a single MPS |L>,
 function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams)
 
     itermax = pm_params.itermax
-    converged_ds2 = pm_params.ds2_converged
+    eps_converged = pm_params.eps_converged
 
-    (; cutoff, maxbondim, ortho_method) = pm_params.trunc_params
-    # cutoff = pm_params.trunc_params.cutoff
-    # maxbondim = pm_params.trunc_params.maxbondim
-    # method = pm_params.trunc_params.ortho_method
-
+    (; cutoff, maxbondim, ortho_method) = pm_params.truncp
+  
     # normalize the vector to get a good starting point
 
     psi_ortho = normalize(in_mps)
@@ -31,9 +28,9 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams)
 
         if pm_params.increase_chi
             maxbondim += 2
-            maxbondim = minimum([maxbondim,pm_params.trunc_params.maxbondim])
+            maxbondim = minimum([maxbondim,pm_params.truncp.maxbondim])
         else
-            maxbondim = pm_params.trunc_params.maxbondim
+            maxbondim = pm_params.truncp.maxbondim
         end
 
         # Note that ITensors does the apply on the MPS/MPO legs with the SAME label, eg. p-p 
@@ -59,7 +56,7 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams)
 
         next!(p; showvalues = [(:Info,"[$(jj)] ds2=$(ds2), chi=$(maxlinkdim(psi_ortho))" )])
 
-        if ds2 < converged_ds2
+        if ds2 < eps_converged
             break
         end
 

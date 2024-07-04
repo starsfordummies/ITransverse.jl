@@ -20,11 +20,11 @@ function main_ising_loschmidt(Tstart::Int, Tend::Int, nbeta::Int; Tstep::Int=1)
     cutoff = 1e-16
     maxbondim = 140
     itermax = 800
-    ds2_converged = 1e-6
+    eps_converged = 1e-6
 
     truncp = trunc_params(cutoff, maxbondim, "EIG")
 
-    pm_params = PMParams(truncp, itermax, ds2_converged, true)
+    pm_params = PMParams(truncp, itermax, eps_converged, true)
 
     mp = model_params("S=1/2", JXX, hz, gx, dt)
     tp = tmpo_params(build_expH_ising_murg, mp, nbeta, init_state, init_state)
