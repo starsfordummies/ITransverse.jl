@@ -28,7 +28,7 @@ export quick_mps,
 
 
 include("sweeps/sweeps.jl")
-include("sweeps/alt_sweeps.jl")
+#include("sweeps/alt_sweeps.jl")
 include("sweeps/sweeps_sym.jl")
 include("sweeps/gen_form_checks.jl")
 
