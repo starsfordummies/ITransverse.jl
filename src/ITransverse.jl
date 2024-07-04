@@ -48,9 +48,9 @@ export  truncate_normalize_sweep_sym,
     gen_canonical_left, gen_canonical_right
 
 
+include("entropies/build_entropies.jl")
 
 include("entropies/rdm_svd_entropies.jl")
-include("entropies/gen_entropies.jl")
 include("entropies/gen_sym_entropies.jl")
 include("entropies/diagonalize_sym_rtm.jl")
 include("entropies/compute_rho2.jl")
@@ -65,7 +65,8 @@ export vn_entanglement_entropy,
     #generalized_entropy_cut,
     generalized_entropy,
     generalized_renyi_entropy,
-    build_entropies
+    build_entropies,
+    diagonalize_rdm
 
 # from gen_form_checks
 export check_gencan_left, check_gencan_right

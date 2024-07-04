@@ -40,3 +40,45 @@ function build_entropies(spectra::Vector)
     return entropies
 end
 
+function salpha(λ::Number, α)
+    Sλ = 0.0
+    if α ≈ 1
+        Sλ= - λ * log(λ)
+    else
+        Sλ = λ^α
+    end
+    return Sλ
+end
+
+
+function build_entropies(spectra::Vector{<:Vector{<:Number}}, which_ents::Vector{<:Real})
+
+    allents = Dict()
+
+    for α in which_ents
+        Sα = []
+        Sα_n = []
+        for eigs in spectra
+            ss = 0.0
+            ssn = 0.0
+            sum_λ = sum(eigs)
+            for λ in eigs[abs.(eigs) .> 1e-15]
+               ss += salpha(λ, α)
+               ssn += salpha(λ/sum_λ, α)
+            end
+            push!(Sα, ss)
+            push!(Sα_n, ssn)
+
+        end
+
+        sums_l = [sum(eigs) for eigs in spectra]
+
+        allents["S$(α)"] = Sα
+        allents["S$(α)n"] = Sα_n 
+        allents["sums"] = sums_l
+
+    end
+
+    return allents
+end
+

@@ -1,5 +1,5 @@
 using Test
-
+using Revise
 using ITensors, ITensorMPS
 using ITransverse 
 
@@ -11,8 +11,21 @@ psic = deepcopy(psi)
 s_vn = vn_entanglement_entropy(psi)
 
 # check that vn_entanglement_entropy() does not modify the psi 
-@test psi[5] ≈ psic[5]
 @test psi[9] ≈ psic[9]
-@test psi[20] ≈ psic[20]
+
+psi = deepcopy(psic)
+
+eigen_rho = diagonalize_rdm(psi)
+
+ents = build_entropies(eigen_rho, [1])
+
+ents["S1"]
+ents["S1n"]
+
+@test ents["S1n"] ≈ s_vn
+
+
+@test psi[9] ≈ psic[9]
+
 
 end

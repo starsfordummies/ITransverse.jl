@@ -1,3 +1,5 @@
+""" Given an input MPS, computes the spectra of its (normalized) RDM via SVD decompositions - these
+can be used to calculate the usual entanglement entropies""" 
 function diagonalize_rdm(psi::MPS)
 
     workpsi = normalize(psi)
@@ -11,14 +13,15 @@ function diagonalize_rdm(psi::MPS)
     return evs_rho
 end
 
+""" At a given cut, performs SVD and returns the squares of the SVs, ie. the eigenvalues of the RDM"""
 function diagonalize_rdm!(psi::MPS, cut::Int)
 
     orthogonalize!(psi, cut)
 
-      _,S,_ = svd(psi[cut], (linkind(psi, cut-1), siteind(psi,cut)))
-      eigenvals_rho = S.^2 
+    _,S,_ = svd(psi[cut], (linkinds(psi, cut-1)..., siteinds(psi,cut)...))
+    eigenvals_rho = S.^2 
    
-      return array(diag(eigenvals_rho))
+    return array(diag(eigenvals_rho))
 end
 
 

@@ -2,7 +2,7 @@
 Generalized entropy for a *symmetric* environment (psiL,psiL)
     Assuming we're in LEFT GENERALIZED canonical form 
 """
-function generalized_entropy_symmetric(psiL::MPS; bring_left_gen::Bool=true)
+function generalized_vn_entropy_symmetric(psiL::MPS; bring_left_gen::Bool=true)
  
     if bring_left_gen
         psiL = gen_canonical_left(psiL)
@@ -57,21 +57,11 @@ function generalized_entropy_symmetric(psiL::MPS; bring_left_gen::Bool=true)
 end
 
 
-""" TODO these two are the same! """
-
-function generalized_entropy_symmetric_new(psiL::MPS; bring_left_gen::Bool=false)
+function generalized_entropy_symmetric(psiL::MPS; bring_left_gen::Bool=false)
  
-    eigenvalues = diagonalize_rtm_left_gen_sym(psiL; bring_left_gen)
-    gen_ents = build_entropies(eigenvalues)
+    eigenvalues_rtm = diagonalize_rtm_left_gen_sym(psiL; bring_left_gen)
+    gen_ents = build_entropies(eigenvalues_rtm)
     return gen_ents
     
 end
 
-
-
-function build_entropies(psiL::MPS; bring_left_gen::Bool=false, sweep_direction::String="R")
-    if sweep_direction == "R"
-    spectra = diagonalize_rtm_left_gen_sym(psiL, bring_left_gen=bring_left_gen)
-    end
-    return build_entropies(spectra)
-end
