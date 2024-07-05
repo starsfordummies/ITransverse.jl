@@ -24,7 +24,7 @@ function main_ising_loschmidt(Tstart::Int, Tend::Int, nbeta::Int; Tstep::Int=1)
 
     truncp = trunc_params(cutoff, maxbondim, "EIG")
 
-    pm_params = PMParams(truncp, itermax, eps_converged, true)
+    pm_params = PMParams(truncp, itermax, eps_converged, true, "SYM")
 
     mp = model_params("S=1/2", JXX, hz, gx, dt)
     tp = tmpo_params(build_expH_ising_murg, mp, nbeta, init_state, init_state)

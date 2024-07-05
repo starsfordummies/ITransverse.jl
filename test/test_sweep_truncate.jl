@@ -18,8 +18,8 @@ cut_sv = 1e-12
     psi = random_mps(ComplexF64, sites, linkdims=chimaxs)
 
     # this is a hacky way to give an overlap ~ 1/sqrt(2)
-    psi = normalize(sum(psi, psi, maxdim=chimaxs, mindim=chimaxs))
-    phi = normalize(sum(dag(psi), psi, maxdim=chimaxs, mindim=chimaxs))
+    psi = normalize(add(psi, psi, maxdim=chimaxs, mindim=chimaxs))
+    phi = normalize(add(dag(psi), psi, maxdim=chimaxs, mindim=chimaxs))
 
     @test linkdims(psi) == linkdims(phi)
 

@@ -57,26 +57,3 @@ function main_cone()
 end
 
 psi, psiR, chis, expvals, entropies, infos = main_cone()
-
-#resu = ITransverse.resume_cone("cp_cone.jld2", 10)
-
-
-
-# println(ev_x)
-# println(ev_z)
-
-# #a = jldopen("test_future/time_evolution/plus_04.jld2")
-
-# xs = 2:length(ev_x)+1
-
-# pl1 = scatter(xs, real(ev_z))
-# scatter!(pl1, xs, real(ev_x))
-
-# plot!(pl1, plot!(ITransverse.ITenUtils.bench_X_04_plus[1:end]))
-# pl2 = plot(chis) 
-
-# # plot!(pl1, a["Sx"])
-# # plot!(pl1, a["Sz"])
-
-
-# plot(pl1, pl2)

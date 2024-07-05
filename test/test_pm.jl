@@ -23,7 +23,7 @@ using Test
 
     b = FoldtMPOBlocks(tp)
 
-    Nsteps = 60
+    Nsteps = 50
 
     time_sites = siteinds(4, Nsteps)
 

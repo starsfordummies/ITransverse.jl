@@ -16,6 +16,11 @@ Depending on pm_params.opt_method, the update can work as follows
 - "RTE": the common truncation using temporal entanglement, ie. over the RDM (not RTM) of |R>. 
    In practice this is done with the usual SVD truncations of R. In this case, the `mpo_X` input is unused.
 
+
+At each step of the PM we want to normalize back the tMPS, or in the long run we lose precision. 
+The most consistent way to do it is probably to enforce that the overlap <L|R> = 1, but in practice normalizing individually
+<L|L> = <R|R> = 1 seems to work as well. Another possibility is to normalize the overlap <LO|1R> before truncating for |Rnew>.
+
 Truncation params are in pm_params.truncp
 
 We return the (hopefully converged) |R> and <L| tMPS, 
@@ -37,7 +42,6 @@ function powermethod(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::PMPar
     rr = deepcopy(in_mps)
 
 
-    ds2 = 0. 
     sprevs = fill(1., length(in_mps)-1)
     LRprev = overlap_noconj(in_mps,in_mps)
 
@@ -47,35 +51,57 @@ function powermethod(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::PMPar
 
     for jj = 1:itermax  
 
+        # @info norm(ll)
+        # @info overlap_noconj(ll,rr)
+        # @info norm.(sprevs)
+
         if opt_method == "LR"
             
-            # Enforce that the overlap is one before we truncate
-            ll_work = normbyfactor(ll, sqrt(overlap_noconj(ll,rr)))
-            rr_work = normbyfactor(rr, sqrt(overlap_noconj(ll,rr)))
+            #ll_work = normbyfactor(ll, sqrt(overlap_noconj(ll,rr)))
+            #rr_work = normbyfactor(rr, sqrt(overlap_noconj(ll,rr)))
+            #ll_work = normalize(ll)
+            #rr_work = normalize(rr)
+            rr_work = rr
+            ll_work = ll 
     
             # optimize <LO|1R> -> new |R> 
             OpsiR = applyn(in_mpo_1, rr_work)
             OpsiL = applyns(in_mpo_X, ll_work)  
+
+            OpsiR = normalize(OpsiR)
+            OpsiL = normalize(OpsiL)
+
             rr, _, sjj = truncate_rsweep(OpsiR, OpsiL, cutoff=cutoff, chi_max=maxbondim)
 
             # optimize <L1|OR> -> new <L|  
             #TODO: we could be using the new rr here instead of rr_work
             OpsiR = applyn(in_mpo_X, rr_work)
             OpsiL = applyns(in_mpo_1, ll_work)  
+
+            OpsiR = normalize(OpsiR)
+            OpsiL = normalize(OpsiL)
+
             _, ll, _, overlap = truncate_rsweep(OpsiR, OpsiL, cutoff=cutoff, chi_max=maxbondim)
 
 
         elseif opt_method == "R"
-            rr_work = normbyfactor(rr, sqrt(overlap_noconj(rr,rr)))
+            #rr_work = normbyfactor(rr, sqrt(overlap_noconj(rr,rr)))
+            #rr_work = normalize(rr)
+            rr_work = rr
 
             OpsiR = applyn(in_mpo_1, rr_work)
             OpsiL = applyns(in_mpo_X, rr_work)  
+
+            OpsiR = normalize(OpsiR)
+            OpsiL = normalize(OpsiL)
     
             rr, _, sjj, overlap = truncate_rsweep(OpsiR, OpsiL, cutoff=cutoff, chi_max=maxbondim)
             ll = rr
 
         elseif opt_method == "RTE"
-            rr_work = normbyfactor(rr, sqrt(overlap_noconj(rr,rr)))
+            #rr_work = normbyfactor(rr, sqrt(overlap_noconj(rr,rr)))
+            rr_work = normalize(rr)
+
             rr = apply(in_mpo_1, rr_work, cutoff=cutoff, maxdim=maxbondim)
             ll = rr
             sjj = vn_entanglement_entropy(rr)
@@ -90,7 +116,7 @@ function powermethod(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::PMPar
         push!(info_iterations[:LRdiff], abs(LRnew-LRprev))
         LRprev = LRnew
    
-        if abs(LRnew) < 0.001
+        if abs(LRnew) < 1e-6
             @warn "Small overlap $LRnew, watch for trunc error"
         end
 
@@ -98,13 +124,6 @@ function powermethod(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::PMPar
         push!(info_iterations[:ds2], ds2)
         # push!(ds2s, ds2)
         sprevs = sjj
-
-
-        # #TODO 
-        # #dn = inner(ll_work,ll)
-        # dn = overlap_noconj(ll, OpsiR) 
-        # #dn = overlap_noconj(ll,_r)-overlap_noconj(_l,rr)
-        # push!(dns, dn)
 
         RRnew = inner(rr_work,rr)/norm(rr)/norm(rr_work)
 
@@ -121,7 +140,7 @@ function powermethod(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::PMPar
             @warn ("NOT converged after $jj steps - χ=$(maxlinkdim(ll))")
         end
 
-        next!(p; showvalues = [(:Info,"[$(jj)][χ=$(maxlinkdim(ll))] ds2=$(ds2), <R|Rnew>=$(round(RRnew,digits=8)) |S|=$(maxnormS)" )])
+        next!(p; showvalues = [(:Info,"[$(jj)][χ=$(maxlinkdim(ll))] ds2=$(ds2), <R|Rnew>=1-$(round(1-RRnew,digits=8)) |S|=$(maxnormS)" )])
 
     end
 

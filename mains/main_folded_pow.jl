@@ -19,12 +19,11 @@ function main_folded_pm()
 
     truncp = trunc_params(cutoff, maxbondim, "SVD")
 
-    pm_params = PMParams(truncp, itermax, eps_converged, true)
+    pm_params = PMParams(truncp, itermax, eps_converged, true, "LR")
 
     sigX = ComplexF64[0,1,1,0]
 
     evs = [] 
-    evssym = []
 
     leftvecs = []
     ds2s = []
@@ -42,24 +41,17 @@ function main_folded_pm()
         mpo_X = folded_tMPO(b, time_sites, sigX)
         mpo_1 = folded_tMPO(b, time_sites)
 
-        rr, ll, ds2_pm  = powermethod(init_mps, mpo_1, mpo_X, pm_params) # kwargs)
-        #ll, rr, lO, Or, vals, deltas  = pm_all(init_mps, mpo_1, mpo_X, pm_params) # kwargs)
-        #ll, rr, lO, Or, vals, deltas  = pm_svd(init_mps, mpo_1, mpo_X, pm_params) # kwargs)
+        rr, ll, ds2_pm  = powermethod(init_mps, mpo_1, mpo_X, pm_params) 
 
         ev = compute_expvals(ll, rr, ["X"], b)
 
-        rralt, ds2_pm  = powermethod_Ronly(init_mps, mpo_1, mpo_X, pm_params) 
-
-        evsym = compute_expvals(rralt, rralt, ["X"], b)
-
         push!(evs, ev)
-        push!(evssym, evsym)
 
     end
 
-    return leftvecs, evs, evssym, ds2s, ts 
+    return leftvecs, evs, ds2s, ts 
 end
 
 
 
-leftvecs, evs, evssym, ds2s, ts= main_folded_pm()
+leftvecs, evs, ds2s, ts= main_folded_pm()
