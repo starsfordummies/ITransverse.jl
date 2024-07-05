@@ -51,7 +51,73 @@ The 2D network associated with the time evolution of a quantum chain is
 
 ```
 
+Suppose we are interested in calculating the expectation value of a local operator on a given site (or few sites), 
+the network is  
 
+
+```
+   
+|          o--o--o--o--o--o--o--o  <psi0
+|          |  |  |  |  |  |  |  |
+| t        o--o--o--o--o--o--o--o  Udag(dt)
+|          |  |  |  |  |  |  |  |
+|          o--o--o--o--o--o--o--o  Udag(dt)
+|          |  |  |  |  |  |  |  |
+|          o--o--o--o--o--o--o--o  
+v          |  |  |  |  |  |  |  |
+                    x  x            <- local ops
+           |  |  |  |  |  |  |  |
+^          o--o--o--o--o--o--o--o
+|          |  |  |  |  |  |  |  |
+| t        o--o--o--o--o--o--o--o  U(dt)
+|          |  |  |  |  |  |  |  |
+|          o--o--o--o--o--o--o--o  U(dt)
+|          |  |  |  |  |  |  |  |
+|          o--o--o--o--o--o--o--o  |psi0>
+|
+|------------------------------------->   x
+
+```
+
+This can be __folded__ in a smaller network with doubled tensors, 
+
+```
+   
+
+           ^  ^  ^  x  x  ^  ^  ^      <- local ops
+           H  H  H  H  H  H  H  H
+^          o==o==o==o==o==o==o==o
+|          H  H  H  H  H  H  H  H
+| t        o==o==o==o==o==o==o==o  U(dt)
+|          H  H  H  H  H  H  H  H
+|          o==o==o==o==o==o==o==o  U(dt)
+|          H  H  H  H  H  H  H  H
+|          o==o==o==o==o==o==o==o  |psi0>
+|
+|------------------------------------->   x
+
+where `=` and `H` denote doubled horizontal and vertical legs, 
+and `^` are just vectorized identities to close the network from the top. 
+```
+
+Rather than working with top and bottom, we can introduce left and right "temporal MPS" (tMPS), 
+with respect to the central MPO columns (which can be seen as transfer matrices). The full contraction 
+of the network is then given by 
+
+```
+                x  x 
+           *====o==o====*  
+           |    H  H    |
+^          *====o==o====*
+|          |    H  H    |
+| t        *====o==o====*
+|          |    H  H    |
+|          *====o==o====*
+|          |    H  H    |
+|          *====o==o====*
+|         <L|   O1 O2  |R> 
+|---------------------------->   x
+```
 
 ## Rotated / Transverse MPS-MPO
 
@@ -109,3 +175,31 @@ which we depict with the legs pointing upwards
 |------------------------------------------>
                        
 ```
+
+
+# Main high-level routines
+
+We provide high-level functions for the following algorithms
+
+## Power method 
+
+### Update including operator 
+
+the function is `powermethod`
+
+### Symmetric power method
+
+## Light cone 
+
+# Underlying subroutines
+
+## Sweeps 
+
+## Build tMPO 
+
+## Symmetric eigenvalue/SVD decompositions
+
+# Models
+
+
+# WIP: GPU Extensions 
