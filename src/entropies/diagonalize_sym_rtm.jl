@@ -101,6 +101,9 @@ function diagonalize_rtm_left_gen_sym(psiL::MPS; bring_left_gen::Bool=false, nor
     
     end
 
+    # Maybe we want to reverse the resulting entropies, since we're sweeping from right to left
+    # we can also remove zeros we don't care for
+    eigs_rtm_t = reverse([ ee[abs.(ee) .> 1e-20] for ee in eigs_rtm_t ])
     return eigs_rtm_t
     
 end
@@ -146,6 +149,9 @@ function diagonalize_rtm_right_gen_sym(psi::MPS; bring_right_gen::Bool=false, no
         push!(eigs_rtm_t, diag(matrix(eigss)))
 
     end
+
+    eigs_rtm_t = [ ee[abs.(ee) .> 1e-20] for ee in eigs_rtm_t ]
+
     
     return eigs_rtm_t
 end

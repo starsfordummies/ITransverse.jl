@@ -51,7 +51,7 @@ function salpha(λ::Number, α)
 end
 
 
-function build_entropies(spectra::Vector, which_ents::Vector{<:Real})
+function build_entropies(spectra::Vector, which_ents::Vector)
 
     allents = Dict()
 

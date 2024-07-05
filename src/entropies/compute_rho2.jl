@@ -21,11 +21,11 @@ end
       |  |  |
 o--o--o--o--o  |phi>
 |  |      
-□--□--□--□--□  <psi|
+□==□==□==□==□  <psi|
       |  |  |
 o--o--o--o--o  |phi>
 |  |      
-□--□--□--□--□  <psi|
+□==□==□==□==□  <psi|
       |  |  | 
       *  *  *
 ```
@@ -34,18 +34,24 @@ We do this by building the left and right blocks
 ```
 o--o--
 |  |      =  left
-□--□--
+□==□==
 ```
 
 and 
 
 ```
-            --□--□--□  
+            ==□==□==□  
 right         |  |  |
             --o--o--o  
 ```
 
-and appropriately contract them.
+and appropriately contract them. This should basically amount to the contraction
+```
+
+
+tr(--[LEFT]==[RIGHT]--[LEFT]==[RIGHT]--)
+
+```
 
 """
 function rtm2_contracted(psi::MPS, phi::MPS, cut::Int; normalize_factor::Number=1.0)
@@ -57,7 +63,7 @@ function rtm2_contracted(psi::MPS, phi::MPS, cut::Int; normalize_factor::Number=
 
     phi = deepcopy(phi)
 
-    phi = phi/normalize_factor
+    phi = sim(linkinds,phi)/normalize_factor
 
     #replace_siteinds!(phi, siteinds(psi))
     match_siteinds!(psi, phi)
@@ -65,9 +71,6 @@ function rtm2_contracted(psi::MPS, phi::MPS, cut::Int; normalize_factor::Number=
     left = ITensor(eltype(psi[1]),1.)
     right = ITensor(eltype(psi[1]),1.)
 
-    ind_cut_psi = linkind(psi, cut)
-    ind_cut_phi = linkind(phi, cut)
-    
     for jj = 1:cut
         left *= psi[jj] 
         left *= phi[jj]
@@ -78,16 +81,16 @@ function rtm2_contracted(psi::MPS, phi::MPS, cut::Int; normalize_factor::Number=
         right *= phi[jj]
     end
 
-    right = prime(right, ind_cut_psi)
+    @assert inds(left) == inds(right)
+
+
+    v_psi = linkind(psi,cut)
+    right = prime(right, v_psi)
     
     #trace(rho^2) is just the product left * right * left * right as depicted above
-    tr_rho2 = left
-    #@info "1: $(inds(tr_rho2))"
-    tr_rho2 *= right
+    tr_rho2 = left * right
     #@info "2: $(inds(tr_rho2))"
-    tr_rho2 *= prime(left)
-    #@info "3: $(inds(tr_rho2))"
-    tr_rho2 *= swapprime(right, 1=>0) 
+    tr_rho2 *= swapprime(tr_rho2, 1=>0)
     
     return scalar(tr_rho2)
 end
