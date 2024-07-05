@@ -1,7 +1,7 @@
 
 """ Given a vector `spectra` containing sets of eigenvalue spectra of a RDM/RTM at given cuts,
  returns a dict containing various entropies"""
-function build_entropies(spectra::Vector)
+function old_build_entropies(spectra::Vector)
     vns = []
     tsallis2 = []
     renyi2s = [] 
@@ -51,7 +51,7 @@ function salpha(λ::Number, α)
 end
 
 
-function build_entropies(spectra::Vector{<:Vector{<:Number}}, which_ents::Vector{<:Real})
+function build_entropies(spectra::Vector, which_ents::Vector{<:Real})
 
     allents = Dict()
 
