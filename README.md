@@ -7,34 +7,9 @@ in the time evolution of one-dimensional quantum many-body systems.
 It is built on top of the excellent ITensors library, and tries to reuse most of its features whenever possible.
 
 
+# Motivation: time evolution of 1D quantum systems
 
-
-# Conventions
-
-We start with ITensors conventions, so for an MPS we'd have something like (physical legs here point upwards, ie.
-we think of applying an MPO to an MPS like a tetris brick falling from the top - in order words, if we think of time 
-evolution operators, time would go upwards)
-
-
-```
-      p
-      |
- L----o----R
-```
-
-and for an MPO 
-
-```
-      p'
-      |
- L----o----R
-      |
-      p
-```
-
-The application of an MPO to an MPS is simply their product (ITensors automatically contract equal indices) and then noprime the remaining physical index.
-
-The 2D network associated with the time evolution of a quantum chain is 
+The 2D tensor network associated with the time evolution of a quantum chain is 
 
 ```
 
@@ -65,7 +40,7 @@ the network is
 |          |  |  |  |  |  |  |  |
 |          o--o--o--o--o--o--o--o  
 v          |  |  |  |  |  |  |  |
-                    x  x            <- local ops
+           |  |  |  x  x  |  |  |    <- local ops, ..111XX111..
            |  |  |  |  |  |  |  |
 ^          o--o--o--o--o--o--o--o
 |          |  |  |  |  |  |  |  |
@@ -115,9 +90,41 @@ of the network is then given by
 |          *====o==o====*
 |          |    H  H    |
 |          *====o==o====*
-|         <L|   O1 O2  |R> 
+|         <L|  O1  O2  |R> 
 |---------------------------->   x
 ```
+
+So here we develop transverse algorithms for updating the left and right dominant vectors of the transfer matrix, ie. a column
+of the network depicted above. We include both a power method, as well as a light cone algorithm which exploits the causal structure
+of the network when local operators are involved. 
+
+These algorithms in any case are quite generic and can be used for other scenarios as well.
+
+# Conventions
+
+We start with ITensors conventions, so for an MPS we'd have something like (physical legs here point upwards, ie.
+we think of applying an MPO to an MPS like a tetris brick falling from the top - in order words, if we think of time 
+evolution operators, time would go upwards)
+
+
+```
+      p
+      |
+ L----o----R
+```
+
+and for an MPO 
+
+```
+      p'
+      |
+ L----o----R
+      |
+      p
+```
+
+The application of an MPO to an MPS is simply their product (ITensors automatically contract equal indices) and then noprime the remaining physical index.
+
 
 ## Rotated / Transverse MPS-MPO
 
@@ -190,6 +197,8 @@ the function is `powermethod`
 ### Symmetric power method
 
 ## Light cone 
+
+We initialize the cone using `init_cone(tp::tmpo_params)`, then evolve it using `run_cone()`
 
 # Underlying subroutines
 
