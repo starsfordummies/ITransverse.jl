@@ -82,3 +82,16 @@ function build_entropies(spectra::Vector, which_ents::Vector{<:Real})
     return allents
 end
 
+
+""" Given input a sum(eigenvalues^alpha), returns renyi log(sum())/1-alpha """
+function renyi(traces_alpha, alpha=2)
+    return log.(traces_alpha)./(1-alpha)
+end
+    
+
+
+""" Given input a sum(eigenvalues^alpha), returns tsallis (sum()-1)/1-alpha """
+function tsallis(traces_alpha, alpha=2)
+    return (traces_alpha .-1)./(1-alpha)
+end
+    

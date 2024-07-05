@@ -1,7 +1,7 @@
 """ Given two MPS `<psi` and `|phi>`, 
 computes tr(τₜ^2) the trace of the reduced transition matrices |phi><psi| at the various cuts,
- by contracting left and right MPS (see also below). The normalization must be given 
- via `normalization_factor` """
+ by contracting left and right MPS (see also below). 
+ The normalization must be given via `normalization_factor` """
 function rtm2_contracted(psi::MPS, phi::MPS; normalize_factor::Number=1.0)
     r2s = []
     for jj in eachindex(psi)[1:end-1]
@@ -11,9 +11,12 @@ function rtm2_contracted(psi::MPS, phi::MPS; normalize_factor::Number=1.0)
     return r2s
 end
 
+
+
 """ At a given cut, we can compute tr(τₜ^2) as the contraction
 (asterisks denote contracted inds, ie. we trace over topmost with lowmost inds)
 
+```
       *  *  * 
       |  |  |
 o--o--o--o--o  |phi>
@@ -25,14 +28,26 @@ o--o--o--o--o  |phi>
 □--□--□--□--□  <psi|
       |  |  | 
       *  *  *
-
+```
 We do this by building the left and right blocks 
 
+```
 o--o--
-|  |      = 
+|  |      =  left
 □--□--
-"""
+```
 
+and 
+
+```
+            --□--□--□  
+right         |  |  |
+            --o--o--o  
+```
+
+and appropriately contract them.
+
+"""
 function rtm2_contracted(psi::MPS, phi::MPS, cut::Int; normalize_factor::Number=1.0)
 
     # valid cuts go from 1 to L-1
@@ -91,17 +106,10 @@ function rho2(eigenvalues::ITensor)
     return r2
 end
 
-function rho2(eigenvalues::Vector{Number})
-    r2 = sum(eigenvalues .* eigenvalues)
+function rho2(eigenvalues::Vector)
+    r2 = transpose(eigenvalues) * eigenvalues
 end
 
-
-function rho2(all_eigenvalues::Vector{Vector})
-    r2s = []
-    for eigenvalues in all_eigenvalues
-         push!(r2s, sum(eigenvalues .* eigenvalues))
-    end
-end
 
 
 
@@ -148,9 +156,11 @@ function rtm2_bruteforce(psi::MPS, phi::MPS)
 end
 
 
+#= Old and probably unneeded now 
+
 """ Bring psi in generalized RIGHT symmetric canonical form,
 then contract LEFT enviroments and diagonalize them """
-function rtm2_sym_gauged(psi::MPS, normalize_factor::Number=1.0)
+function _rtm2_sym_gauged(psi::MPS, normalize_factor::Number=1.0)
 
     mpslen = length(psi)
 
@@ -193,3 +203,5 @@ function rtm2_sym_gauged(psi::MPS, normalize_factor::Number=1.0)
     
     return r2s, r2s_check 
 end
+
+=#
