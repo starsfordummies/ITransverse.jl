@@ -11,7 +11,7 @@ function main_folded_pm()
 
     tp = ising_tp()
 
-    cutoff = 1e-14
+    cutoff = 1e-20
     maxbondim = 120
     itermax = 100
     verbose=false
@@ -28,9 +28,18 @@ function main_folded_pm()
     leftvecs = []
     ds2s = []
 
-    ts = 30:1:30
+
+    tp = tmpo_params(tp; nbeta=4)
 
     b = FoldtMPOBlocks(tp)
+
+    mpim = model_params(tp.mp; dt=-im*tp.mp.dt)
+    tpim = tmpo_params(tp; mp=mpim)
+
+    b_im = FoldtMPOBlocks(tpim)
+
+
+    ts = 50:1:50
 
     for Nsteps in ts
 
@@ -38,8 +47,13 @@ function main_folded_pm()
 
         
         init_mps = folded_right_tMPS(b, time_sites)
-        mpo_X = folded_tMPO(b, time_sites, sigX)
-        mpo_1 = folded_tMPO(b, time_sites)
+
+        #mpo_X = folded_tMPO(b, time_sites, sigX)
+        #mpo_1 = folded_tMPO(b, time_sites)
+
+        mpo_X = folded_tMPO(b, b_im, time_sites, sigX)
+        mpo_1 = folded_tMPO(b, b_im, time_sites)
+
 
         rr, ll, ds2_pm  = powermethod(init_mps, mpo_1, mpo_X, pm_params) 
 

@@ -82,4 +82,4 @@ function main_ising_loschmidt(Tstart::Int, Tend::Int, nbeta::Int; Tstep::Int=1)
 
 end
 
-psis, ds2s = main_ising_loschmidt(50, 50, 2)
+psis, ds2s = main_ising_loschmidt(50, 50, 0)
