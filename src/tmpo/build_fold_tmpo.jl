@@ -111,27 +111,6 @@ function folded_open_tMPO(WWc::ITensor, time_sites::Vector{<:Index})
 end
 
 
-#=
-""" Given an initial state and a fold_operator as (folded) vectors, build the folded tMPO from those"""
-function folded_tMPO(b::FoldtMPOBlocks, ts::Vector{<:Index},  fold_op::ITensor)
-    
-    tMPO = folded_open_tMPO(b.WWc, ts)
-
-    @assert length(fold_op) == linkdims(tMPO)[end]
-
-    init_state_tensor = ITensor(b.rho0.tensor.storage, inds(tMPO[1]))
-    fold_op_tensor = ITensor(fold_op, inds(tMPO[end]))
-
-    tMPO.data[1] = init_state_tensor
-    tMPO.data[end] = fold_op_tensor
-
-    contract_edges!(tMPO)
-
-    return tMPO
-
-end
-=#
-
 
 
 
@@ -286,7 +265,7 @@ function folded_tMPO_R(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Ind
     return oo
 
 
-    
+
 function folded_left_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index})
     psi = MPS(fill(b.WWl, length(ts)))
     s, r, l = inds(b.WWl)
