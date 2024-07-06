@@ -209,3 +209,11 @@ end
 function applyns(O::MPO, psi::AbstractMPS)
     apply(swapprime(O, 0, 1, "Site"), psi, alg="naive", truncate=false)
 end
+
+function ITensors.replace_siteinds!(M::MPO, sites)
+    for j in eachindex(M)
+      sj = siteind(M, j)
+      M[j] = replaceinds(M[j], (sj,sj') => (sites[j],sites[j]'))
+    end
+    return M
+  end
