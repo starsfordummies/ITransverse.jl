@@ -111,7 +111,7 @@ function folded_open_tMPO(WWc::ITensor, time_sites::Vector{<:Index})
 end
 
 
-
+#=
 """ Given an initial state and a fold_operator as (folded) vectors, build the folded tMPO from those"""
 function folded_tMPO(b::FoldtMPOBlocks, ts::Vector{<:Index},  fold_op::ITensor)
     
@@ -130,6 +130,7 @@ function folded_tMPO(b::FoldtMPOBlocks, ts::Vector{<:Index},  fold_op::ITensor)
     return tMPO
 
 end
+=#
 
 
 
@@ -143,6 +144,39 @@ function folded_tMPO(b::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::Vector{<:N
     for ii in eachindex(oo)
         newinds = (ts[ii],ts[ii]',ll[ii+1],ll[ii])
         oo[ii] = replaceinds(oo[ii], inds(b.WWc), newinds)
+    end
+
+    oo[1] *= b.rho0 * delta(ind(b.rho0,1), ll[1])
+    oo[end] *= ITensor(fold_op, ll[end])
+
+    return oo
+
+end
+
+
+###### New ver with beta 
+""" Given building blocks and time sites, builds folded tMPO associated with `fold_op`. 
+Defaults to closing with identity if no operator is specified"""
+function folded_tMPO(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::Vector{<:Number} = [1,0,0,1])
+
+    @assert b.tp.nbeta <= length(time_sites)
+    WWc = b.WWc
+    WWc_im = b_im.WWc
+
+    #match indices for real-imag so it's easier to work with them 
+    replaceinds!(WWc_im, inds(WWc_im), inds(WWc))
+
+    oo = MPO(fill(WWc, length(ts)))
+
+    for ib = 1:b.tp.nbeta
+        oo[ib] = WWc_im
+    end
+
+    virtual_ind = ind(b.WWc,3)
+    ll = [Index(dim(virtual_ind),"Link,time_fold,l=$(ii-1)") for ii in 1:length(ts)+1]
+    for ii in eachindex(oo)
+        newinds = (ts[ii],ts[ii]',ll[ii+1],ll[ii])
+        oo[ii] = replaceinds(oo[ii], inds(WWc), newinds)
     end
 
     oo[1] *= b.rho0 * delta(ind(b.rho0,1), ll[1])
@@ -171,6 +205,38 @@ function folded_tMPO_L(b::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::Vector{<
 end
 
 
+""" Builds a folded tMPO extended by one site to the top (ie. end) with the tensor WWl """
+function folded_tMPO_L(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::Vector{<:Number} = [1,0,0,1])
+    @assert b.tp.nbeta < length(time_sites)
+    WWc = b.WWc
+    WWc_im = b_im.WWc
+
+    #match indices for real-imag so it's easier to work with them 
+    replaceinds!(WWc_im, inds(WWc_im), inds(WWc))
+
+    oo = MPO(fill(WWc, length(ts)))
+
+    for ib = 1:b.tp.nbeta
+        oo[ib] = WWc_im
+    end
+    
+    oo[end] = b.WWl
+    virtual_ind = ind(b.WWc,3)
+    ll = [Index(dim(virtual_ind),"Link,time_fold,l=$(ii-1)") for ii in 1:length(ts)+1]
+    for ii in eachindex(oo)
+        newinds = (ts[ii],ts[ii]',ll[ii+1],ll[ii])
+        oo[ii] = replaceinds(oo[ii], inds(WWc), newinds)
+    end
+
+    oo[1] *= b.rho0 * delta(ind(b.rho0,1), ll[1])
+    oo[end] *= ITensor(fold_op, ll[end])
+
+    return oo
+
+end
+
+
+
 function folded_tMPO_R(b::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::Vector{<:Number} = [1,0,0,1])
     oo = MPO(fill(b.WWc, length(ts)))
     oo[end] = b.WWr
@@ -189,7 +255,38 @@ function folded_tMPO_R(b::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::Vector{<
 end
 
 
+""" Builds a folded tMPO extended by one site to the top (ie. end) with the tensor WWl """
+function folded_tMPO_R(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::Vector{<:Number} = [1,0,0,1])
+    @assert b.tp.nbeta < length(time_sites)
 
+    WWc = b.WWc
+    WWc_im = b_im.WWc
+
+    #match indices for real-imag so it's easier to work with them 
+    replaceinds!(WWc_im, inds(WWc_im), inds(WWc))
+
+    oo = MPO(fill(WWc, length(ts)))
+
+    for ib = 1:b.tp.nbeta
+        oo[ib] = WWc_im
+    end
+
+    oo[end] = b.WWr
+
+    rind = ind(b.WWc,3)
+    ll = [Index(dim(rind),"Link,time_fold,l=$(ii-1)") for ii in 1:length(ts)+1]
+    for ii in eachindex(oo)
+        newinds = (ts[ii],ts[ii]',ll[ii+1],ll[ii])
+        oo[ii] = replaceinds(oo[ii], inds(WWc), newinds)
+    end
+
+    oo[1] *= b.rho0 * delta(ind(b.rho0,1), ll[1])
+    oo[end] *= ITensor(fold_op, ll[end])
+
+    return oo
+
+
+    
 function folded_left_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index})
     psi = MPS(fill(b.WWl, length(ts)))
     s, r, l = inds(b.WWl)

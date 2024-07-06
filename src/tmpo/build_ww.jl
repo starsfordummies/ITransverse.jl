@@ -194,7 +194,7 @@ struct FoldtMPOBlocks
     WWr::ITensor
     rho0::ITensor
     tp::tmpo_params
-    rot_inds::Vector{<:Index}
+    rot_inds::Dict
 
     function FoldtMPOBlocks(tp::tmpo_params, init_state::Vector{<:Number} = tp.bl) 
 
@@ -225,7 +225,7 @@ struct FoldtMPOBlocks
             rho0 = ITensor(0)
         end
 
-        inds_ww = Dict(:L => L, :R => R, :P => P)
+        inds_ww = Dict() # TODO
         return new(WWl, WWc, WWr, rho0, tp, inds_ww)
     end
 
