@@ -1,5 +1,3 @@
-# TODO put as extension
-
 
 function ITransverse.plot_matrix(a::Matrix)
     heatmap(1:size(a,1),

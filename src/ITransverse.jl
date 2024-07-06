@@ -99,13 +99,14 @@ include("tmpo/build_expH.jl")
 
 include("tmpo/build_ww.jl")
 
-export rotate_90clockwise, FoldtMPOBlocks, build_WWl, build_WWc, build_WWr, build_WW
+export rotate_90clockwise, FoldtMPOBlocks, FwtMPOBlocks,
+ build_WWl, build_WWc, build_WWr, build_WW
 
 include("tmpo/build_tmpo_fw.jl")
 
 #from build_tmpo_[fw|expval].jl
 export
-    fw_tMPO,
+    fw_tMPO, fw_tMPOn,
     #build_ising_fw_tMPO_regul_beta, 
     #build_ising_fw_tMPO,
     #build_potts_fw_tMPO, 

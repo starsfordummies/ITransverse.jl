@@ -1,6 +1,8 @@
 
 """
+Given an MPO tensor `W` and the relevant indices,
 We rotate our space vectors to the *right* by 90°, ie 
+
 (L,R,P,P') => (P',P,R,L)
 ```
    |p'             |L
@@ -8,12 +10,11 @@ L--o--R   =>    p--o--p'
    |p              |R
 ```
 """
-
 function rotate_90clockwise(W::ITensor; L=nothing, R=nothing, P=nothing, Ps=nothing)
     
-    #xLtP = Index(dim(L),"time,site")
     xPtR = Index(dim(P),"time,virtR")
     xPstL = Index(dim(P),"time,virtL")
+    xLtP = Index(1)
 
     if !isnothing(L)
         xLtP = Index(dim(L),"time,site")
@@ -29,16 +30,57 @@ function rotate_90clockwise(W::ITensor; L=nothing, R=nothing, P=nothing, Ps=noth
     W *= delta(Ps, xPtR)
     W *= delta(P, xPstL)
 
-    return W
+    rotated_inds = Dict(:L => xPstL, :R => xPtR, :P => xLtP, :Ps => xLtP' )
+
+    # TODO Permute so we're sure to return the indices in order (rotated)(L,R,P,Ps) ?
+
+    return W, rotated_inds
 end
+
+
+"""
+(L,R,P,P') => (P',P,R,L)
+"""
+function rotate_90clockwisen(W::ITensor; L=nothing, R=nothing, P=nothing, Ps=nothing)
+
+    dim_rotV = dim(P)
+    dim_rotP = isnothing(L) ? dim(R) : dim(L)
+
+    irotL = Index(dim_rotV,"time,virtL")
+    irotR = Index(dim_rotV,"time,virtR")
+    irotP = Index(dim_rotP,"time,site")
+    irotPs = Index(dim_rotP,"time,site")'
+
+    if ndims(W) == 4 
+        W = replaceinds(W, (L,R,P,Ps) ,(irotPs, irotP, irotR, irotL))
+        W = permute(W, (irotL, irotR, irotP, irotPs))
+
+    elseif ndims(W) == 3 && isnothing(L) # Wl 
+        W = replaceinds(W, (R,P,Ps) ,(irotP, irotR, irotL))
+        W = permute(W, (irotL, irotR, irotP))  # should be Ps but we already unprime here 
+
+    elseif ndims(W) == 3 && isnothing(R) # Wr 
+        W = replaceinds(W, (L,P,Ps) ,(irotP, irotR, irotL))
+        W = permute(W, (irotL, irotR, irotP))
+    else
+        @error "Trying to rotate a Wtensor with $ndims(W) legs, not sure what to do"
+    end
+
+    rotated_inds = Dict(:L => irotL, :R => irotR, :P => irotP, :Ps => irotPs )
+
+    return W, rotated_inds
+end
+
+
+
 
 
 """ Convention we stick to for all the following: indices for tMPO WWl before rotations are  L, R, P, P' """
 function build_WW(tp::tmpo_params)
     eH = build_expH(tp)
     WWc, iCwL, iCwR, iCp, iCps = build_WWc(eH)
-    WWl, iCwR, iCp, iCps = build_WWl(eH)
-    WWr, iCwL, iCp, iCps = build_WWr(eH)
+    WWl,       iCwR, iCp, iCps = build_WWl(eH)
+    WWr, iCwL,       iCp, iCps = build_WWr(eH)
 
     return WWl, WWc, WWr
 end
@@ -46,8 +88,8 @@ end
     
 
 """ Builds the bulk tensor for the *folded* time MPO
-Returns the *unrotated* combined indices as well: vL, vR, p, p' """
-
+Returns the *unrotated* combined indices as well: vL, vR, p, p' 
+"""
 function build_WWc(tp::tmpo_params)
     eH = build_expH(tp)
     WWc, iCwL, iCwR, iCp, iCps = build_WWc(eH)
@@ -113,7 +155,7 @@ function build_WWr(eH_space::MPO)
 end
 
 
-""" Builds folded unrotated right edge tensor of the network """ 
+""" Builds folded unrotated left edge tensor of the network """ 
 function build_WWl(eH_space::MPO)
 
     Wl, _, _ = eH_space.data
@@ -143,30 +185,34 @@ function build_WWl(eH_space::MPO)
 end
 
 
-""" Basic building blocks for the folded tMPS/tMPO, folded tensors of time evolution rotated 90deg clockwise"""
+""" Basic building blocks for the folded tMPS/tMPO, folded tensors of time evolution 
+ * already rotated 90deg clockwise* - so the physical indices are "temporal" ones.
+"""
 struct FoldtMPOBlocks
     WWl::ITensor
     WWc::ITensor
     WWr::ITensor
     rho0::ITensor
     tp::tmpo_params
+    rot_inds::Vector{<:Index}
 
     function FoldtMPOBlocks(tp::tmpo_params, init_state::Vector{<:Number} = tp.bl) 
 
         WWl, WWc, WWr = build_WW(tp::tmpo_params)
 
         R, P, Ps = inds(WWl)
-        WWl = rotate_90clockwise(WWl; R,P,Ps)
+        WWl, _ = rotate_90clockwise(WWl; R,P,Ps)
         L, R, P, Ps = inds(WWc)
-        WWc = rotate_90clockwise(WWc; L,R,P,Ps)
+        WWc, rotated_inds= rotate_90clockwise(WWc; L,R,P,Ps)
         L, P, Ps = inds(WWr)
-        WWr = rotate_90clockwise(WWr; L,P,Ps)
+        WWr, _ = rotate_90clockwise(WWr; L,P,Ps)
 
         # Match the inds of all three tensors FIXME do we want this? 
-        il = (Index(1), inds(WWl)...) 
-        WWl = replaceinds(WWl, il, inds(WWc))
-        ir = (ind(WWr,1), Index(1), ind(WWr,2),ind(WWr,3))
-        WWr = replaceinds(WWr, ir, inds(WWc))
+        # TODO check: rotated ints should be L, R, P, P' 
+        iwl = (Index(1), inds(WWl)...) 
+        WWl = replaceinds(WWl, iwl, inds(WWc))
+        iwr = (ind(WWr,1), Index(1), ind(WWr,2),ind(WWr,3))
+        WWr = replaceinds(WWr, iwr, inds(WWc))
 
         # We can accept either an initial state or initial folded state (DM)
         if length(init_state) == dim(P)
@@ -179,8 +225,52 @@ struct FoldtMPOBlocks
             rho0 = ITensor(0)
         end
 
-        return new(WWl, WWc, WWr, rho0, tp)
+        inds_ww = Dict(:L => L, :R => R, :P => P)
+        return new(WWl, WWc, WWr, rho0, tp, inds_ww)
     end
 
+end
+
+
+
+
+""" Basic building blocks for the folded tMPS/tMPO, folded tensors of time evolution rotated 90deg clockwise"""
+struct FwtMPOBlocks
+    Wl::ITensor
+    Wc::ITensor
+    Wr::ITensor
+    tp::tmpo_params
+    rot_inds::Dict
+
+    function FwtMPOBlocks(tp::tmpo_params)
+    
+        eH = build_expH(tp)
+    
+        Wl, Wc, Wr = eH.data
+
+        #space_pL = siteind(eH,1)
+        ilP = siteind(eH,1)
+        ilPs = ilP'
+
+        icP = siteind(eH,2)
+        icPs = icP'
+
+        irP = siteind(eH,3)
+        irPs = irP'
+    
+        (iL, iR) = linkinds(eH)
+
+        check_symmetry_itensor_mpo(Wc, iL, iR, icP, icP')
+
+        # rotate 90deg 
+
+        Wl, rotated_inds = rotate_90clockwisen(Wl;      R=iL,P=ilP,Ps=ilPs)
+        Wc, rotated_inds = rotate_90clockwisen(Wc; L=iL,R=iR,P=icP,Ps=icPs)
+        Wr, rotated_inds = rotate_90clockwisen(Wr; L=iR,     P=irP,Ps=irPs)
+    
+        rot_inds = Dict() #TODO
+
+        return new(Wl, Wc, Wr, tp, rot_inds)
+    end
 
 end

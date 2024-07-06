@@ -41,6 +41,14 @@ function main_ising_loschmidt(Tstart::Int, Tend::Int, nbeta::Int; Tstep::Int=1)
     @info ("Optimizing for T=$(allts) with $(nbeta) imag steps ")
     @info ("Initial state $(init_state)  => quench @ J=$(JXX) , h=$(hz) ")
 
+
+    b = FwtMPOBlocks(tp)
+
+    mpim = model_params(tp.mp; dt=-im*tp.mp.dt)
+    tpim = tmpo_params(tp; mp=mpim)
+
+    b_im = FwtMPOBlocks(tpim)
+
     for ts in allts
 
         Ntime_steps = ts
@@ -48,10 +56,9 @@ function main_ising_loschmidt(Tstart::Int, Tend::Int, nbeta::Int; Tstep::Int=1)
 
         time_sites = addtags(siteinds("S=1/2", Nsteps; conserve_qns=false), "time")
 
-        #mpo_L, start_mps = build_ising_fw_tMPO_regul_beta(build_expH_ising_murg, JXX, hz, dt, nbeta, time_sites, init_state)
-        #psi_trunc, ds2s_murg_s = powermethod_sym(start_mps, mpo_L, pm_params)
-
-        mpo, start_mps = fw_tMPO(tp, time_sites)
+        #mpo, start_mps = fw_tMPO(tp, time_sites)
+        #mpo, start_mps = fw_tMPOn(tp, time_sites)
+        mpo, start_mps = fw_tMPOn(b, b_im, time_sites)
 
         psi_trunc, ds2 = powermethod_sym(start_mps, mpo, pm_params)
 
@@ -75,4 +82,4 @@ function main_ising_loschmidt(Tstart::Int, Tend::Int, nbeta::Int; Tstep::Int=1)
 
 end
 
-psis, ds2s = main_ising_loschmidt(40, 40, 2)
+psis, ds2s = main_ising_loschmidt(50, 50, 2)
