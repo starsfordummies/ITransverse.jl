@@ -132,28 +132,17 @@ function folded_tMPO(b::FoldtMPOBlocks, ts::Vector{<:Index},  fold_op::ITensor)
 end
 
 
-# function folded_tMPO(tp::tmpo_params, time_sites::Vector{<:Index};
-#      init_state = tp.bl, fold_op = tp.tr)
-
-#     tMPO_blocks = FoldtMPOBlocks(tp, init_state)
-#     folded_tMPO(tMPO_blocks, fold_op, time_sites)
-
-# end
 
 
 """ Given building blocks and time sites, builds folded tMPO associated with `fold_op`. 
 Defaults to closing with identity if no operator is specified"""
 function folded_tMPO(b::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::Vector{<:Number} = [1,0,0,1])
     oo = MPO(fill(b.WWc, length(ts)))
-    ri = ind(b.WWc,3)
-    ll = [Index(dim(ri),"Link,time_fold,l=$(ii-1)") for ii in 1:length(ts)+1]
+    rind = ind(b.WWc,3)
+    ll = [Index(dim(rind),"Link,time_fold,l=$(ii-1)") for ii in 1:length(ts)+1]
     for ii in eachindex(oo)
         newinds = (ts[ii],ts[ii]',ll[ii+1],ll[ii])
         oo[ii] = replaceinds(oo[ii], inds(b.WWc), newinds)
-        # oo[ii] *= delta(s,ts[ii])
-        # oo[ii] *= delta(sp,ts[ii]')
-        # oo[ii] *= delta(r,ll[ii+1])
-        # oo[ii] *= delta(l,ll[ii])
     end
 
     oo[1] *= b.rho0 * delta(ind(b.rho0,1), ll[1])
@@ -167,15 +156,11 @@ end
 function folded_tMPO_L(b::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::Vector{<:Number} = [1,0,0,1])
     oo = MPO(fill(b.WWc, length(ts)))
     oo[end] = b.WWl
-    ri = ind(b.WWc,3)
-    ll = [Index(dim(ri),"Link,time_fold,l=$(ii-1)") for ii in 1:length(ts)+1]
+    rind = ind(b.WWc,3)
+    ll = [Index(dim(rind),"Link,time_fold,l=$(ii-1)") for ii in 1:length(ts)+1]
     for ii in eachindex(oo)
         newinds = (ts[ii],ts[ii]',ll[ii+1],ll[ii])
         oo[ii] = replaceinds(oo[ii], inds(b.WWc), newinds)
-        # oo[ii] *= delta(s,ts[ii])
-        # oo[ii] *= delta(sp,ts[ii]')
-        # oo[ii] *= delta(r,ll[ii+1])
-        # oo[ii] *= delta(l,ll[ii])
     end
 
     oo[1] *= b.rho0 * delta(ind(b.rho0,1), ll[1])
@@ -189,15 +174,11 @@ end
 function folded_tMPO_R(b::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::Vector{<:Number} = [1,0,0,1])
     oo = MPO(fill(b.WWc, length(ts)))
     oo[end] = b.WWr
-    ri = ind(b.WWc,3)
-    ll = [Index(dim(ri),"Link,time_fold,l=$(ii-1)") for ii in 1:length(ts)+1]
+    rind = ind(b.WWc,3)
+    ll = [Index(dim(rind),"Link,time_fold,l=$(ii-1)") for ii in 1:length(ts)+1]
     for ii in eachindex(oo)
         newinds = (ts[ii],ts[ii]',ll[ii+1],ll[ii])
         oo[ii] = replaceinds(oo[ii], inds(b.WWc), newinds)
-        # oo[ii] *= delta(s,ts[ii])
-        # oo[ii] *= delta(sp,ts[ii]')
-        # oo[ii] *= delta(r,ll[ii+1])
-        # oo[ii] *= delta(l,ll[ii])
     end
 
     oo[1] *= b.rho0 * delta(ind(b.rho0,1), ll[1])
@@ -216,9 +197,6 @@ function folded_left_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index})
     for ii in eachindex(psi)
         newinds = (ts[ii],ll[ii+1],ll[ii])
         psi[ii] = replaceinds(psi[ii], inds(b.WWl), newinds)
-        # psi[ii] *= delta(s,ts[ii])
-        # psi[ii] *= delta(r,ll[ii+1])
-        # psi[ii] *= delta(l,ll[ii])
     end
 
     psi[1] *= b.rho0 * delta(ind(b.rho0,1), ll[1])
@@ -235,9 +213,6 @@ function folded_right_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index})
     for ii in eachindex(psi)
         newinds = (ts[ii],ll[ii+1],ll[ii])
         psi[ii] = replaceinds(psi[ii], inds(b.WWr), newinds)
-        # psi[ii] *= delta(s,ts[ii])
-        # psi[ii] *= delta(r,ll[ii+1])
-        # psi[ii] *= delta(l,ll[ii])
     end
 
     psi[1] *= b.rho0 * delta(ind(b.rho0,1), ll[1])
