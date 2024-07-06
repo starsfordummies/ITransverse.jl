@@ -264,6 +264,7 @@ function folded_tMPO_R(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Ind
 
     return oo
 
+end
 
 
 function folded_left_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index})
