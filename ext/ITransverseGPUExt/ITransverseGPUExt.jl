@@ -14,13 +14,12 @@ include("gpu_sweeps.jl")
 include("gpu_cone.jl")
 include("gpu_cone_svd.jl")
 
-export gpu_run_cone, 
-gpu_run_cone_svd,
-gpu_truncate_sweep,
-gpu_truncate_sweep!,
-gpu_expval_LR,
-cpu_expval_LR,
-gpu_expval_LL_sym,
-gpu_compute_expvals
+
+device(x) = NDTensors.cu(x)
+
+function device(b::FoldtMPOBlocks)
+    return FoldtMPOBlocks(device(b.WWl), device(b.WWc), device(b.WWr), device(b.rho0), tp, inds_ww)
+end
+
     
 end #module ITransverseGPUExt
