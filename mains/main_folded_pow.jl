@@ -31,12 +31,12 @@ function main_folded_pm()
 
     tp = tmpo_params(tp; nbeta=4)
 
-    b = FoldtMPOBlocks(tp)
-
     mpim = model_params(tp.mp; dt=-im*tp.mp.dt)
     tpim = tmpo_params(tp; mp=mpim)
 
-    b_im = FoldtMPOBlocks(tpim)
+
+    b = device(FoldtMPOBlocks(tp))
+    b_im = device(FoldtMPOBlocks(tpim))
 
 
     ts = 50:1:50
