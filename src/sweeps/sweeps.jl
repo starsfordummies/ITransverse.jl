@@ -14,7 +14,7 @@ function truncate_lsweep(psi::MPS, phi::MPS; cutoff::Real, chi_max::Int)
     psi_ortho = orthogonalize(psi, 1)
     phi_ortho = orthogonalize(phi, 1)
 
-    XUinv, XVinv, left_env = (ITensor(elt,1.), ITensor(elt,1.), ITensor(elt,1.)) 
+    XUinv, XVinv, left_env = (device(ITensor(elt,1.)), device(ITensor(elt,1.)), device(ITensor(elt,1.)))
 
     ents_sites = ComplexF64[]
 
@@ -92,7 +92,7 @@ function truncate_rsweep(psi::MPS, phi::MPS; cutoff::Real, chi_max::Int)
     psi_ortho = orthogonalize(psi, mpslen, normalize=false)
     phi_ortho = orthogonalize(phi, mpslen, normalize=false)
 
-    XUinv, XVinv, right_env = (ITensor(elt, 1.), ITensor(elt, 1.), ITensor(elt, 1.)) 
+    XUinv, XVinv, right_env = (device(ITensor(elt, 1.)), device(ITensor(elt, 1.)), device(ITensor(elt, 1.))) 
     
     ents_sites = ComplexF64[]
 

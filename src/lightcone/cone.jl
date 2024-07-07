@@ -4,7 +4,7 @@ After rotation, initial state goes to the *left*."""
 
 function init_cone(tp::tmpo_params, n::Int=3)
 
-    b = FoldtMPOBlocks(tp)
+    b = device(FoldtMPOBlocks(tp))
 
     time_dim = dim(b.WWc,1)
     
@@ -18,7 +18,7 @@ function init_cone(tp::tmpo_params, n::Int=3)
         psi = apply_extend(m, psi)
     end
 
-    return psi
+    return psi, b 
 end
 
 
@@ -87,9 +87,9 @@ end
 
 
 function run_cone(psi::MPS, 
+    b::FoldtMPOBlocks,
     nsteps::Int, 
     op::Vector{ComplexF64}, 
-    tp::tmpo_params,
     truncp::trunc_params,
     save_cp::Bool=true
     )
@@ -115,9 +115,8 @@ function run_cone(psi::MPS,
     end
 
 
-    infos = Dict(:times => times, :truncp => truncp, :tp => tp, :op => op)
+    infos = Dict(:times => times, :truncp => truncp, :tp => b.tp, :op => op)
 
-    b = FoldtMPOBlocks(tp)
     time_dim = dim(b.WWc,1)
 
 

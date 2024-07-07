@@ -18,8 +18,8 @@ function truncate_lsweep_sym(in_psi::MPS; cutoff::Float64, chi_max::Int, method:
 
     ents_sites = ComplexF64[] 
 
-    XUinv= ITensor(elt, 1.)
-    left_env = ITensor(elt, 1.)
+    XUinv= device(ITensor(elt, 1.))
+    left_env = device(ITensor(elt, 1.))
 
     for ii = 1:mpslen-1
 
@@ -41,6 +41,7 @@ function truncate_lsweep_sym(in_psi::MPS; cutoff::Float64, chi_max::Int, method:
             XU = dag(U) * isqS
             XUinv = sqS * U
 
+        # TODO this likely doesn't work on GPU ..
         elseif method == "EIG"
             F = symm_oeig(left_env, ind(left_env,1); cutoff)
             U = F.V
@@ -92,8 +93,8 @@ function truncate_rsweep_sym(in_psi::MPS; cutoff::Float64, chi_max::Int, method:
     # first bring to LEFT standard canonical form 
     psi_ortho = orthogonalize(in_psi, mpslen)
 
-    XUinv= ITensor(elt,1.)
-    right_env = ITensor(elt,1.)
+    XUinv= device(ITensor(elt,1.))
+    right_env = device(ITensor(elt,1.))
 
     ents_sites = ComplexF64[]
 
