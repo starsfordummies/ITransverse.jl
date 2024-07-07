@@ -260,134 +260,7 @@ end
 
 
 
-"""
-Builds exp(Hpotts) with 2nd order approximation from the Ghent group.
-Bond dimension is 7 
-"""
-function build_expH_potts_2o(sites, 
-    J::Real, f::Real,
-    dt::Number)
 
-    N = length(sites)
-
-    link_dimension = 7
-
-    linkindices = [Index(link_dimension, "Link,l=$(n-1)") for n = 1:N+1]
-
-    U_t = MPO(N)
-
-    # TODO CHECK SIGN
-    τ = -1.0im * dt
-
-
-    for n = 1:N
-        # siteindex s
-        s = sites[n]
-
-        # left link index ll with daggered QN conserving direction (if applicable)
-        ll = dag(linkindices[n])
-        # right link index rl
-        rl = linkindices[n+1]
-
-        
-
-        Id = op(sites, "Id", n)
-
-        D =  -f * op(sites, "τplusτdag",  n)
-        B = -J * [op(sites, "Σ", n), op(sites, "Σdag", n)]
-        C = [op(sites, "Σdag", n), op(sites, "Σ", n)]
-
-        # Init ITensor inside MPO
-        #U_t[n] = ITensor(ComplexF64, ll, dag(s), s', dag(rl))
-
-
-        #[1,1]
-        U_t[n] = onehot(ll => 1, rl =>1)  * 
-        (Id + τ * D + (τ^2 / 2) * replaceprime(D' * D, 2, 1) + (τ^3 / 6) * replaceprime(D'' * D' * D, 3, 1))
-
-        # rest of first row 
-        for (iiC, Ci) in enumerate(C)
-            # sub-block II
-            U_t[n] +=  onehot(ll => 1, rl =>1+iiC)* #setelt(ll[1]) * setelt(rl[1+iiC]) 
-            (Ci + (τ / 2) * braket(Ci, D) + (τ^2 / 6) * braket2(Ci, D)) 
-
-            # sub-block III
-            for (jjC, Cj) in enumerate(C)
-                U_t[n] += onehot(ll => 1, rl => 1 + iiC*2 + jjC) * #setelt(ll[1]) * setelt(rl[1+iiC*2+jjC]) * 
-                (replaceprime(Ci' * Cj, 2, 1) + (τ / 3) * braket(Ci, Cj, D))
-            end 
-        end
-
-        # rest of first column 
-        for (iiB, Bi) in enumerate(B)
-            # sub-block IV
-            U_t[n] += onehot(ll => 1 + iiB, rl => 1) * # setelt(ll[1+iiB]) * setelt(rl[1]) * 
-            (τ * Bi + (τ^2 / 2) * braket(Bi, D) + (τ^3 / 6) * braket2(Bi, D))
-            
-            #sub-block VII
-            for (jjB, Bj) in enumerate(B)
-                U_t[n] += onehot(ll => 1 + iiB*2 + jjB , rl =>1) * # setelt(ll[1+ iiB*2 + jjB]) * setelt(rl[1]) *
-                ((τ^2 / 2) * replaceprime(Bi' * Bj, 2, 1) + (τ^3 / 6) * braket(Bi, Bj, D))
-            end
-
-        end
-
-        # block V
-        for (iiC, Ci) in enumerate(C)
-            for (iiB, Bi) in enumerate(B)
-                U_t[n] += onehot(ll => 1+iiB, rl =>1+iiC) * # setelt(ll[1+iiB]) * setelt(rl[1+iiC]) * 
-                ( (τ / 2) * braket(Bi, Ci)  + (τ^2 / 6) * braket(Ci, Bi, D) ) 
-            end
-        end
-
-        # block VI
-        for (iiC, Ci) in enumerate(C)
-            for (jjC, Cj) in enumerate(C)
-                for (iiB, Bi) in enumerate(B)
-                    U_t[n] += onehot(ll => 1+iiB, rl =>1 + iiC*2 + jjC) * # setelt(ll[1+iiB]) * setelt(rl[1+iiC*2+jjC]) *  
-                    (τ / 3) *  braket(Ci, Cj, Bi)#  * ( (τ / 2) * anticomm(Bi,Ci) )
-                end
-            end
-        end
-
-        # block VIII
-        for (iiB, Bi) in enumerate(B)
-            for (jjB, Bj) in enumerate(B)
-                for (iiC, Ci) in enumerate(C)
-                    U_t[n] += onehot(ll => 1 + iiB*2 + jjB, rl => 1 + iiC) * # setelt(ll[1+iiB*2+jjB]) * setelt(rl[1+iiC]) *
-                    (τ^2 / 6) * braket(Bi, Bj, Ci) #  * ( (τ / 2) * anticomm(Bi,Ci) )
-                end
-            end
-        end
-
-    end
-
-
-    
-    L = onehot(linkindices[1] => 1)
-    R = onehot(dag(linkindices[N+1] => 1))
-
-
-    U_t[1] *= L
-    U_t[N] *= R
-
-    return U_t
-
-end
-
-
-""" Functions needed for the expHpotts a la Murg """
-function fsumI_a(x::Number)
-
-    return (2*exp(-x) + exp(2*x))/3.
-
-end
-
-function fsumΣ_a(x::Number)
-
-    return (-exp(-x) + exp(2*x))/3.
-
-end
 
 
 """
@@ -397,6 +270,9 @@ Bond dimension is 3
 function build_expH_potts_murg(sites, 
     J::Real, fpotts::Real,
     dt::Number)
+
+    fsumI_a(x) = (2*exp(-x) + exp(2*x))/3.
+    fsumΣ_a(x) = (-exp(-x) + exp(2*x))/3.
 
     N = length(sites)
 
