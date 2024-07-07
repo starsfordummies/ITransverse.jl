@@ -11,41 +11,27 @@ using ProgressMeter
 include("ITenUtils/ITenUtils.jl")
 using .ITenUtils
 
-export sqrt 
+include("ChainModels/ChainModels.jl")
+using .ChainModels
+
 
 # #from utils.jl
 export quick_mps, 
     overlap_noconj, 
-    check_symmetry_itensor_mpo, 
-    check_symmetry_itensor,
-    applys,
+    applyn,
     isid,
-    mergedicts!,
-    merge_siteinds!
-    # check_diag_matrix, 
-    # check_id_matrix,
-    # isid
-
+    mergedicts!
 
 include("sweeps/sweeps.jl")
-#include("sweeps/alt_sweeps.jl")
 include("sweeps/sweeps_sym.jl")
 include("sweeps/gen_form_checks.jl")
 
 export truncate_lsweep, truncate_rsweep
 export truncate_lsweep_sym, truncate_rsweep_sym
 
-#from sweeps.jl
-export truncate_normalize_sweep, 
-    truncate_normalize_sweep_LR
+export gen_canonical_left, gen_canonical_right
 
-# from alt_sweeps.jl
-export truncate_sweep_keep_lenv, truncate_sweep_aggressive_normalize
-# sweeps_sym.jl
-export  truncate_normalize_sweep_sym,
-    truncate_normalize_sweep_sym!,
-    truncate_normalize_sweep_sym_right,
-    gen_canonical_left, gen_canonical_right
+export check_gencan_left, check_gencan_right
 
 
 include("entropies/build_entropies.jl")
@@ -54,87 +40,53 @@ include("entropies/rdm_svd_entropies.jl")
 include("entropies/gen_sym_entropies.jl")
 include("entropies/diagonalize_sym_rtm.jl")
 include("entropies/compute_rho2.jl")
-#include("entropies/ent_segment.jl")
 
 
-#from compute_entropies.jl
 export vn_entanglement_entropy, 
     renyi_entanglement_entropy!,
-    generalized_entropy_symmetric_cut, 
-    generalized_entropy_symmetric, 
-    #generalized_entropy_cut,
-    generalized_entropy,
-    generalized_renyi_entropy,
     build_entropies,
     diagonalize_rdm
-
-# from gen_form_checks
-export check_gencan_left, check_gencan_right
 
 # from compute_rho2.jl
 export rho2, 
     rtm2_contracted, 
-    rtm2_bruteforce,
     diagonalize_rtm_right_gen_sym,
     diagonalize_rtm_left_gen_sym
 
  
-include("ChainModels/ChainModels.jl")
-using .ChainModels
-
 export model_params
 
 export trunc_params
 
 export build_expH_ising_murg, 
-build_expH_potts_murg, 
-build_expH_potts_symmetric_svd,
-build_expH_ising_parallel_field_murg
+    build_expH_potts_murg, 
+    build_expH_potts_symmetric_svd
 
 include("tmpo/tmpo_params.jl")
-export tmpo_params, ising_tp
+    export tmpo_params, ising_tp
 
 include("tmpo/build_expH.jl")
 
 
 include("tmpo/build_ww.jl")
 
-export rotate_90clockwise, FoldtMPOBlocks, FwtMPOBlocks,
- build_WWl, build_WWc, build_WWr, build_WW
+export rotate_90clockwise, FoldtMPOBlocks, FwtMPOBlocks
+ #build_WWl, build_WWc, build_WWr, build_WW
 
 include("tmpo/build_tmpo_fw.jl")
 
 #from build_tmpo_[fw|expval].jl
 export
-    fw_tMPO, fw_tMPOn,
-    #build_ising_fw_tMPO_regul_beta, 
-    #build_ising_fw_tMPO,
-    #build_potts_fw_tMPO, 
-    #build_xxmodel_fw_tMPO, 
-    build_potts_fw_tMPO_regul_beta, 
-    build_xxmodel_fw_tMPO_regul_beta, 
-    #build_tMPO_regul_beta, 
-    build_expval_tMPO, 
-    build_ising_expval_tMPO
-    #build_left_tMPS
-
+    fw_tMPO, fw_tMPOn
 
 include("tmpo/build_fold_tmpo.jl")
-#include("tmpo/ising_fold_tmpo.jl")
 
 #from build_fold_tmpo.jl
 export 
-     #build_ising_folded_tMPO,  # superseded by build_ham_ ? 
-     #build_ising_folded_tMPS,
-    #  build_folded_tMPO_regul_beta, 
-    #  build_folded_left_tMPS,
-    #  folded_tMPO,
-    #  folded_open_tMPO
-
      folded_tMPO,
      folded_tMPO_R,
-     folded_right_tMPS,
-     apply_extend
+     folded_right_tMPS
+   #  apply_extend
     
 include("power_method/pm_params.jl")
 
@@ -144,14 +96,7 @@ include("power_method/pm.jl")
 include("power_method/symm_pm.jl")
 
 #from power_method.jl
-export powermethod, 
-    powermethod_converge_norm,
-    powermethod_converge_eig,
-    powermethod_fold,
-    powermethod_Ronly,
-    pm_all,
-    pm_svd
-
+export powermethod
 
 export powermethod_sym
 

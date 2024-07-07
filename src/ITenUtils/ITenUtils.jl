@@ -57,9 +57,7 @@ export quick_mps,
 # moreutils.jl
 export randsymITensor,
     isid,
-    #plot_matrix,
     pinvten,
-    #symmetrize,
     randITensor_decayspec
 
 # matrix_utils.jl
