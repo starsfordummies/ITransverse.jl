@@ -5,7 +5,7 @@ using ITensors, ITensorMPS
 using ..ITenUtils
 
 include("model_params.jl")
-include("generic.jl")
+include("id_mpo.jl")
 include("ising_parallel.jl")
 include("potts.jl")
 include("xxzmodel.jl")
@@ -21,7 +21,7 @@ export build_H_ising,
 #from potts.jl
 export build_H_potts_manual,
     build_H_potts,
-    build_expH_potts_2o,
+    #build_expH_potts_2o,
     build_expH_potts_murg,
     build_expH_potts_symmetric_svd
 
