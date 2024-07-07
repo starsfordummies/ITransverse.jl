@@ -78,9 +78,11 @@ end
 """ Convention we stick to for all the following: indices for tMPO WWl before rotations are  L, R, P, P' """
 function build_WW(tp::tmpo_params)
     eH = build_expH(tp)
-    WWc, iCwL, iCwR, iCp, iCps = build_WWc(eH)
+
     WWl,       iCwR, iCp, iCps = build_WWl(eH)
     WWr, iCwL,       iCp, iCps = build_WWr(eH)
+    WWc, iCwL, iCwR, iCp, iCps = build_WWc(eH)
+    check_symmetry_itensor_mpo(WWc, iCwL, iCwR, iCp, iCps)
 
     return WWl, WWc, WWr
 end

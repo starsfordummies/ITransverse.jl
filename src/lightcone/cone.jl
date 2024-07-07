@@ -94,6 +94,8 @@ function run_cone(psi::MPS,
     save_cp::Bool=true
     )
 
+    tp = b.tp
+
     ll = deepcopy(psi)
     rr = deepcopy(psi)
 
@@ -115,7 +117,7 @@ function run_cone(psi::MPS,
     end
 
 
-    infos = Dict(:times => times, :truncp => truncp, :tp => b.tp, :op => op)
+    infos = Dict(:times => times, :truncp => truncp, :tp => tp, :op => op)
 
     time_dim = dim(b.WWc,1)
 
