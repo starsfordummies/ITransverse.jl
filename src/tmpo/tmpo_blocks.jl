@@ -40,13 +40,13 @@ function FoldtMPOBlocks(tp::tmpo_params, init_state::ITensor = tp.bl)
     WWr = replaceinds(WWr, iwr, inds(WWc))
 
     # We can accept either an initial state or initial folded state (DM)
-    if length(init_state) == dim(P)
+    if dim(init_state) == dim(P)
         rho0 = init_state * delta(ind(init_state,1), Index(dim(P),"virt,time,rho0"))
-    elseif length(init_state) == dim(P) ÷ 2
+    elseif dim(init_state) == dim(P) ÷ 2
         rho0 = (init_state) * (init_state') * combiner(ind(init_state,1),ind(init_state,1)')  #TODO combiner.. 
         rho0 *= delta(ind(rho0,1), Index(dim(P), "virt,time,rho0"))
     else
-        @error "Dimension of init_state is $(length(init_state)) vs linkdim $(dim(P))"
+        @error "Dimension of init_state is $(dim(init_state)) vs linkdim $(dim(P))"
         rho0 = ITensor(0)
     end
 
