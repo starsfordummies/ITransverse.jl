@@ -11,14 +11,14 @@ struct FoldtMPOBlocks
     rot_inds::Dict
 
     function FoldtMPOBlocks(WWl::ITensor,WWc::ITensor,WWr::ITensor,
-    rho0::ITensor,tp::tmpo_params,rot_inds::Dict) 
+        rho0::ITensor,tp::tmpo_params,rot_inds::Dict) 
 
-    # The data type of the bottom-left term in tp dictates whether the *full* thing will lie on GPU
-    dtype = promote_type(NDTensors.unwrap_array_type(tp.bl))
+        # The data type of the bottom-left term in tp dictates whether the *full* thing will lie on GPU
+        dtype = promote_type(NDTensors.unwrap_array_type(tp.bl))
 
         new( adapt(WWl, dtype), adapt(WWc, dtype), adapt(WWr, dtype), adapt(rho0, dtype),
-        tp,
-        rot_inds)
+        tp, rot_inds)
+    end
 end
 
 
