@@ -141,7 +141,7 @@ end
 Defaults to closing with identity if no operator is specified"""
 function folded_tMPO(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::Vector{<:Number} = [1,0,0,1])
 
-    @assert b.tp.nbeta <= length(time_sites)
+    @assert b.tp.nbeta <= length(ts)
     WWc = b.WWc
     WWc_im = b_im.WWc
 
