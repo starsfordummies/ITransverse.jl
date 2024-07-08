@@ -15,7 +15,7 @@ using JLD2
 # include("gpu_cone_svd.jl")
 
 
-togpu(x) = NDTensors.cu(x)
+ITransverse.togpu(x) = NDTensors.cu(x)
 
 # function device(b::Struct)
 #     cuvals= NDTensors.cu.(getfield.((b,), fieldnames(typeof(b))))
