@@ -10,6 +10,14 @@ struct FoldtMPOBlocks
     tp::tmpo_params
     rot_inds::Dict
 
+    FoldtMPOBlocks(WWl::ITensor,WWc::ITensor,WWr::ITensor,
+    rho0::ITensor,tp::tmpo_params,rot_inds::Dict) = 
+    new( device(WWl),
+    device(WWc),
+    device(WWr),
+    device(rho0),
+    tp,
+    rot_inds)
 end
 
 

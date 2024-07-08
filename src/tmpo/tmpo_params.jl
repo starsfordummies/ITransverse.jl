@@ -6,6 +6,11 @@ struct tmpo_params
     bl::Vector{<:Number}  # bottom -> left(rotated)
     tr::Vector{<:Number}  # top -> right(rotated)
 
+    tmpo_params(expH_func::Function,
+    mp::model_params,
+    nbeta::Int64,
+    bl::Vector{<:Number},  # bottom -> left(rotated)
+    tr::Vector{<:Number}) = new(expH_func, mp, nbeta, device(bl), device(tr))
 end
 
 tmpo_params(
