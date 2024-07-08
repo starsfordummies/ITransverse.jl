@@ -72,8 +72,8 @@ function folded_open_tMPO(b::FoldtMPOBlocks, ts::Vector{<:Index})
         oo[ii] = replaceinds(oo[ii], inds(b.WWc), newinds)
     end
 
-    pushfirst!(oo.data, ITensor([1,0,0,1], ll[1]))
-    push!(oo.data , ITensor([1,0,0,1], ll[end]))
+    pushfirst!(oo.data, togpu(ITensor([1,0,0,1], ll[1])))
+    push!(oo.data , togpu(ITensor([1,0,0,1], ll[end])))
 
     return oo
 end
@@ -103,8 +103,8 @@ function folded_open_tMPO(WWc::ITensor, time_sites::Vector{<:Index})
     t1 = Index(1,"trivial")
     tend = sim(t1)
 
-    tMPO[1] = ITensor(eltype(WWc)[1,0,0,1] , t1, rot_links[1], t1')
-    tMPO[end] = ITensor(eltype(WWc)[1,0,0,1] , tend, rot_links[end], tend')
+    tMPO[1] = togpu(ITensor(eltype(WWc)[1,0,0,1] , t1, rot_links[1], t1'))
+    tMPO[end] = togpu(ITensor(eltype(WWc)[1,0,0,1] , tend, rot_links[end], tend'))
 
     return tMPO 
 
@@ -126,7 +126,7 @@ function folded_tMPO(b::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::Vector{<:N
     end
 
     oo[1] *= b.rho0 * delta(ind(b.rho0,1), ll[1])
-    oo[end] *= ITensor(fold_op, ll[end])
+    oo[end] *= togpu(ITensor(fold_op, ll[end]))
 
     return oo
 
@@ -159,7 +159,7 @@ function folded_tMPO(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index
     end
 
     oo[1] *= b.rho0 * delta(ind(b.rho0,1), ll[1])
-    oo[end] *= ITensor(fold_op, ll[end])
+    oo[end] *= togpu(ITensor(fold_op, ll[end]))
 
     return oo
 
@@ -177,7 +177,7 @@ function folded_tMPO_L(b::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::Vector{<
     end
 
     oo[1] *= b.rho0 * delta(ind(b.rho0,1), ll[1])
-    oo[end] *= ITensor(fold_op, ll[end])
+    oo[end] *= togpu(ITensor(fold_op, ll[end]))
 
     return oo
 
@@ -208,7 +208,7 @@ function folded_tMPO_L(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Ind
     end
 
     oo[1] *= b.rho0 * delta(ind(b.rho0,1), ll[1])
-    oo[end] *= ITensor(fold_op, ll[end])
+    oo[end] *= togpu(ITensor(fold_op, ll[end]))
 
     return oo
 
@@ -227,7 +227,7 @@ function folded_tMPO_R(b::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::Vector{<
     end
 
     oo[1] *= b.rho0 * delta(ind(b.rho0,1), ll[1])
-    oo[end] *= ITensor(fold_op, ll[end])
+    oo[end] *= togpu(ITensor(fold_op, ll[end]))
 
     return oo
 
@@ -260,7 +260,7 @@ function folded_tMPO_R(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Ind
     end
 
     oo[1] *= b.rho0 * delta(ind(b.rho0,1), ll[1])
-    oo[end] *= ITensor(fold_op, ll[end])
+    oo[end] *= togpu(ITensor(fold_op, ll[end]))
 
     return oo
 
@@ -277,7 +277,7 @@ function folded_left_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index})
     end
 
     psi[1] *= b.rho0 * delta(ind(b.rho0,1), ll[1])
-    psi[end] *= ITensor([1,0,0,1], ll[end])
+    psi[end] *= togpu(ITensor([1,0,0,1], ll[end]))
 
     return psi 
 end
@@ -293,7 +293,7 @@ function folded_right_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index})
     end
 
     psi[1] *= b.rho0 * delta(ind(b.rho0,1), ll[1])
-    psi[end] *= ITensor([1,0,0,1], ll[end])
+    psi[end] *= togpu(ITensor([1,0,0,1], ll[end]))
 
     return psi 
 end
