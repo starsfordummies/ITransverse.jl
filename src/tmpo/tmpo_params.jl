@@ -3,14 +3,25 @@ struct tmpo_params
     expH_func::Function
     mp::model_params
     nbeta::Int64
-    bl::Vector{<:Number}  # bottom -> left(rotated)
-    tr::Vector{<:Number}  # top -> right(rotated)
+    bl::ITensor  # bottom -> left(rotated)
+    tr::ITensor  # top -> right(rotated)
 
     tmpo_params(expH_func::Function,
     mp::model_params,
     nbeta::Int64,
-    bl::Vector{<:Number},  # bottom -> left(rotated)
-    tr::Vector{<:Number}) = new(expH_func, mp, nbeta, togpu(bl), togpu(tr))
+    bl::ITensor,  # bottom -> left(rotated)
+    tr::ITensor) = new(expH_func, mp, nbeta, togpu(bl), togpu(tr))
+end
+
+function tmpo_params(expH_func::Function,
+mp::model_params,
+nbeta::Int64,
+bl::Vector{<:Number},  # bottom -> left(rotated)
+tr::Vector{<:Number}) 
+
+    blt = ITensor(bl, Index(length(bl), "bl"))
+    trt = ITensor(tr, Index(length(tr), "tr"))
+    return tmpo_params(expH_func, mp, nbeta, blt, trt)
 end
 
 tmpo_params(
