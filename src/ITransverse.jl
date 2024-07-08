@@ -115,6 +115,7 @@ include("ext_functions.jl")
 
 export gpu_run_cone
 export togpu
+export tocpu
 
 export plotr,ploti,plotri 
 

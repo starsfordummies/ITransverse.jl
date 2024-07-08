@@ -13,3 +13,7 @@ end
 function togpu(x)
     return x
 end 
+
+function tocpu(x)
+    return x
+end

@@ -45,7 +45,7 @@ function truncate_lsweep(psi::MPS, phi::MPS; cutoff::Real, chi_max::Int)
         psi_ortho[ii] = Ai * XU  
         phi_ortho[ii] = Bi * XV
 
-        push!(ents_sites, scalar(-S*log.(S)))
+        push!(ents_sites, scalar(tocpu((-S*log.(S)))))
       
     end
 
@@ -53,7 +53,7 @@ function truncate_lsweep(psi::MPS, phi::MPS; cutoff::Real, chi_max::Int)
     psi_ortho[end] = XUinv * psi_ortho[end]
     phi_ortho[end] = XVinv * phi_ortho[end]
 
-    gen_overlap = scalar(left_env * ( psi_ortho[end] *  phi_ortho[end] ) )
+    gen_overlap = scalar(tocpu((left_env * ( psi_ortho[end] *  phi_ortho[end] ) )))
 
     return psi_ortho, phi_ortho, ents_sites, gen_overlap
 
@@ -133,7 +133,7 @@ function truncate_rsweep(psi::MPS, phi::MPS; cutoff::Real, chi_max::Int)
         psi_ortho[ii] = Ai * XU  
         phi_ortho[ii] = Bi * XV
 
-        push!(ents_sites, scalar(-S*log.(S)))
+        push!(ents_sites, scalar(tocpu((-S*log.(S)))))
 
     end
 
@@ -141,7 +141,7 @@ function truncate_rsweep(psi::MPS, phi::MPS; cutoff::Real, chi_max::Int)
     psi_ortho[1] = XUinv * psi_ortho[1]
     phi_ortho[1] = XVinv * phi_ortho[1]
 
-    gen_overlap = scalar(right_env * ( phi_ortho[1] *  psi_ortho[1] ) )
+    gen_overlap = scalar(tocpu((right_env * ( phi_ortho[1] *  psi_ortho[1] ) )))
 
 
     return psi_ortho, phi_ortho, ents_sites, gen_overlap
