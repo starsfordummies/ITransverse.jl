@@ -6,6 +6,8 @@ using ITensors
 
 using NDTensors 
 
+using ITensors.Adapt: adapt
+
 import NDTensors:
  replace_nothing,
  default_use_absolute_cutoff,

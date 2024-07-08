@@ -14,10 +14,9 @@ struct FoldtMPOBlocks
         rho0::ITensor,tp::tmpo_params,rot_inds::Dict) 
 
         # The data type of the bottom-left term in tp dictates whether the *full* thing will lie on GPU
-        dtype = promote_type(NDTensors.unwrap_array_type(tp.bl))
+        dttype = NDTensors.unwrap_array_type(tp.bl)
 
-        new( adapt(WWl, dtype), adapt(WWc, dtype), adapt(WWr, dtype), adapt(rho0, dtype),
-        tp, rot_inds)
+        new( adapt(dttype,WWl), adapt(dttype,WWc), adapt(dttype, WWr), adapt(dttype, rho0), tp, rot_inds)
     end
 end
 

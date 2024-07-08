@@ -12,9 +12,5 @@ function togpu(x)
 end 
 
 function tocpu(x)
-    dtype = promote_type(NDTensors.unwrap_array_type(x))
-    if dtype <: CuArray
-        return NDTensors.cpu(x)
-    end
     return x
 end

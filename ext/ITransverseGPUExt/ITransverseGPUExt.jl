@@ -26,6 +26,15 @@ function ITransverse.togpu(b::tmpo_params)
      return tmpo_params(b; bl = bl_gpu, tr = tr_gpu)
 end
 
+
+function ITransverse.tocpu(x)
+    dtype = promote_type(NDTensors.unwrap_array_type(x))
+    if dtype <: CuArray
+        return NDTensors.cpu(x)
+    end
+    return x
+end
+
 # function ITransverse.togpu(x) 
 #     return NDTensors.cpu(x)
 # end
