@@ -6,14 +6,15 @@ function ploti end
 function plotri end
 
 
-function gpu_run_cone()
-    @info "CUDA not loaded" 
-end
 
 function togpu(x)
     return x
 end 
 
 function tocpu(x)
+    dtype = promote_type(NDTensors.unwrap_array_type(x))
+    if dtype <: CuArray
+        return NDTensors.cpu(x)
+    end
     return x
 end

@@ -10,14 +10,15 @@ struct FoldtMPOBlocks
     tp::tmpo_params
     rot_inds::Dict
 
-    FoldtMPOBlocks(WWl::ITensor,WWc::ITensor,WWr::ITensor,
-    rho0::ITensor,tp::tmpo_params,rot_inds::Dict) = 
-    new( togpu(WWl),
-    togpu(WWc),
-    togpu(WWr),
-    togpu(rho0),
-    tp,
-    rot_inds)
+    function FoldtMPOBlocks(WWl::ITensor,WWc::ITensor,WWr::ITensor,
+    rho0::ITensor,tp::tmpo_params,rot_inds::Dict) 
+
+    # The data type of the bottom-left term in tp dictates whether the *full* thing will lie on GPU
+    dtype = promote_type(NDTensors.unwrap_array_type(tp.bl))
+
+        new( adapt(WWl, dtype), adapt(WWc, dtype), adapt(WWr, dtype), adapt(rho0, dtype),
+        tp,
+        rot_inds)
 end
 
 

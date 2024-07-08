@@ -19,9 +19,16 @@ function ITransverse.togpu(x)
     return NDTensors.cu(x)
 end
 
-function ITransverse.togpu(x) 
-    return NDTensors.cpu(x)
+function ITransverse.togpu(b::tmpo_params)
+     bl_gpu = NDTensors.cu(b.bl)
+     tr_gpu = NDTensors.cu(b.tr)
+
+     return tmpo_params(b; bl = bl_gpu, tr = tr_gpu)
 end
+
+# function ITransverse.togpu(x) 
+#     return NDTensors.cpu(x)
+# end
 
 # function device(b::Struct)
 #     cuvals= NDTensors.cu.(getfield.((b,), fieldnames(typeof(b))))

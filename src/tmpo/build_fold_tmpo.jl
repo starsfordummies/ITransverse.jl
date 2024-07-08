@@ -72,8 +72,9 @@ function folded_open_tMPO(b::FoldtMPOBlocks, ts::Vector{<:Index})
         oo[ii] = replaceinds(oo[ii], inds(b.WWc), newinds)
     end
 
-    pushfirst!(oo.data, togpu(ITensor([1,0,0,1], ll[1])))
-    push!(oo.data , togpu(ITensor([1,0,0,1], ll[end])))
+    dtype = promote_type(NDTensors.unwrap_array_type(b.WWc))
+    pushfirst!(oo.data, adapt(ITensor([1,0,0,1], ll[1]), dtype))
+    push!(oo.data,  adapt(ITensor([1,0,0,1], ll[end]), dtype))
 
     return oo
 end
@@ -103,8 +104,9 @@ function folded_open_tMPO(WWc::ITensor, time_sites::Vector{<:Index})
     t1 = Index(1,"trivial")
     tend = sim(t1)
 
-    tMPO[1] = togpu(ITensor(eltype(WWc)[1,0,0,1] , t1, rot_links[1], t1'))
-    tMPO[end] = togpu(ITensor(eltype(WWc)[1,0,0,1] , tend, rot_links[end], tend'))
+    dtype = promote_type(NDTensors.unwrap_array_type(b.WWc))
+    tMPO[1] = adapt(ITensor(eltype(WWc)[1,0,0,1] , t1, rot_links[1], t1'), dtype)
+    tMPO[end] = adapt(ITensor(eltype(WWc)[1,0,0,1] , tend, rot_links[end], tend'), dtype)
 
     return tMPO 
 
@@ -125,8 +127,9 @@ function folded_tMPO(b::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::Vector{<:N
         oo[ii] = replaceinds(oo[ii], inds(b.WWc), newinds)
     end
 
+    dtype = promote_type(NDTensors.unwrap_array_type(b.WWc))
     oo[1] *= b.rho0 * delta(ind(b.rho0,1), ll[1])
-    oo[end] *= togpu(ITensor(fold_op, ll[end]))
+    oo[end] *= adapt(ITensor(fold_op, ll[end]), dtype)
 
     return oo
 
@@ -158,8 +161,9 @@ function folded_tMPO(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index
         oo[ii] = replaceinds(oo[ii], inds(WWc), newinds)
     end
 
+    dtype = promote_type(NDTensors.unwrap_array_type(b.WWc))
     oo[1] *= b.rho0 * delta(ind(b.rho0,1), ll[1])
-    oo[end] *= togpu(ITensor(fold_op, ll[end]))
+    oo[end] *= adapt(ITensor(fold_op, ll[end]),dtype)
 
     return oo
 
@@ -176,8 +180,9 @@ function folded_tMPO_L(b::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::Vector{<
         oo[ii] = replaceinds(oo[ii], inds(b.WWc), newinds)
     end
 
+    dtype = promote_type(NDTensors.unwrap_array_type(b.WWc))
     oo[1] *= b.rho0 * delta(ind(b.rho0,1), ll[1])
-    oo[end] *= togpu(ITensor(fold_op, ll[end]))
+    oo[end] *= adapt(ITensor(fold_op, ll[end]), dtype)
 
     return oo
 
@@ -207,8 +212,9 @@ function folded_tMPO_L(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Ind
         oo[ii] = replaceinds(oo[ii], inds(WWc), newinds)
     end
 
+    dtype = promote_type(NDTensors.unwrap_array_type(b.WWc))
     oo[1] *= b.rho0 * delta(ind(b.rho0,1), ll[1])
-    oo[end] *= togpu(ITensor(fold_op, ll[end]))
+    oo[end] *= adapt(ITensor(fold_op, ll[end]), dtype)
 
     return oo
 
@@ -226,8 +232,9 @@ function folded_tMPO_R(b::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::Vector{<
         oo[ii] = replaceinds(oo[ii], inds(b.WWc), newinds)
     end
 
+    dtype = promote_type(NDTensors.unwrap_array_type(b.WWc))
     oo[1] *= b.rho0 * delta(ind(b.rho0,1), ll[1])
-    oo[end] *= togpu(ITensor(fold_op, ll[end]))
+    oo[end] *= adapt(ITensor(fold_op, ll[end]), dtype)
 
     return oo
 
@@ -259,8 +266,9 @@ function folded_tMPO_R(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Ind
         oo[ii] = replaceinds(oo[ii], inds(WWc), newinds)
     end
 
+    dtype = promote_type(NDTensors.unwrap_array_type(b.WWc))
     oo[1] *= b.rho0 * delta(ind(b.rho0,1), ll[1])
-    oo[end] *= togpu(ITensor(fold_op, ll[end]))
+    oo[end] *= adapt(ITensor(fold_op, ll[end]), dtype)
 
     return oo
 
@@ -276,8 +284,9 @@ function folded_left_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index})
         psi[ii] = replaceinds(psi[ii], inds(b.WWl), newinds)
     end
 
+    dtype = promote_type(NDTensors.unwrap_array_type(b.WWc))
     psi[1] *= b.rho0 * delta(ind(b.rho0,1), ll[1])
-    psi[end] *= togpu(ITensor([1,0,0,1], ll[end]))
+    psi[end] *= adapt(ITensor([1,0,0,1], ll[end]), dtype)
 
     return psi 
 end
@@ -292,8 +301,9 @@ function folded_right_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index})
         psi[ii] = replaceinds(psi[ii], inds(b.WWr), newinds)
     end
 
+    dtype = promote_type(NDTensors.unwrap_array_type(b.WWc))
     psi[1] *= b.rho0 * delta(ind(b.rho0,1), ll[1])
-    psi[end] *= togpu(ITensor([1,0,0,1], ll[end]))
+    psi[end] *= adapt(ITensor([1,0,0,1], ll[end]), dtype)
 
     return psi 
 end
