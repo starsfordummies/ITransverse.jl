@@ -26,6 +26,6 @@ togpu(x) = NDTensors.cu(x)
 #     return FoldtMPOBlocks(device(b.WWl), device(b.WWc), device(b.WWr), device(b.rho0), tp, inds_ww)
 # end
 
-export ITransverse.togpu
+# export ITransverse.togpu
     
 end #module ITransverseGPUExt

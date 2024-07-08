@@ -113,14 +113,8 @@ export init_cone, run_cone
 
 include("ext_functions.jl")
 
-export gpu_run_cone, 
-gpu_run_cone_svd,
-gpu_truncate_sweep,
-gpu_truncate_sweep!,
-gpu_expval_LR,
-cpu_expval_LR,
-gpu_expval_LL_sym,
-gpu_compute_expvals
+export gpu_run_cone
+export togpu
 
 export plotr,ploti,plotri 
 
