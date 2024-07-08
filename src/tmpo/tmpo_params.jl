@@ -10,7 +10,7 @@ struct tmpo_params
     mp::model_params,
     nbeta::Int64,
     bl::Vector{<:Number},  # bottom -> left(rotated)
-    tr::Vector{<:Number}) = new(expH_func, mp, nbeta, device(bl), device(tr))
+    tr::Vector{<:Number}) = new(expH_func, mp, nbeta, togpu(bl), togpu(tr))
 end
 
 tmpo_params(

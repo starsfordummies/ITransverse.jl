@@ -10,4 +10,4 @@ function gpu_run_cone()
     @info "CUDA not loaded" 
 end
 
-device(x) = x 
+togpu(x) = x 

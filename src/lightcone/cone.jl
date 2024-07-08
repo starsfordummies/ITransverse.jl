@@ -4,7 +4,7 @@ After rotation, initial state goes to the *left*."""
 
 function init_cone(tp::tmpo_params, n::Int=3)
 
-    b = device(FoldtMPOBlocks(tp))
+    b = FoldtMPOBlocks(tp)
 
     time_dim = dim(b.WWc,1)
     

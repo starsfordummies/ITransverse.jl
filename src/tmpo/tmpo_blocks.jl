@@ -12,10 +12,10 @@ struct FoldtMPOBlocks
 
     FoldtMPOBlocks(WWl::ITensor,WWc::ITensor,WWr::ITensor,
     rho0::ITensor,tp::tmpo_params,rot_inds::Dict) = 
-    new( device(WWl),
-    device(WWc),
-    device(WWr),
-    device(rho0),
+    new( togpu(WWl),
+    togpu(WWc),
+    togpu(WWr),
+    togpu(rho0),
     tp,
     rot_inds)
 end

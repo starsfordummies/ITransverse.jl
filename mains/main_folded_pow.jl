@@ -35,8 +35,8 @@ function main_folded_pm()
     tpim = tmpo_params(tp; mp=mpim)
 
 
-    b = device(FoldtMPOBlocks(tp))
-    b_im = device(FoldtMPOBlocks(tpim))
+    b = togpu(FoldtMPOBlocks(tp))
+    b_im = togpu(FoldtMPOBlocks(tpim))
 
 
     ts = 50:1:50
