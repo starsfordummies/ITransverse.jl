@@ -1,15 +1,7 @@
 module ITransverseGPUExt
 
 using CUDA
-
-using ITensors
-using ITensorMPS
-using ITransverse 
-using ProgressMeter
-using JLD2
-
 using ITensors.Adapt
-
 
 Adapt.adapt_structure(to, tp::tmpo_params) = tmpo_params(tp; bl=adapt(to, tp.bl), tr=adapt(to,tp.tr))
 
@@ -27,5 +19,4 @@ function ITransverse.ITenUtils.tocpu(x)
     return x
 end
 
-    
 end #module ITransverseGPUExt
