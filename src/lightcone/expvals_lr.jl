@@ -49,6 +49,9 @@ function expval_LR_ops(ll::MPS, rr::MPS, ops::MPO, b::FoldtMPOBlocks)
     # TODO: make for MPOs with length > 2 
     @assert length(ops) == 2
 
+    ops = adapt(mapreduce(NDTensors.unwrap_array_type, promote_type, ll), ops)
+
+
     time_sites_L = siteinds(ll)
     new_timesite = Index(dim(time_sites_L[end]))
     push!(time_sites_L, new_timesite)
