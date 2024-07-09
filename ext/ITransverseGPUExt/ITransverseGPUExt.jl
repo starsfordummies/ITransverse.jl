@@ -8,23 +8,15 @@ using ITransverse
 using ProgressMeter
 using JLD2
 
+using ITensors.Adapt
 
-# include("gpu_expvals.jl")
-# include("gpu_sweeps.jl")
-# include("gpu_cone.jl")
-# include("gpu_cone_svd.jl")
 
+Adapt.adapt_structure(to, tp::tmpo_params) = tmpo_params(tp; bl=adapt(to, tp.bl), tr=adapt(to,tp.tr))
 
 function ITransverse.togpu(x) 
     return NDTensors.cu(x)
 end
 
-function ITransverse.togpu(b::tmpo_params)
-     bl_gpu = NDTensors.cu(b.bl)
-     tr_gpu = NDTensors.cu(b.tr)
-
-     return tmpo_params(b; bl = bl_gpu, tr = tr_gpu)
-end
 
 
 function ITransverse.tocpu(x)
@@ -35,19 +27,5 @@ function ITransverse.tocpu(x)
     return x
 end
 
-# function ITransverse.togpu(x) 
-#     return NDTensors.cpu(x)
-# end
-
-# function device(b::Struct)
-#     cuvals= NDTensors.cu.(getfield.((b,), fieldnames(typeof(b))))
-#     return typeof(b)(cuvals)
-# end
-
-# function device(b::FoldtMPOBlocks)
-#     return FoldtMPOBlocks(device(b.WWl), device(b.WWc), device(b.WWr), device(b.rho0), tp, inds_ww)
-# end
-
-# export ITransverse.togpu
     
 end #module ITransverseGPUExt
