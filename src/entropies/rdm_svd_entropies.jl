@@ -40,7 +40,7 @@ function vn_entanglement_entropy!(psi::MPS, cut::Int)
     end
 
     S2 = S.^2
-    SvN = - S2 * log(S2)
+    SvN = - S2 * log.(S2)
 
     #SvN = scalar(tocpu(SvN))
     SvN = sum(SvN) # hack to get it to CPU .. 
