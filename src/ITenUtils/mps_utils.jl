@@ -6,7 +6,8 @@ function quick_mps(len::Int=40, chi::Int=50)
     return p
 end
 
-""" Computes the overlap (ll,rr) between two MPS *without* conjugating either one
+""" Computes the overlap (ll,rr) between two MPS *without* conjugating either one.
+If siteinds(ll) and siteinds(rr) do not match, it matches them before contracting.
 """
 function overlap_noconj(ll::MPS, rr::MPS, approx_real::Bool=false)
     siteinds(ll) != siteinds(rr) ? rr = replace_siteinds(rr, siteinds(ll)) : nothing

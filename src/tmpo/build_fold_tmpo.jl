@@ -49,11 +49,10 @@ and contract with  the initial state `init_state` on the *left* and the operator
 
 
 """ Given `tp` parameters and `time_sites` with Nt sites,
- builds a folded tMPO with rotated indices 
+ builds a folded tMPO  *of length  Nt + 2* with rotated indices 
  and additional identity tensors (meant to be replaced) with trivial site indices on the first and last site.
- Final length is Nt + 2 
-"""
 
+"""
 function folded_open_tMPO(tp::tmpo_params, time_sites::Vector{<:Index})
 
     WWc = build_WWc(tp)
@@ -118,7 +117,7 @@ end
 
 """ Given building blocks and time sites, builds folded tMPO associated with `fold_op`. 
 Defaults to closing with identity if no operator is specified"""
-function folded_tMPO(b::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::Vector{<:Number} = [1,0,0,1])
+function folded_tMPO(b::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::AbstractVector = [1,0,0,1])
     oo = MPO(fill(b.WWc, length(ts)))
     rind = ind(b.WWc,3)
     ll = [Index(dim(rind),"Link,time_fold,l=$(ii-1)") for ii in 1:length(ts)+1]
@@ -139,7 +138,7 @@ end
 ###### New ver with beta 
 """ Given building blocks and time sites, builds folded tMPO associated with `fold_op`. 
 Defaults to closing with identity if no operator is specified"""
-function folded_tMPO(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::Vector{<:Number} = [1,0,0,1])
+function folded_tMPO(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::AbstractVector = [1,0,0,1])
 
     @assert b.tp.nbeta <= length(ts)
     WWc = b.WWc
@@ -170,7 +169,7 @@ function folded_tMPO(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index
 end
 
 """ Builds a folded tMPO extended by one site to the top (ie. end) with the tensor WWl """
-function folded_tMPO_L(b::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::Vector{<:Number} = [1,0,0,1])
+function folded_tMPO_L(b::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::AbstractVector = [1,0,0,1])
     oo = MPO(fill(b.WWc, length(ts)))
     oo[end] = b.WWl
     rind = ind(b.WWc,3)
@@ -190,7 +189,7 @@ end
 
 
 """ Builds a folded tMPO extended by one site to the top (ie. end) with the tensor WWl """
-function folded_tMPO_L(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::Vector{<:Number} = [1,0,0,1])
+function folded_tMPO_L(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::AbstractVector = [1,0,0,1])
     @assert b.tp.nbeta < length(time_sites)
     WWc = b.WWc
     WWc_im = b_im.WWc
@@ -222,7 +221,7 @@ end
 
 
 
-function folded_tMPO_R(b::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::Vector{<:Number} = [1,0,0,1])
+function folded_tMPO_R(b::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::AbstractVector = [1,0,0,1])
     oo = MPO(fill(b.WWc, length(ts)))
     oo[end] = b.WWr
     rind = ind(b.WWc,3)
@@ -242,7 +241,7 @@ end
 
 
 """ Builds a folded tMPO extended by one site to the top (ie. end) with the tensor WWl """
-function folded_tMPO_R(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::Vector{<:Number} = [1,0,0,1])
+function folded_tMPO_R(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::AbstractVector  = [1,0,0,1])
     @assert b.tp.nbeta < length(time_sites)
 
     WWc = b.WWc
