@@ -183,32 +183,79 @@ which we depict with the legs pointing upwards
                        
 ```
 
+## Why it is a non-trivial problem
 
-# Main high-level routines
+In principle here we have more options to truncate than the usual update using SVDs/eigenvalues of RDMs: more specifically,
+we can truncate on the reduced *transition* matrices (RTM) built from the left and right vectors, T~|R><L|. 
+These objects are however *non-hermitian*, so the eigenvalue problems becomes much less straightforward (we are typically doing 
+dynamics so all our quantities are complex). 
+Fortunately, for many cases our TMs end up being symmetric left-right in space, (related to having translationally invariant Hamiltonians), which allows 
+for the use of algorithms which have higher numerical stability. 
 
-We provide high-level functions for the following algorithms
+
+# High-level routines
+
+We provide high-level functions for the following algorithms (more details below):
+-power method
+-symmetric power method 
+-light cone 
+
+## Parameters 
+We have a few basic structs which define the models and truncations and are carried around in the programs. 
+Most notably we have
+- `model_params` for building the basic model Hamiltonians
+- `tmpo_params` for building the temporal MPOs (including the initial states and closing operators)
+- `trunc_params` which specify the cutoffs, max bond dimensions, as well as the truncation scheme when applicable
+- `pm_params` where we store also additional parameters required for the power methods
+
+The simplest way to get an idea is probably to look at the various main files in the mains/ folder 
+and in the function documentations
+
+## tMPO builders 
+
+we can build both folded and unfolded tMPOs, the idea is to save the main building blocks (the tMPO tensors) 
+in some structs like `FoldtMPOBlocks` and `FwtMPOBlocks` and build the tMPOS from them. Relevant functions are
+`folded_tMPO` and `fw_tMPO` 
+
+## Sweeps and truncation methods
+
+Depending on the algorithm chosen, we can truncate either by performing the standard optimization based on reduced density 
+matrices (`RDM`) associated with the left and right vectors individually, or optimize the overlap <L|R> or <L|Operators|R>, 
+depending on the problem. For this, the algorithms are rather based on optimizing reduced *transition* matrices.
 
 ## Power method 
 
 ### Update including operator 
 
-the function is `powermethod`
+the function is `powermethod`, which is the relevant one for a setup like folded tMPO 
+(we need to update including an operator or the dominant tMPS end up being trivial).
+
+### Update without an operator 
+
+TODO
 
 ### Symmetric power method
+In a setup like Loschmidt echo, if our tMPOs are symmetric left-right we can optimize
+the overlap <Rbar|TM TM|R>, where <Rbar| = |R>^T  (ie. we don't conjugate the ket in order to make the bra from it,
+simply transpose). Then we can make use of different algorithms based on symmetric SVD or eigenvalue decompositions underneath.
 
 ## Light cone 
 
-We initialize the cone using `init_cone(tp::tmpo_params)`, then evolve it using `run_cone()`
+We initialize the cone using `init_cone(tp::tmpo_params)`, then evolve it using `run_cone(..)`
 
 # Underlying subroutines
-
-## Sweeps 
-
-## Build tMPO 
 
 ## Symmetric eigenvalue/SVD decompositions
 
 # Models
 
+So far Ising with transverse + parallel fields has been thoroughly tested and should work, the relevant function
+to build the exp(Hising) we use is `build_expH_ising_murg`
+
+The Potts model is also defined and should work, but is probably currently broken with the latest million API changes 
 
 # WIP: GPU Extensions 
+
+In principle it should work by simply doing a `using CUDA` and by putting the tmpo_params on GPU, `NDTensors.gpu(tp::tmpo_params)`. 
+The idea is that the programs build everything down from there on GPU. 
+There are likely bugs 
