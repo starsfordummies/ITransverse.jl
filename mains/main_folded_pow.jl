@@ -31,11 +31,11 @@ function main_folded_pm()
 
     tp = tmpo_params(tp; nbeta=4)
 
-    b = FoldtMPOBlocks(tp)
-
     mpim = model_params(tp.mp; dt=-im*tp.mp.dt)
     tpim = tmpo_params(tp; mp=mpim)
 
+
+    b = FoldtMPOBlocks(tp)
     b_im = FoldtMPOBlocks(tpim)
 
 
@@ -60,6 +60,7 @@ function main_folded_pm()
         ev = compute_expvals(ll, rr, ["X"], b)
 
         push!(evs, ev)
+        push!(ds2s, ds2_pm)
 
     end
 
@@ -68,4 +69,4 @@ end
 
 
 
-leftvecs, evs, ds2s, ts= main_folded_pm()
+leftvecs, evs, ds2s, ts = main_folded_pm()

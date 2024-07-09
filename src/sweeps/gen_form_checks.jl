@@ -1,6 +1,10 @@
 """ Check that two MPS are in (generalized-symmetric) *left* canonical form """
 function check_gencan_left(psi::MPS, phi::MPS; verbose::Bool=false)
 
+    #TODO that's another way of doing it ...
+    dtype = mapreduce(NDTensors.unwrap_array_type, promote_type, psi)
+    #adapt(dtype,...)
+
     mpslen = length(psi)
 
     is_left_gencan = true
@@ -16,7 +20,7 @@ function check_gencan_left(psi::MPS, phi::MPS; verbose::Bool=false)
     
 
     # Start from the left 
-    left_env = ITensor(1.)
+    left_env = (ITensor(1.))
     for ii = 1:mpslen-1
         left_env *= psi[ii]
         left_env *= phi[ii]

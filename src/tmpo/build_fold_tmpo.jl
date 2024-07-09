@@ -49,11 +49,10 @@ and contract with  the initial state `init_state` on the *left* and the operator
 
 
 """ Given `tp` parameters and `time_sites` with Nt sites,
- builds a folded tMPO with rotated indices 
+ builds a folded tMPO  *of length  Nt + 2* with rotated indices 
  and additional identity tensors (meant to be replaced) with trivial site indices on the first and last site.
- Final length is Nt + 2 
-"""
 
+"""
 function folded_open_tMPO(tp::tmpo_params, time_sites::Vector{<:Index})
 
     WWc = build_WWc(tp)
@@ -72,8 +71,9 @@ function folded_open_tMPO(b::FoldtMPOBlocks, ts::Vector{<:Index})
         oo[ii] = replaceinds(oo[ii], inds(b.WWc), newinds)
     end
 
-    pushfirst!(oo.data, ITensor([1,0,0,1], ll[1]))
-    push!(oo.data , ITensor([1,0,0,1], ll[end]))
+    dttype = NDTensors.unwrap_array_type(b.WWc)
+    pushfirst!(oo.data, adapt(dttype, ITensor([1,0,0,1], ll[1])))
+    push!(oo.data,  adapt(dttype, ITensor([1,0,0,1], ll[end])))
 
     return oo
 end
@@ -103,8 +103,9 @@ function folded_open_tMPO(WWc::ITensor, time_sites::Vector{<:Index})
     t1 = Index(1,"trivial")
     tend = sim(t1)
 
-    tMPO[1] = ITensor(eltype(WWc)[1,0,0,1] , t1, rot_links[1], t1')
-    tMPO[end] = ITensor(eltype(WWc)[1,0,0,1] , tend, rot_links[end], tend')
+    dttype = NDTensors.unwrap_array_type(b.WWc)
+    tMPO[1] = adapt(dttype, ITensor(eltype(WWc)[1,0,0,1] , t1, rot_links[1], t1'))
+    tMPO[end] = adapt(dttype, ITensor(eltype(WWc)[1,0,0,1] , tend, rot_links[end], tend'))
 
     return tMPO 
 
@@ -116,7 +117,7 @@ end
 
 """ Given building blocks and time sites, builds folded tMPO associated with `fold_op`. 
 Defaults to closing with identity if no operator is specified"""
-function folded_tMPO(b::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::Vector{<:Number} = [1,0,0,1])
+function folded_tMPO(b::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::AbstractVector = [1,0,0,1])
     oo = MPO(fill(b.WWc, length(ts)))
     rind = ind(b.WWc,3)
     ll = [Index(dim(rind),"Link,time_fold,l=$(ii-1)") for ii in 1:length(ts)+1]
@@ -125,8 +126,9 @@ function folded_tMPO(b::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::Vector{<:N
         oo[ii] = replaceinds(oo[ii], inds(b.WWc), newinds)
     end
 
+    dttype = NDTensors.unwrap_array_type(b.WWc)
     oo[1] *= b.rho0 * delta(ind(b.rho0,1), ll[1])
-    oo[end] *= ITensor(fold_op, ll[end])
+    oo[end] *= adapt(dttype, ITensor(fold_op, ll[end]))
 
     return oo
 
@@ -136,9 +138,9 @@ end
 ###### New ver with beta 
 """ Given building blocks and time sites, builds folded tMPO associated with `fold_op`. 
 Defaults to closing with identity if no operator is specified"""
-function folded_tMPO(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::Vector{<:Number} = [1,0,0,1])
+function folded_tMPO(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::AbstractVector = [1,0,0,1])
 
-    @assert b.tp.nbeta <= length(time_sites)
+    @assert b.tp.nbeta <= length(ts)
     WWc = b.WWc
     WWc_im = b_im.WWc
 
@@ -158,15 +160,16 @@ function folded_tMPO(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index
         oo[ii] = replaceinds(oo[ii], inds(WWc), newinds)
     end
 
+    dttype = NDTensors.unwrap_array_type(b.WWc)
     oo[1] *= b.rho0 * delta(ind(b.rho0,1), ll[1])
-    oo[end] *= ITensor(fold_op, ll[end])
+    oo[end] *= adapt(dttype, ITensor(fold_op, ll[end]))
 
     return oo
 
 end
 
 """ Builds a folded tMPO extended by one site to the top (ie. end) with the tensor WWl """
-function folded_tMPO_L(b::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::Vector{<:Number} = [1,0,0,1])
+function folded_tMPO_L(b::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::AbstractVector = [1,0,0,1])
     oo = MPO(fill(b.WWc, length(ts)))
     oo[end] = b.WWl
     rind = ind(b.WWc,3)
@@ -176,8 +179,9 @@ function folded_tMPO_L(b::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::Vector{<
         oo[ii] = replaceinds(oo[ii], inds(b.WWc), newinds)
     end
 
+    dttype = NDTensors.unwrap_array_type(b.WWc)
     oo[1] *= b.rho0 * delta(ind(b.rho0,1), ll[1])
-    oo[end] *= ITensor(fold_op, ll[end])
+    oo[end] *= adapt(dttype, ITensor(fold_op, ll[end]))
 
     return oo
 
@@ -185,7 +189,7 @@ end
 
 
 """ Builds a folded tMPO extended by one site to the top (ie. end) with the tensor WWl """
-function folded_tMPO_L(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::Vector{<:Number} = [1,0,0,1])
+function folded_tMPO_L(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::AbstractVector = [1,0,0,1])
     @assert b.tp.nbeta < length(time_sites)
     WWc = b.WWc
     WWc_im = b_im.WWc
@@ -207,8 +211,9 @@ function folded_tMPO_L(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Ind
         oo[ii] = replaceinds(oo[ii], inds(WWc), newinds)
     end
 
+    dttype = NDTensors.unwrap_array_type(b.WWc)
     oo[1] *= b.rho0 * delta(ind(b.rho0,1), ll[1])
-    oo[end] *= ITensor(fold_op, ll[end])
+    oo[end] *= adapt(dttype, ITensor(fold_op, ll[end]))
 
     return oo
 
@@ -216,7 +221,7 @@ end
 
 
 
-function folded_tMPO_R(b::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::Vector{<:Number} = [1,0,0,1])
+function folded_tMPO_R(b::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::AbstractVector = [1,0,0,1])
     oo = MPO(fill(b.WWc, length(ts)))
     oo[end] = b.WWr
     rind = ind(b.WWc,3)
@@ -226,8 +231,9 @@ function folded_tMPO_R(b::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::Vector{<
         oo[ii] = replaceinds(oo[ii], inds(b.WWc), newinds)
     end
 
+    dttype = NDTensors.unwrap_array_type(b.WWc)
     oo[1] *= b.rho0 * delta(ind(b.rho0,1), ll[1])
-    oo[end] *= ITensor(fold_op, ll[end])
+    oo[end] *= adapt(dttype, ITensor(fold_op, ll[end]))
 
     return oo
 
@@ -235,7 +241,7 @@ end
 
 
 """ Builds a folded tMPO extended by one site to the top (ie. end) with the tensor WWl """
-function folded_tMPO_R(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::Vector{<:Number} = [1,0,0,1])
+function folded_tMPO_R(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::AbstractVector  = [1,0,0,1])
     @assert b.tp.nbeta < length(time_sites)
 
     WWc = b.WWc
@@ -259,8 +265,9 @@ function folded_tMPO_R(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Ind
         oo[ii] = replaceinds(oo[ii], inds(WWc), newinds)
     end
 
+    dttype = NDTensors.unwrap_array_type(b.WWc)
     oo[1] *= b.rho0 * delta(ind(b.rho0,1), ll[1])
-    oo[end] *= ITensor(fold_op, ll[end])
+    oo[end] *= adapt(dttype, ITensor(fold_op, ll[end]))
 
     return oo
 
@@ -276,8 +283,9 @@ function folded_left_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index})
         psi[ii] = replaceinds(psi[ii], inds(b.WWl), newinds)
     end
 
+    dttype = NDTensors.unwrap_array_type(b.WWc)
     psi[1] *= b.rho0 * delta(ind(b.rho0,1), ll[1])
-    psi[end] *= ITensor([1,0,0,1], ll[end])
+    psi[end] *= adapt(dttype, ITensor([1,0,0,1], ll[end]))
 
     return psi 
 end
@@ -292,8 +300,9 @@ function folded_right_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index})
         psi[ii] = replaceinds(psi[ii], inds(b.WWr), newinds)
     end
 
+    dttype = NDTensors.unwrap_array_type(b.WWc)
     psi[1] *= b.rho0 * delta(ind(b.rho0,1), ll[1])
-    psi[end] *= ITensor([1,0,0,1], ll[end])
+    psi[end] *= adapt(dttype, ITensor([1,0,0,1], ll[end]))
 
     return psi 
 end

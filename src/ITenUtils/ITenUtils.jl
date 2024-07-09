@@ -6,6 +6,8 @@ using ITensors
 
 using NDTensors 
 
+using ITensors.Adapt: adapt
+
 import NDTensors:
  replace_nothing,
  default_use_absolute_cutoff,
@@ -34,6 +36,9 @@ include("eig_sym.jl")
 include("bench_data.jl")
 
 include("sqrt_itensor.jl")
+
+include("ext_functions.jl")
+
 
 export sqrt
 
@@ -73,5 +78,8 @@ export
     mytrunc_svd,
     mytrunc_eig
 
+    
+export togpu
+export tocpu
 
 end

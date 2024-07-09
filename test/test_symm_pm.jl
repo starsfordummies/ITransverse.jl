@@ -31,6 +31,12 @@ function test_symmpm(Tstart::Int, Tend::Int, nbeta::Int; Tstep::Int=1)
     mp = model_params("S=1/2", JXX, hz, gx, dt)
     tp = tmpo_params(build_expH_ising_murg, mp, nbeta, init_state, init_state)
 
+    b = FwtMPOBlocks(tp)
+
+    mpim = model_params(tp.mp; dt=-im*tp.mp.dt)
+    tpim = tmpo_params(tp; mp=mpim)
+
+    b_im = FwtMPOBlocks(tpim)
 
     ds2s = Vector{Float64}[]
 
@@ -52,8 +58,8 @@ function test_symmpm(Tstart::Int, Tend::Int, nbeta::Int; Tstep::Int=1)
 
         time_sites = addtags(siteinds("S=1/2", Nsteps; conserve_qns=false), "time")
 
-        mpo, start_mps = fw_tMPO(tp, time_sites)
-
+        #mpo, start_mps = fw_tMPO(tp, time_sites)
+        mpo, start_mps = fw_tMPOn(b, b_im, time_sites)
 
         truncp = trunc_params(cutoff, maxbondim, "RDM")
         pm_params = PMParams(truncp, itermax, eps_converged, true, "SYM")

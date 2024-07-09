@@ -1,7 +1,7 @@
 using LinearAlgebra
 using ITensors
 using ITransverse
-using ITransverse.ITenUtils
+using ITransverse.ITenUtils: symmetrize, sqrt
 using Test
 
 @testset "Testing sqrt of matrix decompositions" begin

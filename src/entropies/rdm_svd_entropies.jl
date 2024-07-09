@@ -39,11 +39,11 @@ function vn_entanglement_entropy!(psi::MPS, cut::Int)
         _,S,_ = svd(psi[cut], (linkind(psi, cut-1), siteind(psi,cut)))
     end
 
-    SvN = 0.0
-    for n=1:dim(S, 1)
-        p = S[n,n]^2
-        SvN -= p * log(p)
-    end
+    S2 = S.^2
+    SvN = - S2 * log.(S2)
+
+    #SvN = scalar(tocpu(SvN))
+    SvN = sum(SvN) # hack to get it to CPU .. 
 
     return SvN
 end
@@ -88,11 +88,10 @@ function renyi_entanglement_entropy!(in_psi::MPS, cut::Int, αr::Int)
             _,S,_ = svd(psi[cut], (linkind(psi, cut-1), siteind(psi,cut)))
         end
 
-        sum_sN = 0.0
-        for n=1:dim(S, 1)
-            p = S[n,n]^2
-            sum_sN += p^αr
-        end
+        S2α = S.^(2*αr)
+
+        sum_sN = sum(S2α)
+    
         S_ren = -log(sum_sN)
 
     end

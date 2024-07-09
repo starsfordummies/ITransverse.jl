@@ -43,12 +43,12 @@ function main_cone()
     # tp = tmpo_params("S=1/2", "S=1/2", build_expH_ising_murg, mp, dt, nbeta, init_state)
 
 
-    c0 = init_cone(tp)
+    c0, b = init_cone(tp)
 
     # TODO remember ev_ start at T=2dt actually (one already from init_cone)
     #c0, c0r, evs_x, evs_z, chis, overlaps, entropies= run_cone(c0, Nsteps, optimize_op, tp, truncp)
 
-    psi, psiR, chis, expvals, entropies, infos = run_cone(c0, Nsteps, optimize_op, tp, truncp)
+    psi, psiR, chis, expvals, entropies, infos = run_cone(c0, b, Nsteps, optimize_op, truncp)
 
     jldsave("cp_cone.jld2"; psi, psiR, chis, expvals, entropies, infos)
 

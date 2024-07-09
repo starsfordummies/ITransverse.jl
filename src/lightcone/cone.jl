@@ -1,6 +1,7 @@
 """ Initializes the light cone folded and rotated temporal MPS |R> given `tmpo_params`
-builds a (length n) tMPS with a single tensor with one (time,physical) open leg.
-After rotation, initial state goes to the *left*."""
+builds a (length n) tMPS with (time_fold)  legs.
+Our convention is that after rotation the initial state goes to the *left* 
+Returns (psi[the light cone right MPS], b[the folded tMPO building blocks])"""
 
 function init_cone(tp::tmpo_params, n::Int=3)
 
@@ -18,7 +19,7 @@ function init_cone(tp::tmpo_params, n::Int=3)
         psi = apply_extend(m, psi)
     end
 
-    return psi
+    return psi, b 
 end
 
 
@@ -87,12 +88,14 @@ end
 
 
 function run_cone(psi::MPS, 
+    b::FoldtMPOBlocks,
     nsteps::Int, 
     op::Vector{ComplexF64}, 
-    tp::tmpo_params,
     truncp::trunc_params,
     save_cp::Bool=true
     )
+
+    tp = b.tp
 
     ll = deepcopy(psi)
     rr = deepcopy(psi)
@@ -117,7 +120,6 @@ function run_cone(psi::MPS,
 
     infos = Dict(:times => times, :truncp => truncp, :tp => tp, :op => op)
 
-    b = FoldtMPOBlocks(tp)
     time_dim = dim(b.WWc,1)
 
 

@@ -6,6 +6,7 @@ using NDTensors
 using ITensors
 using ITensorMPS
 using ProgressMeter
+using ITensors.Adapt: adapt
 
 
 include("ITenUtils/ITenUtils.jl")
@@ -70,7 +71,11 @@ include("tmpo/build_expH.jl")
 
 include("tmpo/build_ww.jl")
 
-export rotate_90clockwise, FoldtMPOBlocks, FwtMPOBlocks
+include("tmpo/tmpo_blocks.jl")
+
+
+export rotate_90clockwise
+export FoldtMPOBlocks, FwtMPOBlocks
  #build_WWl, build_WWc, build_WWr, build_WW
 
 include("tmpo/build_tmpo_fw.jl")
@@ -107,19 +112,6 @@ export expval_LR, compute_expvals
 include("lightcone/cone.jl")
 
 export init_cone, run_cone
-
-include("ext_functions.jl")
-
-export gpu_run_cone, 
-gpu_run_cone_svd,
-gpu_truncate_sweep,
-gpu_truncate_sweep!,
-gpu_expval_LR,
-cpu_expval_LR,
-gpu_expval_LL_sym,
-gpu_compute_expvals
-
-export plotr,ploti,plotri 
 
 
 end #module ITransverse
