@@ -6,6 +6,13 @@ in the time evolution of one-dimensional quantum many-body systems.
 
 It is built on top of the excellent ITensors library, and tries to reuse most of its features whenever possible.
 
+In order to install it, from julia
+
+```julia
+julia> using Pkg
+
+julia> Pkg.add(url="https://github.com/starsfordummies/ITransverse.jl.git")
+```
 
 # Motivation: time evolution of 1D quantum systems
 
