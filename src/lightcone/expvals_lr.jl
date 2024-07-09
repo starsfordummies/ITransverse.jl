@@ -2,6 +2,7 @@
    Does *NOT* normalize here by <L|1|R>, need to do it separately """
 function expval_LR(ll::MPS, rr::MPS, op::AbstractVector, b::FoldtMPOBlocks)
 
+    time_sites = siteinds(rr)
     tmpo = folded_tMPO(b, time_sites, op)
     psiOR = applyn(tmpo, rr)
     LOR = overlap_noconj(ll,psiOR)
