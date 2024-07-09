@@ -7,11 +7,10 @@ using ITransverse: init_cone
 
 @testset "Light cone initialization and tensors for Ising" begin
 tp = ising_tp()
-b = FoldtMPOBlocks(tp)
 
 evs_X = ComplexF64[]
 for nn = 1:6
-    c0 = init_cone(tp,nn)
+    c0, b = init_cone(tp,nn)
     push!(evs_X, expval_LR(c0,c0,[0,1,1,0], b))
 end
 

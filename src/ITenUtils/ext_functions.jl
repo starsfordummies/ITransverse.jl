@@ -6,7 +6,6 @@ function ploti end
 function plotri end
 
 
-
 function togpu(x)
     return x
 end 

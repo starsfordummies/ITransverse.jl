@@ -74,7 +74,8 @@ include("tmpo/build_ww.jl")
 include("tmpo/tmpo_blocks.jl")
 
 
-export rotate_90clockwise, FoldtMPOBlocks, FwtMPOBlocks
+export rotate_90clockwise
+export FoldtMPOBlocks, FwtMPOBlocks
  #build_WWl, build_WWc, build_WWr, build_WW
 
 include("tmpo/build_tmpo_fw.jl")
@@ -111,14 +112,6 @@ export expval_LR, compute_expvals
 include("lightcone/cone.jl")
 
 export init_cone, run_cone
-
-include("ext_functions.jl")
-
-export gpu_run_cone
-export togpu
-export tocpu
-
-export plotr,ploti,plotri 
 
 
 end #module ITransverse

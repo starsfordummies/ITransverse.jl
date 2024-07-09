@@ -37,9 +37,10 @@ mp = model_params("S=1/2", JXX, hz, gx, dt)
 tp = tmpo_params(build_expH_ising_murg, mp, nbeta, init_state)
 
 
-c0 = init_cone(tp)
+c0,b = init_cone(tp)
 
-psi, psiR, chis, expvals, entropies, infos = run_cone(c0, Nsteps, optimize_op, tp, truncp)
+psi, psiR, chis, expvals, entropies, infos = run_cone(c0, b, Nsteps, optimize_op, truncp, false)
+
 
 @test abs(expvals["X"][end] - ITransverse.ITenUtils.bench_X_04_plus[length(psi)]) < 0.001
 @show(expvals["X"][end], ITransverse.ITenUtils.bench_X_04_plus[length(psi)])

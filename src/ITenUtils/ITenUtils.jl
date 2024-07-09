@@ -37,6 +37,9 @@ include("bench_data.jl")
 
 include("sqrt_itensor.jl")
 
+include("ext_functions.jl")
+
+
 export sqrt
 
 export mergedicts!
@@ -75,5 +78,7 @@ export
     mytrunc_svd,
     mytrunc_eig
 
+export togpu
+export tocpu
 
 end
