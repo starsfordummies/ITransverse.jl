@@ -243,9 +243,13 @@ simply transpose). Then we can make use of different algorithms based on symmetr
 
 We initialize the cone using `init_cone(tp::tmpo_params)`, then evolve it using `run_cone(..)`
 
-# Underlying subroutines
+# Generalized and standard entropies
 
-## Symmetric eigenvalue/SVD decompositions
+We provide tools for diagonalizing the RTMs and computing all sorts of generalized entropies from them. One can 
+- diagonalize directly the RTM T_t (for very short tMPS only, of course)
+- compute Tr(T_t^2) by contracting twice the left and right dominant vectors
+- *If* we have a symmetric RTM (<L| = <Rbar|) we can put the RTM in a symmetric gauge where we have orthogonal matrices,
+  so that we can compute the eigenvalues by diagonalizing site by site some environments of size ~chi^2
 
 # Models
 
@@ -253,6 +257,8 @@ So far Ising with transverse + parallel fields has been thoroughly tested and sh
 to build the exp(Hising) we use is `build_expH_ising_murg`
 
 The Potts model is also defined and should work, but is probably currently broken with the latest million API changes 
+
+The XXZ model is also implemented, but I haven't checked in a million years 
 
 # WIP: GPU Extensions 
 
