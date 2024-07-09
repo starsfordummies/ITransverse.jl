@@ -60,6 +60,7 @@ function main_folded_pm()
         ev = compute_expvals(ll, rr, ["X"], b)
 
         push!(evs, ev)
+        push!(ds2s, ds2_pm)
 
     end
 
@@ -68,4 +69,4 @@ end
 
 
 
-leftvecs, evs, ds2s, ts= main_folded_pm()
+leftvecs, evs, ds2s, ts = main_folded_pm()

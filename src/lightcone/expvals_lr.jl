@@ -19,34 +19,6 @@ function expval_LR(ll::MPS, rr::MPS, op::Vector{<:Number}, b::FoldtMPOBlocks)
 end
 
 
-""" Build exp value <L|O|R> for a single operator `op` 
-in a symmetric way, by building both <L1|OR> and <L1|1R> overlaps, 
- the exp value is given by <L1|OR>/<L1|1R>. 
- This should really be equivalent to `expval_LR`, but could be useful for checks if 
- we are not sure whether our L and R vectors are well converged. """
-function expval_LR_twocol(ll::MPS, rr::MPS, op::Vector{ComplexF64}, tp::tmpo_params)
-
-    fold_id = ComplexF64[1,0,0,1]
-
-    time_sites = siteinds(ll)
-    tmpo = build_folded_tMPO(tp, fold_id, time_sites)
-    psi1L = applyn(tmpo, ll)
-
-    time_sites = siteinds(rr)
-    tmpo = swapprime(build_folded_tMPO(tp, op, time_sites), 0, 1, "Site")
-    psiOR = applyn(tmpo, rr)
-
-    tmpo = swapprime(build_folded_tMPO(tp, fold_id, time_sites), 0, 1, "Site")
-    psi1R = applyn(tmpo, rr)
-
-
-    L1OR = overlap_noconj(psi1L,psiOR)
-    L11R = overlap_noconj(psi1L,psi1R)
-
-    return L1OR/L11R
-
-end
-
 """ Build exp value <L|opLopR|R> for a pair of local operator `opL` and `opR` """ 
 function expval_LR(ll::MPS, rr::MPS, opL::Vector{ComplexF64}, opR::Vector{ComplexF64}, b::FoldtMPOBlocks)
 
@@ -211,7 +183,7 @@ end
 Returns a Dictionary with expectation values <L|O|R>/<L|1|R> """
 function compute_expvals(ll::AbstractMPS, rr::AbstractMPS, op_list::Vector{String}, b::FoldtMPOBlocks)
 
-       # ! TODO To save time, split calculation L1R and L11R in separate function called only once - make also optional ..
+    # TODO To save time, split calculation L1R and L11R in separate function called only once - make also optional ..
 
     if op_list[1] == "all"
         op_list = ["X", "Z", "XX", "ZZ", "eps"]
