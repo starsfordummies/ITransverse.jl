@@ -108,13 +108,15 @@ function fw_tMPOn(tp::tmpo_params, time_sites::Vector{<:Index})
     fw_tMPOn(b, b_im, time_sites)
 end
 
-function fw_tMPOn(b::FwtMPOBlocks, b_im::FwtMPOBlocks, time_sites::Vector{<:Index})
+
+function fw_tMPOn(b::FwtMPOBlocks, b_im::FwtMPOBlocks, time_sites::Vector{<:Index}; 
+    left_state::ITensor = b.tp.bl, right_state::ITensor = b.tp.tr)
 
     tp = b.tp
 
     nbeta = tp.nbeta 
-    left_state = tp.bl
-    right_state = tp.tr 
+    #left_state = tp.bl
+    #right_state = tp.tr 
 
     @assert nbeta < length(time_sites) - 2
 
