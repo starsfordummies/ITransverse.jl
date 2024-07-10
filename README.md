@@ -213,7 +213,7 @@ Most notably we have
 - `model_params` for building the basic model Hamiltonians
 - `tmpo_params` for building the temporal MPOs (including the initial states and closing operators)
 - `trunc_params` which specify the cutoffs, max bond dimensions, as well as the truncation scheme when applicable
-- `pm_params` where we store also additional parameters required for the power methods
+- `PMParams` where we store also additional parameters required for the power methods
 
 The simplest way to get an idea is probably to look at the various main files in the mains/ folder 
 and in the function documentations

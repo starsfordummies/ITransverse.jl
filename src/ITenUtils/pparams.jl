@@ -1,6 +1,3 @@
-
-
-
 struct trunc_params
     cutoff::Float64
     maxbondim::Int64
@@ -8,6 +5,7 @@ struct trunc_params
 
 end
 
+# just some default for when we're lazy
 trunc_params() = trunc_params(1e-10, 100, "SVD")
 
  

@@ -3,6 +3,12 @@ Power method for *symmetric* case: takes as input a single MPS |L>,
     applies the `in_mpo` O and optimizes the overlap (LO|OL) , where LO is *not* conjugated.
     Works eg. for unfolded Loschmidt echo type setups, where `in_mpo` is the transfer matrix 
     and truncating over (LO|OL) does not give trivial results.
+    We can nevertheless specify in `pm_params` the `ortho_method = RDM` if we want to use the usual truncation
+    based on the reduced density matrix (which boils down to SVD of the Left vector)
+    For the RTM truncation, since the problem is symmetric, we can choose to truncate over the SV of 
+    the symmetric environments (`ortho_method=SVD`), which are computed in a Autonne-Takagi form, 
+    or compute the symmetric eigenvalue problem of the RTM  (`ortho_method=EIG`), 
+    and truncate over the (complex, so be mindful..) eigenvalues of the RTM. 
 """
 function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams)
 
