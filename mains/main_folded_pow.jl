@@ -29,7 +29,7 @@ function main_folded_pm()
     ds2s = []
 
 
-    tp = tmpo_params(tp; nbeta=4)
+    tp = tmpo_params(tp; nbeta=0)
 
     mpim = model_params(tp.mp; dt=-im*tp.mp.dt)
     tpim = tmpo_params(tp; mp=mpim)
@@ -47,9 +47,6 @@ function main_folded_pm()
 
         
         init_mps = folded_right_tMPS(b, time_sites)
-
-        #mpo_X = folded_tMPO(b, time_sites, sigX)
-        #mpo_1 = folded_tMPO(b, time_sites)
 
         mpo_X = folded_tMPO(b, b_im, time_sites, sigX)
         mpo_1 = folded_tMPO(b, b_im, time_sites)

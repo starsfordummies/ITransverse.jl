@@ -156,7 +156,9 @@ function run_cone(psi::MPS,
         ent = vn_entanglement_entropy(ll)
 
         if save_cp && length(ll) > 50 && length(ll) % 20 == 0
-            jldsave("cp_cone_$(length(ll))_chi_$(chis[end]).jld2"; psi, ll, rr, chis, expvals, entropies, infos)
+            llcp = tocpu(ll)
+            rrcp = tocpu(rr)
+            jldsave("cp_cone_$(length(ll))_chi_$(chis[end]).jld2"; llcp, rrcp, chis, expvals, entropies, infos)
         end
 
         push!(vn_ents, ent)
