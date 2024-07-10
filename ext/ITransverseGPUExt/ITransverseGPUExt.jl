@@ -2,6 +2,7 @@ module ITransverseGPUExt
 
 using CUDA
 using ITensors.Adapt
+using ITransverse 
 
 Adapt.adapt_structure(to, tp::tmpo_params) = tmpo_params(tp; bl=adapt(to, tp.bl), tr=adapt(to,tp.tr))
 
