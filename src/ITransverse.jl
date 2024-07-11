@@ -109,6 +109,9 @@ export powermethod_sym
 include("lightcone/expvals_lr.jl")
 export expval_LR, compute_expvals
 
+include("lightcone/cone_params.jl")
+export ConeParams
+
 include("lightcone/cone.jl")
 
 export init_cone, run_cone
