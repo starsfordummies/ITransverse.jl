@@ -201,14 +201,7 @@ function powermethod_both(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::
 
         ll, rr, sjj = truncate_normalize_sweep(OpsiL, OpsiR, cutoff=cutoff, method=method, chi_max=maxbondim)
 
-        # TODO: this is costly - maybe not necessary if all we care for is convergence
-        #sjj = generalized_entropy(ll,rr)
-
-        # DEBUG: plot the evolution of the entropies
-        if pm_params.plot_s
-            display(plot(real(sjj),label=jj,legend=:outertopright))
-        end
-
+    
         ds2 = norm(sprevs - sjj)
 
         
@@ -216,16 +209,6 @@ function powermethod_both(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::
         push!(ds2s, inner(llprev,ll))
         sprevs = sjj
 
-        #println("$(jj): [$(maxlinkdim(OpsiL)),$(maxlinkdim(OpsiR))] => $(maxlinkdim(ll)) , ds2 = $(ds2), <L|R> = $(overlap_noconj(ll,rr))")
-
-        @show inner(OpsiL, ll)
-        @show inner(OpsiR, rr)
-        @show inner(llprev,ll)
-        @show inner(rrprev,rr)
-
-        # this maybe helps keeping memory usage low on cluster(?)
-        # https://itensor.discourse.group/t/large-amount-of-memory-used-when-dmrg-runs-on-cluster/1045/4
-        #GC.gc()
 
         next!(p; showvalues = [(:Info,"[$(jj)] ds2=$(ds2), chi=$(maxlinkdim(ll))" )])
 

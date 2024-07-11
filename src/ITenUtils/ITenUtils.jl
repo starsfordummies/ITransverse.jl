@@ -39,6 +39,8 @@ include("sqrt_itensor.jl")
 
 include("ext_functions.jl")
 
+include("size_estimate.jl")
+include("environments.jl")
 
 export sqrt
 

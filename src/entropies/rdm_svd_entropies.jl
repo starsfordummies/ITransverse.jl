@@ -76,7 +76,7 @@ function renyi_entanglement_entropy!(in_psi::MPS, cut::Int, αr::Int)
     psi = normalize(in_psi)
 
     if αr == 1  # VN entropy
-        S_ren = vn_entanglement_entropy_cut!(psi, cut)
+        S_ren = vn_entanglement_entropy!(psi, cut)
     else  # Renyi n
             
         orthogonalize!(psi, cut)
@@ -112,7 +112,7 @@ function renyi_entanglement_entropy!(psi::MPS, α::Int=2)
     ents_renyi = Vector{Float64}()
 
     for icut=1:length(workpsi)-1
-        Si = renyi_entanglement_entropy_cut(workpsi, icut, α)
+        Si = renyi_entanglement_entropy!(workpsi, icut, α)
         push!(ents_renyi, Si)
     end
 

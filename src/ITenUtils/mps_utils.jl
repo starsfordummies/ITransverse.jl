@@ -25,6 +25,7 @@ end
 function overlap_noconj_manual(ll::MPS, rr::MPS, approx_real::Bool=false)
     siteinds(ll) != siteinds(rr) ? rr = replace_siteinds(rr, siteinds(ll)) : nothing
 
+    overlap = zero(eltype(ll[1]))
     for (Ai, Bi) in zip(ll, rr)
         overlap = Ai * Bi 
     end
