@@ -58,7 +58,7 @@ Returns the updated left-right tMPS
 function extend_tmps_cone(ll::MPS, op_L::Vector{<:Number}, op_R::Vector{<:Number}, rr::MPS, 
     ts::Vector{<:Index},
     b::FoldtMPOBlocks,
-    truncp::trunc_params,
+    truncp::TruncParams,
     compute_r2::Bool=false)
 
     @assert length(ts) == length(ll)+1 
@@ -91,7 +91,7 @@ function run_cone(psi::MPS,
     b::FoldtMPOBlocks,
     nsteps::Int, 
     op::Vector{ComplexF64}, 
-    truncp::trunc_params,
+    truncp::TruncParams,
     save_cp::Bool=true
     )
 

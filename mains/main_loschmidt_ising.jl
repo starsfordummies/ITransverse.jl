@@ -22,7 +22,7 @@ function main_ising_loschmidt(Tstart::Int, Tend::Int, nbeta::Int; Tstep::Int=1)
     itermax = 800
     eps_converged = 1e-6
 
-    truncp = trunc_params(cutoff, maxbondim, "EIG")
+    truncp = TruncParams(cutoff, maxbondim, "EIG")
 
     pm_params = PMParams(truncp, itermax, eps_converged, true, "SYM")
 

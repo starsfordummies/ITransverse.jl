@@ -1,4 +1,4 @@
-struct trunc_params
+struct TruncParams
     cutoff::Float64
     maxbondim::Int64
     ortho_method::String
@@ -6,7 +6,7 @@ struct trunc_params
 end
 
 # just some default for when we're lazy
-trunc_params() = trunc_params(1e-10, 100, "SVD")
+TruncParams() = TruncParams(1e-10, 100, "SVD")
 
  
 

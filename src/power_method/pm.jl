@@ -6,14 +6,14 @@ Neither of the input MPOs needs to have the L-R indices swapped, we do it in her
 
 Depending on pm_params.opt_method, the update can work as follows
 
-- "LR": At each iteration we make *two* updates, first compute <L1|OR> and updates <Lnew|, 
+- "RTM_LR": At each iteration we make *two* updates, first compute <L1|OR> and updates <Lnew|, 
     then computes <LO|1R> and computes |Rnew>.
 
-- "R": for a *symmetric* tMPO we should be able to just update one of the two (say |R>), and the
+- "RTM_R": for a *symmetric* tMPO we should be able to just update one of the two (say |R>), and the
  corresponding should just be the transpose. Note that this is *not* the same as performing a symmetric update
  of the form <R|R>, here we still update the overlap <LO|1R>
 
-- "RTE": the common truncation using temporal entanglement, ie. over the RDM (not RTM) of |R>. 
+- "RDM": the common truncation using temporal entanglement, ie. over the RDM (not RTM) of |R>. 
    In practice this is done with the usual SVD truncations of R. In this case, the `mpo_X` input is unused.
 
 
@@ -55,7 +55,7 @@ function powermethod(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::PMPar
         # @info overlap_noconj(ll,rr)
         # @info norm.(sprevs)
 
-        if opt_method == "LR"
+        if opt_method == "RTM_LR"
             
             #ll_work = normbyfactor(ll, sqrt(overlap_noconj(ll,rr)))
             #rr_work = normbyfactor(rr, sqrt(overlap_noconj(ll,rr)))
@@ -84,7 +84,7 @@ function powermethod(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::PMPar
             _, ll, _, overlap = truncate_rsweep(OpsiR, OpsiL, cutoff=cutoff, chi_max=maxbondim)
 
 
-        elseif opt_method == "R"
+        elseif opt_method == "RTM_R"
             #rr_work = normbyfactor(rr, sqrt(overlap_noconj(rr,rr)))
             #rr_work = normalize(rr)
             rr_work = rr
@@ -98,7 +98,7 @@ function powermethod(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::PMPar
             rr, _, sjj, overlap = truncate_rsweep(OpsiR, OpsiL, cutoff=cutoff, chi_max=maxbondim)
             ll = rr
 
-        elseif opt_method == "RTE"
+        elseif opt_method == "RDM"
             #rr_work = normbyfactor(rr, sqrt(overlap_noconj(rr,rr)))
             rr_work = normalize(rr)
 

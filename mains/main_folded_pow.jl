@@ -17,7 +17,7 @@ function main_folded_pm()
     verbose=false
     eps_converged=1e-6
 
-    truncp = trunc_params(cutoff, maxbondim, "SVD")
+    truncp = TruncParams(cutoff, maxbondim, "SVD")
 
     pm_params = PMParams(truncp, itermax, eps_converged, true, "LR")
 

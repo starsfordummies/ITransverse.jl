@@ -212,7 +212,7 @@ We have a few basic structs which define the models and truncations and are carr
 Most notably we have
 - `model_params` for building the basic model Hamiltonians
 - `tmpo_params` for building the temporal MPOs (including the initial states and closing operators)
-- `trunc_params` which specify the cutoffs, max bond dimensions, as well as the truncation scheme when applicable
+- `TruncParams` which specify the cutoffs, max bond dimensions, as well as the truncation scheme when applicable
 - `PMParams` where we store also additional parameters required for the power methods
 
 The simplest way to get an idea is probably to look at the various main files in the mains/ folder 

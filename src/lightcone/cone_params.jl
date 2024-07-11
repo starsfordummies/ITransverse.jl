@@ -1,5 +1,5 @@
 struct ConeParams
-    truncp::trunc_params
+    truncp::TruncParams
     opt_method::String
     sweep_method::String
     op::Vector{ComplexF64}
@@ -8,7 +8,7 @@ struct ConeParams
     save_cp::Int
 end
 
-ConeParams( truncp::trunc_params,
+ConeParams( truncp::TruncParams,
 opt_method::String = "RTM",
 sweep_method::String = "SVD",
 op::Vector{ComplexF64} = [1,0,0,1],

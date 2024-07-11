@@ -23,9 +23,14 @@ export quick_mps,
     isid,
     mergedicts!
 
+include("sweeps/trunc_params.jl")
 include("sweeps/sweeps.jl")
 include("sweeps/sweeps_sym.jl")
 include("sweeps/gen_form_checks.jl")
+
+# from pparams
+export TruncParams
+
 
 export truncate_lsweep, truncate_rsweep
 export truncate_lsweep_sym, truncate_rsweep_sym
@@ -57,7 +62,7 @@ export rho2,
  
 export model_params
 
-export trunc_params
+export TruncParams
 
 export build_expH_ising_murg, 
     build_expH_potts_murg, 

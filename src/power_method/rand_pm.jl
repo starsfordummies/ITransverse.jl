@@ -123,7 +123,7 @@ function main_fw_randpm()
     itermax = 10
     eps_converged = 1e-6
 
-    truncp = trunc_params(cutoff, maxbondim, "SVD")
+    truncp = TruncParams(cutoff, maxbondim, "SVD")
 
     pm_params = PMParams(truncp, itermax, eps_converged, true, "LR")
 

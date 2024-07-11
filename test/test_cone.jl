@@ -29,7 +29,7 @@ cutoff = 1e-20
 maxbondim = 200
 ortho_method = "SVD"
 
-truncp = trunc_params(cutoff, maxbondim, ortho_method)
+truncp = TruncParams(cutoff, maxbondim, ortho_method)
 
 Nsteps = 50
 

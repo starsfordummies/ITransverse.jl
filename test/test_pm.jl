@@ -15,7 +15,7 @@ using Test
     verbose=false
     eps_converged=1e-6
 
-    truncp = trunc_params(cutoff, maxbondim, "SVD")
+    truncp = TruncParams(cutoff, maxbondim, "SVD")
 
     pm_params = PMParams(truncp, itermax, eps_converged, true, "RL")
 
@@ -45,7 +45,7 @@ using Test
     evsym = compute_expvals(ll, rr, ["X"], b)
     χ_R = maxlinkdim(ll)
 
-    truncp = trunc_params(sqrt(cutoff), maxbondim, "SVD")
+    truncp = TruncParams(sqrt(cutoff), maxbondim, "SVD")
     pm_params = PMParams(truncp, itermax, eps_converged, true, "RTE")
     ll, rr, ds2_pm  = powermethod(init_mps, mpo_1, mpo_X, pm_params) 
 
