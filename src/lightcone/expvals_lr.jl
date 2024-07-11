@@ -1,10 +1,10 @@
 """ Build exp value <L|O|R> for a single vectorized operator `op`, given as a 1D array 
    Does *NOT* normalize here by <L|1|R>, need to do it separately """
-function expval_LR(ll::MPS, rr::MPS, op::AbstractVector, b::FoldtMPOBlocks)
+function expval_LR(ll::MPS, rr::MPS, op::AbstractVector, b::FoldtMPOBlocks; maxdim=nothing)
 
     time_sites = siteinds(rr)
     tmpo = folded_tMPO(b, time_sites, op)
-    psiOR = applyn(tmpo, rr)
+    psiOR = isnothing(maxdim) ? applyn(tmpo, rr) : apply(tmpo,rr; alg="naive", maxdim)
     LOR = overlap_noconj(ll,psiOR)
 
     return LOR
