@@ -56,7 +56,7 @@ function check_id_matrix(m::Matrix, cutoff::Float64=1e-8)
             is_id_matrix = false
         end
     else
-        @error ("Not even square? $(size(d))")
+        @error ("Not even square? $(size(m))")
         is_id_matrix = false
     end
 

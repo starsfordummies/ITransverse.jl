@@ -366,6 +366,9 @@ function build_expH_potts_murg_alt(sites,
     J::Real, fpotts::Real,
     dt::Number)
 
+    fsumI_a(x) = (2*exp(-x) + exp(2*x))/3.
+    fsumΣ_a(x) = (-exp(-x) + exp(2*x))/3.
+
     N = length(sites)
 
     link_dimension = 3

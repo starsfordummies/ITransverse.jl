@@ -103,7 +103,7 @@ function folded_open_tMPO(WWc::ITensor, time_sites::Vector{<:Index})
     t1 = Index(1,"trivial")
     tend = sim(t1)
 
-    dttype = NDTensors.unwrap_array_type(b.WWc)
+    dttype = NDTensors.unwrap_array_type(WWc)
     tMPO[1] = adapt(dttype, ITensor(eltype(WWc)[1,0,0,1] , t1, rot_links[1], t1'))
     tMPO[end] = adapt(dttype, ITensor(eltype(WWc)[1,0,0,1] , tend, rot_links[end], tend'))
 
@@ -190,7 +190,7 @@ end
 
 """ Builds a folded tMPO extended by one site to the top (ie. end) with the tensor WWl """
 function folded_tMPO_L(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::AbstractVector = [1,0,0,1])
-    @assert b.tp.nbeta < length(time_sites)
+    @assert b.tp.nbeta < length(ts)
     WWc = b.WWc
     WWc_im = b_im.WWc
 
@@ -242,7 +242,7 @@ end
 
 """ Builds a folded tMPO extended by one site to the top (ie. end) with the tensor WWl """
 function folded_tMPO_R(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::AbstractVector  = [1,0,0,1])
-    @assert b.tp.nbeta < length(time_sites)
+    @assert b.tp.nbeta < length(ts)
 
     WWc = b.WWc
     WWc_im = b_im.WWc
