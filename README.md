@@ -214,6 +214,7 @@ Most notably we have
 - `tmpo_params` for building the temporal MPOs (including the initial states and closing operators)
 - `TruncParams` which specify the cutoffs, max bond dimensions, as well as the truncation scheme when applicable
 - `PMParams` where we store also additional parameters required for the power methods
+- `ConeParams` where we store also additional parameters required for the light cone algorithms
 
 The simplest way to get an idea is probably to look at the various main files in the mains/ folder 
 and in the function documentations
@@ -228,7 +229,8 @@ in some structs like `FoldtMPOBlocks` and `FwtMPOBlocks` and build the tMPOS fro
 
 Depending on the algorithm chosen, we can truncate either by performing the standard optimization based on reduced density 
 matrices (`RDM`) associated with the left and right vectors individually, or optimize the overlap <L|R> or <L|Operators|R>, 
-depending on the problem. For this, the algorithms are rather based on optimizing reduced *transition* matrices.
+depending on the problem. For this, the algorithms are rather based on optimizing reduced *transition* matrices, 
+so we label them as `RTMxx`
 
 ## Power method 
 
