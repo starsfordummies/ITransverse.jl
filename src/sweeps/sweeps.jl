@@ -150,7 +150,7 @@ end
 
 
 
-function truncate_normalize_lsweep(psi::MPS, phi::MPS, truncp::trunc_params)
+function truncate_normalize_lsweep(psi::MPS, phi::MPS, truncp::TruncParams)
     psi_n, phi_n, ee, ov = truncate_lsweep(psi, phi, cutoff=truncp.cutoff, chi_max=truncp.maxbondim)
     ov_alt =  overlap_noconj(psi_n,phi_n)
     if abs(ov - ov_alt) > 0.1
@@ -162,7 +162,7 @@ function truncate_normalize_lsweep(psi::MPS, phi::MPS, truncp::trunc_params)
     return psi_n, phi_n, [e./sum(e) for e in ee]
 end
 
-function truncate_normalize_rsweep(psi::MPS, phi::MPS, truncp::trunc_params)
+function truncate_normalize_rsweep(psi::MPS, phi::MPS, truncp::TruncParams)
     psi_n, phi_n, ee, ov = truncate_rsweep(psi, phi, cutoff=truncp.cutoff, chi_max=truncp.maxbondim)
     ov_alt =  overlap_noconj(psi_n,phi_n)
     if abs(ov - ov_alt) > 0.1

@@ -37,19 +37,16 @@ eps_converged = 1e-6
 @testset "Testing Loschmidt echo optimizers" begin
 
 
-truncp = trunc_params(mycutoff, maxbondim, "SVD")
-pm_params = PMParams(truncp, itermax, eps_converged, true, "SYM")
+truncp = TruncParams(mycutoff, maxbondim)
 
+
+pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM")
 psi_svd, ds2 = powermethod_sym(start_mps, mpo, pm_params)
 
-truncp = trunc_params(mycutoff, maxbondim, "EIG")
-pm_params = PMParams(truncp, itermax, eps_converged, true, "SYM")
-
+pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM_EIG")
 psi_eig, ds2 = powermethod_sym(start_mps, mpo, pm_params)
 
-truncp = trunc_params(mycutoff, maxbondim, "RDM")
-pm_params = PMParams(truncp, itermax, eps_converged, true, "SYM")
-
+pm_params = PMParams(truncp, itermax, eps_converged, true, "RDM")
 psi_rdm, ds2 = powermethod_sym(start_mps, mpo, pm_params)
 
     vn_svd = vn_entanglement_entropy(psi_svd)

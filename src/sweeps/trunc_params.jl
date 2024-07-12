@@ -1,0 +1,10 @@
+struct TruncParams
+    cutoff::Float64
+    maxbondim::Int64
+end
+
+# just some default for when we're lazy
+TruncParams() = TruncParams(1e-10, 100)
+
+ 
+

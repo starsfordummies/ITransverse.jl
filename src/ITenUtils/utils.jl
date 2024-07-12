@@ -1,4 +1,6 @@
-
+function dictfromlist(v::Vector)
+    return Dict(v .=> fill([], length(v)))
+end
 
 function mergedicts!(dict1::Dict, dict2::Dict)
     for key in keys(dict2)

@@ -17,9 +17,9 @@ function main_folded_pm()
     verbose=false
     eps_converged=1e-6
 
-    truncp = trunc_params(cutoff, maxbondim, "SVD")
+    truncp = TruncParams(cutoff, maxbondim)
 
-    pm_params = PMParams(truncp, itermax, eps_converged, true, "LR")
+    pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM_LR")
 
     sigX = ComplexF64[0,1,1,0]
 

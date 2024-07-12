@@ -24,9 +24,7 @@ function test_symmpm(Tstart::Int, Tend::Int, nbeta::Int; Tstep::Int=1)
     itermax = 800
     eps_converged = 1e-6
 
-    truncp = trunc_params(cutoff, maxbondim, "RDM")
-
-    pm_params = PMParams(truncp, itermax, eps_converged, true, "SYM")
+    truncp = TruncParams(cutoff, maxbondim)
 
     mp = model_params("S=1/2", JXX, hz, gx, dt)
     tp = tmpo_params(build_expH_ising_murg, mp, nbeta, init_state, init_state)
@@ -61,26 +59,23 @@ function test_symmpm(Tstart::Int, Tend::Int, nbeta::Int; Tstep::Int=1)
         #mpo, start_mps = fw_tMPO(tp, time_sites)
         mpo, start_mps = fw_tMPOn(b, b_im, time_sites)
 
-        truncp = trunc_params(cutoff, maxbondim, "RDM")
-        pm_params = PMParams(truncp, itermax, eps_converged, true, "SYM")
+        pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM_EIG")
 
         psi_trunc, ds2 = powermethod_sym(start_mps, mpo, pm_params)
-
-        push!(allpsis[:rdm], psi_trunc)
-
-        truncp = trunc_params(cutoff, maxbondim, "SVD")
-        pm_params = PMParams(truncp, itermax, eps_converged, true, "SYM")
-
-        psi_trunc, ds2 = powermethod_sym(start_mps, mpo, pm_params)
-
         push!(allpsis[:svd], psi_trunc)
 
-        truncp = trunc_params(cutoff, maxbondim, "EIG")
-        pm_params = PMParams(truncp, itermax, eps_converged, true, "SYM")
+        pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM_EIG")
+
 
         psi_trunc, ds2 = powermethod_sym(start_mps, mpo, pm_params)
 
         push!(allpsis[:eig], psi_trunc)
+
+        pm_params = PMParams(truncp, itermax, eps_converged, true, "RDM")
+        psi_trunc, ds2 = powermethod_sym(start_mps, mpo, pm_params)
+        push!(allpsis[:rdm], psi_trunc)
+
+
         
     end
 

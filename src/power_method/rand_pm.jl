@@ -123,9 +123,9 @@ function main_fw_randpm()
     itermax = 10
     eps_converged = 1e-6
 
-    truncp = trunc_params(cutoff, maxbondim, "SVD")
+    truncp = TruncParams(cutoff, maxbondim)
 
-    pm_params = PMParams(truncp, itermax, eps_converged, true, "LR")
+    pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM_LR")
 
     mp = model_params("S=1/2", JXX, hz, gx, dt)
     tp = tmpo_params(build_expH_ising_murg, mp, nbeta, init_state, init_state)

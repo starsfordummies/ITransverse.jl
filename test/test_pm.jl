@@ -15,9 +15,8 @@ using Test
     verbose=false
     eps_converged=1e-6
 
-    truncp = trunc_params(cutoff, maxbondim, "SVD")
+    truncp = TruncParams(cutoff, maxbondim)
 
-    pm_params = PMParams(truncp, itermax, eps_converged, true, "RL")
 
     sigX = ComplexF64[0,1,1,0]
 
@@ -33,20 +32,20 @@ using Test
     mpo_X = folded_tMPO(b, time_sites, sigX)
     mpo_1 = folded_tMPO(b, time_sites)
 
-    pm_params = PMParams(truncp, itermax, eps_converged, true, "LR")
+    pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM_LR")
     ll, rr, ds2_pm  = powermethod(init_mps, mpo_1, mpo_X, pm_params) 
 
     ev = compute_expvals(ll, rr, ["X"], b)
     χ_LR = maxlinkdim(ll)
 
-    pm_params = PMParams(truncp, itermax, eps_converged, true, "R")
+    pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM_R")
     ll, rr, ds2_pm  = powermethod(init_mps, mpo_1, mpo_X, pm_params) 
 
     evsym = compute_expvals(ll, rr, ["X"], b)
     χ_R = maxlinkdim(ll)
 
-    truncp = trunc_params(sqrt(cutoff), maxbondim, "SVD")
-    pm_params = PMParams(truncp, itermax, eps_converged, true, "RTE")
+    truncp = TruncParams(sqrt(cutoff), maxbondim)
+    pm_params = PMParams(truncp, itermax, eps_converged, true, "RDM")
     ll, rr, ds2_pm  = powermethod(init_mps, mpo_1, mpo_X, pm_params) 
 
     ev_te = compute_expvals(ll, rr, ["X"], b)

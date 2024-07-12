@@ -16,8 +16,6 @@ import NDTensors:
  truncate!!
 
 
-include("pparams.jl")
-
 include("ctruncate.jl")
 include("ceigen.jl")
 
@@ -44,10 +42,7 @@ include("environments.jl")
 
 export sqrt
 
-export mergedicts!
-
-# from pparams
-export trunc_params
+export mergedicts!, dictfromlist
 
 #from utils.jl
 export quick_mps, 

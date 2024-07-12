@@ -91,23 +91,20 @@ function compute_expvals(ll::AbstractMPS, rr::AbstractMPS, op_list::Vector{Strin
     allevs = Dict()
 
     ev_L1R = expval_LR(ll, rr, [1,0,0,1], b)
-    ev_L11R = expval_LR(ll, rr, [1,0,0,1], [1,0,0,1], b)
+    ev_L11R = haskey(op_list, "XX") || haskey(op_list, "ZZ") || haskey(op_list, "eps") ? expval_LR(ll, rr, [1,0,0,1], [1,0,0,1], b) : 1.0
 
     for op in op_list
         if op == "X"
-            #println("X")
-            allevs["X"] = expval_LR(ll, rr, [0,1,1,0], b)/ev_L1R
+            allevs[op] = expval_LR(ll, rr, [0,1,1,0], b)/ev_L1R
         elseif op == "Z"
-            #println("Z")
-            allevs["Z"] = expval_LR(ll, rr, [1,0,0,-1], b)/ev_L1R
+            allevs[op] = expval_LR(ll, rr, [1,0,0,-1], b)/ev_L1R
         elseif op == "XX"
-                #println("X")
-                allevs["X"] = expval_LR(ll, rr, [0,1,1,0], [0,1,1,0], b)/ev_L1R
+                allevs[op] = expval_LR(ll, rr, [0,1,1,0], [0,1,1,0], b)/ev_L1R
+        elseif op == "ZZ"
+                allevs[op] = expval_LR(ll, rr, [1,0,0,-1], [1,0,0,-1], b)/ev_L1R
         elseif op == "eps"
-            #println("eps")
             ϵ_op = ITransverse.ChainModels.epsilon_brick_ising(b.tp.mp)
-            allevs["eps"] = expval_LR_ops(ll, rr, ϵ_op, b)/ev_L11R
-            #allevs["eps"] = expval_en_density(ll, rr, b)
+            allevs[op] = expval_LR_ops(ll, rr, ϵ_op, b)/ev_L11R
         else
             @warn "$(op) not implemented"
         end
