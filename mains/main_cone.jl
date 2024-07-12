@@ -28,9 +28,8 @@ function main_cone()
 
     cutoff = 1e-14
     maxbondim = 200
-    ortho_method = "SVD"
 
-    truncp = TruncParams(cutoff, maxbondim, ortho_method)
+    truncp = TruncParams(cutoff, maxbondim)
 
     Nsteps = 30
 
@@ -45,7 +44,9 @@ function main_cone()
 
     c0, b = init_cone(tp)
 
-    psi, psiR, chis, expvals, entropies, infos = run_cone(c0, b, Nsteps, optimize_op, truncp)
+    cone_params = ConeParams(;truncp, opt_method="RDM", optimize_op, which_evs=["X"], checkpoint=20)
+
+    psi, psiR, chis, expvals, entropies, infos = run_cone(c0, b, cone_params, Nsteps)
 
     return  psi, psiR, chis, expvals, entropies, infos 
 

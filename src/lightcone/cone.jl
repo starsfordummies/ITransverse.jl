@@ -23,26 +23,26 @@ function init_cone(tp::tmpo_params, n::Int=3)
 end
 
 
-""" Given an MPO A and a MPS ψ with length(A) = length(ψ)+1, 
+""" Given an MPO A and a MPS ψ, with length(A) = length(ψ)+1, 
 Extends MPS ψ to the *right* by one site by applying the MPO,
-Returns a new MPS which is the extension of ψ, with siteinds matching those of A
+Returns a new MPS which is the extension of ψ, with siteinds matching those of A.
+In its current version, we allow to apply an MPO with a two-legged tensor at its right edge,
+which I think only works with the "naive" algorithm. We don't perform any truncation here 
+
 ```
         | | | | | |  |
- [rho0]-o-o-o-o-o-o--o--[op]
-        | | | | | |  V
+        o-o-o-o-o-o--o
+        | | | | | |  
         o-o-o-o-o-o
 ``` 
 """
-function apply_extend(A::MPO, ψ::MPS)
+function apply_extend(A::MPO, ψ::MPS; truncate::Bool=false, cutoff::Float64=1e-14, maxdim::Int=maxlinkdim(A) * maxlinkdim(ψ))
 
     ψc = deepcopy(ψ)
     push!(ψc.data, ITensor(1))
-    ψc = applyn(A, ψc)
+    ψc = apply(A, ψc; alg="naive", truncate, cutoff, maxdim)
     return ψc
 end
-
-
-
 
 
 
@@ -56,10 +56,7 @@ extends the time MPO and the left-right tMPS by optimizing
 Returns the updated left-right tMPS 
 """
 function extend_tmps_cone(ll::MPS, op_L::Vector{<:Number}, op_R::Vector{<:Number}, rr::MPS, 
-    ts::Vector{<:Index},
-    b::FoldtMPOBlocks,
-    truncp::TruncParams,
-    compute_r2::Bool=false)
+    ts::Vector{<:Index}, b::FoldtMPOBlocks, truncp::TruncParams)
 
     @assert length(ts) == length(ll)+1 
 
@@ -74,26 +71,21 @@ function extend_tmps_cone(ll::MPS, op_L::Vector{<:Number}, op_R::Vector{<:Number
 
     ll, rr, ents, ov = truncate_rsweep(psi_L,psi_R; cutoff=truncp.cutoff, chi_max=truncp.maxbondim)
     
-    gen_renyi2 = ents
-    if compute_r2
-        gen_renyi2 = generalized_renyi_entropy(ll, rr, 2, normalize=true)
-    end
 
-    return ll, rr, gen_renyi2 # ents
+    return ll, rr, ents, ov
 
 end
 
 
 
 
-
 function run_cone(psi::MPS, 
     b::FoldtMPOBlocks,
-    nsteps::Int, 
-    op::Vector{ComplexF64}, 
-    truncp::TruncParams,
-    save_cp::Bool=true
+    cp::ConeParams,
+    nsteps::Int
     )
+
+    (; opt_method, optimize_op, which_evs, which_ents, checkpoint, truncp) = cp
 
     tp = b.tp
 
@@ -104,65 +96,62 @@ function run_cone(psi::MPS,
 
     chis = []
     overlaps = []
-    vn_ents = []
-    gen_r2sL = []
-    gen_r2sR = []
     times = [] 
 
-    entropies = Dict(:genr2L => gen_r2sL, :genr2R => gen_r2sR, :vn => vn_ents)
-
-    which_evs = ["X","Z","eps"]
-    expvals = Dict()
-    for op in which_evs
-        expvals[op] = []
-    end
-
-
-    infos = Dict(:times => times, :truncp => truncp, :tp => tp, :op => op)
+    entropies = dictfromlist(which_ents)
+    expvals = dictfromlist(which_evs)
+    infos = Dict(:times => [], :b => b, :cp => cp)
 
     time_dim = dim(b.WWc,1)
 
-
-    p = Progress(nsteps; desc="[cone] $cutoff=$(truncp.cutoff), maxbondim=$(truncp.maxbondim)), method=$(truncp.ortho_method)", showspeed=true) 
+    p = Progress(nsteps; desc="[cone|$(opt_method)] $cutoff=$(truncp.cutoff), maxbondim=$(truncp.maxbondim))", showspeed=true) 
 
     for dt = length(psi):nsteps
         
-        rrwork = deepcopy(rr)
-
         ts = siteinds(rr)
         #Extend timesites by 1 
         push!(ts, Index(time_dim, tags="Site,n=$(length(rr)+1),time_fold"))
 
-        # if we're worried about symmetry, evolve separately L and R 
-        _,rr, ents = extend_tmps_cone(ll, op, Id, rrwork, ts, b, truncp)
-        push!(gen_r2sR, ents)
+        if opt_method == "RTM_LR"
+            # if we're worried about symmetry, evolve separately L and R 
+            rrwork = deepcopy(rr)
+            _,rr, ents = extend_tmps_cone(ll, optimize_op, Id, rrwork, ts, b, truncp)
+            ll,_, ents = extend_tmps_cone(ll, Id, optimize_op, rrwork, ts, b, truncp)
+        elseif opt_method == "RTM_R"
+            _,rr, ents = extend_tmps_cone(ll, optimize_op, Id, rr, ts, b, truncp)
+            ll = rr
+        elseif opt_method == "RDM" # TODO Non-symmetric case with RDM ?
+            tmpo = folded_tMPO_R(b, ts)
+            rr = apply_extend(tmpo,rr; truncate=true, cutoff=truncp.cutoff, maxdim=truncp.maxbondim)
+            ll = rr
+        else
+            @error "no valid update method specified"
+            @error "RTM_LR|RTM_R|RDM"
+        end
 
-        ll,_, ents = extend_tmps_cone(ll, Id, op, rrwork, ts, b, truncp)
-        push!(gen_r2sL, ents)
 
         overlapLR = overlap_noconj(ll,rr)
 
-        #TODO  renormalize by overlap ?
+        # At each step we renormalize so that the overlap <L|R>=1 !
         ll *= sqrt(1/overlapLR)
         rr *= sqrt(1/overlapLR)
 
         evs_computed = compute_expvals(ll, rr, which_evs, b)
         mergedicts!(expvals, evs_computed)
 
-
         push!(chis, maxlinkdim(ll))
         push!(overlaps, overlapLR)
+        push!(times, length(ll)*tp.mp.dt)
 
-        ent = vn_entanglement_entropy(ll)
 
-        if save_cp && length(ll) > 50 && length(ll) % 20 == 0
+        #ent = vn_entanglement_entropy(ll)
+        #TODO Compute entropies
+
+        if checkpoint > 0 && length(ll) > 50 && length(ll) % checkpoint == 0
             llcp = tocpu(ll)
             rrcp = tocpu(rr)
-            jldsave("cp_cone_$(length(ll))_chi_$(chis[end]).jld2"; llcp, rrcp, chis, expvals, entropies, infos)
+            jldsave("cp_cone_$(length(ll))_chi_$(chis[end]).jld2"; llcp, rrcp, chis, times, expvals, entropies, infos)
         end
-
-        push!(vn_ents, ent)
-        push!(times, length(ll)*tp.mp.dt)
 
         next!(p; showvalues = [(:Info,"[$(length(ll))] χ=$(maxlinkdim(ll)), (L|R) = $overlapLR " )])
 
@@ -178,10 +167,9 @@ function resume_cone(checkpoint::String, nsteps::Int)
 
     c = jldopen(checkpoint, "r")
 
-    psi = c["psi"]
-    op = c["infos"][:op]
+    psi = c["rrcp"]
+    cp = c["infos"][:cp]
     tp = c["infos"][:tp]
-    truncp = c["infos"][:truncp]
 
     # TODO extend with prev results 
     return run_cone(psi, nsteps, op, tp, truncp)

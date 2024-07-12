@@ -168,7 +168,6 @@ function powermethod_both(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::
     itermax = pm_params.itermax
     cutoff = pm_params.cutoff
     maxbondim = pm_params.maxbondim
-    method = pm_params.ortho_method
 
     mpslen = length(in_mps)
 
@@ -199,7 +198,7 @@ function powermethod_both(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::
         llprev = deepcopy(ll)
         rrprev = deepcopy(rr)
 
-        ll, rr, sjj = truncate_normalize_sweep(OpsiL, OpsiR, cutoff=cutoff, method=method, chi_max=maxbondim)
+        ll, rr, sjj = truncate_normalize_sweep(OpsiL, OpsiR, cutoff=cutoff, chi_max=maxbondim)
 
     
         ds2 = norm(sprevs - sjj)

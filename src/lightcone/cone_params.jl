@@ -1,17 +1,15 @@
-struct ConeParams
+struct ConeParams{T<:Number}
     truncp::TruncParams
     opt_method::String
-    sweep_method::String
-    op::Vector{ComplexF64}
+    optimize_op::Vector{T}
     which_evs::Vector{String}
     which_ents::Vector{String}
-    save_cp::Int
+    checkpoint::Int
 end
 
-ConeParams( truncp::TruncParams,
-opt_method::String = "RTM",
-sweep_method::String = "SVD",
-op::Vector{ComplexF64} = [1,0,0,1],
-which_evs::Vector{String} = ["X"],
-which_ents::Vector{String}= [],
-save_cp::Int=20) = ConeParams(truncp, opt_method, sweep_method, op, which_evs, which_ents, save_cp)
+ConeParams(; truncp::TruncParams,
+    opt_method::String = "RTM_LR",
+    optimize_op::Vector{<:Number} = [1,0,0,1],
+    which_evs::Vector{String} = ["X"],
+    which_ents::Vector{String}= [""],
+    checkpoint::Int=20) = ConeParams(truncp, opt_method, optimize_op, which_evs, which_ents, checkpoint)

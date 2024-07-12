@@ -15,7 +15,7 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams)
     itermax = pm_params.itermax
     eps_converged = pm_params.eps_converged
 
-    (; cutoff, maxbondim, ortho_method) = pm_params.truncp
+    (; cutoff, maxbondim) = pm_params.truncp
   
     # normalize the vector to get a good starting point
 
