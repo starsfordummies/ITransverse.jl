@@ -68,16 +68,31 @@ end
 
 """ Symmetrizes a matrix to improve numerical stability (throws an error if it's not too symetric to begin with)
     TODO This fails for GPU matrices?!  """
-    function symmetrize(a::AbstractMatrix, tol::Float64=1e-6)
-        if size(a,1) != size(a,2)
-            @error("Not square")
-        end
-        if norm(a - transpose(a))/norm(a) > tol
-            @error("Not symmetric? norm(a-aT)=$(norm(a - transpose(a)))")
-            #sleep(2)
-        end
-        return 0.5*(a + transpose(a))
+function symmetrize(a::AbstractMatrix, tol::Float64=1e-6)
+    if size(a,1) != size(a,2)
+        @error("Not square")
     end
-    
+    if norm(a - transpose(a))/norm(a) > tol
+        @error("Not symmetric? norm(a-aT)=$(norm(a - transpose(a)))")
+        #sleep(2)
+    end
+    return 0.5*(a + transpose(a))
+end
 
-    
+
+# """ build a random dxd unitary matrix as exp(iHermitian) """
+# function myrandom_unitary(d::Int)
+#     m = rand(ComplexF64, d,d)
+#     m = m + m'
+#     u = exp(im*m)
+#     return u 
+# end
+
+""" build a random dxd unitary matrix as the U of an SVD of a random matrix"""
+function random_unitary_svd(d::Int)
+    m = rand(ComplexF64, d,d)
+    u, _, _ = svd(m)
+    return u 
+end
+
+

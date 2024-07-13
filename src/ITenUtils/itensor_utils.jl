@@ -125,6 +125,15 @@ function check_symmetry_itensor(T::ITensor, inds_to_permute)
 
 end
 
+
+
+""" build a random dxd unitary matrix as the U of an SVD of a random matrix"""
+function random_unitary_svd(linds::Tuple, rind::Index)
+    m = random_itensor(ComplexF64, linds..., rind)
+    u, _, _ = svd(m, linds)
+    return u 
+end
+
 """ TOOD WIP"""
 function nonzero_elements(A::ITensor)
     return 0
