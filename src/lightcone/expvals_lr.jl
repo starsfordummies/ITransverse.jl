@@ -82,7 +82,7 @@ end
 Returns a Dictionary with expectation values <L|O|R>/<L|1|R> """
 function compute_expvals(ll::AbstractMPS, rr::AbstractMPS, op_list::Vector{String}, b::FoldtMPOBlocks)
 
-    # TODO To save time, split calculation L1R and L11R in separate function called only once - make also optional ..
+    # TODO truncate on apply MPO in expval_... 
 
     if op_list[1] == "all"
         op_list = ["X", "Z", "XX", "ZZ", "eps"]
@@ -91,6 +91,8 @@ function compute_expvals(ll::AbstractMPS, rr::AbstractMPS, op_list::Vector{Strin
     allevs = Dict()
 
     ev_L1R = expval_LR(ll, rr, [1,0,0,1], b)
+
+    #two-col exp value is expensive, only compute if necessary
     ev_L11R = haskey(op_list, "XX") || haskey(op_list, "ZZ") || haskey(op_list, "eps") ? expval_LR(ll, rr, [1,0,0,1], [1,0,0,1], b) : 1.0
 
     for op in op_list

@@ -21,7 +21,7 @@ function main_cone()
 
     optimize_op = sigZ 
 
-    zero_state = Vector{ComplexF64}([1,0])
+    up_state = Vector{ComplexF64}([1,0])
     plus_state = Vector{ComplexF64}([1/sqrt(2),1/sqrt(2)])
 
     init_state = plus_state
@@ -44,7 +44,7 @@ function main_cone()
 
     c0, b = init_cone(tp)
 
-    cone_params = ConeParams(;truncp, opt_method="RDM", optimize_op, which_evs=["X"], checkpoint=20)
+    cone_params = ConeParams(;truncp, opt_method="RDM", optimize_op, which_evs=["X","Z"], checkpoint=20)
 
     psi, psiR, chis, expvals, entropies, infos = run_cone(c0, b, cone_params, Nsteps)
 

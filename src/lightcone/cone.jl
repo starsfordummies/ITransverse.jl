@@ -137,6 +137,7 @@ function run_cone(psi::MPS,
         rr *= sqrt(1/overlapLR)
 
         evs_computed = compute_expvals(ll, rr, which_evs, b)
+
         mergedicts!(expvals, evs_computed)
 
         push!(chis, maxlinkdim(ll))
