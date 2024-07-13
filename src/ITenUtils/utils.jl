@@ -1,10 +1,15 @@
 function dictfromlist(v::Vector)
-    return Dict(v .=> fill([], length(v)))
+    dd = Dict()
+    for key in v
+        dd[key] = []
+    end
+    return dd
 end
 
-function mergedicts!(dict1::Dict, dict2::Dict)
-    for key in keys(dict2)
-        append!(dict1[key], dict2[key])
+""" Updates the first dict with data (with matching keys) from the second """
+function mergedicts!(dict_to_update::Dict, new_data::Dict)
+    for (key,val) in new_data
+        append!(dict_to_update[key], val)
     end
 end
 
