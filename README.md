@@ -1,10 +1,10 @@
 # ITransverse.jl
 
-This package provide several routines for the transverse contraction of 2D tensor networks [1-5](#literature),
+This package provide several routines for the transverse contraction of 2D tensor networks [[1-5]](#literature),
 it was mainly developed for the characterization of temporal matrix product states 
 in the time evolution of one-dimensional quantum many-body systems.
 
-It is built on top of the excellent ITensors library, and tries to reuse most of its features whenever possible.
+It is built on top of the excellent [ITensors](https://github.com/ITensor/ITensors.jl) library, and tries to reuse most of its features whenever possible.
 
 In order to install it, from julia
 
