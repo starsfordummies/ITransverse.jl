@@ -14,6 +14,28 @@ julia> using Pkg
 julia> Pkg.add(url="https://github.com/starsfordummies/ITransverse.jl.git")
 ```
 
+# Literature 
+
+The basic idea of the transverse contraction was proposed in [1], see also [2,3]. 
+The light cone algorithms was proposed in [4]
+For alternate methods of compressing the temporal MPS, see [5]
+
+[1] M. C. Bañuls, M. B. Hastings, F. Verstraete, and J. I. Cirac, 
+[Matrix Product States for  Dynamical Simulation of Infinite Chains](https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.102.240603), Phys. Rev. Lett. 102, 240603 (2009)
+[2] A. Müller-Hermes, J.I. Cirac and M.C. Bañuls, 
+[Tensor network techniques for the computation of dynamical observables in one-dimensional quantum spin systems](https://doi.org/10.1088/1367-2630/14/7/075003),  New J. Phys. 14 075003 (2012)
+
+[3] M.B. Hastings and R. Mahajan,
+[Connecting Entanglement in Time and Space: Improving the Folding Algorithm](https://doi.org/10.1103/PhysRevA.91.032306)
+ Phys.Rev.A 91 (2015) 3, 032306
+
+[4] M. Frías-Pérez and M.C. Bañuls, [Light cone tensor network and time evolution](https://doi.org/10.1103/PhysRevB.106.115117),
+Phys.Rev.B 106 (2022) 11, 115117
+
+[5] S. Carignano, C.R. Marimón and L. Tagliacozzo, [Temporal entropy and the complexity of computing the expectation value of local operators after a quench](https://inspirehep.net/literature/2679401)
+Phys.Rev.Res. 6 (2024) 3, 033021 
+
+
 # Motivation: time evolution of 1D quantum systems
 
 The 2D tensor network associated with the time evolution of a quantum chain is 
