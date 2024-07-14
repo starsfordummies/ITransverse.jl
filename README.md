@@ -185,15 +185,15 @@ so the index renaming convention is
 ```
 
 
-For building the tMPO, we contract with the operator `fold_op` on the *right*
-and the initial state `init_state` on the *left*, ie. 
+So for our temporal MPO, we contract with the relevant operator on the *right*
+and the initial state on the *left*, ie. 
 
 ```
-              p'
-         |    |    |    |
-[in] X==(W)==(W)==(W)==(W)==o [op]
-         |    |    |    |
-              p
+                       p'
+                   |    |    |    |
+[init state]   o==(W)==(W)==(W)==(W)==X [operator]
+                   |    |    |    |
+                       p
 
 ------------------------------>time
 ```
@@ -202,13 +202,13 @@ With our rotation, the MPS with the physical legs is the "right" part of the net
 which we depict with the legs pointing upwards
 
 ```
-^
+^x
 |          |  |  |  |  |  |  |  |
 |          o--o--o--o--o--o--o--o  TM
 |          |  |  |  |  |  |  |  |
 |          o--o--o--o--o--o--o--o  |R>
 |
-|------------------------------------------>
+|------------------------------------------>time
                        
 ```
 
