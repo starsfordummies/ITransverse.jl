@@ -31,7 +31,7 @@ function pm_rand(in_mps::MPS, mpo0::MPO, mpo1::MPO, pm_params::PMParams)
         mpo_L = coin() ? mpo0 : mpo1
         mpo_R = coin() ? mpo0 : mpo1
 
-        if opt_method == "LR"
+        if opt_method == "RTM_LR"
         
             rr_work = rr
             ll_work = ll 
@@ -45,7 +45,7 @@ function pm_rand(in_mps::MPS, mpo0::MPO, mpo1::MPO, pm_params::PMParams)
 
             rr, ll, sjj = truncate_rsweep(OpsiR, OpsiL, cutoff=cutoff, chi_max=maxbondim)
 
-        elseif opt_method == "RTE"
+        elseif opt_method == "RDM"
             #rr_work = normbyfactor(rr, sqrt(overlap_noconj(rr,rr)))
             rr_work = normalize(rr)
 
