@@ -19,7 +19,7 @@ using .ChainModels
 # #from utils.jl
 export quick_mps, 
     overlap_noconj, 
-    applyn,
+    applyn, applyns
     isid,
     mergedicts!
 
