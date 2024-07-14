@@ -148,8 +148,8 @@ function fw_tMPOn(b::FwtMPOBlocks, b_im::FwtMPOBlocks, time_sites::Vector{<:Inde
         tMPS[ii] = (Wr_im) * delta(irP, time_sites[ii]) 
     end
     for ii = nbeta+1:Nsteps-nbeta
-        tMPO[ii] *= delta(icP, time_sites[ii]) * delta(icPs, time_sites[ii]') 
-        tMPS[ii] *= delta(irP, time_sites[ii])
+        tMPO[ii] = tMPO[ii] * delta(icP, time_sites[ii]) * delta(icPs, time_sites[ii]') 
+        tMPS[ii] = tMPO[ii] * delta(irP, time_sites[ii])
     end
     for ii = Nsteps-nbeta+1:Nsteps
         tMPO[ii] = dag(Wc_im) * delta(icPs, time_sites[ii]') * delta(icP, time_sites[ii]) 
@@ -162,8 +162,8 @@ function fw_tMPOn(b::FwtMPOBlocks, b_im::FwtMPOBlocks, time_sites::Vector{<:Inde
     tMPS[1] *= left_state * delta(ind(left_state,1), irL) * delta(irR, rot_links_mps[1]) 
 
     for ii = 2:Nsteps-1
-        tMPO[ii] *= delta(icL, rot_links_mpo[ii-1]) * delta(icR, rot_links_mpo[ii]) 
-        tMPS[ii] *= delta(irL, rot_links_mps[ii-1]) * delta(irR, rot_links_mps[ii]) 
+        tMPO[ii] = tMPO[ii] * delta(icL, rot_links_mpo[ii-1]) * delta(icR, rot_links_mpo[ii]) 
+        tMPS[ii] = tMPO[ii] * delta(irL, rot_links_mps[ii-1]) * delta(irR, rot_links_mps[ii]) 
     end
 
     tMPO[end] *= delta(icL, rot_links_mpo[Nsteps-1]) * dag(right_state) * delta(ind(right_state,1),icR) 
