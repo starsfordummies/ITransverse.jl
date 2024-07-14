@@ -26,7 +26,7 @@ end
 
 
 
-
+#= 
 """ Computes the Von Neumann entanglement entropy of an MPS `psi` at a given `cut` 
 It is a (!) function cause we orthogonalize along the way, gauging `psi` """
 function vn_entanglement_entropy!(psi::MPS, cut::Int)
@@ -47,7 +47,25 @@ function vn_entanglement_entropy!(psi::MPS, cut::Int)
 
     return SvN
 end
+=#
 
+
+vn_from_sv(sv::ITensor) = vn_from_sv(tensor(NDTensors.cpu(sv)))
+
+function vn_from_sv(sv::Tensor)
+   SvN = zero(eltype(sv))
+    for n=1:dim(sv, 1)
+        p = sv[n,n]^2
+        SvN -= p * log(p)
+    end
+    return SvN
+end
+
+function vn_entanglement_entropy!(psi::MPS, bond::Int)
+    orthogonalize!(psi, bond)
+    _,S,_ = svd(psi[bond], uniqueinds(psi[bond],psi[bond+1]))
+    return vn_from_sv(S)
+end
 
 
 """ Computes the Von Neumann entanglement entropy of an MPS `psi` at all links, 
@@ -118,4 +136,5 @@ function renyi_entanglement_entropy!(psi::MPS, α::Int=2)
 
     return ents_renyi
 end
+
 
