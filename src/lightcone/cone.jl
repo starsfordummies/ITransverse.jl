@@ -163,6 +163,8 @@ function run_cone(psi::MPS,
 end
 
 
+# TODO need to update it to newest 
+#=
 """ Resumes a light cone simulation from a checkpoint file """
 function resume_cone(checkpoint::String, nsteps::Int)
 
@@ -176,5 +178,4 @@ function resume_cone(checkpoint::String, nsteps::Int)
     return run_cone(psi, nsteps, op, tp, truncp)
     
 end
-
-
+=#

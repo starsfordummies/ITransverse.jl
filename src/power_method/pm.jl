@@ -165,9 +165,7 @@ Truncation params are in pm_params
 """
 function powermethod_both(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::PMParams; flip_R::Bool=false)
 
-    itermax = pm_params.itermax
-    cutoff = pm_params.cutoff
-    maxbondim = pm_params.maxbondim
+    (; opt_method, itermax, eps_converged, truncp) = pm_params
 
     mpslen = length(in_mps)
 
@@ -192,18 +190,17 @@ function powermethod_both(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::
         # and then unprimes the p' leg. 
         
         # Take the ll vector from the previous step as new L,R 
-        OpsiL = apply(in_mpo_L, ll,  alg="naive", truncate=false)
-        OpsiR = apply(in_mpo_R, rr,  alg="naive", truncate=false)
+        OpsiL = applyns(in_mpo_L, ll)
+        OpsiR = applyn(in_mpo_R, rr)
 
         llprev = deepcopy(ll)
         rrprev = deepcopy(rr)
 
-        ll, rr, sjj = truncate_normalize_sweep(OpsiL, OpsiR, cutoff=cutoff, chi_max=maxbondim)
+        # TODO implement different methods according to `opt_method`
+        ll, rr, sjj = truncate_normalize_rsweep(OpsiL, OpsiR, truncp)
 
-    
         ds2 = norm(sprevs - sjj)
 
-        
         #push!(ds2s, ds2)
         push!(ds2s, inner(llprev,ll))
         sprevs = sjj
@@ -211,8 +208,7 @@ function powermethod_both(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::
 
         next!(p; showvalues = [(:Info,"[$(jj)] ds2=$(ds2), chi=$(maxlinkdim(ll))" )])
 
-
-        if ds2 < 1e-10
+        if ds2 < eps_converged
             println("converged after $jj steps")
             break
         end
