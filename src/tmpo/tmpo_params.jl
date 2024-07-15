@@ -14,8 +14,11 @@ function tmpo_params(expH_func::Function,
     bl::Vector{<:Number},  # bottom -> left(rotated)
     tr::Vector{<:Number}) 
 
-    blt = ITensor(bl, Index(length(bl), "bl"))
-    trt = ITensor(tr, Index(length(tr), "tr"))
+    
+    work_type = ComplexF64
+
+    blt = adapt(work_type,ITensor(bl, Index(length(bl), "bl")))
+    trt = adapt(work_type,ITensor(tr, Index(length(tr), "tr")))
     return tmpo_params(expH_func, mp, nbeta, blt, trt)
 end
 
