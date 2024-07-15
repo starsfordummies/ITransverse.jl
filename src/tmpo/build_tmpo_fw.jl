@@ -158,16 +158,16 @@ function fw_tMPOn(b::FwtMPOBlocks, b_im::FwtMPOBlocks, time_sites::Vector{<:Inde
 
 
     # Contract edges with boundary states, label linkinds
-    tMPO[1] *= left_state * delta(ind(left_state,1), icL) * delta(icR, rot_links_mpo[1]) 
-    tMPS[1] *= left_state * delta(ind(left_state,1), irL) * delta(irR, rot_links_mps[1]) 
+    tMPO[1] = tMPO[1] * left_state * delta(ind(left_state,1), icL) * delta(icR, rot_links_mpo[1]) 
+    tMPS[1] = tMPS[1] * left_state * delta(ind(left_state,1), irL) * delta(irR, rot_links_mps[1]) 
 
     for ii = 2:Nsteps-1
         tMPO[ii] = tMPO[ii] * delta(icL, rot_links_mpo[ii-1]) * delta(icR, rot_links_mpo[ii]) 
         tMPS[ii] = tMPS[ii] * delta(irL, rot_links_mps[ii-1]) * delta(irR, rot_links_mps[ii]) 
     end
 
-    tMPO[end] *= delta(icL, rot_links_mpo[Nsteps-1]) * dag(right_state) * delta(ind(right_state,1),icR) 
-    tMPS[end] *= delta(irL, rot_links_mps[Nsteps-1]) * dag(right_state) * delta(ind(right_state,1),irR) 
+    tMPO[end] = tMPO[end] * delta(icL, rot_links_mpo[Nsteps-1]) * dag(right_state) * delta(ind(right_state,1),icR) 
+    tMPS[end] = tMPS[end] * delta(irL, rot_links_mps[Nsteps-1]) * dag(right_state) * delta(ind(right_state,1),irR) 
 
     return tMPO, tMPS
 
