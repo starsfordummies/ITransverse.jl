@@ -39,7 +39,10 @@ function main_folded_pm()
     b_im = FoldtMPOBlocks(tpim)
 
 
+    infos = Dict("tp" => tp, "pm_params" => pm_params)
+
     ts = 50:1:50
+    alltimes = ts.* tp.dt
 
     for Nsteps in ts
 
@@ -61,9 +64,9 @@ function main_folded_pm()
 
     end
 
-    return leftvecs, evs, ds2s, ts 
+    return rvecs, evs, ds2s, ts, infos
 end
 
 
 
-leftvecs, evs, ds2s, ts = main_folded_pm()
+rvecs, evs, ds2s, alltimes, infos = main_folded_pm()
