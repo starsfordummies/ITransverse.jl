@@ -266,8 +266,8 @@ function folded_tMPO_R(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Ind
     end
 
     dttype = NDTensors.unwrap_array_type(b.WWc)
-    oo[1] *= b.rho0 * delta(ind(b.rho0,1), ll[1])
-    oo[end] *= adapt(dttype, ITensor(fold_op, ll[end]))
+    oo[1] = oo[1] * b.rho0 * delta(ind(b.rho0,1), ll[1])
+    oo[end] = oo[end] * adapt(dttype, ITensor(fold_op, ll[end]))
 
     return oo
 
