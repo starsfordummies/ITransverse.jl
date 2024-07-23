@@ -4,7 +4,7 @@ computes tr(τₜ^2) the trace of the reduced transition matrices |phi><psi| at 
  The normalization must be given via `normalization_factor` """
 function rtm2_contracted(psi::MPS, phi::MPS; normalize_factor::Number=1.0)
     r2s = []
-    for jj in eachindex(psi)[1:end-1]
+    @showprogress for jj in eachindex(psi)[1:end-1]
         push!(r2s, rtm2_contracted(psi, phi, jj; normalize_factor))
     end
 

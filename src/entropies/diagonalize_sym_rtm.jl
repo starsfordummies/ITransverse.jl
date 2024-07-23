@@ -83,7 +83,7 @@ function diagonalize_rtm_left_gen_sym(psiL::MPS; bring_left_gen::Bool=false, nor
     psiR = prime(linkinds, psi_gauged)
 
     # Start from the right 
-    for ii = mpslen:-1:2
+    @showprogress for ii = mpslen:-1:2
         Ai = psi_gauged[ii]
         Bi = psiR[ii]
 
@@ -136,7 +136,7 @@ function diagonalize_rtm_right_gen_sym(psi::MPS; bring_right_gen::Bool=false, no
     #     @warn "RTM not well normalized? Σeigs-1=$(abs(sum(eigss) - 1.)) "
     # end
 
-    for jj in 1:mpslen-1
+    @showprogress for jj in 1:mpslen-1
 
         lenv *= psi_gauged[jj]
         lenv *= psi_gauged[jj]'
