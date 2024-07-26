@@ -54,7 +54,11 @@ function FoldtMPOBlocks(tp::tmpo_params, init_state::ITensor = tp.bl)
     return FoldtMPOBlocks(WWl, WWc, WWr, rho0, tp, inds_ww)
 end
 
-
+""" Allow changing elements of FoldtMPOBlocks """
+function FoldtMPOBlocks(b::FoldtMPOBlocks; 
+    WWl=b.WWl, WWc=b.WWc, WWr=b.WWr, rho0=b.rho0, tp=b.tp, rot_inds=b.rot_inds)
+    return FoldtMPOBlocks(WWl, WWc, WWr, rho0, tp, rot_inds)
+end
 
 """ Basic building blocks for the folded tMPS/tMPO, folded tensors of time evolution rotated 90deg clockwise"""
 struct FwtMPOBlocks
