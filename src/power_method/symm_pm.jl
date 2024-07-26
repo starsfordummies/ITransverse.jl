@@ -51,7 +51,7 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams)
             psi = applyn(in_mpo, psi_ortho)
             psi_ortho, sjj, overlap = truncate_rsweep_sym(psi, cutoff=cutoff, chi_max=maxbondim, method="EIG")
         else
-
+            @error "Specify a valid opt_method: RDM|RTM|RTM_EIG"
         end
             
 
