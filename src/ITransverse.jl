@@ -77,8 +77,8 @@ include("tmpo/build_expH.jl")
 
 include("tmpo/build_ww.jl")
 
-include("tmpo/tmpo_blocks.jl")
-
+include("tmpo/fw_tmpo_blocks.jl")
+include("tmpo/fold_tmpo_blocks.jl")
 
 export rotate_90clockwise
 export FoldtMPOBlocks, FwtMPOBlocks
