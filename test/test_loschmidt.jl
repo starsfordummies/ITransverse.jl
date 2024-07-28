@@ -11,7 +11,7 @@ nbeta =2
 
 mp = model_params("S=1/2", 1, 1, 0)
 
-tp = tmpo_params(tp; nbeta=2, mp=mp, tr=tp.bl)
+tp = tMPOParams(tp; nbeta=2, mp=mp, tr=tp.bl)
 
 Nsteps = nbeta + Ntime_steps + nbeta
 
@@ -22,7 +22,7 @@ time_sites = addtags(siteinds("S=1/2", Nsteps; conserve_qns=false), "time")
 
 b = FwtMPOBlocks(tp)
 
-tpim = tmpo_params(tp; dt=-im*tp.dt)
+tpim = tMPOParams(tp; dt=-im*tp.dt)
 
 b_im = FwtMPOBlocks(tpim)
 

@@ -80,7 +80,7 @@ function fw_tMPO(eH::MPO, eHi::MPO,
 end
 
 """ Returns (tMPO, tMPS) pair. """
-function fw_tMPO(tp::tmpo_params, time_sites::Vector{<:Index})
+function fw_tMPO(tp::tMPOParams, time_sites::Vector{<:Index})
 
     eH = build_expH(tp)
     eHi = build_expHim(tp)
@@ -96,11 +96,11 @@ end
 # Alternate versions using building blocks
 
 
-function fw_tMPOn(tp::tmpo_params, time_sites::Vector{<:Index})
+function fw_tMPOn(tp::tMPOParams, time_sites::Vector{<:Index})
 
     b = FwtMPOBlocks(tp)
 
-    tpim = tmpo_params(tp; dt=-im*tp.dt)
+    tpim = tMPOParams(tp; dt=-im*tp.dt)
 
     b_im = FwtMPOBlocks(tpim)
 

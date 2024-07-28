@@ -212,7 +212,7 @@ We provide high-level functions for the following algorithms (more details below
 We have a few basic structs which define the models and truncations and are carried around in the programs. 
 Most notably we have
 - `model_params` for building the basic model Hamiltonians
-- `tmpo_params` for building the temporal MPOs (including the initial states and closing operators)
+- `tMPOParams` for building the temporal MPOs (including the initial states and closing operators)
 - `TruncParams` which specify the cutoffs, max bond dimensions, as well as the truncation scheme when applicable
 - `PMParams` where we store also additional parameters required for the power methods
 - `ConeParams` where we store also additional parameters required for the light cone algorithms
@@ -251,7 +251,7 @@ simply transpose). Then we can make use of different algorithms based on symmetr
 
 ## Light cone 
 
-We initialize the cone using `init_cone(tp::tmpo_params)`, then evolve it using `run_cone(..)`
+We initialize the cone using `init_cone(tp::tMPOParams)`, then evolve it using `run_cone(..)`
 
 # Generalized and standard entropies
 
@@ -272,7 +272,7 @@ The XXZ model is also implemented, but I haven't checked in a million years
 
 # WIP: GPU Extensions 
 
-In principle it should work by simply doing a `using CUDA` and by putting the tmpo_params on GPU, `NDTensors.gpu(tp::tmpo_params)`. 
+In principle it should work by simply doing a `using CUDA` and by putting the tMPOParams on GPU, `NDTensors.gpu(tp::tMPOParams)`. 
 The idea is that the programs build everything down from there on GPU. 
 There are likely bugs 
 

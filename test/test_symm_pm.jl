@@ -27,11 +27,11 @@ function test_symmpm(Tstart::Int, Tend::Int, nbeta::Int; Tstep::Int=1)
     truncp = TruncParams(cutoff, maxbondim)
 
     mp = model_params("S=1/2", JXX, hz, gx)
-    tp = tmpo_params(dt, build_expH_ising_murg, mp, nbeta, init_state, init_state)
+    tp = tMPOParams(dt, build_expH_ising_murg, mp, nbeta, init_state, init_state)
 
     b = FwtMPOBlocks(tp)
 
-    tpim = tmpo_params(tp; dt=-im*tp.dt)
+    tpim = tMPOParams(tp; dt=-im*tp.dt)
 
     b_im = FwtMPOBlocks(tpim)
 

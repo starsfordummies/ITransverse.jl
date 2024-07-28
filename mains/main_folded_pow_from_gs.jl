@@ -40,9 +40,9 @@ function main_folded_pm()
 
     gs1 = adapt(ComplexF64, gs[40])
 
-    tp = tmpo_params(tp; nbeta=0, bl = gs1)
+    tp = tMPOParams(tp; nbeta=0, bl = gs1)
 
-    tpim = tmpo_params(tp; dt=-im*tp.dt)
+    tpim = tMPOParams(tp; dt=-im*tp.dt)
 
 
     b = FoldtMPOBlocks(tp)

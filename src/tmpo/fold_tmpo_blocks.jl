@@ -7,11 +7,11 @@ struct FoldtMPOBlocks
     WWc::ITensor
     WWr::ITensor
     rho0::ITensor
-    tp::tmpo_params
+    tp::tMPOParams
     rot_inds::Dict
 
     function FoldtMPOBlocks(WWl::ITensor,WWc::ITensor,WWr::ITensor,
-        rho0::ITensor,tp::tmpo_params,rot_inds::Dict) 
+        rho0::ITensor,tp::tMPOParams,rot_inds::Dict) 
 
         # The data type of the bottom-left term in tp dictates whether the *full* thing will lie on GPU
         dttype = NDTensors.unwrap_array_type(tp.bl)
@@ -21,9 +21,9 @@ struct FoldtMPOBlocks
 end
 
 
-function FoldtMPOBlocks(tp::tmpo_params, init_state::ITensor = tp.bl) 
+function FoldtMPOBlocks(tp::tMPOParams, init_state::ITensor = tp.bl) 
 
-    WWl, WWc, WWr = build_WW(tp::tmpo_params)
+    WWl, WWc, WWr = build_WW(tp::tMPOParams)
 
     R, P, Ps = inds(WWl)
     WWl, _ = rotate_90clockwise(WWl; R,P,Ps)

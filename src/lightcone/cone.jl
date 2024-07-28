@@ -1,9 +1,9 @@
-""" Initializes the light cone folded and rotated temporal MPS |R> given `tmpo_params`
+""" Initializes the light cone folded and rotated temporal MPS |R> given `tMPOParams`
 builds a (length n) tMPS with (time_fold)  legs.
 Our convention is that after rotation the initial state goes to the *left* 
 Returns (psi[the light cone right MPS], b[the folded tMPO building blocks])"""
 
-function init_cone(tp::tmpo_params, n::Int=3)
+function init_cone(tp::tMPOParams, n::Int=3)
 
     b = FoldtMPOBlocks(tp)
 

@@ -53,7 +53,7 @@ and contract with  the initial state `init_state` on the *left* and the operator
  and additional identity tensors (meant to be replaced) with trivial site indices on the first and last site.
 
 """
-function folded_open_tMPO(tp::tmpo_params, time_sites::Vector{<:Index})
+function folded_open_tMPO(tp::tMPOParams, time_sites::Vector{<:Index})
 
     WWc = build_WWc(tp)
     folded_open_tMPO(WWc[1], time_sites)

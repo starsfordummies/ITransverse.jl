@@ -76,7 +76,7 @@ end
 
 
 """ Convention we stick to for all the following: indices for tMPO WWl before rotations are  L, R, P, P' """
-function build_WW(tp::tmpo_params)
+function build_WW(tp::tMPOParams)
     eH = build_expH(tp)
 
     WWl,       iCwR, iCp, iCps = build_WWl(eH)
@@ -92,7 +92,7 @@ end
 """ Builds the bulk tensor for the *folded* time MPO
 Returns the *unrotated* combined indices as well: vL, vR, p, p' 
 """
-function build_WWc(tp::tmpo_params)
+function build_WWc(tp::tMPOParams)
     eH = build_expH(tp)
     WWc, iCwL, iCwR, iCp, iCps = build_WWc(eH)
 end

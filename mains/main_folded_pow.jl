@@ -29,9 +29,9 @@ function main_folded_pm()
     ds2s = []
 
 
-    tp = tmpo_params(tp; nbeta=0)
+    tp = tMPOParams(tp; nbeta=0)
 
-    tpim = tmpo_params(tp; dt=-im*tp.dt)
+    tpim = tMPOParams(tp; dt=-im*tp.dt)
 
 
     b = FoldtMPOBlocks(tp)

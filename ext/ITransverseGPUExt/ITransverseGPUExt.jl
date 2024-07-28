@@ -6,7 +6,7 @@ using NDTensors
 using ITensors.Adapt
 using ITransverse 
 
-Adapt.adapt_structure(to, tp::tmpo_params) = tmpo_params(tp; bl=adapt(to, tp.bl), tr=adapt(to,tp.tr))
+Adapt.adapt_structure(to, tp::tMPOParams) = tMPOParams(tp; bl=adapt(to, tp.bl), tr=adapt(to,tp.tr))
 
 function ITransverse.ITenUtils.togpu(x) 
     return NDTensors.cu(x)

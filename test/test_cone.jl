@@ -33,7 +33,7 @@ truncp = TruncParams(cutoff, maxbondim)
 Nsteps = 50
 
 mp = model_params("S=1/2", JXX, hz, gx)
-tp = tmpo_params(dt, build_expH_ising_murg, mp, nbeta, init_state)
+tp = tMPOParams(dt, build_expH_ising_murg, mp, nbeta, init_state)
 
 
 c0,b = init_cone(tp)

@@ -36,10 +36,10 @@ function main_cone()
     #time_sites = siteinds("S=3/2", 1)
 
     mp = model_params("S=1/2", JXX, hz, gx)
-    tp = tmpo_params(dt, build_expH_ising_murg, mp, nbeta, init_state, Id)
+    tp = tMPOParams(dt, build_expH_ising_murg, mp, nbeta, init_state, Id)
 
     # mp = model_params("S=1/2", JXX, hz, 0.0, dt)
-    # tp = tmpo_params("S=1/2", "S=1/2", build_expH_ising_murg, mp, dt, nbeta, init_state)
+    # tp = tMPOParams("S=1/2", "S=1/2", build_expH_ising_murg, mp, dt, nbeta, init_state)
 
 
     c0, b = init_cone(tp)

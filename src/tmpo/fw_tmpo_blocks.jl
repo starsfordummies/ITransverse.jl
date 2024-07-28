@@ -3,11 +3,11 @@ struct FwtMPOBlocks
     Wl::ITensor
     Wc::ITensor
     Wr::ITensor
-    tp::tmpo_params
+    tp::tMPOParams
     rot_inds::Dict
 
   
-    function FwtMPOBlocks(Wl::ITensor,Wc::ITensor,Wr::ITensor, tp::tmpo_params,rot_inds::Dict) 
+    function FwtMPOBlocks(Wl::ITensor,Wc::ITensor,Wr::ITensor, tp::tMPOParams,rot_inds::Dict) 
 
         # The data type of the bottom-left term in tp dictates whether the *full* thing will lie on GPU
         dttype = NDTensors.unwrap_array_type(tp.bl)
@@ -16,7 +16,7 @@ struct FwtMPOBlocks
     end
 end
 
-function FwtMPOBlocks(tp::tmpo_params)
+function FwtMPOBlocks(tp::tMPOParams)
     
     eH = build_expH(tp)
 
