@@ -138,3 +138,26 @@ end
 function nonzero_elements(A::ITensor)
     return 0
 end
+
+
+""" hacky way to extract physical indices from an ITensor, hoping that we've been hintful enough.
+- if the ITensor has only 1 dim, that's the physical dim
+- if it has more than one dim, try to match the tag "phys"
+- if that doesn't work, try to match the tag "Site"
+- throws error otherwise
+"""
+function phys_ind(A::ITensor)
+    if ndims(A) == 1
+        physind = ind(A,1)
+    else
+        if !isempty(inds(A,"phys"))
+            physind = inds(A,"phys")[1]
+        elseif !isempty(inds(A,"Site"))
+            physind = inds(A,"Site")[1]
+        else
+            @error "Not sure what to do here, please label physical index in tensor"
+        end
+    end
+
+    return physind
+end

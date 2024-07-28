@@ -53,7 +53,8 @@ export quick_mps,
     applyn,
     applyns,
     match_siteinds, match_siteinds!,
-    replace_linkinds!
+    replace_linkinds!,
+    phys_ind
 
 
 # moreutils.jl
