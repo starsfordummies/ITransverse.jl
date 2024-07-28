@@ -185,14 +185,14 @@ function folded_tMPO_in(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:In
 
     # Either rho0 is a 1-dim tensor, 
     # or a 3-legged tensor with legs ordered (left-right-phys)
-    @show dim(virtual_ind) 
-    @show dim(inds(b.rho0))[end]
+    #@show dim(virtual_ind) 
+    #@show dim(inds(b.rho0))[end]
 
     @assert dim(virtual_ind) == dim(inds(b.rho0)[end])
 
     # TODO CHECK HERE WE SHOULD MAKE SURE THAT ROTATED INDICES ARE IN ORDER (L,R,PHYS)
-    @show dims(b.rho0)
-    @show dims(ts)
+    #@show dims(b.rho0)
+    #@show dims(ts)
     if ndims(b.rho0) > 1
         @assert dim(b.rho0,1) ==  dim(b.rho0,2)
         @assert dim(ts[1]) == dim(b.rho0,1)
@@ -387,8 +387,8 @@ function folded_right_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index})
         psi[ii] = replaceinds(psi[ii], inds(b.WWr), newinds)
     end
 
-    @show b.WWr
-    @show ts
+    #@show b.WWr
+    #@show ts
     dttype = NDTensors.unwrap_array_type(b.WWc)
     psi[1] = psi[1] * b.rho0 * delta(ind(b.rho0,1), ll[1])
     psi[end] = psi[end] * adapt(dttype, ITensor([1,0,0,1], ll[end]))

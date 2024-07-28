@@ -70,8 +70,8 @@ function FoldtMPOBlocks(tp::tMPOParams, init_state::ITensor = tp.bl)
             ciiright = combiner(lrinds[2], lrinds[2]') 
             rho0 *= ciiright
             iP_rho0 = Index(dim(combinedind(ciileft)),"rho0,time,phys")
-            @show iP_rho0
-            @show ciileft
+            #@show iP_rho0
+            #@show ciileft
             rho0 = replaceinds(rho0, (combinedind(ciileft), combinedind(ciiright)), (iP_rho0, iP_rho0'))
         end
         rho0 *= delta(combinedind(comb_phys), Index(dim(P), "virt,time,rho0"))
