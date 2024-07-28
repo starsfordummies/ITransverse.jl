@@ -60,7 +60,7 @@ export rho2,
     diagonalize_rtm_left_gen_sym
 
  
-export model_params
+export ModelParams
 
 export TruncParams
 

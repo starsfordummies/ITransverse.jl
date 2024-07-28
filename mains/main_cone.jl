@@ -35,10 +35,10 @@ function main_cone()
 
     #time_sites = siteinds("S=3/2", 1)
 
-    mp = model_params("S=1/2", JXX, hz, gx)
+    mp = ModelParams("S=1/2", JXX, hz, gx)
     tp = tMPOParams(dt, build_expH_ising_murg, mp, nbeta, init_state, Id)
 
-    # mp = model_params("S=1/2", JXX, hz, 0.0, dt)
+    # mp = ModelParams("S=1/2", JXX, hz, 0.0, dt)
     # tp = tMPOParams("S=1/2", "S=1/2", build_expH_ising_murg, mp, dt, nbeta, init_state)
 
 

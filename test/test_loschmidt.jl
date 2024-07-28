@@ -9,7 +9,7 @@ maxbondim=100
 Ntime_steps = 60
 nbeta =2 
 
-mp = model_params("S=1/2", 1, 1, 0)
+mp = ModelParams("S=1/2", 1, 1, 0)
 
 tp = tMPOParams(tp; nbeta=2, mp=mp, tr=tp.bl)
 

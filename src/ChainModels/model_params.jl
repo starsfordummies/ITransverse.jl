@@ -1,7 +1,7 @@
 # Custom param structures for Ising-Potts models
 # and for power methods/ truncations etc 
 
-struct model_params
+struct ModelParams
     phys_space::String
     JXX::Float64
     hz::Float64
@@ -9,8 +9,8 @@ struct model_params
 end
 
 # allow for changes on the fly of params 
-model_params(x::model_params; 
+ModelParams(x::ModelParams; 
     JXX=x.JXX, 
     hz=x.hz, 
-    λx=x.λx) = model_params(x.phys_space, JXX, hz, λx)
+    λx=x.λx) = ModelParams(x.phys_space, JXX, hz, λx)
 

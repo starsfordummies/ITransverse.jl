@@ -211,7 +211,7 @@ We provide high-level functions for the following algorithms (more details below
 ## Parameters 
 We have a few basic structs which define the models and truncations and are carried around in the programs. 
 Most notably we have
-- `model_params` for building the basic model Hamiltonians
+- `ModelParams` for building the basic model Hamiltonians
 - `tMPOParams` for building the temporal MPOs (including the initial states and closing operators)
 - `TruncParams` which specify the cutoffs, max bond dimensions, as well as the truncation scheme when applicable
 - `PMParams` where we store also additional parameters required for the power methods

@@ -1,4 +1,4 @@
-function build_H_ising(sites::Vector{<:Index}, mp::model_params)
+function build_H_ising(sites::Vector{<:Index}, mp::ModelParams)
     build_H_ising(sites, mp.JXX, mp.hz, mp.λx)
 end
 
@@ -99,13 +99,13 @@ function build_expH_ising_murg(
 
 end
 
-function build_expH_ising_murg(s::Vector{<:Index}, p::model_params, dt::Number)
+function build_expH_ising_murg(s::Vector{<:Index}, p::ModelParams, dt::Number)
     
     build_expH_ising_murg(s, p.JXX, p.hz, p.λx, dt)
 
 end
 
-function build_expH_ising_murg(mp::model_params, dt::Number)
+function build_expH_ising_murg(mp::ModelParams, dt::Number)
     
     space_sites = siteinds(mp.phys_space, 3; conserve_qns = false)
     build_expH_ising_murg(space_sites, mp.JXX, mp.hz, mp.λx, dt)
@@ -114,7 +114,7 @@ end
 
 
 
-function epsilon_brick_ising(mp::model_params)
+function epsilon_brick_ising(mp::ModelParams)
 
     temp_s = siteinds("S=1/2",2)
     os = OpSum()

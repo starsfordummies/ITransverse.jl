@@ -4,13 +4,13 @@ using ITensors, ITensorMPS
 
 using ..ITenUtils
 
-include("model_params.jl")
+include("ModelParams.jl")
 include("id_mpo.jl")
 include("ising_parallel.jl")
 include("potts.jl")
 include("xxzmodel.jl")
 
-export model_params
+export ModelParams
 
 # export  build_expH, build_expHim
 
