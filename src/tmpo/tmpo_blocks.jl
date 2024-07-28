@@ -39,15 +39,44 @@ function FoldtMPOBlocks(tp::tmpo_params, init_state::ITensor = tp.bl)
     iwr = (ind(WWr,1), Index(1), ind(WWr,2),ind(WWr,3))
     WWr = replaceinds(WWr, iwr, inds(WWc))
 
+
+    # Handling of initial state 
     # We can accept either an initial state or initial folded state (DM)
-    if dim(init_state) == dim(P)
-        rho0 = init_state * delta(ind(init_state,1), Index(dim(P),"virt,time,rho0"))
-    elseif dim(init_state) == dim(P) ÷ 2
-        rho0 = (init_state) * (init_state') * combiner(ind(init_state,1),ind(init_state,1)')  #TODO combiner.. 
-        rho0 *= delta(ind(rho0,1), Index(dim(P), "virt,time,rho0"))
+    iP = phys_ind(init_state)
+    physdim_init = dim(iP)
+
+    @assert ndims(init_state) == 1 || ndims(init_state) == 3
+
+    lrinds = uniqueinds(inds(init_state), iP)
+    if !isempty(lrinds)
+        @assert dim(lrinds[1]) == dim(lrinds[2])  # translational invariance 
+    end
+
+    # Do we need to fold ? 
+    if physdim_init == dim(P)
+        rho0 = init_state * delta(iP, Index(dim(P),"virt,time,rho0"))
+        if !isempty(lrinds)
+            iP_rho0 = Index(dim(rho0,1),"rho0,time,phys")
+            rho0 = replaceinds(rho0, lrinds, (iP_rho0, iP_rho0'))
+        end
+    elseif physdim_init == dim(P) ÷ 2
+        rho0 = (init_state) * (init_state') 
+        comb_phys = combiner(iP, iP')
+        rho0 *= comb_phys
+        
+        if !isempty(lrinds)
+            ciileft = combiner(lrinds[1], lrinds[1]') 
+            rho0 *= ciileft
+            ciiright = combiner(lrinds[2], lrinds[2]') 
+            rho0 *= ciiright
+            iP_rho0 = Index(dim(combinedind(ciileft)),"rho0,time,phys")
+            @show iP_rho0
+            @show ciileft
+            rho0 = replaceinds(rho0, (combinedind(ciileft), combinedind(ciiright)), (iP_rho0, iP_rho0'))
+        end
+        rho0 *= delta(combinedind(comb_phys), Index(dim(P), "virt,time,rho0"))
     else
-        @error "Dimension of init_state is $(dim(init_state)) vs linkdim $(dim(P))"
-        rho0 = ITensor(0)
+        @error "Dimension of init_state is $(physdim_init) vs linkdim $(dim(P))"
     end
 
     inds_ww = Dict() # TODO
