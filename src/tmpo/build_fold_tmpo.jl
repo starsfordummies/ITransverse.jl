@@ -242,9 +242,10 @@ function folded_right_tMPS_in(T::MPO)
 
     one_first = zeros(dim(siteind(T,1)))
     one_first[1] = 1
-    psi[1] *= ITensor(one_first, siteind(T,1)')
+    dttype = NDTensors.unwrap_array_type(T[1])
+    psi[1] = psi[1] * adapt(dttype, ITensor(one_first, siteind(T,1)'))
     for ii in eachindex(psi)[2:end]
-        psi[ii] *= ITensor([1,0,0,0], siteind(T,ii)')
+        psi[ii] *= adapt(dttype, ITensor([1,0,0,0], siteind(T,ii)'))
     end
     return psi 
 end
