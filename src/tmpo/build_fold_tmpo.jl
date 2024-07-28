@@ -168,6 +168,93 @@ function folded_tMPO(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index
 
 end
 
+
+""" Build folded tMPO with an extra site at the beginning for the initial state.
+Effectively  """
+function folded_tMPO_in(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::AbstractVector = [1,0,0,1])
+
+    @assert b.tp.nbeta <= length(ts)
+    WWc = b.WWc
+    WWc_im = b_im.WWc
+
+    #match indices for real-imag so it's easier to work with them 
+    replaceinds!(WWc_im, inds(WWc_im), inds(WWc))
+
+
+    virtual_ind = ind(b.WWc,3)
+
+    # Either rho0 is a 1-dim tensor, 
+    # or a 3-legged tensor with legs ordered (left-right-phys)
+    @show dim(virtual_ind) 
+    @show dim(inds(b.rho0))[end]
+
+    @assert dim(virtual_ind) == dim(inds(b.rho0)[end])
+
+    # TODO CHECK HERE WE SHOULD MAKE SURE THAT ROTATED INDICES ARE IN ORDER (L,R,PHYS)
+    @show dims(b.rho0)
+    @show dims(ts)
+    if ndims(b.rho0) > 1
+        @assert dim(b.rho0,1) ==  dim(b.rho0,2)
+        @assert dim(ts[1]) == dim(b.rho0,1)
+    end
+    # TODO 
+    # else
+    # b.rho0 *= delta(ts[1],ts[1]')
+    # end
+
+    ll = [Index(dim(virtual_ind),"Link,time_fold,l=$(ii-1)") for ii in 1:length(ts)]
+
+    oo = MPO(fill(WWc, length(ts)))
+
+    if ndims(b.rho0) == 1
+        oo[1] = b.rho0 * delta(inds(b.rho0)[end], ll[1]) 
+    elseif ndims(b.rho0) == 3
+        oo[1] = b.rho0 * delta(inds(b.rho0)[end], ll[1])
+        oo[1] = replaceinds(oo[1], uniqueinds(oo[1], ll[1]), (ts[1],ts[1]') )
+    end
+
+
+    for ib = 2:b.tp.nbeta
+        oo[ib] = WWc_im
+    end
+
+    for ii in eachindex(oo)[2:end]
+        newinds = (ts[ii],ts[ii]',ll[ii],ll[ii-1])
+        oo[ii] = replaceinds(oo[ii], inds(WWc), newinds)
+    end
+
+
+    dttype = NDTensors.unwrap_array_type(b.WWc)
+
+
+
+    oo[end] *= adapt(dttype, ITensor(fold_op, ll[end]))
+
+    return oo
+
+end
+
+
+# Quick way to get init mps, just close with [1,0,0,..] to one side
+function folded_right_tMPS_in(T::MPO)
+
+    psi = MPS(deepcopy(T.data))
+
+    one_first = zeros(dim(siteind(T,1)))
+    one_first[1] = 1
+    psi[1] *= ITensor(one_first, siteind(T,1)')
+    for ii in eachindex(psi)[2:end]
+        psi[ii] *= ITensor([1,0,0,0], siteind(T,ii)')
+    end
+    return psi 
+end
+
+
+#TODO 
+function folded_left_tMPS_in(T::MPO)
+    return folded_right_tMPS_in(T)
+end
+
 """ Builds a folded tMPO extended by one site to the top (ie. end) with the tensor WWl """
 function folded_tMPO_L(b::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::AbstractVector = [1,0,0,1])
     oo = MPO(fill(b.WWc, length(ts)))
@@ -300,9 +387,11 @@ function folded_right_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index})
         psi[ii] = replaceinds(psi[ii], inds(b.WWr), newinds)
     end
 
+    @show b.WWr
+    @show ts
     dttype = NDTensors.unwrap_array_type(b.WWc)
-    psi[1] *= b.rho0 * delta(ind(b.rho0,1), ll[1])
-    psi[end] *= adapt(dttype, ITensor([1,0,0,1], ll[end]))
+    psi[1] = psi[1] * b.rho0 * delta(ind(b.rho0,1), ll[1])
+    psi[end] = psi[end] * adapt(dttype, ITensor([1,0,0,1], ll[end]))
 
     return psi 
 end

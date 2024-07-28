@@ -105,10 +105,10 @@ function build_expH_ising_murg(s::Vector{<:Index}, p::model_params)
 
 end
 
-function build_expH_ising_murg(p::model_params)
+function build_expH_ising_murg(mp::model_params)
     
-    space_sites = siteinds(p.phys_space, 3; conserve_qns = false)
-    build_expH_ising_murg(space_sites, p.JXX, p.hz, p.λx, p.dt)
+    space_sites = siteinds(mp.phys_space, 3; conserve_qns = false)
+    build_expH_ising_murg(space_sites, mp.JXX, mp.hz, mp.λx, mp.dt)
 
 end
 

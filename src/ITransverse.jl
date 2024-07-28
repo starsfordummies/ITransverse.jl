@@ -64,7 +64,8 @@ export model_params
 
 export TruncParams
 
-export build_expH_ising_murg, 
+export build_H_ising,
+    build_expH_ising_murg, 
     build_expH_potts_murg, 
     build_expH_potts_symmetric_svd
 
@@ -95,7 +96,10 @@ include("tmpo/build_fold_tmpo.jl")
 export 
      folded_tMPO,
      folded_tMPO_R,
-     folded_right_tMPS
+     folded_right_tMPS,
+     folded_tMPO_in,
+     folded_right_tMPS_in
+
    #  apply_extend
     
 include("power_method/pm_params.jl")
