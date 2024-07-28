@@ -69,8 +69,8 @@ export build_H_ising,
     build_expH_potts_murg, 
     build_expH_potts_symmetric_svd
 
-include("tmpo/tMPOParams.jl")
-    export tMPOParams, ising_tp
+include("tmpo/tmpo_params.jl")
+export tMPOParams, ising_tp
 
 include("tmpo/build_expH.jl")
 
