@@ -14,7 +14,6 @@ function main_folded_pm()
     cutoff = 1e-20
     maxbondim = 120
     itermax = 100
-    verbose=false
     eps_converged=1e-6
 
     truncp = TruncParams(cutoff, maxbondim)
@@ -25,7 +24,7 @@ function main_folded_pm()
 
     evs = [] 
 
-    leftvecs = []
+    rvecs = []
     ds2s = []
 
 
@@ -58,6 +57,7 @@ function main_folded_pm()
 
         ev = compute_expvals(ll, rr, ["X"], b)
 
+        push!(rvecs, rr)
         push!(evs, ev)
         push!(ds2s, ds2_pm)
 

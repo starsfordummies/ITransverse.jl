@@ -15,7 +15,6 @@ function main_folded_pm()
     cutoff = 1e-20
     maxbondim = 120
     itermax = 100
-    verbose=false
     eps_converged=1e-6
 
     truncp = TruncParams(cutoff, maxbondim)
@@ -26,7 +25,7 @@ function main_folded_pm()
 
     evs = [] 
 
-    leftvecs = []
+    rvecs = []
     ds2s = []
 
 
@@ -34,7 +33,7 @@ function main_folded_pm()
     space_sites = siteinds("S=1/2", 80)
     hisi = build_H_ising(space_sites, tp.mp)
     p0 = random_mps(space_sites)
-    en, gs = dmrg(hisi, p0, nsweeps=1)
+    _, gs = dmrg(hisi, p0, nsweeps=6)
 
     #gs1 = random_itensor(ComplexF64,Index(3,"lef"),  Index(3, "rig"), Index(2, "phys"))
 
