@@ -142,7 +142,7 @@ function run_cone(psi::MPS,
 
         push!(chis, maxlinkdim(ll))
         push!(overlaps, overlapLR)
-        push!(times, length(ll)*tp.mp.dt)
+        push!(times, length(ll)*tp.dt)
 
 
         #ent = vn_entanglement_entropy(ll)

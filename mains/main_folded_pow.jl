@@ -31,8 +31,7 @@ function main_folded_pm()
 
     tp = tmpo_params(tp; nbeta=0)
 
-    mpim = model_params(tp.mp; dt=-im*tp.mp.dt)
-    tpim = tmpo_params(tp; mp=mpim)
+    tpim = tmpo_params(tp; dt=-im*tp.dt)
 
 
     b = FoldtMPOBlocks(tp)

@@ -99,16 +99,16 @@ function build_expH_ising_murg(
 
 end
 
-function build_expH_ising_murg(s::Vector{<:Index}, p::model_params)
+function build_expH_ising_murg(s::Vector{<:Index}, p::model_params, dt::Number)
     
-    build_expH_ising_murg(s, p.JXX, p.hz, p.λx, p.dt)
+    build_expH_ising_murg(s, p.JXX, p.hz, p.λx, dt)
 
 end
 
-function build_expH_ising_murg(mp::model_params)
+function build_expH_ising_murg(mp::model_params, dt::Number)
     
     space_sites = siteinds(mp.phys_space, 3; conserve_qns = false)
-    build_expH_ising_murg(space_sites, mp.JXX, mp.hz, mp.λx, mp.dt)
+    build_expH_ising_murg(space_sites, mp.JXX, mp.hz, mp.λx, dt)
 
 end
 

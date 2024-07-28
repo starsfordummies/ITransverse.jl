@@ -42,21 +42,17 @@ function main_folded_pm()
 
     tp = tmpo_params(tp; nbeta=0, bl = gs1)
 
-    mpim = model_params(tp.mp; dt=-im*tp.mp.dt)
-
-    tpim = tmpo_params(tp; mp=mpim)
+    tpim = tmpo_params(tp; dt=-im*tp.dt)
 
 
     b = FoldtMPOBlocks(tp)
     b_im = FoldtMPOBlocks(tpim)
 
 
-    @show dims(b.rho0)
-
     infos = Dict("tp" => tp, "pm_params" => pm_params)
 
     ts = 50:1:50
-    alltimes = ts.* tp.mp.dt
+    alltimes = ts.* tp.dt
 
     for Nsteps in ts
 

@@ -100,8 +100,7 @@ function fw_tMPOn(tp::tmpo_params, time_sites::Vector{<:Index})
 
     b = FwtMPOBlocks(tp)
 
-    mpim = model_params(tp.mp; dt=-im*tp.mp.dt)
-    tpim = tmpo_params(tp; mp=mpim)
+    tpim = tmpo_params(tp; dt=-im*tp.dt)
 
     b_im = FwtMPOBlocks(tpim)
 
