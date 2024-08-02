@@ -35,7 +35,7 @@ function check_diag_matrix(d::AbstractMatrix, cutoff::Float64=1e-8, verbose::Boo
     delta_diag = sqrt(maximum(abs2, d - Diagonal(d))/maximum(abs2,diag(d)))
 
     if delta_diag > cutoff
-        verbose && println("Warning, matrix non diagonal: Δ=$(delta_diag) [cutoff=$(cutoff)]")
+        verbose && @warn "Matrix non diagonal: Δ=$(delta_diag) [cutoff=$(cutoff)]"
         isdiag = false
     end
     return isdiag
