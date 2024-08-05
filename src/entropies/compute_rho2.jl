@@ -47,12 +47,9 @@ right         |  |  |
 
 and appropriately contract them. This should basically amount to the contraction
 ```
-
-
 tr(--[LEFT]==[RIGHT]--[LEFT]==[RIGHT]--)
 
 ```
-
 """
 function rtm2_contracted(psi::MPS, phi::MPS, cut::Int; normalize_factor::Number=1.0)
 
@@ -95,6 +92,41 @@ function rtm2_contracted(psi::MPS, phi::MPS, cut::Int; normalize_factor::Number=
     return scalar(tr_rho2)
 end
 
+function rtm2_contracted_m(psi::MPS, phi::MPS, cut::Int; normalize_factor::Number=1.0)
+
+    # valid cuts go from 1 to L-1
+    @assert cut < length(psi)
+    @assert cut > 0
+
+
+    phi = deepcopy(phi)
+
+    phi = sim(linkinds,phi)/normalize_factor
+
+    #replace_siteinds!(phi, siteinds(psi))
+    match_siteinds!(psi, phi)
+
+    left = ITensor(eltype(psi[1]),1.)
+    right = ITensor(eltype(psi[1]),1.)
+
+    for jj = 1:cut
+        left *= psi[jj] 
+        left *= phi[jj]
+    end
+
+    for jj = length(psi):-1:cut+1
+        right *= psi[jj]
+        right *= phi[jj]
+    end
+
+    @assert inds(left) == inds(right)
+
+    mL = Matrix(left, inds(left))
+    mR = Matrix(right, reverse(inds(left)))
+
+    return tr(mL * mR * mL * mR)
+    
+end
 
 
 function rho2(eigenvalues::ITensor)
