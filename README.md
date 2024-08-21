@@ -233,6 +233,20 @@ matrices (`RDM`) associated with the left and right vectors individually, or opt
 depending on the problem. For this, the algorithms are rather based on optimizing reduced *transition* matrices, 
 so we label them as `RTMxx`
 
+As a flowchart, it goes like
+```mermaid
+  flowchart TD;
+      A["Symmetric L = R ?"]
+      A -- Yes --> B["RTM or RDM?"];
+      A -- No --> C["RTM or RDM?"];
+      B -- RDM --> J["Truncate on SV of L"];
+      B -- RTM --> D["Truncate on SV or Eigenvalues?"];
+      D -- SV --> E[Symmetric SVD Autonne-Takagi of R*R];
+      D -- EIG --> F[Symmetric Eigenvalue decomp of R*R];
+      C -- RDM --> G["Truncate on SV of L and R separately*"];
+      C -- RTM --> H["Truncate on SV of RTM LR"] 
+```
+
 ## Power method 
 
 ### Update including operator 
