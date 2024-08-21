@@ -85,7 +85,7 @@ function compute_expvals(ll::AbstractMPS, rr::AbstractMPS, op_list::Vector{Strin
     # TODO truncate on apply MPO in expval_... 
 
     if op_list[1] == "all"
-        op_list = ["X", "Z", "XX", "ZZ", "eps"]
+        op_list = ["X", "Z", "Pz", "Sp", "Sm", "XX", "ZZ", "eps"]
     end
 
     allevs = Dict()
@@ -100,6 +100,12 @@ function compute_expvals(ll::AbstractMPS, rr::AbstractMPS, op_list::Vector{Strin
             allevs[op] = expval_LR(ll, rr, [0,1,1,0], b)/ev_L1R
         elseif op == "Z"
             allevs[op] = expval_LR(ll, rr, [1,0,0,-1], b)/ev_L1R
+        elseif op == "Pz"
+            allevs[op] = expval_LR(ll, rr, [1,0,0,0], b)/ev_L1R
+        elseif op == "Sp"
+                allevs[op] = expval_LR(ll, rr, [0,1,0,0], b)/ev_L1R
+        elseif op == "Sm"
+                allevs[op] = expval_LR(ll, rr, [0,0,1,0], b)/ev_L1R
         elseif op == "XX"
                 allevs[op] = expval_LR(ll, rr, [0,1,1,0], [0,1,1,0], b)/ev_L1R
         elseif op == "ZZ"
