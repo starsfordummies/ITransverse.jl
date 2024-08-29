@@ -1,23 +1,31 @@
-""" Contracts the two edges of an MPO, making a new MPO with length (N-2) """
-function contract_edges!(TT::MPO)
+""" Contracts the edges of the MPO - either the `first` or `last` one or both, if specified
+How the indices are combined is still open to changes.. """
+function contract_edges!(TT::MPO; first::Bool=false, last::Bool=false)
     llen = length(TT)
 
-    new_first = TT[1] * TT[2]
-    combi = combiner(siteind(TT,1), siteind(TT,2), tags=tags(siteind(TT,2)))
-    new_first *= combi
-    #new_idx = Index(dim(combinedind(combi), tags(siteind(TT,1))))
-    new_first *= combi'
+    if first
+        new_first = TT[1] * TT[2]
+        combi = combiner(siteind(TT,1), siteind(TT,2), tags=tags(siteind(TT,2)))
+        new_first *= combi
+        #new_idx = Index(dim(combinedind(combi), tags(siteind(TT,1))))
+        new_first *= combi'
 
-    new_last = TT[end-1] * TT[end]
-    combi = combiner(siteind(TT,llen-1), siteind(TT,llen), tags=tags(siteind(TT,llen-1)))
-    new_last *= combi
-    new_last *= combi'
+        popfirst!(TT.data)
+        TT.data[1] = new_first
+    end
 
-    pop!(TT.data)
-    popfirst!(TT.data)
+    if last
+        new_last = TT[end-1] * TT[end]
+        # TODO maybe figure out better logic for when combining indices is necessary..
+        if ndims(TT[end]) > 2
+            combi = combiner(siteind(TT,llen-1), siteind(TT,llen), tags=tags(siteind(TT,llen-1)))
+            new_last *= combi
+            new_last *= combi'
+        end
 
-    TT.data[1] = new_first
-    TT.data[end] = new_last
+        pop!(TT.data)
+        TT.data[end] = new_last
+    end
 
 end
 
@@ -170,7 +178,8 @@ end
 
 
 """ Build folded tMPO with an extra site at the beginning for the initial state.
-Effectively  """
+The extra site should already be incorporated in the `ts` index list (and we check whether the dimensions match),
+ so effectively we're building a tMPO for Nt = length(ts)-1 timesteps  """
 function folded_tMPO_in(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::AbstractVector = [1,0,0,1])
 
     @assert b.tp.nbeta <= length(ts)
@@ -194,7 +203,7 @@ function folded_tMPO_in(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:In
     #@show dims(b.rho0)
     #@show dims(ts)
     if ndims(b.rho0) > 1
-        @assert dim(b.rho0,1) ==  dim(b.rho0,2)
+        @assert dim(b.rho0,1) ==  dim(b.rho0,2)  # L-R invariance 
         @assert dim(ts[1]) == dim(b.rho0,1)
     end
     # TODO 
@@ -395,4 +404,18 @@ function folded_right_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index})
     psi[end] = psi[end] * adapt(dttype, ITensor([1,0,0,1], ll[end]))
 
     return psi 
+end
+
+function open_tmpo_top(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index})
+
+    ts = deepcopy(ts)
+    push!(ts, sim(ts[end]))
+    tmpo = folded_tMPO(b, b_im, ts, [1,0,0,1])
+    final_link = linkinds(tmpo)[end]
+    pop!(tmpo.data)
+    push!(tmpo.data, delta(ts[end],final_link))
+    ts[end] = final_link
+
+    return tmpo
+
 end
