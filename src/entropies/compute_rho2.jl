@@ -11,6 +11,18 @@ function rtm2_contracted(psi::MPS, phi::MPS; normalize_factor::Number=1.0)
     return r2s
 end
 
+""" Same as rtm2_contracted() with normalize_factor= overlap_noconj(psi,phi)"""
+function rtm2_contracted_normalized(psi::MPS, phi::MPS)
+    r2s = []
+    normalize_factor = overlap_noconj(psi,phi)
+    normalize_factor > 1e10 || normalize_factor < 1e-10 && @warn "overlap overflow? $(normalize_factor)"
+    @showprogress for jj in eachindex(psi)[1:end-1]
+        push!(r2s, rtm2_contracted(psi, phi, jj; normalize_factor))
+    end
+
+    return r2s
+end
+
 
 
 """ At a given cut, we can compute tr(τₜ^2) as the contraction
