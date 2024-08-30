@@ -122,7 +122,18 @@ function compute_expvals(ll::AbstractMPS, rr::AbstractMPS, op_list::Vector{Strin
 end
 
 
+""" Given a central MPO, computes exp value <L|op_mpo|R> 
+No normalization!  """
+function expval_LR(ll::MPS, op_mpo::MPO, rr::MPS)
 
+    @assert length(ll) == length(op_mpo) == length(rr)
+    orr = applyn(op_mpo, rr)
+
+    ev_LOR = overlap_noconj(ll,orr)
+
+    return ev_LOR
+
+end
 
 
 

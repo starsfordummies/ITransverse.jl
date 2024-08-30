@@ -52,7 +52,7 @@ function FoldtMPOBlocks(tp::tMPOParams, init_state::ITensor = tp.bl)
         @assert dim(lrinds[1]) == dim(lrinds[2])  # translational invariance 
     end
 
-    # Do we need to fold ? 
+    # Check if we need to fold 
     if physdim_init == dim(P)
         rho0 = init_state * delta(iP, Index(dim(P),"virt,time,rho0"))
         if !isempty(lrinds)
