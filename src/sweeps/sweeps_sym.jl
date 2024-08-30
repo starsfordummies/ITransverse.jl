@@ -6,7 +6,7 @@ Symmetric case: Truncates a single MPS optimizing overlap (psi (no conj) |psi)
 By doing first a Right sweep to standard (right-orthogonal) canonical form 
 followed by a Left sweep with truncation on the generalized SVs 
 returns psi_ortho (in generalized symmetric *left* canonical form) normalized to (psi|psi)=1
-and ents_sites = log(sum(σ_i)) for each site
+and ents_sites = log(sum(S_i)) for each site
 """
 function truncate_lsweep_sym(in_psi::MPS; cutoff::Float64, chi_max::Int, method::String)
 
@@ -42,6 +42,7 @@ function truncate_lsweep_sym(in_psi::MPS; cutoff::Float64, chi_max::Int, method:
             XUinv = sqS * U
 
         # TODO this likely doesn't work on GPU ..
+        # maybe add a NDTensors.cpu()
         elseif method == "EIG"
             F = symm_oeig(left_env, ind(left_env,1); cutoff)
             U = F.V
@@ -102,9 +103,14 @@ function truncate_rsweep_sym(in_psi::MPS; cutoff::Float64, chi_max::Int, method:
         Ai = XUinv * psi_ortho[ii]
 
         right_env *= Ai
+        
         right_env *= Ai'
         right_env *= delta(elt, s[ii], s[ii]')
+        
+        # Alt: needs to have specified link!
+        #right_env *= prime(Ai, "Link")
 
+        #@info inds(right_env)
         @assert order(right_env) == 2
 
         if method == "SVD"
@@ -129,6 +135,8 @@ function truncate_rsweep_sym(in_psi::MPS; cutoff::Float64, chi_max::Int, method:
             XU = U * isqS
             XUinv = sqS * U
 
+        else
+            @error "Need to specify valid method: SVD|EIG"
         end
 
         psi_ortho[ii] = Ai * XU
