@@ -88,6 +88,8 @@ with respect to the central MPO columns (which can be seen as transfer matrices)
 of the network is then given by 
 
 ```
+
+
                 x  x 
            *====o==o====*  
            |    H  H    |
@@ -98,8 +100,11 @@ of the network is then given by
 |          *====o==o====*
 |          |    H  H    |
 |          *====o==o====*
-|         <L|  O1  O2  |R> 
+|       
 |---------------------------->   x
+
+
+          <L|  O1  O2  |R>
 ```
 
 So here we develop transverse algorithms for updating the left and right dominant vectors of the transfer matrix, ie. a column
