@@ -104,6 +104,7 @@ function rtm2_contracted(psi::MPS, phi::MPS, cut::Int; normalize_factor::Number=
     return scalar(tr_rho2)
 end
 
+""" Same as before but using matrices - result should be the same, useful for debugging """
 function rtm2_contracted_m(psi::MPS, phi::MPS, cut::Int; normalize_factor::Number=1.0)
 
     # valid cuts go from 1 to L-1
@@ -141,6 +142,7 @@ function rtm2_contracted_m(psi::MPS, phi::MPS, cut::Int; normalize_factor::Numbe
 end
 
 
+""" Given a set of eigenvalues, simply computes sum(λ_i^2) """
 function rho2(eigenvalues::ITensor)
     meig = matrix(eigenvalues)
     if isdiag(meig)
@@ -161,7 +163,7 @@ end
 
 
 # Brute-force diagonalization
-
+""" Brute-force diagonalization of the RTM built from the input MPS psi and phi. Only does it for small chains """
 function rtm2_bruteforce(psi::MPS, phi::MPS)
 
     @assert length(psi) < 14  # don't do this otherwise..
@@ -202,53 +204,3 @@ function rtm2_bruteforce(psi::MPS, phi::MPS)
     return r2s
 end
 
-
-#= Old and probably unneeded now 
-
-""" Bring psi in generalized RIGHT symmetric canonical form,
-then contract LEFT enviroments and diagonalize them """
-function _rtm2_sym_gauged(psi::MPS, normalize_factor::Number=1.0)
-
-    mpslen = length(psi)
-
-    psi_gauged = gen_canonical_right(psi)
-
-    psi_gauged = psi_gauged/normalize_factor
-
-
-    lenv= ITensor(1.)
-    s = siteinds(psi_gauged)
-
-    r2s = []
-    r2s_check = []
-    for jj in 1:mpslen-1
-
-        lenv *= psi_gauged[jj]
-        lenv *= psi_gauged[jj]'
-        lenv *= delta(s[jj],s[jj]' )
-
-        @assert ndims(lenv) == 2 
-
-        vals, vecs = eigen(lenv, ind(lenv,1), ind(lenv,2))
-
-        push!(r2s, rho2(vals))
-
-        if mpslen - jj < 4
-            renv = ITensor(1.)
-            for kk in mpslen:-1:jj+1
-                renv *= psi_gauged[kk]
-                renv *= psi_gauged[kk]'
-            end
-
-            rtm_full = lenv * renv
-            vals_fu, vecs_fu = eigen(rtm_full, inds(rtm_full,plev=0), inds(rtm_full,plev=1))
-
-            push!(r2s_check, rho2(vals_fu))
-        end
-
-    end
-    
-    return r2s, r2s_check 
-end
-
-=#

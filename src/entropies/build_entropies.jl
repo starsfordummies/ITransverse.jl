@@ -40,6 +40,7 @@ function old_build_entropies(spectra::Vector)
     return entropies
 end
 
+""" Given a number λ, builds the corresponding entropy contribution, be it -λlog(λ) if α=1 or λ^α otherwise."""
 function salpha(λ::Number, α)
     Sλ = 0.0
     if α ≈ 1
@@ -50,7 +51,7 @@ function salpha(λ::Number, α)
     return Sλ
 end
 
-
+""" Given an input spectrum, builds the corresponding entropy according to the index α"""
 function build_entropies(spectra::Vector, which_ents::Vector)
 
     allents = Dict()

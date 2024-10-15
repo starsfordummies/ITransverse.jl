@@ -14,14 +14,14 @@ Depending on pm_params.opt_method, the update can work as follows
  of the form <R|R>, here we still update the overlap <LO|1R>
 
 - "RDM": the common truncation using temporal entanglement, ie. over the RDM (not RTM) of |R>. 
-   In practice this is done with the usual SVD truncations of R. In this case, the `mpo_X` input is unused.
+   In practice this is done with the usual SVD truncations of R. In this case, the `in_mpo_O` input is unused.
 
 
 At each step of the PM we want to normalize back the tMPS, or in the long run we lose precision. 
 The most consistent way to do it is probably to enforce that the overlap <L|R> = 1, but in practice normalizing individually
 <L|L> = <R|R> = 1 seems to work as well. Another possibility is to normalize the overlap <LO|1R> before truncating for |Rnew>.
 
-Truncation params are in pm_params.truncp
+Truncation params are in `pm_params.truncp`
 
 We return the (hopefully converged) |R> and <L| tMPS, 
 and some check quantities along the PM iterations in a dict info_iterations
@@ -33,7 +33,7 @@ We could also return the (optimized) LO and OR calculated, but if we converge th
 by applying the relevant MPO to the resulting leading eigenvectors.
 
 """
-function powermethod(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::PMParams)
+function powermethod(in_mps::MPS, in_mpo_1::MPO, in_mpo_O::MPO, pm_params::PMParams)
 
     (; opt_method, itermax, eps_converged, truncp) = pm_params
     (; cutoff, maxbondim) = truncp
@@ -51,6 +51,8 @@ function powermethod(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::PMPar
 
     for jj = 1:itermax  
 
+        #@info jj, expval_LR(ll, in_mpo_O, rr), expval_LR(ll, in_mpo_O, rr)/expval_LR(ll, in_mpo_1, rr)
+
         # @info norm(ll)
         # @info overlap_noconj(ll,rr)
         # @info norm.(sprevs)
@@ -66,7 +68,7 @@ function powermethod(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::PMPar
     
             # optimize <LO|1R> -> new |R> 
             OpsiR = applyn(in_mpo_1, rr_work)
-            OpsiL = applyns(in_mpo_X, ll_work)  
+            OpsiL = applyns(in_mpo_O, ll_work)  
 
             OpsiR = normalize(OpsiR)
             OpsiL = normalize(OpsiL)
@@ -75,7 +77,7 @@ function powermethod(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::PMPar
 
             # optimize <L1|OR> -> new <L|  
             #TODO: we could be using the new rr here instead of rr_work
-            OpsiR = applyn(in_mpo_X, rr_work)
+            OpsiR = applyn(in_mpo_O, rr_work)
             OpsiL = applyns(in_mpo_1, ll_work)  
 
             OpsiR = normalize(OpsiR)
@@ -85,12 +87,12 @@ function powermethod(in_mps::MPS, in_mpo_1::MPO, in_mpo_X::MPO, pm_params::PMPar
 
 
         elseif opt_method == "RTM_R"
-            #rr_work = normbyfactor(rr, sqrt(overlap_noconj(rr,rr)))
+            rr_work = normbyfactor(rr, sqrt(overlap_noconj(rr,rr)))
             #rr_work = normalize(rr)
-            rr_work = rr
+            #rr_work = rr
 
             OpsiR = applyn(in_mpo_1, rr_work)
-            OpsiL = applyns(in_mpo_X, rr_work)  
+            OpsiL = applyns(in_mpo_O, rr_work)  
 
             OpsiR = normalize(OpsiR)
             OpsiL = normalize(OpsiL)
