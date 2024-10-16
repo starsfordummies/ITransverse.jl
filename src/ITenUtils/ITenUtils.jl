@@ -54,7 +54,8 @@ export quick_mps,
     applyns,
     match_siteinds, match_siteinds!,
     replace_linkinds!,
-    phys_ind
+    phys_ind,
+    gaugefix_left
 
 
 # moreutils.jl

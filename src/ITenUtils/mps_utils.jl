@@ -219,3 +219,21 @@ function ITensors.replace_siteinds!(M::MPO, sites)
     end
     return M
   end
+
+
+""" Returns an MPS with a gauge fixed to a *left* form such that 
+1) all tensors M[2:end] are in left canonical form 
+2) the first tensor contracts with its conj to a diagonal matrix 
+
+"""
+function gaugefix_left(psi::MPS)
+    psi_work = orthogonalize(psi,length(psi))
+    orthogonalize!(psi_work,1)
+
+    lenv_1 = psi_work[1] * prime(dag(psi_work[1]), linkind(psi_work,1))
+    vals, vecs = eigen(lenv_1)
+    psi_work[1] = psi_work[1] * vecs
+    psi_work[2] = dag(vecs) * psi_work[2] 
+
+    return psi_work
+end
