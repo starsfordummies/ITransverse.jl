@@ -101,8 +101,11 @@ function run_cone(psi::MPS,
 
     entropies = dictfromlist(which_ents)
     expvals = dictfromlist(which_evs)
+
+    # For checkpoints, we want to save CPU data 
+    tp_cp =  tMPOParams(tp; bl=tocpu(tp.bl), tr=tocpu(tp.tr))
     
-    infos = Dict(:times => [], :b => tocpu(b), :coneparams => cp, :dtype => NDTensors.unwrap_array_type(b.tp.bl))
+    infos = Dict(:times => [], :tp => tocpu(tp), :coneparams => cp, :dtype => NDTensors.unwrap_array_type(tp.bl))
 
     time_dim = dim(b.WWc,1)
 
