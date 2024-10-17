@@ -49,7 +49,7 @@ end
 """
 One step of the light cone algorithm: takes left and right tMPS ll, rr,
 the time MPO and the operator O
-extends the time MPO and the left-right tMPS by optimizing 
+extends the left-right tMPS by building extended tMPOs 1 and O, applying them and and optimizing 
 1) the overlap (L1|OR)  -> save new L
 2) the overlap (LO|1R)  -> save new R  (in case non symmetric)
 
@@ -69,7 +69,8 @@ function extend_tmps_cone(ll::MPS, op_L::Vector{<:Number}, op_R::Vector{<:Number
 
     psi_L = apply_extend(tmpo, ll)
 
-    ll, rr, ents, ov = truncate_rsweep(psi_L,psi_R; cutoff=truncp.cutoff, chi_max=truncp.maxbondim)
+    #ll, rr, ents, ov = truncate_rsweep(psi_L,psi_R; cutoff=truncp.cutoff, chi_max=truncp.maxbondim)
+    ll, rr, ents, ov = truncate_sweep(psi_L,psi_R, truncp)
     
 
     return ll, rr, ents, ov

@@ -5,6 +5,9 @@ Returns
 3) an effective entropy computed from the SV of the environments
 4) the overlap between the two 
 """
+function truncate_lsweep(psi::MPS, phi::MPS, truncp::TruncParams)
+    truncate_lsweep(psi, phi; cutoff=truncp.cutoff, chi_max=truncp.maxbondim)
+end
 
 function truncate_lsweep(psi::MPS, phi::MPS; cutoff::Real, chi_max::Int)
 
@@ -83,9 +86,12 @@ Returns
 2) updated `phi` 
 3) effective entropies calculated form the SVD of the environments
 4) overlap (psi|phi) [without conjugating psi] """
+function truncate_rsweep(psi::MPS, phi::MPS, truncp::TruncParams)
+    truncate_rsweep(psi, phi; cutoff=truncp.cutoff, chi_max=truncp.maxbondim)
+end
 function truncate_rsweep(psi::MPS, phi::MPS; cutoff::Real, chi_max::Int)
 
-    elt = eltype(psi[1])
+    #elt = eltype(psi[1])
     mpslen = length(psi)
 
     # first bring to left canonical form 
@@ -173,3 +179,19 @@ function truncate_normalize_rsweep(psi::MPS, phi::MPS, truncp::TruncParams)
 
     return psi_n, phi_n, [e./sum(e) for e in ee]
 end
+
+
+""" Generic sweep, calls left or right according to `truncp.direction` """
+function truncate_sweep(psi::MPS, phi::MPS, truncp::TruncParams)
+    if truncp.direction == "left"
+        @info "initial state side sweep"
+        truncate_lsweep(psi, phi, truncp)
+    elseif truncp.direction == "right"
+        @info "operator state side sweep"
+        truncate_rsweep(psi, phi, truncp)
+    else
+        @error "Sweep direction should be left|right"
+    end
+end
+
+
