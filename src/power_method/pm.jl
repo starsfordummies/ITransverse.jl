@@ -36,7 +36,7 @@ by applying the relevant MPO to the resulting leading eigenvectors.
 function powermethod(in_mps::MPS, in_mpo_1::MPO, in_mpo_O::MPO, pm_params::PMParams)
 
     (; opt_method, itermax, eps_converged, truncp) = pm_params
-    (; cutoff, maxbondim) = truncp
+    (; cutoff, maxbondim, direction) = truncp
 
     ll = deepcopy(in_mps)
     rr = deepcopy(in_mps)
@@ -73,7 +73,7 @@ function powermethod(in_mps::MPS, in_mpo_1::MPO, in_mpo_O::MPO, pm_params::PMPar
             OpsiR = normalize(OpsiR)
             OpsiL = normalize(OpsiL)
 
-            rr, _, sjj = truncate_rsweep(OpsiR, OpsiL, cutoff=cutoff, chi_max=maxbondim)
+            rr, _, sjj = truncate_sweep(OpsiR, OpsiL, truncp)
 
             # optimize <L1|OR> -> new <L|  
             #TODO: we could be using the new rr here instead of rr_work
@@ -83,7 +83,7 @@ function powermethod(in_mps::MPS, in_mpo_1::MPO, in_mpo_O::MPO, pm_params::PMPar
             OpsiR = normalize(OpsiR)
             OpsiL = normalize(OpsiL)
 
-            _, ll, _, overlap = truncate_rsweep(OpsiR, OpsiL, cutoff=cutoff, chi_max=maxbondim)
+            _, ll, _, overlap = truncate_sweep(OpsiR, OpsiL, truncp)
 
 
         elseif opt_method == "RTM_R"
@@ -97,7 +97,7 @@ function powermethod(in_mps::MPS, in_mpo_1::MPO, in_mpo_O::MPO, pm_params::PMPar
             OpsiR = normalize(OpsiR)
             OpsiL = normalize(OpsiL)
     
-            rr, _, sjj, overlap = truncate_rsweep(OpsiR, OpsiL, cutoff=cutoff, chi_max=maxbondim)
+            rr, _, sjj, overlap = truncate_sweep(OpsiR, OpsiL, truncp)
             ll = rr
 
         elseif opt_method == "RTM_R_twolayers"
@@ -118,7 +118,7 @@ function powermethod(in_mps::MPS, in_mpo_1::MPO, in_mpo_O::MPO, pm_params::PMPar
             OpsiR = normalize(OpsiR)
             OpsiL = normalize(OpsiL)
     
-            rr, _, sjj, overlap = truncate_rsweep(OpsiR, OpsiL, cutoff=cutoff, chi_max=maxbondim)
+            rr, _, sjj, overlap = truncate_sweep(OpsiR, OpsiL, truncp)
             ll = rr
 
         elseif opt_method == "RTM_R_twolayers_alt"
@@ -139,24 +139,9 @@ function powermethod(in_mps::MPS, in_mpo_1::MPO, in_mpo_O::MPO, pm_params::PMPar
             OpsiR = normalize(OpsiR)
             OpsiL = normalize(OpsiL)
     
-            rr, _, sjj, overlap = truncate_rsweep(OpsiR, OpsiL, cutoff=cutoff, chi_max=maxbondim)
+            rr, _, sjj, overlap = truncate_sweep(OpsiR, OpsiL, truncp)
             ll = rr
 
-
-
-        elseif opt_method == "RTM_R_lsweep"
-            rr_work = normbyfactor(rr, sqrt(overlap_noconj(rr,rr)))
-            #rr_work = normalize(rr)
-            #rr_work = rr
-
-            OpsiR = applyn(in_mpo_1, rr_work)
-            OpsiL = applyns(in_mpo_O, rr_work)  
-
-            OpsiR = normalize(OpsiR)
-            OpsiL = normalize(OpsiL)
-    
-            rr, _, sjj, overlap = truncate_lsweep(OpsiR, OpsiL, cutoff=cutoff, chi_max=maxbondim)
-            ll = rr
 
         elseif opt_method == "RDM"
             #rr_work = normbyfactor(rr, sqrt(overlap_noconj(rr,rr)))
@@ -223,7 +208,7 @@ Power method *without* operator
 
 Truncation params are in pm_params
 """
-function powermethod_both(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::PMParams; flip_R::Bool=false)
+function powermethod_both(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::PMParams)
 
     (; opt_method, itermax, eps_converged, truncp) = pm_params
 
@@ -235,11 +220,6 @@ function powermethod_both(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::
 
     ll = deepcopy(in_mps)
     rr = deepcopy(in_mps)
-
-    # TODO CHECK 
-    if flip_R
-        in_mpo_R = swapprime(in_mpo_R, 0, 1, "Site")
-    end
 
     p = Progress(itermax; showspeed=true)  #barlen=40
     p = Progress(itermax; desc="L=$(length(ll)), cutoff=$(cutoff), maxbondim=$(pm_params.maxbondim))", showspeed=true) 
@@ -257,7 +237,7 @@ function powermethod_both(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::
         rrprev = deepcopy(rr)
 
         # TODO implement different methods according to `opt_method`
-        ll, rr, sjj = truncate_normalize_rsweep(OpsiL, OpsiR, truncp)
+        ll, rr, sjj = truncate_normalize_sweep(OpsiL, OpsiR, truncp)
 
         ds2 = norm(sprevs - sjj)
 
