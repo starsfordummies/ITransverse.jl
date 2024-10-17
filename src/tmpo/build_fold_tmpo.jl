@@ -27,6 +27,10 @@ function contract_edges!(TT::MPO; first::Bool=false, last::Bool=false)
         TT.data[end] = new_last
     end
 
+    if !first && !last
+        @warn "No contraction specified, doing nothing"
+    end
+
 end
 
 
@@ -59,7 +63,6 @@ and contract with  the initial state `init_state` on the *left* and the operator
 """ Given `tp` parameters and `time_sites` with Nt sites,
  builds a folded tMPO  *of length  Nt + 2* with rotated indices 
  and additional identity tensors (meant to be replaced) with trivial site indices on the first and last site.
-
 """
 function folded_open_tMPO(tp::tMPOParams, time_sites::Vector{<:Index})
 
@@ -86,7 +89,8 @@ function folded_open_tMPO(b::FoldtMPOBlocks, ts::Vector{<:Index})
     return oo
 end
 
-
+""" Given building tensors `WWc` and time_sites, returns an MPO with two extra sites (one on each side), 
+allowing to insert arbitrary operators at a later stage"""
 function folded_open_tMPO(WWc::ITensor, time_sites::Vector{<:Index})
     
     Nsteps = length(time_sites)
@@ -244,7 +248,8 @@ function folded_tMPO_in(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:In
 end
 
 
-# Quick way to get init mps, just close with [1,0,0,..] to one side
+"""Quick way to get init mps, just close the corresponding MPO with [1,0,0,0] to one side. 
+Nornalization might be not the best """
 function folded_right_tMPS_in(T::MPO)
 
     psi = MPS(deepcopy(T.data))
@@ -285,7 +290,7 @@ function folded_tMPO_L(b::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::Abstract
 end
 
 
-""" Builds a folded tMPO extended by one site to the top (ie. end) with the tensor WWl """
+""" Builds a folded tMPO extended by one site to the top (ie. end) with the tensor `b.WWl` """
 function folded_tMPO_L(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::AbstractVector = [1,0,0,1])
     @assert b.tp.nbeta < length(ts)
     WWc = b.WWc
@@ -337,7 +342,7 @@ function folded_tMPO_R(b::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::Abstract
 end
 
 
-""" Builds a folded tMPO extended by one site to the top (ie. end) with the tensor WWl """
+""" Builds a folded tMPO extended by one site to the top (ie. end) with the tensor `b.WWr`` """
 function folded_tMPO_R(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::AbstractVector  = [1,0,0,1])
     @assert b.tp.nbeta < length(ts)
 
@@ -371,6 +376,7 @@ function folded_tMPO_R(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Ind
 end
 
 
+""" Builds a tMPS using the WWl tensors in `b` """ 
 function folded_left_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index})
     psi = MPS(fill(b.WWl, length(ts)))
     s, r, l = inds(b.WWl)
@@ -387,7 +393,7 @@ function folded_left_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index})
     return psi 
 end
 
-
+""" Builds a tMPS using the WWr tensors in `b` """ 
 function folded_right_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index})
     psi = MPS(fill(b.WWr, length(ts)))
     s, r, l = inds(b.WWr)
