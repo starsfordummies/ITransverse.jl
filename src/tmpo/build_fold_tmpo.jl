@@ -412,16 +412,3 @@ function folded_right_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index})
     return psi 
 end
 
-function open_tmpo_top(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index})
-
-    ts = deepcopy(ts)
-    push!(ts, sim(ts[end]))
-    tmpo = folded_tMPO(b, b_im, ts, [1,0,0,1])
-    final_link = linkinds(tmpo)[end]
-    pop!(tmpo.data)
-    push!(tmpo.data, delta(ts[end],final_link))
-    ts[end] = final_link
-
-    return tmpo
-
-end

@@ -38,8 +38,10 @@ function main_ising_loschmidt(Tstart::Int, Tend::Int, nbeta::Int; Tstep::Int=1)
 
     allts = Tstart:Tstep:Tend
 
-    @info ("Optimizing for T=$(allts) with $(nbeta) imag steps ")
-    @info ("Initial state $(init_state)  => quench @ J=$(JXX) , h=$(hz) ")
+    @info ("Optimizing for T=$(allts) with $(tp.nbeta) imag steps ")
+    @info ("Initial state $(tp.bl)")
+    @info ("Final state $(tp.tr)")
+    @info ("Initial state $(init_state)  => quench @ $(mp) ")
 
 
     b = FwtMPOBlocks(tp)
