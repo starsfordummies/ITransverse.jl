@@ -101,7 +101,8 @@ function run_cone(psi::MPS,
 
     entropies = dictfromlist(which_ents)
     expvals = dictfromlist(which_evs)
-    infos = Dict(:times => [], :b => b, :cp => cp)
+    
+    infos = Dict(:times => [], :b => tocpu(b), :coneparams => cp, :dtype => NDTensors.unwrap_array_type(b.tp.bl))
 
     time_dim = dim(b.WWc,1)
 
@@ -150,6 +151,7 @@ function run_cone(psi::MPS,
         #TODO Compute entropies
 
         if checkpoint > 0 && length(ll) > 50 && length(ll) % checkpoint == 0
+            infos[:times] = length(ll) - length(expvals) : length(ll)
             llcp = tocpu(ll)
             rrcp = tocpu(rr)
             jldsave("cp_cone_$(length(ll))_chi_$(chis[end]).jld2"; llcp, rrcp, chis, times, expvals, entropies, infos)
@@ -164,19 +166,17 @@ function run_cone(psi::MPS,
 end
 
 
-# TODO need to update it to newest 
-#=
 """ Resumes a light cone simulation from a checkpoint file """
 function resume_cone(checkpoint::String, nsteps::Int)
 
     c = jldopen(checkpoint, "r")
 
     psi = c["rrcp"]
-    cp = c["infos"][:cp]
-    tp = c["infos"][:tp]
+    cp = c["infos"][:coneparams]
+    b = adapt(c["infos"][:dtype], c["infos"][:b])
 
     # TODO extend with prev results 
-    return run_cone(psi, nsteps, op, tp, truncp)
+    return run_cone(psi, b, cp, nsteps)
     
 end
-=#
+
