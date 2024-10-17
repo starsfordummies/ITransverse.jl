@@ -173,7 +173,9 @@ function resume_cone(checkpoint::String, nsteps::Int)
 
     psi = c["rrcp"]
     cp = c["infos"][:coneparams]
-    b = adapt(c["infos"][:dtype], c["infos"][:b])
+    tp = c["infos"][:tp]
+    tp = adapt(c["infos"][:dtype], tp)
+    b = FoldtMPOBlocks(tp)
 
     # TODO extend with prev results 
     return run_cone(psi, b, cp, nsteps)
