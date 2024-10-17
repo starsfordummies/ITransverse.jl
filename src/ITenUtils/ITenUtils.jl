@@ -61,6 +61,7 @@ export quick_mps,
 # moreutils.jl
 export randsymITensor,
     isid,
+    isdiag,
     pinvten,
     randITensor_decayspec
 
