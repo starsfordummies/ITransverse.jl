@@ -14,14 +14,14 @@ function main_folded_pm()
     ModelParams("S=1/2", 1.0, 0.7, 0.0), 0, [0,1], [1,0,0,1])
 
 
-    cutoff = 1e-14
+    cutoff = 1e-10
     maxbondim = 120
-    itermax = 100
+    itermax = 1000
     eps_converged=1e-8
 
     truncp = TruncParams(cutoff, maxbondim)
 
-    pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM_R")
+    pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM_R_twolayers_alt")
 
     sigX = ComplexF64[0,1,1,0]
     sigZ = ComplexF64[1,0,0,-1]
@@ -41,7 +41,7 @@ function main_folded_pm()
     b_im = FoldtMPOBlocks(tpim)
 
 
-    ts = 40:40
+    ts = 30:30
     alltimes = ts.* tp.dt
 
     infos = Dict(:tp => tp, :pm_params => pm_params, :b => b, :times => alltimes)

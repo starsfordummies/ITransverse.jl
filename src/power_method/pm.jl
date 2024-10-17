@@ -100,6 +100,49 @@ function powermethod(in_mps::MPS, in_mpo_1::MPO, in_mpo_O::MPO, pm_params::PMPar
             rr, _, sjj, overlap = truncate_rsweep(OpsiR, OpsiL, cutoff=cutoff, chi_max=maxbondim)
             ll = rr
 
+        elseif opt_method == "RTM_R_twolayers"
+            rr_work = normbyfactor(rr, sqrt(overlap_noconj(rr,rr)))
+            #rr_work = normalize(rr)
+            #rr_work = rr
+
+            OpsiR = applyn(in_mpo_1, rr_work)
+
+            OpsiR = applyn(in_mpo_1, OpsiR)
+
+            OpsiL = applyns(in_mpo_1, rr_work)  
+
+            OpsiL = applyns(in_mpo_O, OpsiL)  
+
+
+
+            OpsiR = normalize(OpsiR)
+            OpsiL = normalize(OpsiL)
+    
+            rr, _, sjj, overlap = truncate_rsweep(OpsiR, OpsiL, cutoff=cutoff, chi_max=maxbondim)
+            ll = rr
+
+        elseif opt_method == "RTM_R_twolayers_alt"
+            rr_work = normbyfactor(rr, sqrt(overlap_noconj(rr,rr)))
+            #rr_work = normalize(rr)
+            #rr_work = rr
+
+            OpsiR = applyn(in_mpo_1, rr_work)
+
+            OpsiR = applyn(in_mpo_1, OpsiR)
+
+            OpsiL = applyns(in_mpo_O, rr_work)  
+
+            OpsiL = applyns(in_mpo_1, OpsiL)  
+
+
+
+            OpsiR = normalize(OpsiR)
+            OpsiL = normalize(OpsiL)
+    
+            rr, _, sjj, overlap = truncate_rsweep(OpsiR, OpsiL, cutoff=cutoff, chi_max=maxbondim)
+            ll = rr
+
+
 
         elseif opt_method == "RTM_R_lsweep"
             rr_work = normbyfactor(rr, sqrt(overlap_noconj(rr,rr)))
