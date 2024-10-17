@@ -180,8 +180,14 @@ function resume_cone(checkpoint::String, nsteps::Int)
     psi = c["rrcp"]
     cp = c["infos"][:coneparams]
     tp = c["infos"][:tp]
+
+    @info "Resuming from $(length(psi)) until $(nsteps), dtype = $(c["infos"][:dtype])"
+
+
     tp = adapt(c["infos"][:dtype], tp)
     b = FoldtMPOBlocks(tp)
+
+    psi = adapt(c["infos"][:dtype], psi)
 
     # TODO extend with prev results 
     return run_cone(psi, b, cp, nsteps)
