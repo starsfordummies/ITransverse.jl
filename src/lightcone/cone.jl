@@ -88,6 +88,8 @@ function run_cone(psi::MPS,
 
     (; opt_method, optimize_op, which_evs, which_ents, checkpoint, truncp) = cp
 
+    fn_cp = nothing
+
     tp = b.tp
 
     ll = deepcopy(psi)
@@ -105,7 +107,7 @@ function run_cone(psi::MPS,
     # For checkpoints, we want to save CPU data 
     tp_cp =  tMPOParams(tp; bl=tocpu(tp.bl), tr=tocpu(tp.tr))
     
-    infos = Dict(:times => [], :tp => tocpu(tp), :coneparams => cp, :dtype => NDTensors.unwrap_array_type(tp.bl))
+    infos = Dict(:times => [], :tp => tp_cp, :coneparams => cp, :dtype => NDTensors.unwrap_array_type(tp.bl))
 
     time_dim = dim(b.WWc,1)
 
@@ -154,10 +156,11 @@ function run_cone(psi::MPS,
         #TODO Compute entropies
 
         if checkpoint > 0 && length(ll) > 50 && length(ll) % checkpoint == 0
+            fn_cp = "cp_cone_$(length(ll))_chi_$(chis[end]).jld2"
             infos[:times] = length(ll) - length(expvals) : length(ll)
             llcp = tocpu(ll)
             rrcp = tocpu(rr)
-            jldsave("cp_cone_$(length(ll))_chi_$(chis[end]).jld2"; llcp, rrcp, chis, times, expvals, entropies, infos)
+            jldsave(fn_cp; llcp, rrcp, chis, times, expvals, entropies, infos)
         end
 
         next!(p; showvalues = [(:Info,"[$(length(ll))] χ=$(maxlinkdim(ll)), (L|R) = $overlapLR " )])
@@ -165,7 +168,7 @@ function run_cone(psi::MPS,
     end
 
 
-    return ll, rr, chis, expvals, entropies, infos
+    return ll, rr, chis, expvals, entropies, infos, fn_cp
 end
 
 

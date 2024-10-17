@@ -47,13 +47,13 @@ function main_cone()
 
     cone_params = ConeParams(;truncp, opt_method="RTM_R", optimize_op, which_evs=["X","Z"], checkpoint=20)
 
-    psi, psiR, chis, expvals, entropies, infos = run_cone(c0, b, cone_params, Nsteps)
+    psi, psiR, chis, expvals, entropies, infos, last_cp = run_cone(c0, b, cone_params, Nsteps)
 
-    return  psi, psiR, chis, expvals, entropies, infos 
+    return  psi, psiR, chis, expvals, entropies, infos, last_cp
 
 end
 
-psi, psiR, chis, expvals, entropies, infos = main_cone()
+psi, psiR, chis, expvals, entropies, infos, last_cp = main_cone()
 
 println(chis)
 println(real(expvals["Z"]))
