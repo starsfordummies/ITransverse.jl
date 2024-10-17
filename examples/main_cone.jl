@@ -28,7 +28,7 @@ function main_cone()
 
     cutoff = 1e-10
     maxbondim = 200
-    direction = "right"
+    direction = "left"
 
     truncp = TruncParams(cutoff, maxbondim, direction)
 

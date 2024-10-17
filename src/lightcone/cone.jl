@@ -83,7 +83,7 @@ end
 function run_cone(psi::MPS, 
     b::FoldtMPOBlocks,
     cp::ConeParams,
-    nsteps::Int
+    nT_final::Int
     )
 
     (; opt_method, optimize_op, which_evs, which_ents, checkpoint, truncp) = cp
@@ -111,9 +111,19 @@ function run_cone(psi::MPS,
 
     time_dim = dim(b.WWc,1)
 
-    p = Progress(nsteps; desc="[cone|$(opt_method)] $cutoff=$(truncp.cutoff), maxbondim=$(truncp.maxbondim))", showspeed=true) 
+    if truncp.direction == "right"
+        sweep_str = "<<"
+    elseif  truncp.direction == "left"
+        sweep_str = ">>"
+    else
+        sweep_str = "??"
+    end
 
-    for dt = length(psi):nsteps
+    nsteps = nT_final - length(psi)
+
+    p = Progress(nsteps; desc="[cone|$(opt_method)] $(sweep_str) $cutoff=$(truncp.cutoff), maxbondim=$(truncp.maxbondim))", showspeed=true) 
+
+    for _ = 1:nsteps
         
         ts = siteinds(rr)
         #Extend timesites by 1 
@@ -173,7 +183,7 @@ end
 
 
 """ Resumes a light cone simulation from a checkpoint file """
-function resume_cone(checkpoint::String, nsteps::Int)
+function resume_cone(checkpoint::String, nT_final::Int)
 
     c = jldopen(checkpoint, "r")
 
@@ -181,8 +191,7 @@ function resume_cone(checkpoint::String, nsteps::Int)
     cp = c["infos"][:coneparams]
     tp = c["infos"][:tp]
 
-    @info "Resuming from $(length(psi)) until $(nsteps), dtype = $(c["infos"][:dtype])"
-
+    @info "Resuming from $(length(psi)) until $(nT_final), dtype = $(c["infos"][:dtype])"
 
     tp = adapt(c["infos"][:dtype], tp)
     b = FoldtMPOBlocks(tp)
@@ -190,7 +199,7 @@ function resume_cone(checkpoint::String, nsteps::Int)
     psi = adapt(c["infos"][:dtype], psi)
 
     # TODO extend with prev results 
-    return run_cone(psi, b, cp, nsteps)
+    return run_cone(psi, b, cp, nT_final)
     
 end
 
