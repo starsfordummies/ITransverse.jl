@@ -2,9 +2,11 @@ module ITenUtils
 
 using JLD2
 using LinearAlgebra
-using ITensors
 
 using NDTensors 
+
+using ITensors
+using ITensorMPS
 
 using ITensors.Adapt: adapt
 
