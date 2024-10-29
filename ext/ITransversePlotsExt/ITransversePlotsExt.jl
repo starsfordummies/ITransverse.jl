@@ -2,6 +2,7 @@ module ITransversePlotsExt
 
 using Plots
 using ITensors
+using ITensorMPS
 using ITransverse
 
 include("plot_utils.jl")

@@ -2,6 +2,7 @@ module ITransverseGPUExt
 
 using CUDA
 using ITensors
+using ITensorMPS
 using NDTensors
 using ITensors.Adapt
 using ITransverse 
