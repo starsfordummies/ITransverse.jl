@@ -23,10 +23,14 @@ end
 """ Computes the overlap (ll,rr) between two MPS *without* conjugating either one
 """
 function overlap_noconj(ll::MPS, rr::MPS, approx_real::Bool=false)
-    siteinds(ll) != siteinds(rr) ? rr = replace_siteinds(rr, siteinds(ll)) : nothing
+    #siteinds(ll) != siteinds(rr) ? rr = replace_siteinds(rr, siteinds(ll)) : nothing
 
-    # just to be safe 
-    sim!(linkinds, ll)
+    if !ITensorMPS.hassameinds(siteinds, ll, rr)
+        @warn "L and R don't have the same physical indices, correcting "
+        rr = replace_siteinds(rr, siteinds(ll))
+    end
+
+    ll = sim(linkinds, ll)
 
     overlap = ll[1] * rr[1]
     for ii in eachindex(ll)[2:end]
