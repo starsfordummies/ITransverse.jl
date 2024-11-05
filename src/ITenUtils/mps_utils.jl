@@ -25,9 +25,12 @@ end
 function overlap_noconj(ll::MPS, rr::MPS, approx_real::Bool=false)
     siteinds(ll) != siteinds(rr) ? rr = replace_siteinds(rr, siteinds(ll)) : nothing
 
-    overlap = one(eltype(ll[1]))
-    for (Ai, Bi) in zip(ll, rr)
-        overlap = (overlap * Ai) * Bi
+    # just to be safe 
+    sim!(linkinds, ll)
+
+    overlap = ll[1] * rr[1]
+    for ii in eachindex(ll)[2:end]
+        overlap = (overlap * rr[ii]) * ll[ii]
     end
 
     if approx_real && imag(overlap) < 1e-14

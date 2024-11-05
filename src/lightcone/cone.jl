@@ -192,11 +192,12 @@ function resume_cone(checkpoint::String, nT_final::Int, run_on::String="CPU")
     tp = c["infos"][:tp]
 
 
-    @info "Resuming from $(length(psi)) until $(nT_final), run on $(run_on))"
+    @info "Resuming from $(length(psi)) until $(nT_final)"
 
 
 
     if run_on == "GPU"  
+        @info "Trying to run on GPU"
         # tp = NDTensors.cu(tp)
         # psi = NDTensors.cu(psi)
         tp = togpu(tp)
