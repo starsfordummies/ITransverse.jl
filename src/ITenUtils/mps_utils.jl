@@ -34,7 +34,7 @@ function overlap_noconj(ll::MPS, rr::MPS, approx_real::Bool=false)
         return real(overlap)
     end
     
-    return scalar(overlap), overlap[]
+    return scalar(overlap)
     
 end
 

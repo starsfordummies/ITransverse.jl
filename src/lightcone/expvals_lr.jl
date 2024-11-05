@@ -1,6 +1,72 @@
+
+""" Given <L|, MPO,|R> computes exp value <L|op_mpo|R>  (here L is *not* conjugated!)
+Version with ITensors' apply(), in principle slower 
+No normalization is done here.  """
+function expval_LR_apply(ll::MPS, op_mpo::MPO, rr::MPS)
+
+    @assert length(ll) == length(op_mpo) == length(rr)
+    orr = applyn(op_mpo, rr)
+
+    ev_LOR = overlap_noconj(ll,orr)
+
+    return ev_LOR
+
+end
+
+""" Given <L|, MPO,|R> computes exp value <L|op_mpo|R>  (here L is *not* conjugated!)
+in a supposedly efficient way. No normalization is done here.  """
+function expval_LR(ll::MPS, op_mpo::MPO, rr::MPS)
+
+    # Assuming all siteinds match. 
+    # TODO: put checks and fixes..
+    siteinds(ll) != siteinds(rr) ? rr = replace_siteinds(rr, siteinds(ll)) : nothing
+
+    @assert length(ll) == length(op_mpo) == length(rr)
+  
+    O = ll[1]' * (op_mpo[1] * rr[1])
+
+    for ii in eachindex(ll)[2:end]
+        O = O * rr[ii]
+        O = O * op_mpo[ii]
+        O = O * ll[ii]'
+    end
+
+    return scalar(O)
+
+end
+
+
+""" Given <L|, MPO,|R> computes exp value <L|op_mpo|R>  (here L is *not* conjugated!)
+in a supposedly efficient way. No normalization is done here.  """
+function expval_LR(ll::MPS, opL::MPO, opR::MPO, rr::MPS)
+
+    # Assuming all siteinds match. 
+    # TODO: put checks and fixes..
+    siteinds(ll) != siteinds(rr) ? rr = replace_siteinds(rr, siteinds(ll)) : nothing
+
+    @assert length(ll) == length(opL) == length(opR) == length(rr)
+  
+    O = ll[1]'' * (opL[1]' * (opR[1] * rr[1]))
+
+    for ii in eachindex(ll)[2:end]
+        O = O * rr[ii]
+        O = O * opR[ii]
+        O = O * opL[ii]'
+        O = O * ll[ii]''
+    end
+
+    return scalar(O)
+
+end
+
+
+
+
+
 """ Build exp value <L|O|R> for a single vectorized operator `op`, given as a 1D array 
-   Does *NOT* normalize here by <L|1|R>, need to do it separately """
-function expval_LR(ll::MPS, rr::MPS, op::AbstractVector, b::FoldtMPOBlocks; maxdim=nothing)
+   Does *NOT* normalize here by <L|1|R>, need to do it separately.
+   Slower version which uses ITensors' apply(), allows to truncate intermediate MPO """
+function expval_LR_apply(ll::MPS, rr::MPS, op::AbstractVector, b::FoldtMPOBlocks; maxdim=nothing)
 
     time_sites = siteinds(rr)
     tmpo = folded_tMPO(b, time_sites, op)
@@ -11,9 +77,36 @@ function expval_LR(ll::MPS, rr::MPS, op::AbstractVector, b::FoldtMPOBlocks; maxd
 
 end
 
+""" Build exp value <L|O|R> for a single vectorized operator `op`, given as a 1D array 
+   Does *NOT* normalize here by <L|1|R>, need to do it separately. """
+function expval_LR(ll::MPS, rr::MPS, op::AbstractVector, b::FoldtMPOBlocks)
+
+    # Assuming here siteinds(ll) and (rr) match
+    time_sites = siteinds(rr)
+    tmpo = folded_tMPO(b, time_sites, op)
+    expval_LR(ll, tmpo, rr)
+    
+end
+
 
 """ Build exp value <L|opLopR|R> for a pair of local operator `opL` and `opR` """ 
 function expval_LR(ll::MPS, rr::MPS, opL::AbstractVector, opR::AbstractVector, b::FoldtMPOBlocks)
+
+    time_sites = siteinds(ll)
+    # TODO CHECK do we need to swap legs on the left ? 
+    #tmpoL = swapprime(folded_tMPO(b, time_sites, opL), 0, 1, "Site")
+    tmpoL = folded_tMPO(b, time_sites, opL)
+
+    time_sites = siteinds(rr)
+    tmpoR = folded_tMPO(b, time_sites, opR)
+
+    expval_LR(ll, opL, opR, rr)
+
+end
+
+
+""" Build exp value <L|opLopR|R> for a pair of local operator `opL` and `opR` using apply() """ 
+function expval_LR_apply(ll::MPS, rr::MPS, opL::AbstractVector, opR::AbstractVector, b::FoldtMPOBlocks)
 
     time_sites = siteinds(ll)
     tmpo = folded_tMPO(b, time_sites, opL)
@@ -35,7 +128,7 @@ function expval_LR(ll::MPS, rr::MPS, opL::AbstractVector, opR::AbstractVector, b
 
     # ev_L11R = overlap_noconj(psi_L,psi_R)
 
-    return ev_LOOR#/ev_L11R
+    return ev_LOOR
 
 end
 
@@ -120,21 +213,6 @@ function compute_expvals(ll::AbstractMPS, rr::AbstractMPS, op_list::Vector{Strin
 
     return allevs
 end
-
-
-""" Given a central MPO, computes exp value <L|op_mpo|R> 
-No normalization!  """
-function expval_LR(ll::MPS, op_mpo::MPO, rr::MPS)
-
-    @assert length(ll) == length(op_mpo) == length(rr)
-    orr = applyn(op_mpo, rr)
-
-    ev_LOR = overlap_noconj(ll,orr)
-
-    return ev_LOR
-
-end
-
 
 
 
