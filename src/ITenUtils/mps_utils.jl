@@ -9,7 +9,7 @@ end
 """ Computes the overlap (ll,rr) between two MPS *without* conjugating either one.
 If siteinds(ll) and siteinds(rr) do not match, it matches them before contracting.
 """
-function overlap_noconj(ll::MPS, rr::MPS, approx_real::Bool=false)
+function overlap_noconj_ite(ll::MPS, rr::MPS, approx_real::Bool=false)
     siteinds(ll) != siteinds(rr) ? rr = replace_siteinds(rr, siteinds(ll)) : nothing
     overlap = inner(dag(ll),rr) 
     if approx_real && imag(overlap) < 1e-15
@@ -22,18 +22,19 @@ end
 
 """ Computes the overlap (ll,rr) between two MPS *without* conjugating either one
 """
-function overlap_noconj_manual(ll::MPS, rr::MPS, approx_real::Bool=false)
+function overlap_noconj(ll::MPS, rr::MPS, approx_real::Bool=false)
     siteinds(ll) != siteinds(rr) ? rr = replace_siteinds(rr, siteinds(ll)) : nothing
 
-    overlap = zero(eltype(ll[1]))
+    overlap = one(eltype(ll[1]))
     for (Ai, Bi) in zip(ll, rr)
-        overlap = Ai * Bi 
+        overlap = (overlap * Ai) * Bi
     end
-    if approx_real && imag(overlap) < 1e-15
+
+    if approx_real && imag(overlap) < 1e-14
         return real(overlap)
     end
     
-    return overlap
+    return scalar(overlap), overlap[]
     
 end
 
