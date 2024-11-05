@@ -38,13 +38,54 @@ which I think only works with the "naive" algorithm. We don't perform any trunca
 """
 function apply_extend(A::MPO, ψ::MPS; truncate::Bool=false, cutoff::Float64=1e-14, maxdim::Int=maxlinkdim(A) * maxlinkdim(ψ))
 
+    @assert length(A) == length(ψ)+1
+
+    if length(ψ) == 1
+        result = deepcopy(ψ) 
+        result[1] = noprime(result[1] * A[1])
+        push!(result.data, noprime(A[2]))
+        return result
+    end
+
+    result = deepcopy(ψ) 
+    li_o = linkinds(A)
+    li_psi = linkinds(ψ)
+
+    li_comb = [combiner(lp, lo) for (lp,lo) in zip(li_psi, li_o[1:end-1])]
+
+    result[1] = result[1] * A[1]
+    result[1] = result[1] * li_comb[1]
+    result[1] = noprime(result[1])
+
+    for ii in eachindex(ψ)[2:end-1]
+        #@info ii
+        result[ii] = result[ii] * A[ii]
+        result[ii] = result[ii] * li_comb[ii-1]
+        result[ii] = result[ii] * li_comb[ii]
+        result[ii] = noprime(result[ii])
+    end
+    result[end] = result[end] * A[end-1]
+    result[end] = result[end] * li_comb[end]
+    #result[end] = result[end] * combiner(li_o[end])
+    result[end] = noprime(result[end])
+
+    push!(result.data, noprime(A[end])) # * combiner(li_o[end])))
+    
+    if truncate
+        truncate!(result; cutoff, maxdim)
+    end
+
+    return result
+end
+
+""" Apply+extend version with ITensors utils """
+function apply_extend_ite(A::MPO, ψ::MPS; truncate::Bool=false, cutoff::Float64=1e-14, maxdim::Int=maxlinkdim(A) * maxlinkdim(ψ))
+
     ψc = deepcopy(ψ)
     push!(ψc.data, ITensor(1))
     ψc = apply(A, ψc; alg="naive", truncate, cutoff, maxdim)
     return ψc
 end
-
-
 
 """
 One step of the light cone algorithm: takes left and right tMPS ll, rr,
@@ -130,7 +171,7 @@ function run_cone(psi::MPS,
         push!(ts, Index(time_dim, tags="Site,n=$(length(rr)+1),time_fold"))
 
         if opt_method == "RTM_LR"
-            # if we're worried about symmetry, evolve separately L and R 
+            # if we're worried about symmetry Left-Right, evolve separately L and R 
             rrwork = deepcopy(rr)
             _,rr, ents = extend_tmps_cone(ll, optimize_op, Id, rrwork, ts, b, truncp)
             ll,_, ents = extend_tmps_cone(ll, Id, optimize_op, rrwork, ts, b, truncp)
