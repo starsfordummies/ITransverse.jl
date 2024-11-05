@@ -183,7 +183,7 @@ end
 
 
 """ Resumes a light cone simulation from a checkpoint file """
-function resume_cone(checkpoint::String, nT_final::Int)
+function resume_cone(checkpoint::String, nT_final::Int, run_on::String="CPU")
 
     c = jldopen(checkpoint, "r")
 
@@ -191,12 +191,19 @@ function resume_cone(checkpoint::String, nT_final::Int)
     cp = c["infos"][:coneparams]
     tp = c["infos"][:tp]
 
-    @info "Resuming from $(length(psi)) until $(nT_final), dtype = $(c["infos"][:dtype])"
 
-    tp = adapt(c["infos"][:dtype], tp)
+    @info "Resuming from $(length(psi)) until $(nT_final), run on $(run_on))"
+
+
+
+    if run_on == "GPU"  
+        # tp = NDTensors.cu(tp)
+        # psi = NDTensors.cu(psi)
+        tp = togpu(tp)
+        psi = togpu(psi)
+    end
+
     b = FoldtMPOBlocks(tp)
-
-    psi = adapt(c["infos"][:dtype], psi)
 
     # TODO extend with prev results 
     return run_cone(psi, b, cp, nT_final)
