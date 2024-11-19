@@ -205,6 +205,10 @@ function run_cone(psi::MPS,
 
         #ent = vn_entanglement_entropy(ll)
         #TODO Compute entropies
+        if haskey(entropies, "VN")
+            #@info "computing VN ent"
+            push!(entropies["VN"], vn_entanglement_entropy(rr))
+        end
 
         if checkpoint > 0 && length(ll) > 50 && length(ll) % checkpoint == 0
             fn_cp = "cp_cone_$(length(ll))_chi_$(chis[end]).jld2"
