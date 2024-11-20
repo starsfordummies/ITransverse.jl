@@ -17,7 +17,7 @@ using .ChainModels
 
 
 # #from utils.jl
-export quick_mps, 
+export quick_mps, myrMPO
     overlap_noconj, 
     applyn, applyns
     isid,

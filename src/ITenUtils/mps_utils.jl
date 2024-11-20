@@ -245,3 +245,12 @@ function gaugefix_left(psi::MPS)
 
     return psi_work
 end
+
+
+function myrMPO(sites::Vector{<:Index}; linkdims::Int)
+    o = random_mpo(sites)
+    for ii = 2:linkdims
+        o += random_mpo(sites)
+    end
+    return o
+  end
