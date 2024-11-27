@@ -134,3 +134,60 @@ function epsilon_brick_ising(mp::ModelParams)
     return ϵ_op
 end
 
+
+function build_expH_ising_symm_svd(p::ModelParams, dt::Number)
+    
+    s = siteinds("S=1/2", 3)
+    X1 = op(s, "X", 1)
+    X2 = op(s, "X", 2)
+    X3 = op(s, "X", 3)
+
+    e12 = exp(im*X1*X2*dt)
+    e23 = exp(im*X2*X3*dt)
+
+    fac_z = p.hz*dt*0.5
+    eZ1 = exp(im*fac_z*op(s,"Z",1))
+    eZ2 = exp(im*fac_z*op(s,"Z",2))
+    eZ3 = exp(im*fac_z*op(s,"Z",3))
+
+    l1, r2 = ITenUtils.symm_factorization(e12, inds(X1))
+    l2, r3 = ITenUtils.symm_factorization(e23, inds(X2))
+
+    # apply(r2,l2) ≈ apply(l2,r2)   #true
+
+    Wl = apply(apply(eZ1, l1), eZ1)
+    Wc = apply(apply(eZ2, apply(r2,l2)), eZ2)
+    Wr = apply(apply(eZ3, r3), eZ3)
+
+    return MPO([Wl, Wc, Wr])
+
+end
+
+
+function build_expH_ising_symm_svd_1o(p::ModelParams, dt::Number)
+    
+    s = siteinds("S=1/2", 3)
+    X1 = op(s, "X", 1)
+    X2 = op(s, "X", 2)
+    X3 = op(s, "X", 3)
+
+    e12 = exp(im*X1*X2*dt)
+    e23 = exp(im*X2*X3*dt)
+
+    fac_z = p.hz*dt
+    eZ1 = exp(im*fac_z*op(s,"Z",1))
+    eZ2 = exp(im*fac_z*op(s,"Z",2))
+    eZ3 = exp(im*fac_z*op(s,"Z",3))
+
+    l1, r2 = ITenUtils.symm_factorization(e12, inds(X1))
+    l2, r3 = ITenUtils.symm_factorization(e23, inds(X2))
+
+    # apply(r2,l2) ≈ apply(l2,r2)   #true
+
+    Wl = apply(eZ1, l1)
+    Wc = apply(eZ2, apply(r2,l2))
+    Wr = apply(eZ3, r3)
+
+    return MPO([Wl, Wc, Wr])
+
+end

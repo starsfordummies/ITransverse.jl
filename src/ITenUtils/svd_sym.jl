@@ -264,3 +264,37 @@ function symm_svd(a::ITensor; cutoff=nothing, maxdim=nothing)
 
 end
 
+
+
+
+""" Using SVD, split a symmetric tensor in the product of two symmetric ones  """
+function symm_factorization(a::ITensor, linds; cutoff=nothing, maxdim=nothing)
+    rinds = uniqueinds(a, linds)
+
+    cL = combiner(linds)
+    cR = combiner(rinds)
+
+    ac = a * cL * cR
+
+    iL = combinedind(cL)
+    iR = combinedind(cR)
+
+    #ac = symmetrize(ac)
+
+    # u * s * vd ≈ a 
+    u,s,vd, spec = svd(ac, iL; cutoff, maxdim)
+   
+    index_u = commonind(u,s)
+    index_v = commonind(vd,s)
+
+    z = dag(u) * (s*vd)' * delta(iL, iR') * delta(index_u', index_v)
+
+    # Best way is probably still to rely on Schur decomposition from Julia's matrix utils !? 
+    sq_z = ITensor(sqrt(matrix(z)), inds(z))
+
+    uu = u * sq_z 
+    uuL = uu * dag(cL)
+    uuR = uu * delta(iL, iR) * dag(cR)
+  
+    return uuL, uuR
+end

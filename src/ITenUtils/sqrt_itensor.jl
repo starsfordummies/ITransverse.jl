@@ -1,6 +1,7 @@
 
 
-""" Sqrt for a square ITensor"""
+""" Sqrt for a square ITensor. If it's (almost) diagonal, just returns the sqrt of its diagonal elements,
+otherwise it extracts the tensor and sqrt-s it using fancy linear algebra from Julia """
 function Base.sqrt(a::ITensor, is::Tuple{<:Index, <:Index}=inds(a))
 
     # we want to sqrt square matrices
