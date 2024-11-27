@@ -1,6 +1,6 @@
 #using Revise
 using ITensors, JLD2
-using Plots
+#using Plots
 
 using ITransverse
 #using ITransverse.ITenUtils
@@ -8,7 +8,7 @@ using ITransverse
 ITensors.enable_debug_checks()
 
 
-function main_folded_pm()
+function main_folded_pm(itermax::Int,length_string::Int)
 
     #tp = ising_tp()
     tp = tMPOParams(0.1, build_expH_ising_murg, 
@@ -17,8 +17,8 @@ function main_folded_pm()
     ModelParams("S=1/2", 1.0, 0.4, 0.0), 0, [1,0], [1,0,0,0])
     cutoff = 1e-20
     maxbondim = 120
-    length_string = 10
-    itermax = 10
+    #length_string = 10
+    #itermax = 10
     total_size =2*itermax+length_string
     eps_converged=1e-6
 
@@ -62,41 +62,47 @@ function main_folded_pm()
         mpo_P_up = folded_tMPO(b, b_im, time_sites, P_up)
         mpo_1 = folded_tMPO(b, b_im, time_sites)
 
-
+        #Here I am using the power method to find the the left and right environments after itermax which I interpret as the spatial size of the system 
         rr, ll, ds2_pm  = powermethod(init_mps, mpo_1, mpo_P_up, pm_params) 
-
+        #I then compute the expectation value of the operator Pz
         ev = compute_expvals(ll, rr, ["Pz"], b)
+        # and collect the results 
         push!(rvecs, rr)
         push!(evs, ev)
         push!(ds2s, ds2_pm)
-        itermax = 1
+        #Now I will go step by step and absorb the operator P_up into the left and right, thus computing the expectation value of a larger string
+        itermax = (length_string-1)/2
         pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM_LR")
-        for i in 1:length_string
-            println("i = ", i)
+        println("i = ", i)
+            #I will use the left environment of the previous step as the initial state, hoping that this is fine.
+        rr, ll, ds2_pm  =  powermethod(ll, mpo_P_up, mpo_P_up, pm_params) 
+            #Notice that I expect that I absorb twice mpo_P_up, so I should get the expectation value of P_up \otimes P_up
             
-            rr, ll, ds2_pm  = powermethod(init_mps, mpo_P_up, mpo_P_up, pm_params) 
-            ev = compute_expvals(ll, rr, ["Pz"], b)
-            push!(rvecs, rr)
-            push!(evs, ev)
-            push!(ds2s, ds2_pm)
-        end
-
+        
+        ev = compute_expvals(ll, rr, ["Pz"], b)
     end
 
-    return rvecs, evs, ds2s, ts, infos
+    return ev
 end
+evs=[]
+total_lenght = 11
+string_length = 1
 
-
-
-rvecs, evs, ds2s, alltimes, infos = main_folded_pm()
-
+for string_length in 1:2:total_lenght
+    itermax = Int((total_lenght-string_length)/2)
+    println("itermax = ", itermax)
+    println("string_length = ", string_length)
+    ev= main_folded_pm(itermax, string_length)
+    push!(evs, ev)
+end
 
 
 # evs contains my restults, I want to plot them
 x_values = 1:2:length(evs) * 2 - 1  # Create x-axis values starting at 1, 3, 5, ...
-keys_evs = collect(keys(evs))
-values_evs = collect(values(evs))
-plot(x_values, values_evs, title="Results", xlabel="Index", ylabel="Value", legend=false)
+values_evs = [ev["Pz"] for ev in evs if haskey(ev, "Pz")]
+
+plot(x_values, real(values_evs), title="Results", xlabel="Index", ylabel="Value", legend=false,seriestype=:scatter, markershape=:circle, markercolor=:blue, markerstrokecolor=:red, markerstrokewidth=2, markersize=5)
+plot!(x_values, real(values_evs), seriestype=:line, linecolor=:black)
 
 # Display the plot
 display(plot)
