@@ -23,6 +23,19 @@ function tMPOParams(dt::Number,
     return tMPOParams(dt, expH_func, mp, nbeta, blt, trt)
 end
 
+function tMPOParams(dt::Number,
+    expH_func::Function,
+    mp::ModelParams,
+    nbeta::Int64,
+    bl::ITensor,  # bottom -> left(rotated)
+    tr::Vector{<:Number}) 
+
+    work_type = ComplexF64
+
+    trt = adapt(work_type,ITensor(tr, Index(length(tr), "tr")))
+    return tMPOParams(dt, expH_func, mp, nbeta, bl, trt)
+end
+
 tMPOParams(
     dt::Number,
     expH_func::Function,
@@ -44,7 +57,8 @@ tMPOParams(x::tMPOParams;
     expH_func::Function=x.expH_func, 
     mp::ModelParams=x.mp,
     nbeta::Int64=x.nbeta,
-    bl=x.bl, tr = x.tr) = tMPOParams(dt, expH_func, mp, nbeta, bl, tr)
+    bl=x.bl, 
+    tr = x.tr) = tMPOParams(dt, expH_func, mp, nbeta, bl, tr)
 
 
 # quick defaults for parallel field Ising, for playing around: J=1 hz=0.4, gx=0, init_state= |+>
