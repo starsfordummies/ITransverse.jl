@@ -32,12 +32,13 @@ function main_cone()
 
     truncp = TruncParams(cutoff, maxbondim, direction)
 
-    Nsteps = 80
+    Nsteps = 60
 
     #time_sites = siteinds("S=3/2", 1)
 
     mp = ModelParams("S=1/2", JXX, hz, gx)
     tp = tMPOParams(dt, build_expH_ising_murg, mp, nbeta, init_state, Id)
+    #tp = tMPOParams(dt, ITransverse.ChainModels.build_expH_ising_symm_svd_1o, mp, nbeta, init_state, Id)
 
     # mp = ModelParams("S=1/2", JXX, hz, 0.0, dt)
     # tp = tMPOParams("S=1/2", "S=1/2", build_expH_ising_murg, mp, dt, nbeta, init_state)
@@ -45,7 +46,7 @@ function main_cone()
 
     c0, b = init_cone(tp)
 
-    cone_params = ConeParams(;truncp, opt_method="RTM_R", optimize_op, which_evs=["X","Z"], checkpoint=20)
+    cone_params = ConeParams(;truncp, opt_method="RDM", optimize_op, which_evs=["X","Z"], which_ents=["VN"], checkpoint=20)
 
     psi, psiR, chis, expvals, entropies, infos, last_cp = run_cone(c0, b, cone_params, Nsteps)
 
