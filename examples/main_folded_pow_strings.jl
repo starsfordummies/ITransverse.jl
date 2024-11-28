@@ -1,20 +1,22 @@
 #using Revise
 using ITensors, JLD2
-#using Plots
-
+using Plots
+using LaTeXStrings
 using ITransverse
 #using ITransverse.ITenUtils
 
 ITensors.enable_debug_checks()
 
 
-function main_folded_pm(itermax::Int,length_string::Int)
+function main_folded_pm(itermax::Int,length_string::Int,ts::Int=10,Jxx::Float64=1.0,hz::Float64=1.0,hx::Float64=0.0)
+
+    #If I understand correctly the Ising Hamiltonian is defined as Jxx XX + hz Z +hx X
 
     #tp = ising_tp()
     tp = tMPOParams(0.1, build_expH_ising_murg, 
-    ModelParams("S=1/2", 1.0, 0.4, 0.0), 0, [1,0], [1,0,0,1])
+    ModelParams("S=1/2", Jxx, hz, hx), 0, [1,0], [1,0,0,1])
     tp_proj = tMPOParams(0.1, build_expH_ising_murg, 
-    ModelParams("S=1/2", 1.0, 0.4, 0.0), 0, [1,0], [1,0,0,0])
+    ModelParams("S=1/2", Jxx, hz, hx), 0, [1,0], [1,0,0,0])
     cutoff = 1e-20
     maxbondim = 120
     #length_string = 10
@@ -29,10 +31,9 @@ function main_folded_pm(itermax::Int,length_string::Int)
     sigX = ComplexF64[0,1,1,0]
     P_up = ComplexF64[1,0,0,0]
 
-    evs = [] 
+    ev = [] 
 
-    rvecs = []
-    ds2s = []
+
 
 
     tp = tMPOParams(tp; nbeta=4)
@@ -52,9 +53,9 @@ function main_folded_pm(itermax::Int,length_string::Int)
 
     alltimes = ts.* tp.dt
 
-    for Nsteps in ts
+    #for Nsteps in ts
 
-        time_sites = siteinds(4, Nsteps)
+        time_sites = siteinds(4, ts)
 
         
         init_mps = folded_right_tMPS(b, time_sites)
@@ -63,37 +64,44 @@ function main_folded_pm(itermax::Int,length_string::Int)
         mpo_1 = folded_tMPO(b, b_im, time_sites)
 
         #Here I am using the power method to find the the left and right environments after itermax which I interpret as the spatial size of the system 
+        println("itermax no string= ", itermax)
         rr, ll, ds2_pm  = powermethod(init_mps, mpo_1, mpo_P_up, pm_params) 
-        #I then compute the expectation value of the operator Pz
-        ev = compute_expvals(ll, rr, ["Pz"], b)
+        
+        #ev = compute_expvals(ll, rr, ["Pz"], b)
         # and collect the results 
-        push!(rvecs, rr)
-        push!(evs, ev)
-        push!(ds2s, ds2_pm)
+        #push!(rvecs, rr)
+        #push!(evs, ev)
+        #push!(ds2s, ds2_pm)
         #Now I will go step by step and absorb the operator P_up into the left and right, thus computing the expectation value of a larger string
         itermax = (length_string-1)/2
+        println("itermax with string= ", itermax)
         pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM_LR")
-        println("i = ", i)
+        #println("i = ", i)
             #I will use the left environment of the previous step as the initial state, hoping that this is fine.
         rr, ll, ds2_pm  =  powermethod(ll, mpo_P_up, mpo_P_up, pm_params) 
             #Notice that I expect that I absorb twice mpo_P_up, so I should get the expectation value of P_up \otimes P_up
             
         
         ev = compute_expvals(ll, rr, ["Pz"], b)
-    end
+    #end
 
     return ev
 end
+for ts in 10:40
+    println("ts = ", ts)
 evs=[]
-total_lenght = 11
+total_lenght = 51
 string_length = 1
-
+Jxx=1.
+hx=0.0
+hz=1.0  
 for string_length in 1:2:total_lenght
     itermax = Int((total_lenght-string_length)/2)
     println("itermax = ", itermax)
     println("string_length = ", string_length)
-    ev= main_folded_pm(itermax, string_length)
-    push!(evs, ev)
+    val_ev = main_folded_pm(itermax, string_length)
+    print(val_ev)
+    push!(evs, val_ev)
 end
 
 
@@ -101,8 +109,9 @@ end
 x_values = 1:2:length(evs) * 2 - 1  # Create x-axis values starting at 1, 3, 5, ...
 values_evs = [ev["Pz"] for ev in evs if haskey(ev, "Pz")]
 
-plot(x_values, real(values_evs), title="Results", xlabel="Index", ylabel="Value", legend=false,seriestype=:scatter, markershape=:circle, markercolor=:blue, markerstrokecolor=:red, markerstrokewidth=2, markersize=5)
-plot!(x_values, real(values_evs), seriestype=:line, linecolor=:black)
+plot!(x_values, log.(-real(values_evs).+1.),title="L = $total_lenght, Jxx=$Jxx, hz=$hz,hx=$hx" , xlabel=L"l_s=\text{lenght  string}", ylabel=L"\log(1-\langle Pz^{\otimes l_s} \rangle)", legend=true, label="ts = $ts",seriestype=:scatter, markershape=:circle, markercolor=:blue, markerstrokecolor=:blue, markerstrokewidth=2, markersize=5)
+plot!(x_values, log.(-real(values_evs).+1.), seriestype=:line, linecolor=:black)
 
 # Display the plot
 display(plot)
+end
