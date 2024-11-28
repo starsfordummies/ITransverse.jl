@@ -270,3 +270,55 @@ function _expval_LR_open(ll::MPS, rr::MPS, ops::MPO, b::FoldtMPOBlocks)
 
 end
 =# 
+
+
+
+""" Build exp value <L|O|R> for a single vectorized operator `op`, given as a 1D array 
+   Does *NOT* normalize here by <L|1|R>, need to do it separately.
+   Slower version which uses ITensors' apply(), allows to truncate intermediate MPO """
+function expval_LR_apply_list(ll::MPS, rr::MPS, op_list::AbstractVector, b::FoldtMPOBlocks,  b_im::FoldtMPOBlocks; maxdim=256)
+
+    time_sites = siteinds(rr)
+
+    psiOR = deepcopy(rr)
+    for op in op_list
+        tmpo = folded_tMPO(b, b_im, time_sites, op)
+        psiOR = isnothing(maxdim) ? applyn(tmpo, psiOR) : apply(tmpo,psiOR; alg="naive", maxdim)
+    end
+
+    LOR = overlap_noconj(ll,psiOR)
+
+
+    return LOR
+
+end
+
+""" Given an input MPS |B> and an operator list, builds tMPO columns with all the operators in the list 
+and applies them to the MPS, building O1*O2*..*ON|B> = |OB> . Then computes the exp value <BO|OB>, so it
+should be thought as a symmetric string all the time """
+
+function expval_LR_apply_list_sym(rr::MPS, op_list::AbstractVector, b::FoldtMPOBlocks,  b_im::FoldtMPOBlocks; maxdim=256, cutoff=1e-10)
+
+    time_sites = siteinds(rr)
+    tmpo_id  = folded_tMPO(b, b_im, time_sites)
+
+    psiOR = deepcopy(rr)
+    p = Progress(length(op_list); desc="L=$(length(rr)), cutoff=$(cutoff), maxbondim=$(maxdim))", showspeed=true) 
+
+    @showprogress  for op in op_list
+        tmpo = folded_tMPO(b, b_im, time_sites, op)
+        norm1 = norm(apply(tmpo_id, psiOR; maxdim, cutoff) )
+
+        psiOR = isnothing(maxdim) ? applyn(tmpo, psiOR) : apply(tmpo,psiOR; alg="naive", maxdim, cutoff)
+        # Try to normalize along the way ? 
+        psiOR = psiOR / norm1
+
+        next!(p; showvalues = [(:Info,"chi=$(maxlinkdim(psiOR))" )])
+
+    end
+
+    LOR = overlap_noconj(psiOR,psiOR)
+
+    return LOR
+
+end
