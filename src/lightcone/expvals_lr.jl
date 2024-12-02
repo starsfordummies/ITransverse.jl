@@ -293,32 +293,87 @@ function expval_LR_apply_list(ll::MPS, rr::MPS, op_list::AbstractVector, b::Fold
 
 end
 
-""" Given an input MPS |B> and an operator list, builds tMPO columns with all the operators in the list 
-and applies them to the MPS, building O1*O2*..*ON|B> = |OB> . Then computes the exp value <BO|OB>, so it
-should be thought as a symmetric string all the time """
 
-function expval_LR_apply_list_sym(rr::MPS, op_list::AbstractVector, b::FoldtMPOBlocks,  b_im::FoldtMPOBlocks; maxdim=256, cutoff=1e-10)
+
+""" Given an input MPS |B>, an operator list, and a "middle" operator X, builds tMPO columns with all the operators in the list 
+and applies them to the MPS, building O1*O2*..*ON|B> = |OB> . Then computes the exp value <BO|X|OB>, so it
+should be thought as a symmetric string +1 extra operator in the middle."""
+function expval_LR_apply_list_sym(rr::MPS, op_list::AbstractVector, op_mid::String, b::FoldtMPOBlocks,  b_im::FoldtMPOBlocks; maxdim=256, cutoff=1e-10, method="RDM")
 
     time_sites = siteinds(rr)
-    tmpo_id  = folded_tMPO(b, b_im, time_sites)
+    tmpo_id  = folded_tMPO_doublebeta(b, b_im, time_sites)
 
     psiOR = deepcopy(rr)
-    p = Progress(length(op_list); desc="L=$(length(rr)), cutoff=$(cutoff), maxbondim=$(maxdim))", showspeed=true) 
+    # psiIR = deepcopy(rr)
+    #p = Progress(length(op_list); desc="L=$(length(rr)), cutoff=$(cutoff), maxbondim=$(maxdim))", showspeed=true) 
 
-    @showprogress  for op in op_list
-        tmpo = folded_tMPO(b, b_im, time_sites, op)
-        norm1 = norm(apply(tmpo_id, psiOR; maxdim, cutoff) )
 
-        psiOR = isnothing(maxdim) ? applyn(tmpo, psiOR) : apply(tmpo,psiOR; alg="naive", maxdim, cutoff)
+        # # Assuming normalization factor is always the same..
+        # psiIR = applyn(tmpo_id, psiIR) 
+        # #@info "2: " linkdims(psiIR)
+        # psiIR, _, overlap_IR = truncate_rsweep_sym(psiIR; cutoff, chi_max=maxdim, method="SVD")
+        # # #@info "3: " linkdims(psiIR)
+        # # #@info "norm factor =", overlap_IR 
+        # # psiIR = ITransverse.normbyfactor(psiIR, sqrt(overlap_IR))
+        # # #@info "4: " linkdims(psiIR)
+        # #@info "normalizing at each step by  $(overlap_IR)"
+
+
+    #@showprogress  
+    for (ii, str_op) in enumerate(op_list)
+
+        if str_op == "Id"
+            op = ComplexF64[1,0,0,1]
+        elseif str_op == "Pz"
+            op = ComplexF64[1,0,0,0]
+        else
+            @error "No valid operator given"
+        end
+
+
+
+        tmpo = folded_tMPO_doublebeta(b, b_im, time_sites, op)
+        #norm1 = norm(apply(tmpo_id, psiOR; maxdim, cutoff) )
+
+
+        
+        if method == "RTM"
+            #@info "1: " linkdims(psiIR)
+
+
+            #TODO CHECK Do we want to correct by overlap before or after truncation?
+            #overlap_IR = overlap_noconj(psiIR,psiIR)
+            #@info ii, " applying ", str_op
+            #@info "Before apply:" ITransverse.overlap_noconj(psiOR, psiOR)
+            psiOR = applyn(tmpo, psiOR) 
+            #@info "After apply:" ITransverse.overlap_noconj(psiOR, psiOR)
+            psiOR, _, overlap_OR = truncate_rsweep_sym(psiOR; cutoff, chi_max=maxdim, method="SVD")
+            #@info "After trunc:" ITransverse.overlap_noconj(psiOR, psiOR)
+            psiOR = ITransverse.normbyfactor(psiOR, sqrt(overlap_OR))
+            #@info "After normalization:" ITransverse.overlap_noconj(psiOR, psiOR)
+        else # RDM
+            psiOR = isnothing(maxdim) ? applyn(tmpo, psiOR) : apply(tmpo,psiOR; alg="naive", maxdim, cutoff)
+        end
         # Try to normalize along the way ? 
-        psiOR = psiOR / norm1
+        #psiOR = psiOR / norm1
 
-        next!(p; showvalues = [(:Info,"chi=$(maxlinkdim(psiOR))" )])
+        #next!(p; showvalues = [(:Info,"chi=$(maxlinkdim(psiIR))|chi=$(maxlinkdim(psiOR))" )])
 
     end
 
-    LOR = overlap_noconj(psiOR,psiOR)
+    LR = overlap_noconj(psiOR,psiOR)
 
-    return LOR
+    if op_mid == "Id"
+        tmpo = folded_tMPO_doublebeta(b, b_im, time_sites)
+    elseif op_mid == "Pz"
+        tmpo = folded_tMPO_doublebeta(b, b_im, time_sites, ComplexF64[1,0,0,0])
+    else 
+        @error "Wrong op ?", op_mid
+    end
+
+    OOR = applyn(tmpo, psiOR)
+    LOR = overlap_noconj(psiOR, OOR) 
+
+    return LOR, LR
 
 end
