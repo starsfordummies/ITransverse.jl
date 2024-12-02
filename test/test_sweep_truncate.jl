@@ -68,3 +68,17 @@ end
     
     
 end
+
+
+@testset "Silly test that truncate_sweep(a,b) gives same as truncate_sweep(b,a)" begin
+
+a = random_mps(ComplexF64, sites, linkdims=chimaxs)
+b = random_mps(ComplexF64, sites, linkdims=chimaxs)
+
+atr, btr = truncate_rsweep(a,b, cutoff=cut_sv, chi_max=chimaxs)
+btr2, atr2 = truncate_rsweep(b,a, cutoff=cut_sv, chi_max=chimaxs)
+
+@test atr ≈ atr2 
+@test btr ≈ btr2 
+
+end
