@@ -20,7 +20,8 @@ function overlap_noconj_ite(ll::MPS, rr::MPS, approx_real::Bool=false)
     
 end
 
-""" Computes the overlap (ll,rr) between two MPS *without* conjugating either one
+""" Computes the overlap (ll,rr) between two MPS *without* conjugating either one.
+The "generalized norm" of an MPS should be sqrt(overlap_noconj(psi,psi)).
 """
 function overlap_noconj(ll::MPS, rr::MPS, approx_real::Bool=false)
     #siteinds(ll) != siteinds(rr) ? rr = replace_siteinds(rr, siteinds(ll)) : nothing
