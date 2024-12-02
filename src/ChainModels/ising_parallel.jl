@@ -150,14 +150,31 @@ function build_expH_ising_symm_svd(p::ModelParams, dt::Number)
     eZ2 = exp(im*fac_z*op(s,"Z",2))
     eZ3 = exp(im*fac_z*op(s,"Z",3))
 
+    fac_X = p.λx*dt 
+    eX1 = exp(im*fac_X*op(s,"X",1))
+    eX2 = exp(im*fac_X*op(s,"X",2))
+    eX3 = exp(im*fac_X*op(s,"X",3))
+
     l1, r2 = ITenUtils.symm_factorization(e12, inds(X1))
     l2, r3 = ITenUtils.symm_factorization(e23, inds(X2))
 
+    """
+
+    x   x   x 
+    |   |   |
+    |   |>=<| 
+    |>=<|   |
+    |   |   |
+    o   o   o
+    |   |   | 
+    x   x   x 
+    L1      R3 
+    """
     # apply(r2,l2) ≈ apply(l2,r2)   #true
 
-    Wl = apply(apply(eZ1, l1), eZ1)
-    Wc = apply(apply(eZ2, apply(r2,l2)), eZ2)
-    Wr = apply(apply(eZ3, r3), eZ3)
+    Wl = apply(apply(eZ1, apply(eX1, l1)),           eZ1)
+    Wc = apply(apply(eZ2, apply(eX2, apply(r2,l2))), eZ2)
+    Wr = apply(apply(eZ3, apply(eX3,r3)),            eZ3)
 
     return MPO([Wl, Wc, Wr])
 
