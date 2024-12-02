@@ -127,6 +127,7 @@ end
 
 
 
+#= 
 """ Given building blocks and time sites, builds folded tMPO associated with `fold_op`. 
 Defaults to closing with identity if no operator is specified"""
 function folded_tMPO(b::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::AbstractVector = [1,0,0,1])
@@ -145,11 +146,19 @@ function folded_tMPO(b::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::AbstractVe
     return oo
 
 end
+=# 
+
+#Legacy, remove eventually ?
+function folded_tMPO(b::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::AbstractVector = [1,0,0,1])
+    @assert b.tp.nbeta == 0
+    folded_tMPO(b,b, ts, fold_op)
+end
 
 
 ###### New ver with beta 
 """ Given building blocks and time sites, builds folded tMPO associated with `fold_op`. 
-Defaults to closing with identity if no operator is specified"""
+Defaults to closing with identity if no operator is specified. Builds `b.tp.nbeta` steps of b_im blocks
+    at the beginning of the tMPO. """
 function folded_tMPO(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::AbstractVector = [1,0,0,1])
 
     @assert b.tp.nbeta <= length(ts)
@@ -412,3 +421,50 @@ function folded_right_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index})
     return psi 
 end
 
+
+""" Puts imaginary time on *both* edges of the folded tMPO """
+function folded_tMPO_doublebeta(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::AbstractVector = [1,0,0,1])
+
+    @assert 2*b.tp.nbeta <= length(ts)
+    WWc = b.WWc
+    WWc_im = b_im.WWc
+
+    #match indices for real-imag so it's easier to work with them 
+    replaceinds!(WWc_im, inds(WWc_im), inds(WWc))
+
+    oo = MPO(fill(WWc, length(ts)))
+
+    for ib = 1:b.tp.nbeta
+        oo[ib] = WWc_im
+        oo[end-ib+1] = WWc_im
+    end
+
+    virtual_ind = ind(b.WWc,3)
+    ll = [Index(dim(virtual_ind),"Link,time_fold,l=$(ii-1)") for ii in 1:length(ts)+1]
+    for ii in eachindex(oo)
+        newinds = (ts[ii],ts[ii]',ll[ii+1],ll[ii])
+        oo[ii] = replaceinds(oo[ii], inds(WWc), newinds)
+    end
+
+    dttype = NDTensors.unwrap_array_type(b.WWc)
+    oo[1] *= b.rho0 * delta(ind(b.rho0,1), ll[1])
+    oo[end] *= adapt(dttype, ITensor(fold_op, ll[end]))
+
+    return oo
+
+end
+
+"""Quick way to get init mps, just close the corresponding MPO with [1,0,0,0] to one side. 
+Nornalization might be not the best """
+function folded_right_tMPS(T::MPO)
+
+    psi = MPS(deepcopy(T.data))
+
+    dttype = NDTensors.unwrap_array_type(T[1])
+ 
+    for ii in eachindex(psi)
+        psi[ii] *= adapt(dttype, ITensor([1,0,0,0], siteind(T,ii)'))
+    end
+
+    return psi 
+end
