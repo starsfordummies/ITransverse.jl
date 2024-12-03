@@ -40,7 +40,10 @@ function build_expH_ising_murg(
     # I should have already taken into account both the - sign in exp(-iHt) 
     # and the overall minus in Ising H= -(JXX+Z)
 
-    dt = JXX*dt
+    # TODO CHECK that this doesn't break anything: 
+    JXX = JXX*dt
+    gz = gz*dt
+    λx = λx*dt
 
     N = length(sites)
     U_t = MPO(N)
@@ -63,24 +66,24 @@ function build_expH_ising_murg(
 
         if n == 1
             #U_t[n] = ITensor(ComplexF64, dag(s), s', dag(rl))
-            U_t[n] = onehot(rl => 1) * sqrt(cos(dt))*I
-            U_t[n] += onehot(rl => 2) * sqrt(im*sin(dt))*X
+            U_t[n] = onehot(rl => 1) * sqrt(cos(JXX))*I
+            U_t[n] += onehot(rl => 2) * sqrt(im*sin(JXX))*X
         elseif n == N
             #U_t[n] = ITensor(ComplexF64, ll, dag(s), s')
-            U_t[n] = onehot(ll => 1) * sqrt(cos(dt))*I
-            U_t[n] += onehot(ll => 2) * sqrt(im*sin(dt))*X
+            U_t[n] = onehot(ll => 1) * sqrt(cos(JXX))*I
+            U_t[n] += onehot(ll => 2) * sqrt(im*sin(JXX))*X
 
         else
             #U_t[n] = ITensor(ComplexF64, ll, dag(s), s', dag(rl))
 
-            U_t[n] = onehot(ll => 1, rl =>1) * cos(dt)*I
-            U_t[n] += onehot(ll => 1, rl =>2) * sqrt(im*sin(dt))*sqrt(cos(dt))*X
-            U_t[n] += onehot(ll => 2, rl =>1) * sqrt(im*sin(dt))*sqrt(cos(dt))*X
-            U_t[n] += onehot(ll => 2, rl =>2) * im*sin(dt)*I
+            U_t[n] = onehot(ll => 1, rl =>1) * cos(JXX)*I
+            U_t[n] += onehot(ll => 1, rl =>2) * sqrt(im*sin(JXX))*sqrt(cos(JXX))*X
+            U_t[n] += onehot(ll => 2, rl =>1) * sqrt(im*sin(JXX))*sqrt(cos(JXX))*X
+            U_t[n] += onehot(ll => 2, rl =>2) * im*sin(JXX)*I
         end
 
-        Ux = exp(im*λx*dt*op(sites, "X", n))
-        Uz2 = exp(0.5*im*gz*dt*op(sites, "Z", n))
+        Ux = exp(im*λx*op(sites, "X", n))
+        Uz2 = exp(0.5*im*gz*op(sites, "Z", n))
 
 
         # Multiply in order:  exp(iZ/2)*exp(iX)*exp(iXX)*exp(iZ/2)
@@ -136,24 +139,27 @@ end
 
 
 function build_expH_ising_symm_svd(p::ModelParams, dt::Number)
+
+    JXX = p.JXX*dt
+    hz = p.hz*dt
+    λx = p.λx*dt
     
     s = siteinds("S=1/2", 3)
     X1 = op(s, "X", 1)
     X2 = op(s, "X", 2)
     X3 = op(s, "X", 3)
 
-    e12 = exp(im*X1*X2*dt)
-    e23 = exp(im*X2*X3*dt)
+    e12 = exp(im*X1*X2*JXX)
+    e23 = exp(im*X2*X3*JXX)
 
-    fac_z = p.hz*dt*0.5
+    fac_z = hz*0.5
     eZ1 = exp(im*fac_z*op(s,"Z",1))
     eZ2 = exp(im*fac_z*op(s,"Z",2))
     eZ3 = exp(im*fac_z*op(s,"Z",3))
 
-    fac_X = p.λx*dt 
-    eX1 = exp(im*fac_X*op(s,"X",1))
-    eX2 = exp(im*fac_X*op(s,"X",2))
-    eX3 = exp(im*fac_X*op(s,"X",3))
+    eX1 = exp(im*λx*op(s,"X",1))
+    eX2 = exp(im*λx*op(s,"X",2))
+    eX3 = exp(im*λx*op(s,"X",3))
 
     l1, r2 = ITenUtils.symm_factorization(e12, inds(X1))
     l2, r3 = ITenUtils.symm_factorization(e23, inds(X2))
@@ -183,18 +189,20 @@ end
 
 function build_expH_ising_symm_svd_1o(p::ModelParams, dt::Number)
     
+    JXX = p.JXX*dt
+    hz = p.hz*dt
+
     s = siteinds("S=1/2", 3)
     X1 = op(s, "X", 1)
     X2 = op(s, "X", 2)
     X3 = op(s, "X", 3)
 
-    e12 = exp(im*X1*X2*dt)
-    e23 = exp(im*X2*X3*dt)
+    e12 = exp(im*X1*X2*JXX)
+    e23 = exp(im*X2*X3*JXX)
 
-    fac_z = p.hz*dt
-    eZ1 = exp(im*fac_z*op(s,"Z",1))
-    eZ2 = exp(im*fac_z*op(s,"Z",2))
-    eZ3 = exp(im*fac_z*op(s,"Z",3))
+    eZ1 = exp(im*hz*op(s,"Z",1))
+    eZ2 = exp(im*hz*op(s,"Z",2))
+    eZ3 = exp(im*hz*op(s,"Z",3))
 
     l1, r2 = ITenUtils.symm_factorization(e12, inds(X1))
     l2, r3 = ITenUtils.symm_factorization(e23, inds(X2))

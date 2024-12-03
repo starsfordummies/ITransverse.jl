@@ -6,6 +6,8 @@ struct ModelParams
     JXX::Float64
     hz::Float64
     λx::Float64
+
+    ModelParams(phys_space, JXX, hz, λx) = new(phys_space, JXX, hz, λx)
 end
 
 # allow for changes on the fly of params 
