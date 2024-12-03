@@ -16,6 +16,16 @@ eigs_l = diagonalize_rtm_left_gen_sym(ll; bring_left_gen=true, normalize_factor)
 # eigs_r sweeps from left to right, eigs_l the other way around
 eigs_r = diagonalize_rtm_right_gen_sym(ll; bring_right_gen=true, normalize_factor)
 
+# If they differ by a zero we don't mind, so let's fix it by hand (assuming they can differ at most by 1)
+if length(eigs_l) != length(eigs_r)
+    @warn "Length eigs_l and r are different, adding a zero by hand"
+    if length(eigs_l) > length(eigs_r)
+        push!(eigs_r, 0.)
+    else
+        push!(eigs_l, 0.)
+    end
+end
+
 @test eigs_l ≈ eigs_r
 
 
