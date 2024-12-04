@@ -1,5 +1,3 @@
-using Revise
-
 using ITensors
 using ITransverse
 using Test

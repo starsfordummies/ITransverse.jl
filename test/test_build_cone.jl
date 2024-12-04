@@ -1,5 +1,4 @@
 using ITensors, ITensorMPS
-using Revise
 using Test
 
 using ITransverse

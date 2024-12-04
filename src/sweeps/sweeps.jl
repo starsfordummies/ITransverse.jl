@@ -113,7 +113,8 @@ function truncate_rsweep(psi::MPS, phi::MPS; cutoff::Real, chi_max::Int)
         rnorm = norm(right_env)
         #@show ii, rnorm
 
-        if rnorm > 1e6 || rnorm < 1e-6
+        # TODO maybe we should correct along the way if envs become too large
+        if rnorm > 1e8 || rnorm < 1e-8
             @warn "Norm of environment is $(rnorm), watch for roundoff errs"
         end
 

@@ -1,5 +1,4 @@
 using LinearAlgebra
-using Revise
 
 using ITensors
 using ITransverse
