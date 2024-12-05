@@ -144,6 +144,10 @@ function truncate_rsweep_sym(in_psi::MPS; cutoff::Float64, chi_max::Int, method:
         right_env *= XU 
         right_env *= XU' 
 
+        # if we want to cheat 
+        #  right_env = delta(inds(right_env))
+
+
         # convert to CPU to avoid headaches
         S = NDTensors.cpu(S)
         push!(ents_sites, scalar(-S*log.(S)))

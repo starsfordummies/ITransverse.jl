@@ -12,29 +12,29 @@ Power method for *symmetric* case: takes as input a single MPS |L>,
 """
 function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams)
 
-    (; itermax, eps_converged, opt_method, truncp) = pm_params
+    (; itermax, eps_converged, opt_method, truncp, increase_chi) = pm_params
     (; cutoff, maxbondim) = truncp
   
     # normalize the vector to get a good starting point
 
     psi_ortho = normalize(in_mps)
 
-    ds2s = Float64[]
+    ds2s = [] #Float64[]
     ds2 = 0. 
     sprevs = fill(1., length(in_mps)-1)
 
     p = Progress(itermax; desc="[Symmetric PM|$(opt_method)] L=$(length(in_mps)), cutoff=$(cutoff), maxbondim=$(maxbondim))", showspeed=true) 
 
-
+    max_chi = maxbondim
     maxbondim = 20 
 
     for jj = 1:itermax
 
-        if pm_params.increase_chi
+        if increase_chi
             maxbondim += 2
-            maxbondim = minimum([maxbondim,pm_params.truncp.maxbondim])
+            maxbondim = minimum([maxbondim, max_chi])
         else
-            maxbondim = pm_params.truncp.maxbondim
+            maxbondim = max_chi
         end
 
         # Note that ITensors does the apply on the MPS/MPO legs with the SAME label, eg. p-p 
@@ -46,12 +46,25 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams)
             sjj = vn_entanglement_entropy(psi_ortho)
         elseif opt_method == "RTM"
             psi = applyn(in_mpo, psi_ortho)
-            psi_ortho, sjj, overlap = truncate_rsweep_sym(psi, cutoff=cutoff, chi_max=maxbondim, method="SVD")
+            psi_ortho, sjj, overlap = ITransverse.truncate_rsweep_sym_alt(psi, cutoff=cutoff, chi_max=maxbondim, method="SVD")
+        elseif opt_method == "RTMRDM"
+            if jj == 200
+                #increase_chi = false
+                max_chi = maxlinkdim(psi_ortho)+4 # give it some room for adjustment
+                opt_method = "RDM"
+                @info "$(jj) - Changing method to RDM "
+                overlap = overlap_noconj(psi_ortho, psi_ortho)
+                sjj = vn_entanglement_entropy(psi_ortho)
+            else # do RTM
+                psi = applyn(in_mpo, psi_ortho)
+                psi_ortho, sjj, overlap = ITransverse.truncate_rsweep_sym_alt(psi, cutoff=cutoff, chi_max=maxbondim, method="SVD")
+            end
+        # TODO this is likely not accurate, remove it ?
         elseif opt_method == "RTM_EIG"
             psi = applyn(in_mpo, psi_ortho)
             psi_ortho, sjj, overlap = truncate_rsweep_sym(psi, cutoff=cutoff, chi_max=maxbondim, method="EIG")
         else
-            @error "Specify a valid opt_method: RDM|RTM|RTM_EIG"
+            @error "Specify a valid opt_method: RDM|RTM|..."
         end
             
 
@@ -60,7 +73,12 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams)
         #@show overlap
 
         ds2 = norm(sprevs - sjj)
+        #push!(ds2s, psi_ortho)
         push!(ds2s, ds2)
+
+        #@info jj, ds2
+        #@info sprevs
+        #@info sjj 
         sprevs = sjj
 
         next!(p; showvalues = [(:Info,"[$(jj)] ds2=$(ds2), chi=$(maxlinkdim(psi_ortho))" )])
