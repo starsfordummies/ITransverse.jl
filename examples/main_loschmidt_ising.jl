@@ -1,11 +1,10 @@
 using ITensors, JLD2
-using Revise
 using ITransverse
 
 function main_ising_loschmidt(Tstart::Int, Tend::Int, nbeta::Int; Tstep::Int=1)
 
     JXX = 1.0
-    hz = 0.9
+    hz = 1.0
     gx = 0.0
 
     dt = 0.1
@@ -19,18 +18,18 @@ function main_ising_loschmidt(Tstart::Int, Tend::Int, nbeta::Int; Tstep::Int=1)
 
     cutoff = 1e-12
     maxbondim = 140
-    itermax = 800
+    itermax = 500
     eps_converged = 1e-6
 
     truncp = TruncParams(cutoff, maxbondim)
 
-    pm_params = PMParams(truncp, itermax, eps_converged, true, "RDM")
+    pm_params = PMParams(truncp, itermax, eps_converged, true, "RTMRDM")
 
     mp = ModelParams("S=1/2", JXX, hz, gx)
     tp = tMPOParams(dt, build_expH_ising_murg, mp, nbeta, init_state, init_state)
 
     ll_murgs = Vector{MPS}()
-    ds2s = Vector{Float64}[]
+    ds2s = [] # Vector{Float64}[]
     leading_eigs = ComplexF64[]
     leading_eigsq = ComplexF64[]
     overlapsLR = ComplexF64[]
@@ -84,7 +83,7 @@ function main_ising_loschmidt(Tstart::Int, Tend::Int, nbeta::Int; Tstep::Int=1)
         curr_T = ts
 
 
-        if ts % 20 == 0
+        if ts % 40 == 0
             out_filename = "cp_ising_$(ts)_$(maxlinkdim(psi_trunc)).jld2"
             jldsave(out_filename; ll_murgs, ds2s, tp, pm_params, curr_T, allts, leading_eigs, leading_eigsq, overlapsLR)
         end
@@ -97,4 +96,4 @@ function main_ising_loschmidt(Tstart::Int, Tend::Int, nbeta::Int; Tstep::Int=1)
 end
 
 
-psis, ds2s, leading_eigs, leading_eigsq, overlapsLR = main_ising_loschmidt(10, 120, 2; Tstep=4)
+psis, ds2s, leading_eigs, leading_eigsq, overlapsLR = main_ising_loschmidt(10, 160, 2; Tstep=10);

@@ -72,7 +72,7 @@ end
 
 """ Builds with autompo H XX Hamiltonian, convention 
 H = -( J(XX+YY) + 2*hZ ) 
-specify J and h as input params 
+specify JXX and hZ as input params 
 """
 function build_H_XX(sites, JXX::Real, hz::Real)
 
@@ -81,7 +81,7 @@ end
 
 """ Builds with autompo H XXZ Hamiltonian, convention 
 H = -( J(XX+YY+ Δ*ZZ) + 2*hZ ) 
-specify J, Δ and h as input params 
+specify JXX, ΔZZ and hZ as input params 
 """
 function build_H_XXZ(sites, JXX::Real, ΔZZ::Real, hz::Real)
 
@@ -109,9 +109,9 @@ end
 
 
 
-""" Builds with autompo H XXZ Hamiltonian, convention 
+""" Builds with autompo H XXZ Hamiltonian using S+ and S- operators, convention 
 H = -( J(XX+YY+ Δ*ZZ) + 2*hZ ) 
-specify J, Δ and h as input params 
+specify JXX, ΔZZ and hZ as input params 
 """
 function build_H_XXZ_SpSm(sites, JXX::Real, ΔZZ::Real, hz::Real)
 
@@ -333,8 +333,8 @@ function build_expH_XXZ_murg_from_ising(
     hz::Real,
     dt::Number)
 
-
     # For real dt this does REAL time evolution 
+
     # I should have already taken into account both the - sign in exp(-iHt) 
     # and the overall minus in Ising H= -(JXX+Z)
 
