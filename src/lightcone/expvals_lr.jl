@@ -304,22 +304,7 @@ function expval_LR_apply_list_sym(rr::MPS, op_list::AbstractVector, op_mid::Stri
     tmpo_id  = folded_tMPO_doublebeta(b, b_im, time_sites)
 
     psiOR = deepcopy(rr)
-    # psiIR = deepcopy(rr)
-    #p = Progress(length(op_list); desc="L=$(length(rr)), cutoff=$(cutoff), maxbondim=$(maxdim))", showspeed=true) 
-
-
-        # # Assuming normalization factor is always the same..
-        # psiIR = applyn(tmpo_id, psiIR) 
-        # #@info "2: " linkdims(psiIR)
-        # psiIR, _, overlap_IR = truncate_rsweep_sym(psiIR; cutoff, chi_max=maxdim, method="SVD")
-        # # #@info "3: " linkdims(psiIR)
-        # # #@info "norm factor =", overlap_IR 
-        # # psiIR = ITransverse.normbyfactor(psiIR, sqrt(overlap_IR))
-        # # #@info "4: " linkdims(psiIR)
-        # #@info "normalizing at each step by  $(overlap_IR)"
-
-
-    #@showprogress  
+ 
     for (ii, str_op) in enumerate(op_list)
 
         if str_op == "Id"
@@ -330,13 +315,8 @@ function expval_LR_apply_list_sym(rr::MPS, op_list::AbstractVector, op_mid::Stri
             @error "No valid operator given"
         end
 
-
-
         tmpo = folded_tMPO_doublebeta(b, b_im, time_sites, op)
-        #norm1 = norm(apply(tmpo_id, psiOR; maxdim, cutoff) )
 
-
-        
         if method == "RTM"
             #@info "1: " linkdims(psiIR)
 
@@ -349,7 +329,7 @@ function expval_LR_apply_list_sym(rr::MPS, op_list::AbstractVector, op_mid::Stri
             #@info "After apply:" ITransverse.overlap_noconj(psiOR, psiOR)
             psiOR, _, overlap_OR = truncate_rsweep_sym(psiOR; cutoff, chi_max=maxdim, method="SVD")
             #@info "After trunc:" ITransverse.overlap_noconj(psiOR, psiOR)
-            psiOR = ITransverse.normbyfactor(psiOR, sqrt(overlap_OR))
+            #psiOR = ITransverse.normbyfactor(psiOR, sqrt(overlap_OR))
             #@info "After normalization:" ITransverse.overlap_noconj(psiOR, psiOR)
         else # RDM
             psiOR = isnothing(maxdim) ? applyn(tmpo, psiOR) : apply(tmpo,psiOR; alg="naive", maxdim, cutoff)
@@ -375,5 +355,49 @@ function expval_LR_apply_list_sym(rr::MPS, op_list::AbstractVector, op_mid::Stri
     LOR = overlap_noconj(psiOR, OOR) 
 
     return LOR, LR
+
+end
+
+
+
+""" Given an input MPS |B>, an operator list, and a "middle" operator X, builds tMPO columns with all the operators in the list 
+and applies them to the MPS, building O1*O2*..*ON|B> = |OB> . Then computes the exp value <BO|X|OB>, so it
+should be thought as a symmetric string +1 extra operator in the middle."""
+function expval_LR_apply_list_sym_2(rr::MPS, op_list::AbstractVector, b::FoldtMPOBlocks,  b_im::FoldtMPOBlocks; maxdim=256, cutoff=1e-10, method="RDM")
+
+    time_sites = siteinds(rr)
+    psiOR = deepcopy(rr)
+
+    norm_factors = []
+ 
+    for str_op in op_list
+
+        if str_op == "Id"
+            op = ComplexF64[1,0,0,1]
+        elseif str_op == "Pz"
+            op = ComplexF64[1,0,0,0]
+        else
+            @error "Operator $(str_op) not implemented yet"
+        end
+
+        tmpo = folded_tMPO_doublebeta(b, b_im, time_sites, op)
+
+        if method == "RTM"
+          
+            psiOR = applyn(tmpo, psiOR) 
+            psiOR, _, overlap_OR = truncate_rsweep_sym(psiOR; cutoff, chi_max=maxdim, method="SVD")
+            push!(norm_factors, overlap_OR)
+            psiOR = ITransverse.normbyfactor(psiOR, sqrt(overlap_OR))
+        else # RDM
+            psiOR = isnothing(maxdim) ? applyn(tmpo, psiOR) : apply(tmpo,psiOR; alg="naive", maxdim, cutoff)
+            @info maxlinkdim(psiOR), norm(psiOR)
+            push!(norm_factors, 1.)
+        end
+    
+    end
+
+    LR = overlap_noconj(psiOR,psiOR)
+
+    return LR * prod(norm_factors), LR, norm_factors
 
 end
