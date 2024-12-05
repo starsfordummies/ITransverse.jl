@@ -28,3 +28,4 @@ Manifest.toml
 settings.json
 
 draft/*
+src/experimental/*
