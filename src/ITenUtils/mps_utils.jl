@@ -195,7 +195,7 @@ function extend_mps_v(in_mps::MPS, new_sites::Vector{<:Index})
 end
 
 
-""" Returns a copy of psi normalized by a `factor` (spread out over all MPS tensors) """
+""" Returns a copy of psi normalized by a `factor` (spread out over all MPS tensors using log) """
 function normbyfactor(psi::AbstractMPS, factor::Number )
 
     psic = deepcopy(psi)
@@ -206,6 +206,10 @@ function normbyfactor(psi::AbstractMPS, factor::Number )
     for n in eachindex(psic)
       psic[n] ./= z
     end
+
+    # When we do this, we are breaking canonical forms so reset llims
+    ITensorMPS.setleftlim!(psic,1)
+    ITensorMPS.setrightlim!(psic,length(psic))
 
     return psic
 

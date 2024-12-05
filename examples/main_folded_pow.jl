@@ -1,5 +1,6 @@
-using Revise
-using ITensors, JLD2
+using ITensors
+using ITensorMPS 
+using JLD2
 
 using ITransverse
 #using ITransverse.ITenUtils
