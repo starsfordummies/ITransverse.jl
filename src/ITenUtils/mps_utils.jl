@@ -208,8 +208,7 @@ function normbyfactor(psi::AbstractMPS, factor::Number )
     end
 
     # When we do this, we are breaking canonical forms so reset llims
-    ITensorMPS.setleftlim!(psic,1)
-    ITensorMPS.setrightlim!(psic,length(psic))
+    ITensorMPS.reset_ortho_lims!(psic)
 
     return psic
 
