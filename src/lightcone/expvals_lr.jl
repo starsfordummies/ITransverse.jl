@@ -398,6 +398,6 @@ function expval_LR_apply_list_sym_2(rr::MPS, op_list::AbstractVector, b::FoldtMP
 
     LR = overlap_noconj(psiOR,psiOR)
 
-    return LR * prod(norm_factors), LR, norm_factors
+    return LR * prod(norm_factors), LR, norm_factors, psiOR
 
 end
