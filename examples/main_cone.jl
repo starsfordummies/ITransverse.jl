@@ -1,6 +1,5 @@
 using ITensors, ITensorMPS, JLD2
 using ITransverse.ITenUtils
-using Revise
 #using Plots
 
 using ITransverse
@@ -8,8 +7,8 @@ using ITransverse
 function main_cone()
 
     JXX = 1.0  
-    hz = 0.4 # 1.05
-    gx = 0.0 # 0.5
+    hz = 1.0 # 1.05
+    gx = 0.5 # 0.5
 
     dt = 0.1
 
@@ -32,13 +31,13 @@ function main_cone()
 
     truncp = TruncParams(cutoff, maxbondim, direction)
 
-    Nsteps = 60
+    Nsteps = 50
 
     #time_sites = siteinds("S=3/2", 1)
 
     mp = ModelParams("S=1/2", JXX, hz, gx)
-    tp = tMPOParams(dt, build_expH_ising_murg, mp, nbeta, init_state, Id)
-    #tp = tMPOParams(dt, ITransverse.ChainModels.build_expH_ising_symm_svd_1o, mp, nbeta, init_state, Id)
+    #tp = tMPOParams(dt, build_expH_ising_murg, mp, nbeta, init_state, Id)
+    tp = tMPOParams(dt, ITransverse.ChainModels.build_expH_ising_symm_svd, mp, nbeta, init_state, Id)
 
     # mp = ModelParams("S=1/2", JXX, hz, 0.0, dt)
     # tp = tMPOParams("S=1/2", "S=1/2", build_expH_ising_murg, mp, dt, nbeta, init_state)
