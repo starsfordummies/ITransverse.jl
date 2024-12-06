@@ -8,7 +8,7 @@ using ProgressMeter
 
 function simpler_string(length_string::Int,ts::Int, nbeta::Int; Jxx::Real=1,hz::Real, hx::Real=0.0)
 
-    tp = tMPOParams(0.1, build_expH_ising_murg, ModelParams("S=1/2", Jxx, hz, hx), nbeta, [1,0])
+    tp = tMPOParams(0.1, build_expH_ising_murg, IsingParams(Jxx, hz, hx), nbeta, [1,0])
     tp_proj = tMPOParams(tp; tr=[1,0,0,0])
 
     cutoff = 1e-12

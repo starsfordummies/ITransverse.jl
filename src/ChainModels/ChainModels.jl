@@ -10,7 +10,7 @@ include("ising_parallel.jl")
 include("potts.jl")
 include("xxzmodel.jl")
 
-export ModelParams
+export ModelParams, IsingParams
 
 # export  build_expH, build_expHim
 

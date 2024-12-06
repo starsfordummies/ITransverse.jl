@@ -1,18 +1,23 @@
 # Custom param structures for Ising-Potts models
 # and for power methods/ truncations etc 
 
-struct ModelParams
-    phys_space::String
-    JXX::Float64
-    hz::Float64
-    λx::Float64
+abstract type ModelParams end
 
-    ModelParams(phys_space, JXX, hz, λx) = new(phys_space, JXX, hz, λx)
+function ModelParams(phys_space, Jtwo, gperp, hpar)
+    @warn "Warning, this is deprecated - use IsingParams(Jxx, gz, hx) for Ising instead"
+    return IsingParams(Jtwo, gperp, hpar)
+end
+
+struct IsingParams <: ModelParams
+    phys_space::String
+    direction::String
+    Jtwo::Float64
+    gperp::Float64
+    hpar::Float64
+
+    IsingParams(Jtwo, gperp, hpar; direction="XXZ") = new("S=1/2", direction, Jtwo, gperp, hpar)
 end
 
 # allow for changes on the fly of params 
-ModelParams(x::ModelParams; 
-    JXX=x.JXX, 
-    hz=x.hz, 
-    λx=x.λx) = ModelParams(x.phys_space, JXX, hz, λx)
+IsingParams(x::IsingParams; Jtwo=x.Jtwo, gperp=x.gperp, hpar=x.hpar) = IsingParams(Jtwo, gperp, hpar)
 

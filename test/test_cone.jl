@@ -31,7 +31,7 @@ truncp = TruncParams(cutoff, maxbondim)
 
 Nsteps = 50
 
-mp = ModelParams("S=1/2", JXX, hz, gx)
+mp = IsingParams(JXX, hz, gx)
 tp = tMPOParams(dt, build_expH_ising_murg, mp, nbeta, init_state)
 
 

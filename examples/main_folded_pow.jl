@@ -12,7 +12,7 @@ function main_folded_pm()
 
     tp = ising_tp()
     tp =  tMPOParams(0.1, build_expH_ising_murg, 
-    ModelParams("S=1/2", 1.0, 0.7, 0.0), 0, [0,1], [1,0,0,1])
+    IsingParams(1.0, 0.7, 0.0), 0, [0,1], [1,0,0,1])
 
 
     cutoff = 1e-10

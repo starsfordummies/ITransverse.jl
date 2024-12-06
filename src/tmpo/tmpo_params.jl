@@ -1,7 +1,7 @@
-struct tMPOParams{T <:Union{Float64,ComplexF64}}
+struct tMPOParams{T <:Union{Float64,ComplexF64}, T2 <: ModelParams}
     dt::T
     expH_func::Function
-    mp::ModelParams
+    mp::T2
     nbeta::Int64
     bl::ITensor  # bottom -> left(rotated)
     tr::ITensor  # top -> right(rotated)
@@ -63,4 +63,4 @@ tMPOParams(x::tMPOParams;
 
 # quick defaults for parallel field Ising, for playing around: J=1 hz=0.4, gx=0, init_state= |+>
 ising_tp() = tMPOParams(0.1, build_expH_ising_murg, 
-    ModelParams("S=1/2", 1.0, 0.4, 0.0), 0, [1.0+0im,1]/sqrt(2), [1,0,0,1])
+    IsingParams(1.0, 0.4, 0.0), 0, [1.0+0im,1]/sqrt(2), [1,0,0,1])

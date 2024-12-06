@@ -1,23 +1,23 @@
-function build_H_ising(sites::Vector{<:Index}, mp::ModelParams)
-    build_H_ising(sites, mp.JXX, mp.hz, mp.λx)
+function build_H_ising(sites::Vector{<:Index}, mp::IsingParams)
+    build_H_ising(sites, mp.Jtwo, mp.gperp, mp.hpar)
 end
 
-function build_H_ising(sites::Vector{<:Index}, JXX::Real, hz::Real, λx::Real)
+function build_H_ising(sites::Vector{<:Index}, Jtwo::Real, gperp::Real, hpar::Real)
 
     # Input operator terms which define a Hamiltonian
     N = length(sites)
     os = OpSum()
 
     for j in 1:(N - 1)
-        os += -JXX, "X", j, "X", j + 1
+        os += -Jtwo, "X", j, "X", j + 1
     end
 
     for j in 1:N
-        os += -hz, "Z", j
+        os += -gperp, "Z", j
     end
 
     for j in 1:N
-        os += -λx, "X", j
+        os += -hpar, "X", j
     end
 
     # Convert these terms to an MPO tensor network
@@ -102,30 +102,30 @@ function build_expH_ising_murg(
 
 end
 
-function build_expH_ising_murg(s::Vector{<:Index}, p::ModelParams, dt::Number)
+function build_expH_ising_murg(s::Vector{<:Index}, p::IsingParams, dt::Number)
     
-    build_expH_ising_murg(s, p.JXX, p.hz, p.λx, dt)
+    build_expH_ising_murg(s, p.Jtwo, p.gperp, p.hpar, dt)
 
 end
 
-function build_expH_ising_murg(mp::ModelParams, dt::Number)
+function build_expH_ising_murg(mp::IsingParams, dt::Number)
     
     space_sites = siteinds(mp.phys_space, 3; conserve_qns = false)
-    build_expH_ising_murg(space_sites, mp.JXX, mp.hz, mp.λx, dt)
+    build_expH_ising_murg(space_sites, mp.Jtwo, mp.gperp, mp.hpar, dt)
 
 end
 
 
-
-function epsilon_brick_ising(mp::ModelParams)
+""" Convention XX+Z only for now """
+function epsilon_brick_ising(mp::IsingParams)
 
     temp_s = siteinds("S=1/2",2)
     os = OpSum()
-    os += mp.JXX,   "X",1,"X",2
-    os += mp.hz/2,  "I",1,"Z",2
-    os += mp.hz/2,  "Z",1,"I",2
-    os += mp.λx/2,  "I",1,"X",2
-    os += mp.λx/2,  "X",1,"I",2
+    os += mp.Jtwo,   "X",1,"X",2
+    os += mp.gperp/2,  "I",1,"Z",2
+    os += mp.gperp/2,  "Z",1,"I",2
+    os += mp.hpar/2,  "I",1,"X",2
+    os += mp.hpar/2,  "X",1,"I",2
 
     #ϵ_op = ITensor(os, temp_s, temp_s')
     ϵ_op = MPO(os, temp_s)
@@ -138,11 +138,11 @@ function epsilon_brick_ising(mp::ModelParams)
 end
 
 
-function build_expH_ising_symm_svd(p::ModelParams, dt::Number)
+function build_expH_ising_symm_svd(p::IsingParams, dt::Number)
 
-    JXX = p.JXX*dt
-    hz = p.hz*dt
-    λx = p.λx*dt
+    JXX = p.Jtwo*dt
+    hz = p.gperp*dt
+    λx = p.hpar*dt
     
     s = siteinds("S=1/2", 3)
     X1 = op(s, "X", 1)
@@ -187,10 +187,10 @@ function build_expH_ising_symm_svd(p::ModelParams, dt::Number)
 end
 
 
-function build_expH_ising_symm_svd_1o(p::ModelParams, dt::Number)
+function build_expH_ising_symm_svd_1o(p::IsingParams, dt::Number)
     
-    JXX = p.JXX*dt
-    hz = p.hz*dt
+    JXX = p.Jtwo*dt
+    hz = p.gpar*dt
 
     s = siteinds("S=1/2", 3)
     X1 = op(s, "X", 1)

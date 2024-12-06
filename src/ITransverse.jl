@@ -59,8 +59,7 @@ export rho2,
     diagonalize_rtm_right_gen_sym,
     diagonalize_rtm_left_gen_sym
 
- 
-export ModelParams
+export ModelParams, IsingParams
 
 export TruncParams
 
