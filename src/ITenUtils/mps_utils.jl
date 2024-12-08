@@ -251,10 +251,22 @@ function gaugefix_left(psi::MPS)
 end
 
 
+""" Builds a random MPO with `linkdims` bond dimension """
 function myrMPO(sites::Vector{<:Index}; linkdims::Int)
-    o = random_mpo(sites)
-    for ii = 2:linkdims
-        o += random_mpo(sites)
+    if linkdims > 15  # Break up into smaller pieces and sum them afterwards
+        ns = div(linkdims,10)
+        o = myrMPO(sites, linkdims=linkdims % 10)
+        @showprogress for _ = 1:ns
+            o += myrMPO(sites, linkdims=10)
+        end
+
+    else
+        o = random_mpo(sites)
+        for _ = 2:linkdims
+            o += random_mpo(sites)
+        end
     end
+
     return o
+
   end
