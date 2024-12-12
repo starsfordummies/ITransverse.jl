@@ -110,7 +110,7 @@ end
 
 function build_expH_ising_murg(mp::IsingParams, dt::Number)
     
-    space_sites = siteinds(mp.phys_space, 3; conserve_qns = false)
+    space_sites = siteinds("S=1/2", 3; conserve_qns = false)
     build_expH_ising_murg(space_sites, mp.Jtwo, mp.gperp, mp.hpar, dt)
 
 end
