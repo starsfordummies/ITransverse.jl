@@ -173,17 +173,21 @@ function fw_tMPOn(b::FwtMPOBlocks, b_im::FwtMPOBlocks, time_sites::Vector{<:Inde
 end
 
 
-
+""" Builds forward tMPO with nbeta steps on one side only: 
+in-U(β)-U(β)-..U(β)-U(idt)-U(idt)-U(idt)-U(idt)-fin 
+   |___nbeta_____|     
+   Returns tMPO and tMPS     
+"""
 function fw_tMPOn_initbetaonly(b::FwtMPOBlocks, b_im::FwtMPOBlocks, time_sites::Vector{<:Index}; 
     left_state::ITensor = b.tp.bl, right_state::ITensor = b.tp.tr)
 
     tp = b.tp
 
-    nbeta = tp.nbeta*2
+    nbeta = tp.nbeta
     #left_state = tp.bl
     #right_state = tp.tr 
 
-    @assert nbeta < length(time_sites) - 2
+    @assert nbeta < length(time_sites) - 1
 
     Nsteps = length(time_sites)
 
@@ -205,16 +209,16 @@ function fw_tMPOn_initbetaonly(b::FwtMPOBlocks, b_im::FwtMPOBlocks, time_sites::
     rot_links_mps = sim(rot_links_mpo)
 
 
-    tMPO =  MPO(fill(Wc, Nsteps))
-    tMPS =  MPS(fill(Wr, Nsteps))
+    tMPO =  MPO(Nsteps)
+    tMPS =  MPS(Nsteps)
 
     for ii = 1:nbeta
         tMPO[ii] = (Wc_im) * delta(icP, time_sites[ii]) * delta(icPs, time_sites[ii]')
         tMPS[ii] = (Wr_im) * delta(irP, time_sites[ii]) 
     end
     for ii = nbeta+1:Nsteps
-        tMPO[ii] = tMPO[ii] * delta(icP, time_sites[ii]) * delta(icPs, time_sites[ii]') 
-        tMPS[ii] = tMPS[ii] * delta(irP, time_sites[ii])
+        tMPO[ii] = Wc * delta(icP, time_sites[ii]) * delta(icPs, time_sites[ii]') 
+        tMPS[ii] = Wr * delta(irP, time_sites[ii])
     end
 
 
