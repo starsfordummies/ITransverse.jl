@@ -19,4 +19,3 @@ IsingParams(Jtwo, gperp, hpar; direction="XXZ") = IsingParams(Jtwo, gperp, hpar,
 
 # allow for changes on the fly of params 
 IsingParams(x::IsingParams; Jtwo=x.Jtwo, gperp=x.gperp, hpar=x.hpar, direction=x.direction) = IsingParams(Jtwo, gperp, hpar; direction)
-
