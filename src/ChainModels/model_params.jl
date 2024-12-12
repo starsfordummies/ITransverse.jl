@@ -4,7 +4,7 @@
 abstract type ModelParams end
 
 function ModelParams(phys_space, Jtwo, gperp, hpar)
-    @warn "Warning, this is deprecated - use IsingParams(Jxx, gz, hx) for Ising instead"
+    @warn "Warning, ModelParams(site, J,g,h) is deprecated - use IsingParams(Jxx, gz, hx) for Ising instead"
     return IsingParams(Jtwo, gperp, hpar)
 end
 
