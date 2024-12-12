@@ -9,15 +9,14 @@ function ModelParams(phys_space, Jtwo, gperp, hpar)
 end
 
 struct IsingParams <: ModelParams
-    phys_space::String
-    direction::String
     Jtwo::Float64
     gperp::Float64
     hpar::Float64
-
-    IsingParams(Jtwo, gperp, hpar; direction="XXZ") = new("S=1/2", direction, Jtwo, gperp, hpar)
+    direction::String
 end
 
+IsingParams(Jtwo, gperp, hpar; direction="XXZ") = IsingParams(Jtwo, gperp, hpar, direction)
+
 # allow for changes on the fly of params 
-IsingParams(x::IsingParams; Jtwo=x.Jtwo, gperp=x.gperp, hpar=x.hpar) = IsingParams(Jtwo, gperp, hpar)
+IsingParams(x::IsingParams; Jtwo=x.Jtwo, gperp=x.gperp, hpar=x.hpar, direction=x.direction) = IsingParams(Jtwo, gperp, hpar; direction)
 
