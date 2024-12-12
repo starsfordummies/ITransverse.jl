@@ -25,7 +25,7 @@ function main_ising_loschmidt(Tstart::Int, Tend::Int, nbeta::Int; Tstep::Int=1)
 
     pm_params = PMParams(truncp, itermax, eps_converged, true, "RTMRDM")
 
-    mp = ModelParams("S=1/2", JXX, hz, gx)
+    mp = IsingParams(JXX, hz, gx)
     tp = tMPOParams(dt, build_expH_ising_murg, mp, nbeta, init_state, init_state)
 
     ll_murgs = Vector{MPS}()

@@ -8,6 +8,8 @@ using NDTensors
 using ITensors
 using ITensorMPS
 
+using ProgressMeter
+
 using ITensors.Adapt: adapt
 
 import NDTensors:

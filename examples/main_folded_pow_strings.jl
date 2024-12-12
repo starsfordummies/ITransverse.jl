@@ -15,9 +15,9 @@ function main_folded_pm(itermax::Int,length_string::Int; ts::Int=10,Jxx::Float64
 
     #tp = ising_tp()
     tp = tMPOParams(0.1, build_expH_ising_murg, 
-    ModelParams("S=1/2", Jxx, hz, hx), 0, [1,0], [1,0,0,1])
+    IsingParams(Jxx, hz, hx), 0, [1,0], [1,0,0,1])
     tp_proj = tMPOParams(0.1, build_expH_ising_murg, 
-    ModelParams("S=1/2", Jxx, hz, hx), 0, [1,0], [1,0,0,0])
+    IsingParams(Jxx, hz, hx), 0, [1,0], [1,0,0,0])
     cutoff = 1e-12
     maxbondim = 120
     #length_string = 10

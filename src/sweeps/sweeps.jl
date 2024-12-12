@@ -95,8 +95,8 @@ function truncate_rsweep(psi::MPS, phi::MPS; cutoff::Real, chi_max::Int)
     mpslen = length(psi)
 
     # first bring to left canonical form 
-    psi_ortho = orthogonalize(psi, mpslen, normalize=false)
-    phi_ortho = orthogonalize(phi, mpslen, normalize=false)
+    psi_ortho = orthogonalize(psi, mpslen)
+    phi_ortho = orthogonalize(phi, mpslen)
 
     XUinv, XVinv, right_env = (ITensor(1), ITensor(1), ITensor(1))
     
