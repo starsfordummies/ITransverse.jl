@@ -219,6 +219,11 @@ function applyn(O::MPO, psi::AbstractMPS)
     apply(O, psi, alg="naive", truncate=false)
 end
 
+""" Shorthand for apply + swap indices """
+function applys(O::MPO, psi::AbstractMPS; cutoff, maxdim)
+    apply(swapprime(O, 0, 1, "Site"), psi; cutoff, maxdim)
+end
+
 """ Shorthand for apply with no truncation + swap indices """
 function applyns(O::MPO, psi::AbstractMPS)
     apply(swapprime(O, 0, 1, "Site"), psi, alg="naive", truncate=false)
