@@ -183,6 +183,11 @@ function fw_tMPOn_initbetaonly(b::FwtMPOBlocks, b_im::FwtMPOBlocks, time_sites::
 
     tp = b.tp
 
+    # CPU or GPU ?
+    dttype = NDTensors.unwrap_array_type(b.Wc)
+    left_state = adapt(dttype, left_state)
+    right_state = adapt(dttype, right_state)
+
     nbeta = tp.nbeta
     #left_state = tp.bl
     #right_state = tp.tr 
