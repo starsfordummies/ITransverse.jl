@@ -40,7 +40,7 @@ function check_gencan_left(psi::MPS, phi::MPS; verbose::Bool=false)
 
     if is_left_gencan
         @info("overlap = $(overlap_noconj(psi,phi))), 
-        alt = $(scalar(psi[end]*phi[end]* left_env )))")
+        alt = $(scalar(psi[end]* (phi[end]*left_env) )))")
     end
     
     return is_left_gencan
@@ -82,7 +82,7 @@ function check_gencan_right(psi::MPS, phi::MPS; verbose::Bool=false)
 
     if all(is_right_s)
         @info ("overlap = $(overlap_noconj(psi,phi))), 
-        alt = $(scalar(right_env * psi[1]*phi[1]))")
+        alt = $(scalar((right_env * psi[1])*phi[1]))")
     end
     
     return all(is_right_s)

@@ -165,8 +165,8 @@ function fw_tMPOn(b::FwtMPOBlocks, b_im::FwtMPOBlocks, time_sites::Vector{<:Inde
         tMPS[ii] = tMPS[ii] * delta(irL, rot_links_mps[ii-1]) * delta(irR, rot_links_mps[ii]) 
     end
 
-    tMPO[end] = tMPO[end] * delta(icL, rot_links_mpo[Nsteps-1]) * dag(right_state) * delta(ind(right_state,1),icR) 
-    tMPS[end] = tMPS[end] * delta(irL, rot_links_mps[Nsteps-1]) * dag(right_state) * delta(ind(right_state,1),irR) 
+    tMPO[end] = (tMPO[end] * delta(icL, rot_links_mpo[Nsteps-1])) * (dag(right_state) * delta(ind(right_state,1),icR))
+    tMPS[end] = (tMPS[end] * delta(irL, rot_links_mps[Nsteps-1])) * (dag(right_state) * delta(ind(right_state,1),irR))
 
     return tMPO, tMPS
 
@@ -236,8 +236,8 @@ function fw_tMPOn_initbetaonly(b::FwtMPOBlocks, b_im::FwtMPOBlocks, time_sites::
         tMPS[ii] = tMPS[ii] * delta(irL, rot_links_mps[ii-1]) * delta(irR, rot_links_mps[ii]) 
     end
 
-    tMPO[end] = tMPO[end] * delta(icL, rot_links_mpo[Nsteps-1]) * dag(right_state) * delta(ind(right_state,1),icR) 
-    tMPS[end] = tMPS[end] * delta(irL, rot_links_mps[Nsteps-1]) * dag(right_state) * delta(ind(right_state,1),irR) 
+    tMPO[end] = (tMPO[end] * delta(icL, rot_links_mpo[Nsteps-1])) * (dag(right_state) * delta(ind(right_state,1),icR))
+    tMPS[end] = tMPS[end] * delta(irL, rot_links_mps[Nsteps-1]) * (dag(right_state) * delta(ind(right_state,1),irR))
 
     return tMPO, tMPS
 

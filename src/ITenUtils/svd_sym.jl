@@ -198,7 +198,7 @@ function symm_svd(a::ITensor, linds; cutoff=nothing, maxdim=nothing)
     #@show matrix(vd)
     #@show u * s * vd ≈ ac
 
-    z = noprime(dag(u) * vd' * delta(iL, iR'))
+    z = noprime(dag(u) * (vd' * delta(iL, iR')))
 
     #@show inds(z)
     # Z could still be block-diagonal. 

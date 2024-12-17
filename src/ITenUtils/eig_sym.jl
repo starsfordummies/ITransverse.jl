@@ -103,7 +103,7 @@ function symm_oeig(a::ITensor, linds; cutoff=nothing, maxdim=nothing)
 
     cL = combiner(linds)
     cR = combiner(rinds)
-    am = matrix(a * cL * cR)
+    am = matrix((a * cL) * cR)
 
     F, spec, norm_err = symm_oeig(am; cutoff, maxdim)
     D = F.values
