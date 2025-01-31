@@ -161,8 +161,8 @@ function build_expH_ising_symm_svd(p::IsingParams, dt::Number)
     eX2 = exp(im*λx*op(s,"X",2))
     eX3 = exp(im*λx*op(s,"X",3))
 
-    l1, r2 = ITenUtils.symm_factorization(e12, inds(X1))
-    l2, r3 = ITenUtils.symm_factorization(e23, inds(X2))
+    l1, r2 = ITenUtils.symm_factorization(e12, inds(X1), cutoff=1e-14)
+    l2, r3 = ITenUtils.symm_factorization(e23, inds(X2), cutoff=1e-14)
 
     """
 

@@ -16,7 +16,9 @@ export ModelParams, IsingParams
 
 # from ising.jl
 export build_H_ising, 
-    build_expH_ising_murg
+    build_expH_ising_murg,
+    build_expH_ising_symm_svd
+
     
 #from potts.jl
 export build_H_potts_manual,
