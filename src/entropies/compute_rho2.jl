@@ -15,7 +15,7 @@ end
 function rtm2_contracted_normalized(psi::MPS, phi::MPS)
     r2s = []
     normalize_factor = overlap_noconj(psi,phi)
-    normalize_factor > 1e10 || normalize_factor < 1e-10 && @warn "overlap overflow? $(normalize_factor)"
+    abs(normalize_factor) > 1e10 || abs(normalize_factor) < 1e-10 && @warn "overlap overflow? $(normalize_factor)"
     @showprogress for jj in eachindex(psi)[1:end-1]
         push!(r2s, rtm2_contracted(psi, phi, jj; normalize_factor))
     end
