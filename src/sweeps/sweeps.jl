@@ -114,8 +114,12 @@ function truncate_rsweep(psi::MPS, phi::MPS; cutoff::Real, chi_max::Int)
         #@show ii, rnorm
 
         # TODO maybe we should correct along the way if envs become too large
-        if rnorm > 1e8 || rnorm < 1e-8
-            @warn "Norm of environment is $(rnorm), watch for roundoff errs"
+        if rnorm > 1e9 || rnorm < 1e-9
+            @warn "Norm of environment $(ii) is $(rnorm), watch for roundoff errs"
+            @warn overlap_noconj(psi,phi)
+            @warn inner(psi,phi)
+            @warn norm(psi)
+            @warn norm(phi)
         end
 
         #right_env /= rnorm
@@ -140,7 +144,8 @@ function truncate_rsweep(psi::MPS, phi::MPS; cutoff::Real, chi_max::Int)
         psi_ortho[ii] = Ai * XU  
         phi_ortho[ii] = Bi * XV
 
-        push!(ents_sites, scalar(tocpu((-S*log.(S)))))
+        Snorm = tocpu(normalize(S))
+        push!(ents_sites, scalar((-Snorm*log.(Snorm))))
 
     end
 
