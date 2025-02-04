@@ -67,7 +67,8 @@ export build_H_ising,
     build_expH_ising_murg, 
     build_expH_ising_symm_svd,
     build_expH_potts_murg, 
-    build_expH_potts_symmetric_svd
+    build_expH_potts_symmetric_svd,
+    build_expH_random_symm_svd_1o
 
 
 include("tmpo/tmpo_params.jl")

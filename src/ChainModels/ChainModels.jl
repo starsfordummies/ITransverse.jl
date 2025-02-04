@@ -9,6 +9,7 @@ include("id_mpo.jl")
 include("ising_parallel.jl")
 include("potts.jl")
 include("xxzmodel.jl")
+include("random_mpo.jl")
 
 export ModelParams, IsingParams
 
@@ -28,6 +29,7 @@ export build_H_potts_manual,
     build_expH_potts_symmetric_svd
 
 
+export build_expH_random_symm_svd_1o
 # from xxzmodel.jl
 # export build_H_XXZ_manual,
 #     #build_H_XXZ_manual_lowtri,
