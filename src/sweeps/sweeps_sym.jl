@@ -14,7 +14,7 @@ function truncate_lsweep_sym(in_psi::MPS; cutoff::Float64, chi_max::Int, method:
     mpslen = length(in_psi)
 
     psi_ortho = orthogonalize(in_psi,1)
-    s = siteinds(psi_ortho)
+    sits = siteinds(psi_ortho)
 
     ents_sites = ComplexF64[] 
 
@@ -27,7 +27,7 @@ function truncate_lsweep_sym(in_psi::MPS; cutoff::Float64, chi_max::Int, method:
 
         left_env *= Ai
         left_env *= Ai'
-        left_env *= delta(elt, s[ii],s[ii]')
+        left_env *= delta(elt, sits[ii],sits[ii]')
 
 
         if method == "SVD"
@@ -175,7 +175,7 @@ Just bring the MPS to generalized *left* canonical form without truncating (as f
 """
 function gen_canonical_left(in_mps::MPS)
     temp = deepcopy(in_mps)
-    psi_leftgencan, _, _ = truncate_lsweep_sym(temp; cutoff=1e-30, chi_max=2*maxlinkdim(in_mps), method="EIG")
+    psi_leftgencan, _, _ = truncate_lsweep_sym(temp; cutoff=1e-15, chi_max=2*maxlinkdim(in_mps), method="EIG")
     return psi_leftgencan
 end
 
@@ -184,6 +184,6 @@ Just bring the MPS to generalized *right* canonical form without truncating (as 
 TODO should use chi_min here to make sure ! 
 """
 function gen_canonical_right(in_mps::MPS)
-    psi_rightgencan, _, _ = truncate_rsweep_sym(in_mps; cutoff=1e-30, chi_max=2*maxlinkdim(in_mps), method="EIG")
+    psi_rightgencan, _, _ = truncate_rsweep_sym(in_mps; cutoff=1e-15, chi_max=2*maxlinkdim(in_mps), method="EIG")
     return psi_rightgencan
 end
