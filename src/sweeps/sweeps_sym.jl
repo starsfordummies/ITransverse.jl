@@ -61,6 +61,8 @@ function truncate_lsweep_sym(in_psi::MPS; cutoff::Float64, chi_max::Int, method:
         left_env *= XU
         left_env *= XU'
 
+        # If we build "SVD" generalized entropy, normalize them to one 
+        S = NDTensors.cpu(S./sum(S))
         push!(ents_sites, scalar(-S*log.(S)))
     end
 
@@ -89,7 +91,7 @@ function truncate_rsweep_sym(in_psi::MPS; cutoff::Float64, chi_max::Int, method:
 
     mpslen = length(in_psi)
     elt = eltype(in_psi[1])
-    s = siteinds(in_psi)
+    sits = siteinds(in_psi)
 
     # first bring to LEFT standard canonical form 
     psi_ortho = orthogonalize(in_psi, mpslen)
@@ -105,7 +107,7 @@ function truncate_rsweep_sym(in_psi::MPS; cutoff::Float64, chi_max::Int, method:
         right_env *= Ai
         
         right_env *= Ai'
-        right_env *= delta(elt, s[ii], s[ii]')
+        right_env *= delta(elt, sits[ii], sits[ii]')
         
         # Alt: needs to have specified link!
         #right_env *= prime(Ai, "Link")
@@ -149,7 +151,8 @@ function truncate_rsweep_sym(in_psi::MPS; cutoff::Float64, chi_max::Int, method:
 
 
         # convert to CPU to avoid headaches
-        S = NDTensors.cpu(S)
+        # If we build "SVD" generalized entropy, normalize them to one 
+        S = NDTensors.cpu(S./sum(S))
         push!(ents_sites, scalar(-S*log.(S)))
     end
 
