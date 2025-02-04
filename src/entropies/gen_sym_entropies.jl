@@ -57,10 +57,10 @@ function generalized_vn_entropy_symmetric(psiL::MPS; bring_left_gen::Bool=true)
 end
 
 
-function generalized_entropy_symmetric(psiL::MPS; bring_left_gen::Bool=false)
+function generalized_entropy_symmetric(psiL::MPS; which_ents::Vector, bring_left_gen::Bool=false)
  
     eigenvalues_rtm = diagonalize_rtm_left_gen_sym(psiL; bring_left_gen)
-    gen_ents = build_entropies(eigenvalues_rtm)
+    gen_ents = build_entropies(eigenvalues_rtm, which_ents)
     return gen_ents
     
 end
