@@ -88,7 +88,7 @@ function build_expH_ising_murg(
         # Multiply in order:  exp(iZ/2)*exp(iX)*exp(iXX)*exp(iZ/2)
         # everything is symmetric in phys legs here so no need to worry too much
         # (otherwise this is not right, transpositions!) 
-
+        # TODO CHECK ORDER
         U_t[n] *= Uz2' 
         U_t[n] *= Ux
         U_t[n] *= Uz2
@@ -103,12 +103,8 @@ end
 
 
 
-function build_expH_ising_murg_new(
-    sites::Vector{<:Index},
-    JXX::Real,
-    gz::Real,
-    λx::Real,
-    dt::Number)
+function build_expH_ising_murg_new(sites::Vector{<:Index},
+    JXX::Real, gz::Real, λx::Real, dt::Number)
     """ Symmetric version of Murg exp(-iHising t) """
 
     # For real dt this does REAL time evolution 
@@ -127,15 +123,30 @@ function build_expH_ising_murg_new(
 
     eX = exp(im*λx*sigma_X)
     eZ2 = exp(0.5*im*gz*sigma_Z)
+    
+    Ux = MPO([op(eX, s) for s in siteinds(Uxx, plev=0)])
+    Uz2 = MPO([op(eZ2, s) for s in siteinds(Uxx, plev=0)])
 
-    Ux = MPO(ComplexF64, sites, n -> eX)
-    Uz2 = MPO(ComplexF64, sites, n -> eZ2)
+    # Ux = MPO(ComplexF64, sites, n -> eX)
+    # Uz2 = MPO(ComplexF64, sites, n -> eZ2)
 
     # Multiply in order:  exp(iZ/2)*exp(iX)*exp(iXX)*exp(iZ/2)
     
-    U_t = apply(Ux, Uz2)
-    U_t = apply(Uxx, U_t)
-    U_t = apply(Uz2, U_t)
+    U_t = applyn(Ux, Uz2)
+    @show U_t[1].tensor
+
+    U_t = applyn(Uxx, U_t)
+    @show U_t[1].tensor
+
+    U_t = applyn(Uz2, U_t)
+    @show U_t[1].tensor
+
+    @show Uxx[1].tensor
+    @show U_t[1].tensor
+
+    @show Uz2[1].tensor
+
+    @show JXX
 
     return U_t
 
@@ -145,6 +156,13 @@ end
 function build_expH_ising_murg_new(s::Vector{<:Index}, p::IsingParams, dt::Number)
     build_expH_ising_murg_new(s, p.Jtwo, p.gperp, p.hpar, dt)
 end
+
+
+function build_expH_ising_murg_new(p::IsingParams, dt::Number)
+    s = siteinds("S=1/2", 3)
+    build_expH_ising_murg_new(s, p.Jtwo, p.gperp, p.hpar, dt)
+end
+
 
 
 function build_expXX_murg(
@@ -157,7 +175,7 @@ function build_expXX_murg(
     # and the overall minus in Ising H= -(JXX+Z)
 
     N = length(sites)
-    U_t = MPO(N)
+    U_XX = MPO(N)
 
     link_dimension = 2
 
@@ -176,25 +194,25 @@ function build_expXX_murg(
 
         if n == 1
             #U_t[n] = ITensor(ComplexF64, dag(s), s', dag(rl))
-            U_t[n] = onehot(rl => 1) * sqrt(cos(Jdt))*I
-            U_t[n] += onehot(rl => 2) * sqrt(im*sin(Jdt))*X
+            U_XX[n] = onehot(rl => 1) * sqrt(cos(Jdt))*I
+            U_XX[n] += onehot(rl => 2) * sqrt(im*sin(Jdt))*X
         elseif n == N
-            #U_t[n] = ITensor(ComplexF64, ll, dag(s), s')
-            U_t[n] = onehot(ll => 1) * sqrt(cos(Jdt))*I
-            U_t[n] += onehot(ll => 2) * sqrt(im*sin(Jdt))*X
+            #U_XX[n] = ITensor(ComplexF64, ll, dag(s), s')
+            U_XX[n] = onehot(ll => 1) * sqrt(cos(Jdt))*I
+            U_XX[n] += onehot(ll => 2) * sqrt(im*sin(Jdt))*X
 
         else
-            #U_t[n] = ITensor(ComplexF64, ll, dag(s), s', dag(rl))
+            #U_XX[n] = ITensor(ComplexF64, ll, dag(s), s', dag(rl))
 
-            U_t[n] = onehot(ll => 1, rl =>1) * cos(Jdt)*I
-            U_t[n] += onehot(ll => 1, rl =>2) * sqrt(im*sin(Jdt))*sqrt(cos(Jdt))*X
-            U_t[n] += onehot(ll => 2, rl =>1) * sqrt(im*sin(Jdt))*sqrt(cos(Jdt))*X
-            U_t[n] += onehot(ll => 2, rl =>2) * im*sin(Jdt)*I
+            U_XX[n]  = onehot(ll => 1, rl =>1) * cos(Jdt)*I
+            U_XX[n] += onehot(ll => 1, rl =>2) * sqrt(im*sin(Jdt))*sqrt(cos(Jdt))*X
+            U_XX[n] += onehot(ll => 2, rl =>1) * sqrt(im*sin(Jdt))*sqrt(cos(Jdt))*X
+            U_XX[n] += onehot(ll => 2, rl =>2) * im*sin(Jdt)*I
         end
 
     end
 
-    return U_t
+    return U_XX
 
 
 end
@@ -208,28 +226,6 @@ function build_expH_ising_murg(mp::IsingParams, dt::Number)
     space_sites = siteinds("S=1/2", 3; conserve_qns = false)
     build_expH_ising_murg(space_sites, mp.Jtwo, mp.gperp, mp.hpar, dt)
 
-end
-
-
-""" Convention XX+Z only for now """
-function epsilon_brick_ising(mp::IsingParams)
-
-    temp_s = siteinds("S=1/2",2)
-    os = OpSum()
-    os += mp.Jtwo,   "X",1,"X",2
-    os += mp.gperp/2,  "I",1,"Z",2
-    os += mp.gperp/2,  "Z",1,"I",2
-    os += mp.hpar/2,  "I",1,"X",2
-    os += mp.hpar/2,  "X",1,"I",2
-
-    #ϵ_op = ITensor(os, temp_s, temp_s')
-    ϵ_op = MPO(os, temp_s)
-    cs1 = combiner(temp_s[1], temp_s[1]')
-    cs2 = combiner(temp_s[2], temp_s[2]')
-    ϵ_op[1] *= cs1 
-    ϵ_op[2] *= cs2 
-
-    return ϵ_op
 end
 
 function build_expH_ising_symm_svd(s::Vector{<:Index}, p::IsingParams, dt::Number)
@@ -320,4 +316,28 @@ function build_expH_ising_symm_svd_1o(p::IsingParams, dt::Number)
 
     return MPO([Wl, Wc, Wr])
 
+end
+
+
+
+
+""" Convention XX+Z only for now """
+function epsilon_brick_ising(mp::IsingParams)
+
+    temp_s = siteinds("S=1/2",2)
+    os = OpSum()
+    os += mp.Jtwo,   "X",1,"X",2
+    os += mp.gperp/2,  "I",1,"Z",2
+    os += mp.gperp/2,  "Z",1,"I",2
+    os += mp.hpar/2,  "I",1,"X",2
+    os += mp.hpar/2,  "X",1,"I",2
+
+    #ϵ_op = ITensor(os, temp_s, temp_s')
+    ϵ_op = MPO(os, temp_s)
+    cs1 = combiner(temp_s[1], temp_s[1]')
+    cs2 = combiner(temp_s[2], temp_s[2]')
+    ϵ_op[1] *= cs1 
+    ϵ_op[2] *= cs2 
+
+    return ϵ_op
 end

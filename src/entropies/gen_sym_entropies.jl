@@ -96,7 +96,7 @@ function generalized_svd_vn_entropy_symmetric(psiL::MPS; bring_left_gen::Bool=tr
         #gen_ent_cut = sum(eigss.*log.(eigss))
         
         if abs(sum(s) - 1.) > 0.01
-            @warn "RTM not well normalized? Σeigs = 1-$(abs(sum(s) - 1.)) "
+            @warn "RTM not well normalized? Σeigs - 1 = $(abs(sum(s) - 1.)) "
         end
 
         #@show s 
