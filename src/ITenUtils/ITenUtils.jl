@@ -83,7 +83,6 @@ export
     mytrunc_svd,
     mytrunc_eig
 
-    
 export togpu
 export tocpu
 

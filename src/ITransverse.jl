@@ -127,5 +127,8 @@ include("lightcone/cone.jl")
 
 export init_cone, run_cone
 
+include("tebd/tebd.jl")
+
+export tebd_ev
 
 end #module ITransverse
