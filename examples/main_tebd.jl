@@ -2,10 +2,10 @@ using ITensors, ITensorMPS
 using ITransverse
 using Plots
 
-JXX = 1.0
+JXX = -1.0
 hz = 1.05
 gx = -0.5
-
+#H= JXX - 2.0 * 0.525 Z + 2 * 0.25 X
 dt = 0.10
 
 zero_state = Vector{ComplexF64}([1, 0])
@@ -21,30 +21,36 @@ maxbondim = 256
 
 truncp=  TruncParams(cutoff, maxbondim)
 
-ss = siteinds("S=1/2", 40)
+ss = siteinds("S=1/2", 18)
 
 truncp = TruncParams(cutoff, maxbondim)
 
 mp = IsingParams(JXX, hz, gx)
 
 
+tp = tMPOParams(dt, build_expH_ising_murg, mp, nbeta, init_state, init_state)
+#tp = tMPOParams(dt, build_expH_ising_symm_svd, mp, nbeta, init_state, init_state)
+resu = tebd_ev(ss, tp, 60, ["X","Z"], truncp)
+
+
 tp = tMPOParams(dt, build_expH_ising_symm_svd, mp, nbeta, init_state, init_state)
-resu2 = tebd_ev(ss, tp, 40, ["X","Z"], truncp)
+resu2 = tebd_ev(ss, tp, 60, ["X","Z"], truncp)
 
 
 tp = tMPOParams(dt, ITransverse.ChainModels.build_expH_ising_murg_new, mp, nbeta, init_state, init_state)
-resu3 = tebd_ev(ss, tp, 40, ["X","Z"], truncp)
+resu3 = tebd_ev(ss, tp, 60, ["X","Z"], truncp)
 
-tp = tMPOParams(dt, build_expH_ising_murg, mp, nbeta, init_state, init_state)
-#tp = tMPOParams(dt, build_expH_ising_symm_svd, mp, nbeta, init_state, init_state)
-resu = tebd_ev(ss, tp, 40, ["X","Z"], truncp)
+trange = 0.2:0.1:6.1
+p1 = plot(trange, resu["Z"])
+scatter!(p1,trange, resu2["Z"])
+scatter!(p1,trange, resu3["Z"],marker=:x)
 
-p1 = plot(resu["Z"])
-scatter!(p1, resu2["Z"])
-scatter!(p1, resu3["Z"],marker=:x)
+plot!(p1,trange, resu["X"])
+scatter!(p1,trange, resu2["X"])
+scatter!(p1,trange, resu3["X"],marker=:x)
 
-p2 = plot(resu["chis"])
-scatter!(p2, resu2["chis"])
-scatter!(p2, resu3["chis"],marker=:x)
+p2 = plot(trange,resu["chis"])
+scatter!(p2,trange, resu2["chis"])
+scatter!(p2,trange, resu3["chis"],marker=:x)
 
 plot(p1,p2)
