@@ -6,7 +6,7 @@ JXX = 1.0
 hz = 1.05
 gx = -0.5
 
-dt = 0.12
+dt = 0.10
 
 zero_state = Vector{ComplexF64}([1, 0])
 plus_state = Vector{ComplexF64}([1 / sqrt(2), 1 / sqrt(2)])
