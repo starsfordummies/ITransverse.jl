@@ -42,3 +42,9 @@ resu = tebd_ev(ss, tp, 40, ["X","Z"], truncp)
 p1 = plot(resu["Z"])
 scatter!(p1, resu2["Z"])
 scatter!(p1, resu3["Z"],marker=:x)
+
+p2 = plot(resu["chis"])
+scatter!(p2, resu2["chis"])
+scatter!(p2, resu3["chis"],marker=:x)
+
+plot(p1,p2)
