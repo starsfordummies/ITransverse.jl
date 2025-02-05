@@ -60,7 +60,7 @@ end
 Generalized entropy for a *symmetric* environment (psiL,psiL)
     Assuming we're in LEFT GENERALIZED canonical form 
 """
-function generalized_svd_vn_entropy_symmetric(psiL::MPS; bring_left_gen::Bool=true)
+function generalized_svd_vn_entropy_symmetric(psiL::MPS; bring_left_gen::Bool=true, normalize_ent::Bool=true)
  
     if bring_left_gen
         psiL = gen_canonical_left(psiL)
@@ -95,13 +95,15 @@ function generalized_svd_vn_entropy_symmetric(psiL::MPS; bring_left_gen::Bool=tr
         _, s, _ = svd(right_env, ind(right_env,1))
         #gen_ent_cut = sum(eigss.*log.(eigss))
         
-        if abs(sum(s) - 1.) > 0.01
+        if abs(sum(s) - 1.) > 0.1
             @warn "RTM not well normalized? Σeigs - 1 = $(abs(sum(s) - 1.)) "
         end
 
         #@show s 
         # If we build "generalized" entropy from SV (and not their squares), normalize by sum(s)
-        s = s./sum(s)
+        if normalize_ent 
+            s = s./sum(s)
+        end
 
         gen_ent_cut = 0.
         for n=1:dim(s, 1)
