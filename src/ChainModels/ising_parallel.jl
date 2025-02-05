@@ -279,9 +279,9 @@ function build_expH_ising_symm_svd(p::IsingParams, dt::Number)
     """
     # apply(r2,l2) ≈ apply(l2,r2)   #true
 
-    Wl = applyn(applyn(eZ1, applyn(eX1, l1)),           eZ1)
-    Wc = applyn(applyn(eZ2, applyn(eX2, applyn(r2,l2))), eZ2)
-    Wr = applyn(applyn(eZ3, applyn(eX3,r3)),            eZ3)
+    Wl = apply(apply(eZ1, apply(eX1, l1)),           eZ1)
+    Wc = apply(apply(eZ2, apply(eX2, apply(r2,l2))), eZ2)
+    Wr = apply(apply(eZ3, apply(eX3,r3)),            eZ3)
 
     return MPO([Wl, Wc, Wr])
 
