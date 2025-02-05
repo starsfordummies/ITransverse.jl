@@ -134,9 +134,9 @@ function build_expH_random_symm_svd_1o(dt::Number)
     #    Wc = eH2 * (r2 * l2)
     #    Wr = eH3 * r3
     # We use 'apply' if you prefer that style.
-    Wl = apply(eH1, l1)
-    Wc = apply(eH2, apply(r2, l2))
-    Wr = apply(eH3, r3)
+    Wl = applyn(eH1, l1)
+    Wc = applyn(eH2, applyn(r2, l2))
+    Wr = applyn(eH3, r3)
 
     # 9) Return the resulting 3-site MPO
     return MPO([Wl, Wc, Wr])
