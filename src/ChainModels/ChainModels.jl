@@ -5,6 +5,7 @@ using ITensors, ITensorMPS
 using ..ITenUtils
 
 include("model_params.jl")
+include("generic.jl")
 include("id_mpo.jl")
 include("ising_parallel.jl")
 include("potts.jl")

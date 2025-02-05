@@ -2,6 +2,7 @@ function build_H_ising(sites::Vector{<:Index}, mp::IsingParams)
     build_H_ising(sites, mp.Jtwo, mp.gperp, mp.hpar)
 end
 
+""" Builds Ising Hamiltonian MPO  H = -Jtwo*XX - gperp*Z - hpar*X """ 
 function build_H_ising(sites::Vector{<:Index}, Jtwo::Real, gperp::Real, hpar::Real)
 
     # Input operator terms which define a Hamiltonian
@@ -20,7 +21,6 @@ function build_H_ising(sites::Vector{<:Index}, Jtwo::Real, gperp::Real, hpar::Re
         os += -hpar, "X", j
     end
 
-    # Convert these terms to an MPO tensor network
     return MPO(os, sites)
 end
 
@@ -51,7 +51,6 @@ function build_expH_ising_murg(
     link_dimension = 2
 
     link_indices = [Index(link_dimension, "Link,l=$(n-1)") for n = 1:N+1]
-
 
     for n = 1:N
         # siteindex s
@@ -102,14 +101,110 @@ function build_expH_ising_murg(
 
 end
 
-function build_expH_ising_murg(s::Vector{<:Index}, p::IsingParams, dt::Number)
+
+
+function build_expH_ising_murg_new(
+    sites::Vector{<:Index},
+    JXX::Real,
+    gz::Real,
+    λx::Real,
+    dt::Number)
+    """ Symmetric version of Murg exp(-iHising t) """
+
+    # For real dt this does REAL time evolution 
+    # I should have already taken into account both the - sign in exp(-iHt) 
+    # and the overall minus in Ising H= -(JXX+Z)
+
+    # TODO CHECK that this doesn't break anything: 
+    JXX = JXX*dt
+    gz = gz*dt
+    λx = λx*dt
+
+    Uxx = build_expXX_murg(sites, JXX)
+
+    sigma_X = [0 1 ; 1 0]
+    sigma_Z = [1 0 ; 0 -1]
+
+    eX = exp(im*λx*sigma_X)
+    eZ2 = exp(0.5*im*gz*sigma_Z)
+
+    Ux = MPO(ComplexF64, sites, n -> eX)
+    Uz2 = MPO(ComplexF64, sites, n -> eZ2)
+
+    # Multiply in order:  exp(iZ/2)*exp(iX)*exp(iXX)*exp(iZ/2)
     
-    build_expH_ising_murg(s, p.Jtwo, p.gperp, p.hpar, dt)
+    U_t = apply(Ux, Uz2)
+    U_t = apply(Uxx, U_t)
+    U_t = apply(Uz2, U_t)
+
+    return U_t
+
 
 end
 
+function build_expH_ising_murg_new(s::Vector{<:Index}, p::IsingParams, dt::Number)
+    build_expH_ising_murg_new(s, p.Jtwo, p.gperp, p.hpar, dt)
+end
+
+
+function build_expXX_murg(
+    sites::Vector{<:Index},
+    Jdt::Number)
+    """ Symmetric version of Murg exp(-iHising t) """
+
+    # For real dt this does REAL time evolution 
+    # I should have already taken into account both the - sign in exp(-iHt) 
+    # and the overall minus in Ising H= -(JXX+Z)
+
+    N = length(sites)
+    U_t = MPO(N)
+
+    link_dimension = 2
+
+    link_indices = [Index(link_dimension, "Link,l=$(n-1)") for n = 1:N+1]
+
+    for n = 1:N
+        # siteindex s
+
+        # left link index ll with daggered QN conserving direction (if applicable)
+        ll = dag(link_indices[n])
+        # right link index rl
+        rl = link_indices[n+1]
+
+        I = op(sites, "Id", n) 
+        X = op(sites, "X", n)
+
+        if n == 1
+            #U_t[n] = ITensor(ComplexF64, dag(s), s', dag(rl))
+            U_t[n] = onehot(rl => 1) * sqrt(cos(Jdt))*I
+            U_t[n] += onehot(rl => 2) * sqrt(im*sin(Jdt))*X
+        elseif n == N
+            #U_t[n] = ITensor(ComplexF64, ll, dag(s), s')
+            U_t[n] = onehot(ll => 1) * sqrt(cos(Jdt))*I
+            U_t[n] += onehot(ll => 2) * sqrt(im*sin(Jdt))*X
+
+        else
+            #U_t[n] = ITensor(ComplexF64, ll, dag(s), s', dag(rl))
+
+            U_t[n] = onehot(ll => 1, rl =>1) * cos(Jdt)*I
+            U_t[n] += onehot(ll => 1, rl =>2) * sqrt(im*sin(Jdt))*sqrt(cos(Jdt))*X
+            U_t[n] += onehot(ll => 2, rl =>1) * sqrt(im*sin(Jdt))*sqrt(cos(Jdt))*X
+            U_t[n] += onehot(ll => 2, rl =>2) * im*sin(Jdt)*I
+        end
+
+    end
+
+    return U_t
+
+
+end
+
+
+function build_expH_ising_murg(s::Vector{<:Index}, p::IsingParams, dt::Number)
+    build_expH_ising_murg(s, p.Jtwo, p.gperp, p.hpar, dt)
+end
+
 function build_expH_ising_murg(mp::IsingParams, dt::Number)
-    
     space_sites = siteinds("S=1/2", 3; conserve_qns = false)
     build_expH_ising_murg(space_sites, mp.Jtwo, mp.gperp, mp.hpar, dt)
 
@@ -137,14 +232,24 @@ function epsilon_brick_ising(mp::IsingParams)
     return ϵ_op
 end
 
+function build_expH_ising_symm_svd(s::Vector{<:Index}, p::IsingParams, dt::Number)
 
+    w = build_expH_ising_symm_svd(p, dt)
+    wmpo = extend_mpo(s, w)
+    return wmpo
+
+end
+
+
+""" Builds core MPO tensors for 3 sites """ 
 function build_expH_ising_symm_svd(p::IsingParams, dt::Number)
+
+    s = siteinds("S=1/2", 3)
 
     JXX = p.Jtwo*dt
     hz = p.gperp*dt
     λx = p.hpar*dt
     
-    s = siteinds("S=1/2", 3)
     X1 = op(s, "X", 1)
     X2 = op(s, "X", 2)
     X3 = op(s, "X", 3)
