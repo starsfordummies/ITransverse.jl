@@ -96,3 +96,56 @@ function random_unitary_svd(d::Int)
 end
 
 
+
+""" If we're SVD-ing a rank-2 ITensor, we can do it allocating much less memory and without needing to specify indices"""
+function matrix_svd(
+    A::ITensor;
+    lefttags=nothing,
+    righttags=nothing,
+    mindim=nothing,
+    maxdim=nothing,
+    cutoff=nothing,
+    alg=nothing,
+    use_absolute_cutoff=nothing,
+    use_relative_cutoff=nothing,
+    min_blockdim=nothing,
+  )
+
+  @assert ndims(A) == 2 
+
+    lefttags = NDTensors.replace_nothing(lefttags, ts"Link,u")
+    righttags = NDTensors.replace_nothing(righttags, ts"Link,v")
+
+
+    USVT = svd(
+        tensor(A);
+        mindim,
+        maxdim,
+        cutoff,
+        alg,
+        use_absolute_cutoff,
+        use_relative_cutoff,
+        min_blockdim,
+    )
+    
+    if isnothing(USVT)
+        return nothing
+    end
+
+    UT, ST, VT, spec = USVT
+    U, S, V = itensor(UT), itensor(ST), itensor(VT)
+
+    u = commonind(S, U)
+    v = commonind(S, V) 
+
+    U = settags(U, lefttags, u)
+    S = settags(S, lefttags, u)
+    S = settags(S, righttags, v)
+    V = settags(V, righttags, v)
+
+    u = settags(u, lefttags)
+    v = settags(v, righttags)
+
+
+    return ITensors.TruncSVD(U, S, V, spec, u, v)
+end

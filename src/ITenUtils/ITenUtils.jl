@@ -74,7 +74,8 @@ export randsymITensor,
 export symmetrize,
     check_id_matrix,
     check_diag_matrix,
-    randmat_decayspec
+    randmat_decayspec,
+    matrix_svd
 
 # gen_svdeig_symm.jl
 export
