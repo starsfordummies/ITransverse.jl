@@ -100,7 +100,8 @@ function truncate_rsweep(psi::MPS, phi::MPS; cutoff::Real, chi_max::Int)
 
     XUinv, XVinv, right_env = (ITensor(1), ITensor(1), ITensor(1))
     
-    ents_sites = ComplexF64[]
+    # For the non-symmetric case we can only truncate with SVD, so ents will be real 
+    ents_sites = Float64[]
 
     # Start from the *right* side 
     for ii in mpslen:-1:2
@@ -114,13 +115,13 @@ function truncate_rsweep(psi::MPS, phi::MPS; cutoff::Real, chi_max::Int)
         #@show ii, rnorm
 
         # TODO maybe we should correct along the way if envs become too large
-        if rnorm > 1e9 || rnorm < 1e-9
-            @warn "Norm of environment $(ii) is $(rnorm), watch for roundoff errs"
-            @warn overlap_noconj(psi,phi)
-            @warn inner(psi,phi)
-            @warn norm(psi)
-            @warn norm(phi)
-        end
+        # if rnorm > 1e14 || rnorm < 1e-14
+        #     @warn "Norm of environment $(ii) is $(rnorm), watch for roundoff errs"
+        #     @warn overlap_noconj(psi,phi)
+        #     @warn inner(psi,phi)
+        #     @warn norm(psi)
+        #     @warn norm(phi)
+        # end
 
         #right_env /= rnorm
         
@@ -213,3 +214,9 @@ function truncate_normalize_sweep(psi::MPS, phi::MPS, truncp::TruncParams)
     end
 end
 
+""" We can compute the "SVD" VN entropy by just doing a right (generalized) sweep """
+function generalized_svd_vn_entropy(psi, phi)
+    truncp = TruncParams(1e-14, maxlinkdim(psi))
+    _, _, ents, _ = truncate_rsweep(psi, phi, truncp)
+    return ents
+end
