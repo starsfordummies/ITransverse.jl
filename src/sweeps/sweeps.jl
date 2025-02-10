@@ -101,7 +101,7 @@ function truncate_rsweep(psi::MPS, phi::MPS; cutoff::Real, chi_max::Int)
     XUinv, XVinv, right_env = (ITensor(1), ITensor(1), ITensor(1))
     
     # For the non-symmetric case we can only truncate with SVD, so ents will be real 
-    ents_sites = Float64[]
+    ents_sites = fill(0., mpslen-1)  # Float64[]
 
     # Start from the *right* side 
     for ii in mpslen:-1:2
@@ -111,7 +111,7 @@ function truncate_rsweep(psi::MPS, phi::MPS; cutoff::Real, chi_max::Int)
         right_env *= Ai 
         right_env *= Bi 
 
-        rnorm = norm(right_env)
+        #rnorm = norm(right_env)
         #@show ii, rnorm
 
         # TODO maybe we should correct along the way if envs become too large
@@ -127,7 +127,8 @@ function truncate_rsweep(psi::MPS, phi::MPS; cutoff::Real, chi_max::Int)
         
         @assert order(right_env) == 2
 
-        U,S,Vdag = svd(right_env, ind(right_env,1); cutoff=cutoff, maxdim=chi_max)
+        #U,S,Vdag = svd(right_env, ind(right_env,1); cutoff=cutoff, maxdim=chi_max)
+        U,S,Vdag = matrix_svd(right_env; cutoff=cutoff, maxdim=chi_max)
 
         sqS = sqrt.(S)
         isqS = sqS.^(-1)
@@ -146,7 +147,9 @@ function truncate_rsweep(psi::MPS, phi::MPS; cutoff::Real, chi_max::Int)
         phi_ortho[ii] = Bi * XV
 
         Snorm = tocpu(normalize(S))
-        push!(ents_sites, scalar((-Snorm*log.(Snorm))))
+        ents_sites[ii-1] = scalar((-Snorm*log.(Snorm)))
+
+        #@info "setting psi[$(ii)]"
 
     end
 
