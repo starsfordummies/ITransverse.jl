@@ -11,7 +11,7 @@ end
 
 function truncate_lsweep(psi::MPS, phi::MPS; cutoff::Real, chi_max::Int)
 
-    elt = eltype(psi[1])
+    #elt = eltype(psi[1])
     mpslen = length(phi)
 
     psi_ortho = orthogonalize(psi, 1)
@@ -19,7 +19,8 @@ function truncate_lsweep(psi::MPS, phi::MPS; cutoff::Real, chi_max::Int)
 
     XUinv, XVinv, left_env = (ITensor(1),ITensor(1),ITensor(1))
 
-    ents_sites = ComplexF64[]
+    #ents_sites = ComplexF64[]
+    ents_sites = Vector{Float64}(undef, mpslen - 1) 
 
     # Left gen.can. sweep with truncation 
     for ii = 1:mpslen-1
@@ -48,7 +49,11 @@ function truncate_lsweep(psi::MPS, phi::MPS; cutoff::Real, chi_max::Int)
         psi_ortho[ii] = Ai * XU  
         phi_ortho[ii] = Bi * XV
 
-        push!(ents_sites, scalar(tocpu((-S*log.(S)))))
+
+        Snorm = tocpu(normalize(S))
+        ents_sites[ii] = scalar((-Snorm*log.(Snorm)))
+
+        #push!(ents_sites, scalar(tocpu((-S*log.(S)))))
       
     end
 
@@ -61,7 +66,6 @@ function truncate_lsweep(psi::MPS, phi::MPS; cutoff::Real, chi_max::Int)
     return psi_ortho, phi_ortho, ents_sites, gen_overlap
 
 end
-
 
 
 

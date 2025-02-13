@@ -79,10 +79,12 @@ end
 function build_WW(tp::tMPOParams)
     eH = build_expH(tp)
 
+    @info "Building WW tensors using $(tp.expH_func), parameters $(tp.mp)"
     WWl,       iCwR, iCp, iCps = build_WWl(eH)
     WWr, iCwL,       iCp, iCps = build_WWr(eH)
     WWc, iCwL, iCwR, iCp, iCps = build_WWc(eH)
     check_symmetry_itensor_mpo(WWc, iCwL, iCwR, iCp, iCps)
+
 
     return WWl, WWc, WWr
 end

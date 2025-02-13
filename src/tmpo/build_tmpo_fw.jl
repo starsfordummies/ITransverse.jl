@@ -242,3 +242,17 @@ function fw_tMPOn_initbetaonly(b::FwtMPOBlocks, b_im::FwtMPOBlocks, time_sites::
     return tMPO, tMPS
 
 end
+
+
+""" For quick debugging, build a forward tMPO for non-integrable Ising with random params """
+function rand_ising_fwtmpo(time_sites=siteinds("S=1/2",20))
+
+    plus_state = Vector{ComplexF64}([1 / sqrt(2), 1 / sqrt(2)])
+    mp = IsingParams(1.0, -rand(), rand())
+    tp = tMPOParams(0.1, build_expH_ising_murg, mp, 0, plus_state, plus_state)
+    b = FwtMPOBlocks(tp)
+
+    ww, _ = fw_tMPOn(b, b, time_sites)
+
+    return ww
+end

@@ -127,7 +127,7 @@ function matrix_svd(
         use_relative_cutoff,
         min_blockdim,
     )
-    
+
     if isnothing(USVT)
         return nothing
     end
@@ -135,6 +135,9 @@ function matrix_svd(
     UT, ST, VT, spec = USVT
     U, S, V = itensor(UT), itensor(ST), itensor(VT)
 
+
+    #@info diag(S)
+    
     u = commonind(S, U)
     v = commonind(S, V) 
 
