@@ -112,11 +112,13 @@ export PMParams
 
 include("power_method/pm.jl")
 include("power_method/symm_pm.jl")
-
+include("power_method/pm_finite.jl")
 #from power_method.jl
 export powermethod
 
 export powermethod_sym
+
+export pm_finite
 
 
 include("lightcone/expvals_lr.jl")
