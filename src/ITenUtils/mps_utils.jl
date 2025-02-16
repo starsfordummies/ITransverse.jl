@@ -23,9 +23,10 @@ end
 """ Computes the overlap (ll,rr) between two MPS *without* conjugating either one.
 The "generalized norm" of an MPS should be sqrt(overlap_noconj(psi,psi)).
 """
-function overlap_noconj(ll::MPS, rr::MPS, approx_real::Bool=false)
+function overlap_noconj(ll::MPS, rr::MPS)
     #siteinds(ll) != siteinds(rr) ? rr = replace_siteinds(rr, siteinds(ll)) : nothing
 
+    #elt = eltype(ll[1])
     if !ITensorMPS.hassameinds(siteinds, ll, rr)
         @warn "L and R don't have the same physical indices, correcting "
         rr = replace_siteinds(rr, siteinds(ll))
@@ -37,12 +38,8 @@ function overlap_noconj(ll::MPS, rr::MPS, approx_real::Bool=false)
     for ii in eachindex(ll)[2:end]
         overlap = (overlap * rr[ii]) * ll[ii]
     end
-
-    if approx_real && imag(overlap) < 1e-14
-        return real(overlap)
-    end
     
-    return scalar(overlap)
+    return scalar(overlap) #:: ComplexF64
     
 end
 
@@ -198,8 +195,10 @@ end
 """ Returns a copy of psi normalized by a `factor` (spread out over all MPS tensors using log) """
 function normbyfactor(psi::AbstractMPS, factor::Number )
 
+    #elt = promote_type(eltype(factor), promote_itensor_eltype(psi)) # promote_itensor_eltype(psi)
+    #psic = adapt(elt, psi)
+
     psic = deepcopy(psi)
-    
     lf = log(factor)
     z = exp(lf/length(psi))
 
