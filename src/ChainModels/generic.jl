@@ -32,3 +32,10 @@ function extend_mpo(s::Vector{<:Index}, w::MPO)
 
     return wmpo
 end
+
+
+
+up_state = Vector{ComplexF64}([1, 0])
+down_state = Vector{ComplexF64}([0, 1])
+plus_state = Vector{ComplexF64}([1 / sqrt(2), 1 / sqrt(2)])
+minus_state = Vector{ComplexF64}([1 / sqrt(2), -1 / sqrt(2)])

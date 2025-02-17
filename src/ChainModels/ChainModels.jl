@@ -16,6 +16,8 @@ export ModelParams, IsingParams
 
 # export  build_expH, build_expHim
 
+export up_state, down_state, plus_state
+
 # from ising.jl
 export build_H_ising, 
     build_expH_ising_murg,
