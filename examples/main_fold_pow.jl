@@ -5,27 +5,27 @@ using JLD2
 using ITransverse
 #using ITransverse.ITenUtils
 
-ITensors.enable_debug_checks()
+#ITensors.enable_debug_checks()
 
 
 function main_folded_pm()
 
     tp = ising_tp()
     tp =  tMPOParams(0.1, build_expH_ising_murg, 
-    IsingParams(1.0, 0.7, 0.0), 0, [0,1], [1,0,0,1])
+    IsingParams(1.0, 0.7, 0.0), 0, [1,0], [1,0,0,1])
 
 
-    cutoff = 1e-10
-    maxbondim = 120
-    itermax = 1000
+    cutoff = 1e-8
+    maxbondim = 80
+    itermax = 500
     eps_converged=1e-8
 
     truncp = TruncParams(cutoff, maxbondim)
 
-    pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM_R_twolayers_alt")
+    pm_params = PMParams(truncp, itermax, eps_converged, true, "RDM")
 
-    sigX = ComplexF64[0,1,1,0]
-    sigZ = ComplexF64[1,0,0,-1]
+    #sigX = ComplexF64[0,1,1,0]
+    #sigZ = ComplexF64[1,0,0,-1]
 
     evs = [] 
 
@@ -42,7 +42,7 @@ function main_folded_pm()
     b_im = FoldtMPOBlocks(tpim)
 
 
-    ts = 30:30
+    ts = 60:60
     alltimes = ts.* tp.dt
 
     infos = Dict(:tp => tp, :pm_params => pm_params, :b => b, :times => alltimes)
@@ -54,15 +54,22 @@ function main_folded_pm()
 
         init_mps = folded_right_tMPS(b, time_sites)
 
-        mpo_X = folded_tMPO(b, b_im, time_sites, sigX)
-        mpo_Z = folded_tMPO(b, b_im, time_sites, sigZ)
+        mpo_X = folded_tMPO(b, b_im, time_sites, vX)
+        mpo_Z = folded_tMPO(b, b_im, time_sites, vZ)
 
         mpo_1 = folded_tMPO(b, b_im, time_sites)
 
 
-        rr, ll, ds2_pm  = powermethod(init_mps, mpo_1, mpo_Z, pm_params) 
+        ll, rr, ds2_pm  = ITransverse.powermethod_sweep(init_mps, mpo_1, mpo_Z, pm_params) 
+
+        @show maxlinkdim(ll), maxlinkdim(rr)
+        ev = compute_expvals(ll, rr, ["Z"], b)
+
+        @show ev
+        ll, rr, ds2_pm  = powermethod(init_mps, mpo_1, mpo_Z, pm_params) 
 
         ev = compute_expvals(ll, rr, ["Z"], b)
+        @show ev
 
         push!(rvecs, rr)
         push!(evs, ev)

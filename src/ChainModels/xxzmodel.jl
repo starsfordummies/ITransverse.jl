@@ -348,7 +348,7 @@ function build_expH_XXZ_murg_from_ising(
     dt = JXX*dt
 
     eH_YY =  build_expH_ising_murg_YY(space_sites, 1, dt/2)
-    eH_XX = build_expH_ising_murg(space_sites, 1, 0, dt)
+    eH_XX = build_expH_ising_murg(space_sites, 1, 0, 0, dt)
 
 
     temp1 = eH_YY[1] * eH_XX[1]' * eH_YY[1]''

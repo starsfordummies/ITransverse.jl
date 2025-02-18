@@ -31,7 +31,6 @@ include("sweeps/gen_form_checks.jl")
 # from pparams
 export TruncParams
 
-
 export truncate_lsweep, truncate_rsweep
 export truncate_lsweep_sym, truncate_rsweep_sym
 
@@ -71,6 +70,9 @@ export build_H_ising,
     build_expH_potts_murg, 
     build_expH_potts_symmetric_svd,
     build_expH_random_symm_svd_1o
+
+export up_state, down_state, plus_state
+export vX, vZ, vI
 
 
 include("tmpo/tmpo_params.jl")

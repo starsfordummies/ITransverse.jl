@@ -14,14 +14,14 @@ function main_cone()
 
     nbeta = 0
 
-    sigX = ComplexF64[0,1,1,0]
+    #sigX = ComplexF64[0,1,1,0]
     sigZ = ComplexF64[1,0,0,-1]
-    Id = ComplexF64[1,0,0,1]
+    #Id = ComplexF64[1,0,0,1]
 
-    optimize_op = sigZ
+    optimize_op = vZ
 
-    up_state = Vector{ComplexF64}([1,0])
-    plus_state = Vector{ComplexF64}([1/sqrt(2),1/sqrt(2)])
+    #up_state = Vector{ComplexF64}([1,0])
+    #plus_state = Vector{ComplexF64}([1/sqrt(2),1/sqrt(2)])
 
     init_state = plus_state
 
@@ -37,7 +37,7 @@ function main_cone()
 
     mp = IsingParams(JXX, hz, gx)
     #tp = tMPOParams(dt, build_expH_ising_murg, mp, nbeta, init_state, Id)
-    tp = tMPOParams(dt, ITransverse.ChainModels.build_expH_ising_symm_svd, mp, nbeta, init_state, Id)
+    tp = tMPOParams(dt, ITransverse.ChainModels.build_expH_ising_symm_svd, mp, nbeta, init_state, vI)
 
     c0, b = init_cone(tp)
 
