@@ -51,18 +51,8 @@ function powermethod(in_mps::MPS, in_mpo_1::MPO, in_mpo_O::MPO, pm_params::PMPar
 
     for jj = 1:itermax  
 
-        #@info jj, expval_LR(ll, in_mpo_O, rr), expval_LR(ll, in_mpo_O, rr)/expval_LR(ll, in_mpo_1, rr)
-
-        # @info norm(ll)
-        # @info overlap_noconj(ll,rr)
-        # @info norm.(sprevs)
-
         if opt_method == "RTM_LR"
             
-            #ll_work = normbyfactor(ll, sqrt(overlap_noconj(ll,rr)))
-            #rr_work = normbyfactor(rr, sqrt(overlap_noconj(ll,rr)))
-            #ll_work = normalize(ll)
-            #rr_work = normalize(rr)
             rr_work = rr
             ll_work = ll 
     
@@ -258,5 +248,4 @@ function powermethod_both(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::
     return ll, rr, ds2s
 
 end
-
 

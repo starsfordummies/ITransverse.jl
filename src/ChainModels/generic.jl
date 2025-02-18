@@ -39,3 +39,7 @@ up_state = Vector{ComplexF64}([1, 0])
 down_state = Vector{ComplexF64}([0, 1])
 plus_state = Vector{ComplexF64}([1 / sqrt(2), 1 / sqrt(2)])
 minus_state = Vector{ComplexF64}([1 / sqrt(2), -1 / sqrt(2)])
+
+vX = ComplexF64[0,1,1,0]
+vZ = ComplexF64[1,0,0,-1]
+vI = ComplexF64[1,0,0,1]

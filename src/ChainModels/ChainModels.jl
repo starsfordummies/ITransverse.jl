@@ -17,6 +17,7 @@ export ModelParams, IsingParams
 # export  build_expH, build_expHim
 
 export up_state, down_state, plus_state
+export vX, vZ, vI
 
 # from ising.jl
 export build_H_ising, 

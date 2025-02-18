@@ -24,8 +24,10 @@ docs/site/
 Manifest.toml
 
 *.jld2
+*.dat
 
 settings.json
 
 draft/*
 src/experimental/*
+main_experimental/*
