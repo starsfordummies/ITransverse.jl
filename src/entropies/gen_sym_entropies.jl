@@ -1,7 +1,7 @@
 """
 Generalized entropy for a *symmetric* environment (psiL,psiL)
     Assuming we're in LEFT GENERALIZED canonical form, by default bring the MPS to it
-    By default, normalizes the energies. 
+    By default, normalizes the eigenvalues of the symmetric RTM. 
 """
 function generalized_vn_entropy_symmetric(psiL::MPS; bring_left_gen::Bool=true, normalize_eigs::Bool=true)
  
