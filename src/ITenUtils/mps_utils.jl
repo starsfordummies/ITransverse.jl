@@ -1,9 +1,14 @@
 """ Quick random MPS for playing around """
-function quick_mps(len::Int=40, chi::Int=50)
+function quick_mps(len::Int=10, chi::Int=32)
     s = siteinds("S=1/2", len)
     p = random_mps(ComplexF64, s, linkdims=chi)
 
     return p
+end
+
+function quick_mpo(len::Int=10, chi::Int=2)
+    s = siteinds("S=1/2", len)
+    myrMPO(s; linkdims=chi)
 end
 
 """ Computes the overlap (ll,rr) between two MPS *without* conjugating either one.
