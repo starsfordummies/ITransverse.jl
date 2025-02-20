@@ -1,8 +1,9 @@
 """
 Generalized entropy for a *symmetric* environment (psiL,psiL)
-    Assuming we're in LEFT GENERALIZED canonical form 
+    Assuming we're in LEFT GENERALIZED canonical form, by default bring the MPS to it
+    By default, normalizes the energies. 
 """
-function generalized_vn_entropy_symmetric(psiL::MPS; bring_left_gen::Bool=true)
+function generalized_vn_entropy_symmetric(psiL::MPS; bring_left_gen::Bool=true, normalize_eigs::Bool=true)
  
     if bring_left_gen
         psiL = gen_canonical_left(psiL)
@@ -37,8 +38,13 @@ function generalized_vn_entropy_symmetric(psiL::MPS; bring_left_gen::Bool=true)
         eigss, _ = eigen(right_env, inds(right_env)[1],inds(right_env)[2])
         #gen_ent_cut = sum(eigss.*log.(eigss))
         
-        if abs(sum(eigss) - 1.) > 0.01
-            @warn "RTM not well normalized? Σeigs = 1-$(abs(sum(eigss) - 1.)) "
+        
+        if normalize_eigs
+            eigss = eigss/sum(eigss) 
+        else # If we don't normalize, warn if normalization is off
+            if abs(sum(eigss) - 1.) > 0.01
+                @warn "RTM not well normalized? Σeigs = 1-$(abs(sum(eigss) - 1.)) "
+            end
         end
 
         gen_ent_cut = ComplexF64(0.)
