@@ -13,8 +13,8 @@ function generalized_vn_entropy_symmetric(psiL::MPS; bring_left_gen::Bool=true, 
     #links = linkinds(psiL)
 
     overlap = overlap_noconj(psiL,psiL)
-    if abs(1-overlap) > 1e-4
-        @warn" overlap not 1: $overlap"
+    if abs(1-overlap) > 1e-4 && !normalize_eigs
+        @warn" overlap not 1: $(overlap)"
     end
     
     gen_ents = ComplexF64[]
