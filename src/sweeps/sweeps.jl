@@ -93,12 +93,12 @@ Returns
 function truncate_rsweep(psi::MPS, phi::MPS, truncp::TruncParams)
     truncate_rsweep(psi, phi; cutoff=truncp.cutoff, chi_max=truncp.maxbondim)
 end
-function truncate_rsweep(psi::MPS, phi::MPS; cutoff::Real, chi_max::Int)
+function truncate_rsweep(psi::MPS, phi::MPS; cutoff::Real=1e-12, chi_max::Int=max(maxlinkdim(psi),maxlinkdim(phi)))
 
     #elt = eltype(psi[1])
     mpslen = length(psi)
 
-    # first bring to left canonical form 
+    # first bring to left canonical form  
     psi_ortho = orthogonalize(psi, mpslen)
     phi_ortho = orthogonalize(phi, mpslen)
 
