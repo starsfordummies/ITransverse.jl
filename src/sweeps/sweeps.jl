@@ -50,7 +50,7 @@ function truncate_lsweep(psi::MPS, phi::MPS; cutoff::Real, chi_max::Int)
         phi_ortho[ii] = Bi * XV
 
 
-        Snorm = tocpu(normalize(S))
+        Snorm = tocpu(S./sum(S))
         ents_sites[ii] = scalar((-Snorm*log.(Snorm)))
 
         #push!(ents_sites, scalar(tocpu((-S*log.(S)))))
@@ -150,7 +150,7 @@ function truncate_rsweep(psi::MPS, phi::MPS; cutoff::Real=1e-12, chi_max::Int=ma
         psi_ortho[ii] = Ai * XU  
         phi_ortho[ii] = Bi * XV
 
-        Snorm = tocpu(normalize(S))
+        Snorm = tocpu(S./sum(S))
         ents_sites[ii-1] = scalar((-Snorm*log.(Snorm)))
 
         #@info "setting psi[$(ii)]"
@@ -227,3 +227,70 @@ function generalized_svd_vn_entropy(psi, phi)
     _, _, ents, _ = truncate_rsweep(psi, phi, truncp)
     return ents
 end
+
+
+""" Attempt at making a faster sweep with little success"""
+function truncate_rsweep!(psi::MPS, phi::MPS; cutoff::Real=1e-12, chi_max::Int=max(maxlinkdim(psi),maxlinkdim(phi)))
+
+    #elt = eltype(psi[1])
+    mpslen = length(psi)
+
+    # first bring to left canonical form  
+    orthogonalize!(psi, mpslen)
+    orthogonalize!(phi, mpslen)
+
+    XUinv, XVinv, right_env = (ITensor(1), ITensor(1), ITensor(1))
+    
+    # For the non-symmetric case we can only truncate with SVD, so ents will be real 
+    ents_sites = fill(0., mpslen-1)  # Float64[]
+
+    # Start from the *right* side 
+    for ii in mpslen:-1:2
+        Ai = XUinv * psi[ii]
+        Bi = XVinv * phi[ii] 
+
+        right_env *= Ai 
+        right_env *= Bi 
+
+        @assert order(right_env) == 2
+
+        #U,S,Vdag = svd(right_env, ind(right_env,1); cutoff=cutoff, maxdim=chi_max)
+        U,S,Vdag = matrix_svd(right_env; cutoff=cutoff, maxdim=chi_max)
+
+        
+        sqS = sqrt.(S)
+        isqS = sqS.^(-1)
+
+        XU = dag(U) * isqS
+        XUinv = sqS * U
+
+        XV = dag(Vdag) * isqS
+        XVinv = sqS * Vdag
+
+        # right_env *= XU
+        # right_env *= XV
+        right_env = delta(only(uniqueinds(XU, right_env)), only(uniqueinds(XV, right_env)))
+
+        # Set updated matrices
+        psi[ii] = Ai * XU  
+        phi[ii] = Bi * XV
+
+        Snorm = tocpu(normalize(S))
+        ents_sites[ii-1] = scalar((-Snorm*log.(Snorm)))
+
+        #@info "setting psi[$(ii)]"
+
+    end
+
+    # the final two
+    psi[1] = XUinv * psi[1]
+    phi[1] = XVinv * phi[1]
+
+    gen_overlap = scalar(tocpu((right_env * ( phi[1] *  psi[1] ) )))
+
+
+    return ents_sites, gen_overlap
+
+end
+
+

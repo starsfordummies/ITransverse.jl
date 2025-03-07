@@ -99,7 +99,7 @@ function truncate_rsweep_sym(in_psi::MPS; cutoff::Float64, chi_max::Int, method:
     XUinv= ITensor(1)
     right_env = ITensor(1)
 
-    ents_sites = ComplexF64[]
+    ents_sites = fill(zero(ComplexF64), mpslen-1)  # Float64[]
 
     for ii = mpslen:-1:2
         Ai = XUinv * psi_ortho[ii]
@@ -153,7 +153,7 @@ function truncate_rsweep_sym(in_psi::MPS; cutoff::Float64, chi_max::Int, method:
         # convert to CPU to avoid headaches
         # If we build "SVD" generalized entropy, normalize them to one 
         S = NDTensors.cpu(S./sum(S))
-        push!(ents_sites, scalar(-S*log.(S)))
+        ents_sites[ii-1] =  scalar(-S*log.(S))
     end
 
     # the last one 

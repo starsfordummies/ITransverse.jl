@@ -3,13 +3,13 @@ using ITransverse
 
 function ising_loschmidt(tp::tMPOParams, Tstart::Int, Tend::Int, nbeta::Int; Tstep::Int=1)
 
-    cutoff = 1e-9
-    maxbondim = 140
+    cutoff = 1e-10
+    maxbondim = 60
     itermax = 500
     eps_converged = 1e-6
 
     truncp = TruncParams(cutoff, maxbondim)
-    pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM")
+    pm_params = PMParams(truncp, itermax, eps_converged, true, "RDM")
 
     ll_murgs = Vector{MPS}()
     ds2s = [] # Vector{Float64}[]
@@ -53,6 +53,14 @@ function ising_loschmidt(tp::tMPOParams, Tstart::Int, Tend::Int, nbeta::Int; Tst
         # Entropies 
         sgen = generalized_vn_entropy_symmetric(psi_trunc)
         sgen_sv = generalized_svd_vn_entropy_symmetric(psi_trunc)
+        sgen_sv_alt = ITransverse.generalized_svd_vn_entropy(psi_trunc,psi_trunc)
+
+        #@info norm(sgen_sv - sgen_sv_alt)
+        #@info sgen_sv
+        #@info sgen_sv_alt
+
+
+
         svn = vn_entanglement_entropy(psi_trunc)
 
         leading_eig = inner(conj(psi_trunc'), mpo, psi_trunc)
@@ -92,17 +100,14 @@ function main_ising_loschmidt()
 
     
     JXX = 1.0
-    hz = -1.05
-    gx = 0.5
+    hz = 1.0
+    gx = 0.0
     #H= JXX - 2.0 * 0.525 Z + 2 * 0.25 X
 
 
     dt = 0.1
 
-    nbeta = 0
-
-    zero_state = Vector{ComplexF64}([1, 0])
-    plus_state = Vector{ComplexF64}([1 / sqrt(2), 1 / sqrt(2)])
+    nbeta = 2
 
     init_state = plus_state
     #init_state = zero_state
@@ -112,28 +117,39 @@ function main_ising_loschmidt()
 
     @info ("Initial state $(init_state)  => quench @ $(mp) ")
     
-    Tmin = 4
-    Tmax = 80
+    Tmin = 20
+    Tmax = 160
     Tstep = 2
 
 
-    tp = tMPOParams(dt, build_expH_ising_murg, mp, nbeta, init_state, init_state)
+    tp = tMPOParams(dt,  ITransverse.ChainModels.build_expH_ising_murg_new, mp, nbeta, init_state, init_state)
     psis1, ds2s, leading_eigs, leading_eigsq, overlapsLR, entropies, maxents = ising_loschmidt(tp, Tmin, Tmax, nbeta; Tstep)
 
-    tp = tMPOParams(dt, ITransverse.ChainModels.build_expH_ising_murg_new, mp, nbeta, init_state, init_state)
-    psis2, ds2s, leading_eigs2, leading_eigsq, overlapsLR, entropies2, maxents2 = ising_loschmidt(tp, Tmin, Tmax, nbeta; Tstep)
+    rr2s = []
+    ir2s = []
+    for psi in psis1
+        r2 = rtm2_contracted(psi, psi, normalize_factor=overlap_noconj(psi,psi))
+        r2 = -log.(r2)
+        push!(rr2s, maximum(real(r2)))
+        push!(ir2s, maximum(imag(r2)))
+    end
 
-    tp = tMPOParams(dt, build_expH_ising_symm_svd, mp, nbeta, init_state, init_state)
-    psis3, ds2s, leading_eigs3, leading_eigsq, overlapsLR, entropies3, maxents3 = ising_loschmidt(tp, Tmin, Tmax, nbeta; Tstep)
+    return collect(Tmin:Tstep:Tmax), rr2s, ir2s, entropies 
 
-    @show inner(psis1[end],psis2[end])/((norm(psis1[end]))*(norm(psis2[end])))
-    @show inner(psis2[end],psis3[end])/((norm(psis2[end]))*(norm(psis3[end])))
-    @show inner(psis1[end],psis3[end])/((norm(psis1[end]))*(norm(psis3[end])))
+    # tp = tMPOParams(dt, ITransverse.ChainModels.build_expH_ising_murg_new, mp, nbeta, init_state, init_state)
+    # psis2, ds2s, leading_eigs2, leading_eigsq, overlapsLR, entropies2, maxents2 = ising_loschmidt(tp, Tmin, Tmax, nbeta; Tstep)
 
-    @show leading_eigs[end], leading_eigs2[end], leading_eigs3[end] 
+    # tp = tMPOParams(dt, build_expH_ising_symm_svd, mp, nbeta, init_state, init_state)
+    # psis3, ds2s, leading_eigs3, leading_eigsq, overlapsLR, entropies3, maxents3 = ising_loschmidt(tp, Tmin, Tmax, nbeta; Tstep)
 
-    return maxents, maxents2, maxents3, entropies, entropies2, entropies3, leading_eigs
+    # @show inner(psis1[end],psis2[end])/((norm(psis1[end]))*(norm(psis2[end])))
+    # @show inner(psis2[end],psis3[end])/((norm(psis2[end]))*(norm(psis3[end])))
+    # @show inner(psis1[end],psis3[end])/((norm(psis1[end]))*(norm(psis3[end])))
+
+    # @show leading_eigs[end], leading_eigs2[end], leading_eigs3[end] 
+
+    #return maxents, maxents2, maxents3, entropies, entropies2, entropies3, leading_eigs
 
 end
 
-e1,e2,e3, s1,s2,s3, eigs = main_ising_loschmidt();
+results = main_ising_loschmidt();
