@@ -294,3 +294,62 @@ function truncate_rsweep!(psi::MPS, phi::MPS; cutoff::Real=1e-12, chi_max::Int=m
 end
 
 
+""" Try to truncate_sweep without doing inverses, just bring the SVs along
+TODO: do we want to normalize SVs?  """
+function truncate_rsweep_noinv(psi::MPS, phi::MPS; cutoff::Real=1e-12, chi_max::Int=max(maxlinkdim(psi),maxlinkdim(phi)))
+
+    mpslen = length(psi)
+
+    # first bring to left canonical form  
+    psi_ortho = orthogonalize(psi, mpslen)
+    phi_ortho = orthogonalize(phi, mpslen)
+
+    XUinv, XVinv, right_env = (ITensor(1), ITensor(1), ITensor(1))
+    
+    # For the non-symmetric case we can only truncate with SVD, so ents will be real 
+    ents_sites = fill(0., mpslen-1)  # Float64[]
+
+    # Start from the *right* side 
+    for ii in mpslen:-1:2
+        Ai = XUinv * psi_ortho[ii]
+        Bi = XVinv * phi_ortho[ii] 
+
+        right_env *= Ai 
+        right_env *= Bi 
+
+        @assert order(right_env) == 2
+
+        #U,S,Vdag = svd(right_env, ind(right_env,1); cutoff=cutoff, maxdim=chi_max)
+        U,S,Vdag = matrix_svd(right_env; cutoff=cutoff, maxdim=chi_max)
+
+
+        XU = dag(U) 
+        XUinv =  U
+
+        XV = dag(Vdag) 
+        XVinv =  Vdag
+
+        right_env *= XU
+        right_env *= XV
+
+        # Set updated matrices
+        psi_ortho[ii] = Ai * XU  
+        phi_ortho[ii] = Bi * XV
+
+        Snorm = tocpu(S./sum(S))
+        ents_sites[ii-1] = scalar((-Snorm*log.(Snorm)))
+
+        #@info "setting psi[$(ii)]"
+
+    end
+
+    # the final two
+    psi_ortho[1] = XUinv * psi_ortho[1]
+    phi_ortho[1] = XVinv * phi_ortho[1]
+
+    gen_overlap = scalar(tocpu((right_env * ( phi_ortho[1] *  psi_ortho[1] ) )))
+
+
+    return psi_ortho, phi_ortho, ents_sites, gen_overlap
+
+end

@@ -31,7 +31,7 @@ include("sweeps/gen_form_checks.jl")
 # from pparams
 export TruncParams
 
-export truncate_lsweep, truncate_rsweep
+export truncate_lsweep, truncate_rsweep, truncate_rsweep_noinv
 export truncate_lsweep_sym, truncate_rsweep_sym
 
 export gen_canonical_left, gen_canonical_right
