@@ -50,9 +50,14 @@ end
 =#
 
 
-vn_from_sv(sv::ITensor) = vn_from_sv(tensor(NDTensors.cpu(sv)))
+vn_from_sv(sv::ITensor; normalize::Bool=true) = vn_from_sv(tensor(NDTensors.cpu(sv)); normalize)
 
-function vn_from_sv(sv::Tensor)
+function vn_from_sv(sv::Tensor; normalize::Bool=true)
+
+    if normalize
+        sv = sv/norm(sv)
+    end
+
    SvN = zero(eltype(sv))
     for n=1:dim(sv, 1)
         p = sv[n,n]^2
@@ -61,10 +66,10 @@ function vn_from_sv(sv::Tensor)
     return SvN
 end
 
-function vn_entanglement_entropy!(psi::MPS, bond::Int)
+function vn_entanglement_entropy!(psi::MPS, bond::Int; normalize::Bool=false)
     orthogonalize!(psi, bond)
     _,S,_ = svd(psi[bond], uniqueinds(psi[bond],psi[bond+1]))
-    return vn_from_sv(S)
+    return vn_from_sv(S; normalize) 
 end
 
 
@@ -78,7 +83,8 @@ function vn_entanglement_entropy(psi::MPS)
     ents_vn = Vector{Float64}()
 
     for icut=1:length(workpsi)-1
-        Si = vn_entanglement_entropy!(workpsi, icut)
+        Si = vn_entanglement_entropy!(workpsi, icut, normalize=false)
+        # no need to normalize if we normalize psi already before
         push!(ents_vn, Si)
     end
 
