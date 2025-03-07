@@ -269,7 +269,7 @@ function truncate_rsweep!(psi::MPS, phi::MPS; cutoff::Real=1e-12, chi_max::Int=m
         psi[ii] = Ai * XU  
         phi[ii] = Bi * XV
 
-        Snorm = tocpu(normalize(S))
+        Snorm = tocpu(S./sum(S))
         ents_sites[ii-1] = scalar((-Snorm*log.(Snorm)))
 
         #@info "setting psi[$(ii)]"
