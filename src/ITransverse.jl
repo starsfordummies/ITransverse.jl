@@ -52,7 +52,8 @@ export vn_entanglement_entropy,
     build_entropies,
     diagonalize_rdm,
     generalized_vn_entropy_symmetric,
-    generalized_svd_vn_entropy_symmetric
+    generalized_svd_vn_entropy_symmetric,
+    generalized_svd_vn_entropy
 
 # from compute_rho2.jl
 export rho2, 

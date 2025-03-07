@@ -84,10 +84,9 @@ function generalized_entropies_symmetric(psiL::MPS; which_ents::Vector, bring_le
     
 end
 
-function generalized_svd_vn_entropy(psi::MPS, phi::MPS)
-
-    _, _, ents, _ = truncate_rsweep(psi, phi; cutoff=1e-12, chi_max=maxlinkdim(psi))
-     
+""" We can compute the "SVD" VN entropy by just doing a right (generalized) sweep """
+function generalized_svd_vn_entropy(psi, phi)
+    truncp = TruncParams(1e-12, maxlinkdim(psi)+maxlinkdim(phi))
+    _, _, ents, _ = truncate_rsweep(psi, phi, truncp)
     return real(ents)
-
 end

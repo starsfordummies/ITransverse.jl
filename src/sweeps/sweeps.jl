@@ -221,12 +221,6 @@ function truncate_normalize_sweep(psi::MPS, phi::MPS, truncp::TruncParams)
     end
 end
 
-""" We can compute the "SVD" VN entropy by just doing a right (generalized) sweep """
-function generalized_svd_vn_entropy(psi, phi)
-    truncp = TruncParams(1e-14, maxlinkdim(psi))
-    _, _, ents, _ = truncate_rsweep(psi, phi, truncp)
-    return ents
-end
 
 
 """ Attempt at making a faster sweep with little success"""

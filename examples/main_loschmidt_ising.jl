@@ -53,12 +53,6 @@ function ising_loschmidt(tp::tMPOParams, Tstart::Int, Tend::Int, nbeta::Int; Tst
         # Entropies 
         sgen = generalized_vn_entropy_symmetric(psi_trunc)
         sgen_sv = generalized_svd_vn_entropy_symmetric(psi_trunc)
-        sgen_sv_alt = ITransverse.generalized_svd_vn_entropy(psi_trunc,psi_trunc)
-
-        #@info norm(sgen_sv - sgen_sv_alt)
-        #@info sgen_sv
-        #@info sgen_sv_alt
-
 
 
         svn = vn_entanglement_entropy(psi_trunc)
