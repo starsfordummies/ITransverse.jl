@@ -11,6 +11,18 @@ function quick_mpo(len::Int=10, chi::Int=2)
     myrMPO(s; linkdims=chi)
 end
 
+""" Return triple (psi,phi,o)  sharing the same sites"""
+function quick_psipsio(len::Int=10)
+    s = siteinds("S=1/2", len)
+    psi = random_mps(ComplexF64, s, linkdims=12)
+    phi = random_mps(ComplexF64, s, linkdims=20)
+
+    oo = myrMPO(s; linkdims=2)
+
+    return psi,phi, oo 
+end
+
+
 """ Computes the overlap (ll,rr) between two MPS *without* conjugating either one.
 If siteinds(ll) and siteinds(rr) do not match, it matches them before contracting.
 """
