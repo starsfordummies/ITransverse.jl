@@ -67,6 +67,7 @@ function diagonalize_rtm_left_gen_sym(psiL::MPS; bring_left_gen::Bool=false, nor
     # we can enforce to bring it in left symmetric gen. canonical form 
     if bring_left_gen
         psi_gauged = gen_canonical_left(psi_gauged)
+        psi_gauged[1] /= sqrt(overlap_noconj(psi_gauged, psi_gauged))
     end
 
     mpslen = length(psi_gauged)
@@ -124,6 +125,8 @@ function diagonalize_rtm_right_gen_sym(psi::MPS; bring_right_gen::Bool=false, no
 
     if bring_right_gen
         psi_gauged = gen_canonical_right(psi_gauged)
+        psi_gauged[end] /= sqrt(overlap_noconj(psi_gauged, psi_gauged))
+
     end
 
     lenv= ITensor(1.)
