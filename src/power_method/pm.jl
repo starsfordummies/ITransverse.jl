@@ -73,7 +73,7 @@ function powermethod(in_mps::MPS, in_mpo_1::MPO, in_mpo_O::MPO, pm_params::PMPar
             OpsiR = normalize(OpsiR)
             OpsiL = normalize(OpsiL)
 
-            _, ll, _, overlap = truncate_sweep(OpsiR, OpsiL, truncp)
+            _, ll, _ = truncate_sweep(OpsiR, OpsiL, truncp)
 
 
         elseif opt_method == "RTM_R"
@@ -87,7 +87,7 @@ function powermethod(in_mps::MPS, in_mpo_1::MPO, in_mpo_O::MPO, pm_params::PMPar
             OpsiR = normalize(OpsiR)
             OpsiL = normalize(OpsiL)
     
-            rr, _, sjj, overlap = truncate_sweep(OpsiR, OpsiL, truncp)
+            rr, _, sjj = truncate_sweep(OpsiR, OpsiL, truncp)
             ll = rr
 
         elseif opt_method == "RTM_R_twolayers"
@@ -108,7 +108,7 @@ function powermethod(in_mps::MPS, in_mpo_1::MPO, in_mpo_O::MPO, pm_params::PMPar
             OpsiR = normalize(OpsiR)
             OpsiL = normalize(OpsiL)
     
-            rr, _, sjj, overlap = truncate_sweep(OpsiR, OpsiL, truncp)
+            rr, _, sjj = truncate_sweep(OpsiR, OpsiL, truncp)
             ll = rr
 
         elseif opt_method == "RTM_R_twolayers_alt"
@@ -129,7 +129,7 @@ function powermethod(in_mps::MPS, in_mpo_1::MPO, in_mpo_O::MPO, pm_params::PMPar
             OpsiR = normalize(OpsiR)
             OpsiL = normalize(OpsiL)
     
-            rr, _, sjj, overlap = truncate_sweep(OpsiR, OpsiL, truncp)
+            rr, _, sjj = truncate_sweep(OpsiR, OpsiL, truncp)
             ll = rr
 
 

@@ -61,9 +61,9 @@ function truncate_lsweep(psi::MPS, phi::MPS; cutoff::Real, chi_max::Int)
     psi_ortho[end] = XUinv * psi_ortho[end]
     phi_ortho[end] = XVinv * phi_ortho[end]
 
-    gen_overlap = scalar(tocpu((left_env * ( psi_ortho[end] *  phi_ortho[end] ) )))
+    #gen_overlap = scalar(tocpu((left_env * ( psi_ortho[end] *  phi_ortho[end] ) )))
 
-    return psi_ortho, phi_ortho, ents_sites, gen_overlap
+    return psi_ortho, phi_ortho, ents_sites #, gen_overlap
 
 end
 
@@ -83,17 +83,19 @@ So this can be seen as a "RL: Right(can)Left(gen)" sweep
 
 
 
-""" Brings to right generalized canonical form two MPS `psi` and `phi`, truncating along the way if necessary.
+""" Truncate sweep to optimize overlap <psi|phi> .
+If `fast=true`, it only truncates without bringing to generalized canonical form (no multiplication by inverses of SV)
+
 Returns
 
 1) updated `psi`
 2) updated `phi` 
-3) effective entropies calculated form the SVD of the environments
-4) overlap (psi|phi) [without conjugating psi] """
+3) SVD generalized entropies 
+"""
 function truncate_rsweep(psi::MPS, phi::MPS, truncp::TruncParams)
     truncate_rsweep(psi, phi; cutoff=truncp.cutoff, chi_max=truncp.maxbondim)
 end
-function truncate_rsweep(psi::MPS, phi::MPS; cutoff::Real=1e-12, chi_max::Int=max(maxlinkdim(psi),maxlinkdim(phi)))
+function truncate_rsweep(psi::MPS, phi::MPS; cutoff::Real=1e-12, chi_max::Int=max(maxlinkdim(psi),maxlinkdim(phi)), fast::Bool=false)
 
     #elt = eltype(psi[1])
     mpslen = length(psi)
@@ -115,33 +117,28 @@ function truncate_rsweep(psi::MPS, phi::MPS; cutoff::Real=1e-12, chi_max::Int=ma
         right_env *= Ai 
         right_env *= Bi 
 
-        #rnorm = norm(right_env)
-        #@show ii, rnorm
-
-        # TODO maybe we should correct along the way if envs become too large
-        # if rnorm > 1e14 || rnorm < 1e-14
-        #     @warn "Norm of environment $(ii) is $(rnorm), watch for roundoff errs"
-        #     @warn overlap_noconj(psi,phi)
-        #     @warn inner(psi,phi)
-        #     @warn norm(psi)
-        #     @warn norm(phi)
-        # end
-
-        #right_env /= rnorm
-        
         @assert order(right_env) == 2
 
         #U,S,Vdag = svd(right_env, ind(right_env,1); cutoff=cutoff, maxdim=chi_max)
         U,S,Vdag = matrix_svd(right_env; cutoff=cutoff, maxdim=chi_max)
+        norm_factor = sum(S)
 
-        sqS = sqrt.(S)
-        isqS = sqS.^(-1)
+        XU = dag(U)
+        XUinv = U
 
-        XU = dag(U) * isqS
-        XUinv = sqS * U
+        XV = dag(Vdag) 
+        XVinv = Vdag
 
-        XV = dag(Vdag) * isqS
-        XVinv = sqS * Vdag
+        if fast 
+            right_env /= norm_factor
+        else
+            sqS = sqrt.(S)
+            isqS = sqS.^(-1)
+            XU = XU * isqS
+            XUinv = sqS * XUinv
+            XV = XV * isqS
+            XVinv = sqS * XVinv
+        end
 
         right_env *= XU
         right_env *= XV
@@ -150,7 +147,7 @@ function truncate_rsweep(psi::MPS, phi::MPS; cutoff::Real=1e-12, chi_max::Int=ma
         psi_ortho[ii] = Ai * XU  
         phi_ortho[ii] = Bi * XV
 
-        Snorm = tocpu(S./sum(S))
+        Snorm = tocpu(S./norm_factor)
         ents_sites[ii-1] = scalar((-Snorm*log.(Snorm)))
 
         #@info "setting psi[$(ii)]"
@@ -171,11 +168,9 @@ end
 
 
 function truncate_normalize_lsweep(psi::MPS, phi::MPS, truncp::TruncParams)
-    psi_n, phi_n, ee, ov = truncate_lsweep(psi, phi, cutoff=truncp.cutoff, chi_max=truncp.maxbondim)
+    psi_n, phi_n, ee = truncate_lsweep(psi, phi, cutoff=truncp.cutoff, chi_max=truncp.maxbondim)
     ov_alt =  overlap_noconj(psi_n,phi_n)
-    if abs(ov - ov_alt) > 0.1
-        @warn "Check canonical form!? $(ov) vs $(ov_alt)"
-    end
+ 
     psi_n[end] /= sqrt(ov_alt)
     phi_n[end] /= sqrt(ov_alt)
     
@@ -183,11 +178,9 @@ function truncate_normalize_lsweep(psi::MPS, phi::MPS, truncp::TruncParams)
 end
 
 function truncate_normalize_rsweep(psi::MPS, phi::MPS, truncp::TruncParams)
-    psi_n, phi_n, ee, ov = truncate_rsweep(psi, phi, cutoff=truncp.cutoff, chi_max=truncp.maxbondim)
+    psi_n, phi_n, ee = truncate_rsweep(psi, phi, cutoff=truncp.cutoff, chi_max=truncp.maxbondim,fast=false)
     ov_alt =  overlap_noconj(psi_n,phi_n)
-    if abs(ov - ov_alt) > 0.1
-        @warn "Check canonical form!? $(ov) vs $(ov_alt)"
-    end
+
     psi_n[1] /= sqrt(ov_alt)
     phi_n[1] /= sqrt(ov_alt)
 
@@ -223,7 +216,8 @@ end
 
 
 
-""" Attempt at making a faster sweep with little success"""
+""" Inplace version of truncate_rsweep. Modifies input MPS !
+ Returns generalized SVD entropies  """
 function truncate_rsweep!(psi::MPS, phi::MPS; cutoff::Real=1e-12, chi_max::Int=max(maxlinkdim(psi),maxlinkdim(phi)))
 
     #elt = eltype(psi[1])
@@ -250,26 +244,22 @@ function truncate_rsweep!(psi::MPS, phi::MPS; cutoff::Real=1e-12, chi_max::Int=m
 
         #U,S,Vdag = svd(right_env, ind(right_env,1); cutoff=cutoff, maxdim=chi_max)
         U,S,Vdag = matrix_svd(right_env; cutoff=cutoff, maxdim=chi_max)
-
+        norm_factor = sum(S)
         
-        sqS = sqrt.(S)
-        isqS = sqS.^(-1)
+        XU = dag(U) 
+        XUinv =  U
 
-        XU = dag(U) * isqS
-        XUinv = sqS * U
-
-        XV = dag(Vdag) * isqS
-        XVinv = sqS * Vdag
+        XV = dag(Vdag) 
+        XVinv = Vdag
 
         # right_env *= XU
         # right_env *= XV
-        right_env = delta(only(uniqueinds(XU, right_env)), only(uniqueinds(XV, right_env)))
-
+        right_env = S./sum(S)
         # Set updated matrices
         psi[ii] = Ai * XU  
         phi[ii] = Bi * XV
 
-        Snorm = tocpu(S./sum(S))
+        Snorm = tocpu(right_env)
         ents_sites[ii-1] = scalar((-Snorm*log.(Snorm)))
 
         #@info "setting psi[$(ii)]"
@@ -280,70 +270,8 @@ function truncate_rsweep!(psi::MPS, phi::MPS; cutoff::Real=1e-12, chi_max::Int=m
     psi[1] = XUinv * psi[1]
     phi[1] = XVinv * phi[1]
 
-    gen_overlap = scalar(tocpu((right_env * ( phi[1] *  psi[1] ) )))
 
-
-    return ents_sites, gen_overlap
+    return ents_sites
 
 end
 
-
-""" Try to truncate_sweep without doing inverses, just bring the SVs along
-TODO: do we want to normalize SVs?  """
-function truncate_rsweep_noinv(psi::MPS, phi::MPS; cutoff::Real=1e-12, chi_max::Int=max(maxlinkdim(psi),maxlinkdim(phi)))
-
-    mpslen = length(psi)
-
-    # first bring to left canonical form  
-    psi_ortho = orthogonalize(psi, mpslen)
-    phi_ortho = orthogonalize(phi, mpslen)
-
-    XUinv, XVinv, right_env = (ITensor(1), ITensor(1), ITensor(1))
-    
-    # For the non-symmetric case we can only truncate with SVD, so ents will be real 
-    ents_sites = fill(0., mpslen-1)  # Float64[]
-
-    # Start from the *right* side 
-    for ii in mpslen:-1:2
-        Ai = XUinv * psi_ortho[ii]
-        Bi = XVinv * phi_ortho[ii] 
-
-        right_env *= Ai 
-        right_env *= Bi 
-
-        @assert order(right_env) == 2
-
-        #U,S,Vdag = svd(right_env, ind(right_env,1); cutoff=cutoff, maxdim=chi_max)
-        U,S,Vdag = matrix_svd(right_env; cutoff=cutoff, maxdim=chi_max)
-
-
-        XU = dag(U) 
-        XUinv =  U
-
-        XV = dag(Vdag) 
-        XVinv =  Vdag
-
-        right_env *= XU
-        right_env *= XV
-
-        # Set updated matrices
-        psi_ortho[ii] = Ai * XU  
-        phi_ortho[ii] = Bi * XV
-
-        Snorm = tocpu(S./sum(S))
-        ents_sites[ii-1] = scalar((-Snorm*log.(Snorm)))
-
-        #@info "setting psi[$(ii)]"
-
-    end
-
-    # the final two
-    psi_ortho[1] = XUinv * psi_ortho[1]
-    phi_ortho[1] = XVinv * phi_ortho[1]
-
-    gen_overlap = scalar(tocpu((right_env * ( phi_ortho[1] *  psi_ortho[1] ) )))
-
-
-    return psi_ortho, phi_ortho, ents_sites, gen_overlap
-
-end

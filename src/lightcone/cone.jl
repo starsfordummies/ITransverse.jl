@@ -111,10 +111,10 @@ function extend_tmps_cone(ll::MPS, op_L::Vector{<:Number}, op_R::Vector{<:Number
     psi_L = apply_extend(tmpo, ll)
 
     #ll, rr, ents, ov = truncate_rsweep(psi_L,psi_R; cutoff=truncp.cutoff, chi_max=truncp.maxbondim)
-    ll, rr, ents, ov = truncate_sweep(psi_L,psi_R, truncp)
+    ll, rr, ents = truncate_sweep(psi_L,psi_R, truncp)
     
 
-    return ll, rr, ents, ov
+    return ll, rr, ents
 
 end
 

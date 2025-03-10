@@ -8,7 +8,7 @@ s = siteinds(4, 50)
 ll = random_mps(ComplexF64, s, linkdims=test_linkdim)
 rr = ll + dag(ll)
 
-lln, rrn = truncate_rsweep(ll, rr, cutoff=1e-12, chi_max=test_chimax)
+lln, rrn, ss = truncate_rsweep(ll, rr, cutoff=1e-12, chi_max=test_chimax, fast=false)
 
 @test check_gencan_right(lln, rrn)
 
