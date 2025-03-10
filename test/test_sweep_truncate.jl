@@ -27,7 +27,7 @@ cut_sv = 1e-12
     psi_c = deepcopy(psi)
     phi_c = deepcopy(phi)
 
-    psi_trunc, phi_trunc, s, ov = truncate_lsweep(psi, phi, cutoff=cut_sv, chi_max=chimaxs)
+    psi_trunc, phi_trunc, s = truncate_lsweep(psi, phi, cutoff=cut_sv, chi_max=chimaxs)
 
     # test we don't mess up with data
     @test inner(psi, psi_c) ≈ 1

@@ -92,8 +92,8 @@ Returns
 2) updated `phi` 
 3) SVD generalized entropies 
 """
-function truncate_rsweep(psi::MPS, phi::MPS, truncp::TruncParams)
-    truncate_rsweep(psi, phi; cutoff=truncp.cutoff, chi_max=truncp.maxbondim)
+function truncate_rsweep(psi::MPS, phi::MPS, truncp::TruncParams; fast::Bool=false)
+    truncate_rsweep(psi, phi; cutoff=truncp.cutoff, chi_max=truncp.maxbondim, fast)
 end
 function truncate_rsweep(psi::MPS, phi::MPS; cutoff::Real=1e-12, chi_max::Int=max(maxlinkdim(psi),maxlinkdim(phi)), fast::Bool=false)
 
