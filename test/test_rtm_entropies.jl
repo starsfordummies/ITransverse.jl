@@ -16,7 +16,7 @@ eigs_l = diagonalize_rtm_left_gen_sym(ll; bring_left_gen=true, normalize_factor)
 # eigs_r sweeps from left to right, eigs_l the other way around
 eigs_r = diagonalize_rtm_right_gen_sym(ll; bring_right_gen=true, normalize_factor)
 
-@test equal_up_to_trailing_zeros(eigs_l,eigs_r)
+@test ITransverse.ITenUtils.equal_up_to_trailing_zeros(eigs_l,eigs_r)
 # @test eigs_l ≈ eigs_r 
 
 

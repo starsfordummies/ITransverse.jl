@@ -100,7 +100,7 @@ end
         atr, btr, s1 = truncate_rsweep(a,b, cutoff=cut_sv, chi_max=chimaxs);
         atr2, btr2, s2 = truncate_rsweep(a,b, cutoff=cut_sv, chi_max=chimaxs, fast=true);
         s3 = truncate_rsweep!(a,b, cutoff=cut_sv, chi_max=chimaxs)
-        @info "cut little"
+        
         @test norm(atr-atr2) < 1e-14
         @test norm(btr-btr2) < 1e-14
         @test norm(a-atr2) < 1e-14
