@@ -38,11 +38,15 @@ end
 
 """ Given <L|, MPO,|R> computes exp value <L|op_mpo|R>  (here L is *not* conjugated!)
 in a supposedly efficient way. No normalization is done here.  """
-function expval_LR(ll::MPS, opL::MPO, opR::MPO, rr::MPS)
+function expval_LR(ll::MPS, opL::MPO, opR::MPO, rr::MPS, match_inds::Bool=true)
 
     # Assuming all siteinds match. 
     # TODO: put checks and fixes..
-    siteinds(ll) != siteinds(rr) ? rr = replace_siteinds(rr, siteinds(ll)) : nothing
+    if match_inds
+        if siteinds(ll) != siteinds(rr)
+             rr = replace_siteinds(rr, siteinds(ll)) 
+        end
+    end
 
     @assert length(ll) == length(opL) == length(opR) == length(rr)
   
