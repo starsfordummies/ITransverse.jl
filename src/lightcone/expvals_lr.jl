@@ -15,17 +15,20 @@ end
 
 """ Given <L|, MPO,|R> computes exp value <L|op_mpo|R>  (here L is *not* conjugated!)
 in a supposedly efficient way. No normalization is done here.  """
-function expval_LR(ll::MPS, op_mpo::MPO, rr::MPS)
+function expval_LR(ll::MPS, op_mpo::MPO, rr::MPS; match_inds::Bool=false)
 
-    # Assuming all siteinds match. 
-    # TODO: put checks and fixes..
-    siteinds(ll) != siteinds(rr) ? rr = replace_siteinds(rr, siteinds(ll)) : nothing
+    if match_inds
+        if siteinds(ll) != siteinds(rr)
+             rr = replace_siteinds(rr, siteinds(ll)) 
+        end
+    end
 
     @assert length(ll) == length(op_mpo) == length(rr)
   
-    O = ll[1]' * (op_mpo[1] * rr[1])
+    #O = ll[1]' * (op_mpo[1] * rr[1])
+    O = ITensor(1)
 
-    for ii in eachindex(ll)[2:end]
+    for ii in eachindex(ll)#[2:end]
         O = O * rr[ii]
         O = O * op_mpo[ii]
         O = O * ll[ii]'
@@ -36,12 +39,10 @@ function expval_LR(ll::MPS, op_mpo::MPO, rr::MPS)
 end
 
 
-""" Given <L|, MPO,|R> computes exp value <L|op_mpo|R>  (here L is *not* conjugated!)
+""" Given <L|MPO, MPO,|R> computes exp value <L|op_mpo|R>  (here L is *not* conjugated!)
 in a supposedly efficient way. No normalization is done here.  """
-function expval_LR(ll::MPS, opL::MPO, opR::MPO, rr::MPS, match_inds::Bool=true)
+function expval_LR(ll::MPS, opL::MPO, opR::MPO, rr::MPS; match_inds::Bool=false)
 
-    # Assuming all siteinds match. 
-    # TODO: put checks and fixes..
     if match_inds
         if siteinds(ll) != siteinds(rr)
              rr = replace_siteinds(rr, siteinds(ll)) 
@@ -220,60 +221,6 @@ end
 
 
 
-
-
-##
-#= More experimental stuff 
-
-
-""" Alternative way of computing expval_LR using open tMPOs and closing them. 
-We pass the list of local operators to compute as a (regular) MPO, 
-which we contract to the top of the tMPO 
-It may be more flexible """
-function _expval_LR_open(ll::MPS, rr::MPS, ops::MPO, b::FoldtMPOBlocks)
-
-    # TODO allow for longer MPOs (longer lists of local ops)
-    @assert length(ops) == 2
-
-    time_sites_L = siteinds(ll)
-    time_sites_R = siteinds(rr)
-
-    tMPO1= folded_open_tMPO(b, time_sites_L)
-    tMPO2= folded_open_tMPO(b, time_sites_R)
-
-    rho0 = b.rho0
-    tMPO1[1] = rho0 * delta(ind(rho0,1), linkind(tMPO1,1))
-    tMPO2[1] = rho0 * delta(ind(rho0,1), linkind(tMPO2,1))
- 
-    e1 = ops[1]
-    e2 = ops[2]
-    e1 *= delta(siteind(ops,1), linkinds(tMPO1)[end])
-    e2 *= delta(siteind(ops,2), linkinds(tMPO2)[end])
-
-    pushfirst!(ll, ITensor(1))
-    push!(ll, ITensor(1))
-
-    LO = applyn(tMPO1, ll)
-    OR = applyn(tMPO2, rr) # todo swap indices for non-symmetric MPOs
-
-    insert!(LO.data, 1, ϵ_op[1])
-    insert!(OR.data, 1, ϵ_op[2])
-
-    ev_LOOR = overlap_noconj(LO, OR)
-
-    deleteat!(LO.data,1)
-    deleteat!(OR.data,1)
-
-    LO[1] *= ITensor(ComplexF64[1,0,0,1], linkinds(tMPO1)[end])
-    OR[1] *= ITensor(ComplexF64[1,0,0,1], linkinds(tMPO2)[end])
-
-    #normalization 
-    ev_L11R = overlap_noconj(LO, OR)
-
-    return ev_LOOR/ev_L11R
-
-end
-=# 
 
 
 

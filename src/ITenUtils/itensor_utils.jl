@@ -41,7 +41,7 @@ end
 For example (for non-rectangular matrices)
 A = -▷-   (largest dimension to the left)
 pinv(A) =  -◁-
-one should have (TODO check: contracted on the fat dimension?)
+one should have (contracted on the fat dimension)
 pinv(A) * A = I   -◁--▷-  = ----
 """ 
 function pinvten(a::ITensor, check::Bool=true)
@@ -73,7 +73,7 @@ function symmetrize(a::ITensor; tol=1e-6)
     return (a + swapinds(a, inds(a)...))/2
 end
 
-"""checks whether an MPO tensor is symmetric """
+"""checks whether an MPO tensor is symmetric - if we don't specify indices, try to guess from labels """
 function check_symmetry_itensor_mpo(T::ITensor)
     (space_p1, space_p) = inds(T, "Site")
     (wL, wR) = inds(T, "Link")
