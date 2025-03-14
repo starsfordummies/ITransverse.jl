@@ -46,7 +46,7 @@ include("environments.jl")
 
 export sqrt
 
-export mergedicts!, dictfromlist
+export mergedicts!, mergedicts, dictfromlist
 
 #from utils.jl
 export quick_mps, quick_mpo, 

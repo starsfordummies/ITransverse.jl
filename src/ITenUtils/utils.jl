@@ -9,8 +9,35 @@ end
 """ Updates the first dict with data (with matching keys) from the second """
 function mergedicts!(dict_to_update::Dict, new_data::Dict)
     for (key,val) in new_data
+        if !haskey(dict_to_update, key)
+            @warn "key $(key) not present in the dict to update, creating an empty one"
+            dict_to_update[key] = []  # Initialize with an empty array if the key doesn't exist
+        end
         append!(dict_to_update[key], val)
     end
+end
+
+function mergedicts(dict1::Dict, dict2::Dict)
+    result = deepcopy(dict1)
+    for (key, val) in dict2
+        if haskey(result, key)
+            if val isa Dict && result[key] isa Dict
+                # Recursively merge nested dictionaries
+                result[key] = mergedicts(result[key], val)
+            elseif val isa AbstractVector && result[key] isa AbstractVector
+                # Create a new vector by concatenating
+                result[key] = vcat(result[key], val)
+            else
+                # Overwrite the value if types differ or not handled above
+                @warn "Overwriting $(key) ?!" 
+                result[key] = val
+            end
+        else
+            # Add new key-value pair if key doesn't exist
+            result[key] = val
+        end
+    end
+    return result
 end
 
 
