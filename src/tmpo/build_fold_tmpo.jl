@@ -162,6 +162,8 @@ Defaults to closing with identity if no operator is specified. Builds `b.tp.nbet
 function folded_tMPO(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::AbstractVector = [1,0,0,1])
 
     @assert b.tp.nbeta <= length(ts)
+
+    @info "Building folded tMPO for (real+im) $(b.tp.nbeta)+$(length(ts)-b.tp.nbeta) sites "
     WWc = b.WWc
     WWc_im = b_im.WWc
 

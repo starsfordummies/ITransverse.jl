@@ -48,7 +48,7 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams)
             psi = applyn(in_mpo, psi_ortho)
             psi_ortho, sjj, overlap = truncate_rsweep_sym(psi, cutoff=cutoff, chi_max=maxbondim, method="SVD")
         elseif opt_method == "RTMRDM"
-            if jj == 200
+            if jj == div(itermax,2)
                 #increase_chi = false
                 max_chi = maxlinkdim(psi_ortho)+4 # give it some room for adjustment
                 opt_method = "RDM"

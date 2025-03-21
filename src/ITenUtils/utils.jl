@@ -13,7 +13,9 @@ function mergedicts!(dict_to_update::Dict, new_data::Dict)
             @warn "key $(key) not present in the dict to update, creating an empty one"
             dict_to_update[key] = []  # Initialize with an empty array if the key doesn't exist
         end
-        append!(dict_to_update[key], val)
+        if dict_to_update[key] isa Vector && val isa Vector
+            append!(dict_to_update[key], val)
+        end
     end
 end
 
@@ -62,4 +64,8 @@ function equal_up_to_trailing_zeros(v1::Vector, v2::Vector)
     
     # Check if remaining elements in the longer vector are all zeros
     return all(x -> abs(x) < 1e-15, longer_vector[min_length+1:end])
+end
+
+function convert_keys_to_symbols_recursive(dict::Dict)
+    return Dict(Symbol(k) => (v isa Dict ? convert_keys_to_symbols_recursive(v) : v) for (k, v) in dict)
 end
