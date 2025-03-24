@@ -290,4 +290,31 @@ function myrMPO(sites::Vector{<:Index}; linkdims::Int)
 
     return o
 
-  end
+end
+
+""" Given a list of tensors in the form [vL, p, p', vR], builds an MPO.
+Note that the index order sanity is left to the user!  """
+function mpo_from_arrays(array_list, ss = siteinds(size(array_list[1],2), length(array_list)))
+    @assert length(array_list) > 2
+    @assert length(ss) == length(array_list)
+    @assert size(array_list[2], 1) ==  size(array_list[2], 4) 
+    @assert size(array_list[2], 2) ==  size(array_list[2], 3) 
+
+    L = length(array_list)
+
+    linkdim = size(array_list[2], 1)
+    linkinds = [Index(linkdim, "Link,l=$(ii)") for ii = 1:L-1]
+
+    mpo_tensors =  [ITensor() for _ in 1:L]
+    mpo_tensors[1] = ITensor(array_list[1], ss[1], ss[1]', linkinds[1])
+    for ii = 2:L-1
+        mpo_tensors[ii] = ITensor(array_list[ii], linkinds[ii-1],  ss[ii], ss[ii]', linkinds[ii])
+    end
+    mpo_tensors[end] = ITensor(array_list[end], linkinds[end], ss[end], ss[end]')
+
+    return MPO(mpo_tensors)
+end
+
+
+
+
