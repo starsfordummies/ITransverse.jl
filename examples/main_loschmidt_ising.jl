@@ -1,4 +1,5 @@
 using ITensors, JLD2
+using ITensorMPS
 using ITransverse
 
 function ising_loschmidt(tp::tMPOParams, Tstart::Int, Tend::Int, nbeta::Int; Tstep::Int=1)

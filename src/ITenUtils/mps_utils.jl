@@ -236,7 +236,7 @@ function applyn(O::MPO, psi::AbstractMPS)
 end
 
 """ Shorthand for apply + swap indices """
-function applys(O::MPO, psi::AbstractMPS; cutoff, maxdim)
+function applys(O::MPO, psi::AbstractMPS; cutoff=nothing, maxdim=nothing)
     apply(swapprime(O, 0, 1, "Site"), psi; cutoff, maxdim)
 end
 

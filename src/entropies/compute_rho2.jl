@@ -69,8 +69,9 @@ function rtm2_contracted(psi::MPS, phi::MPS, cut::Int; normalize_factor::Number=
     @assert cut < length(psi)
     @assert cut > 0
 
-
-    phi = deepcopy(phi)
+    # Remove primes so we don't mess things up later 
+    psi = noprime(psi)
+    phi = noprime(phi)
 
     phi = sim(linkinds,phi)/normalize_factor
 
