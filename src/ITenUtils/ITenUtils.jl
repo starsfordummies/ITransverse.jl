@@ -44,6 +44,9 @@ include("ext_functions.jl")
 include("size_estimate.jl")
 include("environments.jl")
 
+include("vectorize_mpo.jl")
+
+
 export sqrt
 
 export mergedicts!, mergedicts, dictfromlist
