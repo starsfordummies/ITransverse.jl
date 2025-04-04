@@ -12,13 +12,11 @@ dt = 0.1
 
 nbeta = 0
 
-sigX = ComplexF64[0,1,1,0]
-sigZ = ComplexF64[1,0,0,-1]
-Id = ComplexF64[1,0,0,1]
+#sigX = ComplexF64[0,1,1,0]
+#sigZ = ComplexF64[1,0,0,-1]
+#Id = ComplexF64[1,0,0,1]
 
 optimize_op = sigX
-
-plus_state = Vector{ComplexF64}([1/sqrt(2),1/sqrt(2)])
 
 init_state = plus_state
 
@@ -39,6 +37,7 @@ c0,b = init_cone(tp)
 
 cone_params = ConeParams(;truncp, opt_method="RDM", optimize_op, which_evs=["X"], checkpoint=0)
 psi, psiR, chis, expvals, entropies, infos, last_cp = run_cone(c0, b, cone_params, Nsteps)
+@show expvals
 
 @test abs(expvals["X"][end] - ITransverse.ITenUtils.bench_X_04_plus[length(psi)]) < 0.001
 @show(expvals["X"][end], ITransverse.ITenUtils.bench_X_04_plus[length(psi)])

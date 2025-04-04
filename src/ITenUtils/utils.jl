@@ -6,6 +6,21 @@ function dictfromlist(v::Vector)
     return dd
 end
 
+function smart_append!(A, B)
+    if A isa AbstractArray && B isa AbstractArray
+        append!(A, B)
+    elseif A isa AbstractArray && B isa Number
+        push!(A, B)
+    elseif A isa Number && B isa Number
+        return [A, B]
+    elseif A isa Number && B isa AbstractArray
+        return vcat([A], B)
+    else
+        throw(ArgumentError("Unsupported argument types"))
+    end
+    return A
+end
+
 """ Updates the first dict with data (with matching keys) from the second """
 function mergedicts!(dict_to_update::Dict, new_data::Dict)
     for (key,val) in new_data
@@ -13,9 +28,9 @@ function mergedicts!(dict_to_update::Dict, new_data::Dict)
             @warn "key $(key) not present in the dict to update, creating an empty one"
             dict_to_update[key] = []  # Initialize with an empty array if the key doesn't exist
         end
-        if dict_to_update[key] isa Vector && val isa Vector
-            append!(dict_to_update[key], val)
-        end
+        
+        smart_append!(dict_to_update[key], val)
+    
     end
 end
 
@@ -53,17 +68,17 @@ function cpsave(myfunc::Function, cp_name = "checkpoint.jld2")
     @info "Saving checkpoint to $(cp_name)"
 end
 
-function equal_up_to_trailing_zeros(v1::Vector, v2::Vector)
+function equal_up_to_trailing_zeros(v1::Vector, v2::Vector, tol::Float64=1e-12)
     min_length = min(length(v1), length(v2))
     longer_vector = length(v1) > length(v2) ? v1 : v2
     
     # Compare elements up to the length of the shorter vector
-    if !all(v1[1:min_length] .== v2[1:min_length])
+    if !all(v1[1:min_length] .≈ v2[1:min_length])
         return false
     end
     
     # Check if remaining elements in the longer vector are all zeros
-    return all(x -> abs(x) < 1e-15, longer_vector[min_length+1:end])
+    return all(x -> abs(x) < tol, longer_vector[min_length+1:end])
 end
 
 function convert_keys_to_symbols_recursive(dict::Dict)

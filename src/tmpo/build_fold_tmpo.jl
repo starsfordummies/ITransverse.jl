@@ -163,7 +163,7 @@ function folded_tMPO(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index
 
     @assert b.tp.nbeta <= length(ts)
 
-    @info "Building folded tMPO for (real+im) $(b.tp.nbeta)+$(length(ts)-b.tp.nbeta) sites "
+    @info "Building folded tMPO for (im+real) $(b.tp.nbeta)+$(length(ts)-b.tp.nbeta) sites "
     WWc = b.WWc
     WWc_im = b_im.WWc
 

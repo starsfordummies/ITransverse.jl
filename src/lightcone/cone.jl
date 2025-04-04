@@ -198,6 +198,9 @@ function run_cone(psi::MPS,
 
         mergedicts!(expvals, evs_computed)
 
+        #@show evs_computed
+        #@show expvals
+
         push!(chis, maxlinkdim(ll))
         push!(overlaps, overlapLR)
         push!(times, length(ll)*tp.dt)
