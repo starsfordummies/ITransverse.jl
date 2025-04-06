@@ -133,7 +133,9 @@ function matrix_svd(
     end
 
     UT, ST, VT, spec = USVT
-    U, S, V = itensor(UT), itensor(ST), itensor(VT)
+    U = itensor(UT)
+    S = itensor(ST)
+    V = itensor(VT)
 
     #@show first(S), sum(S)
 

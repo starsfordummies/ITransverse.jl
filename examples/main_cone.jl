@@ -3,6 +3,7 @@ using ITransverse.ITenUtils
 #using Plots
 
 using ITransverse
+using ITransverse: vX, vZ, vI
 
 function main_cone()
 
@@ -13,10 +14,6 @@ function main_cone()
     dt = 0.1
 
     nbeta = 0
-
-    #sigX = ComplexF64[0,1,1,0]
-    sigZ = ComplexF64[1,0,0,-1]
-    #Id = ComplexF64[1,0,0,1]
 
     optimize_op = vZ
 

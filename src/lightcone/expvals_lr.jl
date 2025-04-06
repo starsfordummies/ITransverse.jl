@@ -186,7 +186,7 @@ function compute_expvals(ll::AbstractMPS, rr::AbstractMPS, op_list::Vector{Strin
         op_list = ["X", "Z", "Pz", "Sp", "Sm", "XX", "ZZ", "eps"]
     end
 
-    allevs = Dict()
+    allevs = Dict{String,ComplexF64}()
 
     ev_L1R = expval_LR(ll, rr, [1,0,0,1], b)
 

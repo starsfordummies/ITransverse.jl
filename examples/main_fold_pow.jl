@@ -3,6 +3,7 @@ using ITensorMPS
 using JLD2
 
 using ITransverse
+using ITransverse: vX, vZ, vI
 #using ITransverse.ITenUtils
 
 #ITensors.enable_debug_checks()
@@ -12,26 +13,7 @@ function main_folded_pm()
 
     tp = ising_tp()
     tp =  tMPOParams(0.1, build_expH_ising_murg, 
-    IsingParams(1.0, 0.7, 0.0), 0, [1,0], [1,0,0,1])
-
-
-    cutoff = 1e-8
-    maxbondim = 80
-    itermax = 500
-    eps_converged=1e-8
-
-    truncp = TruncParams(cutoff, maxbondim)
-
-    pm_params = PMParams(truncp, itermax, eps_converged, true, "RDM")
-
-    #sigX = ComplexF64[0,1,1,0]
-    #sigZ = ComplexF64[1,0,0,-1]
-
-    evs = [] 
-
-    rvecs = []
-    ds2s = []
-
+    IsingParams(1.0, 0.7, 0.0), 0, [1,1], [1,1,1,1]/2)
 
     tp = tMPOParams(tp; nbeta=0)
 
@@ -42,7 +24,26 @@ function main_folded_pm()
     b_im = FoldtMPOBlocks(tpim)
 
 
-    ts = 60:60
+    cutoff = 1e-8
+    maxbondim = 80
+    itermax = 500
+    eps_converged=1e-8
+
+    truncp = TruncParams(cutoff, maxbondim)
+
+    pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM_R")
+
+    #sigX = ComplexF64[0,1,1,0]
+    #sigZ = ComplexF64[1,0,0,-1]
+
+    evs = [] 
+
+    rvecs = []
+    ds2s = []
+    r2s = [] 
+
+
+    ts = 100:100
     alltimes = ts.* tp.dt
 
     infos = Dict(:tp => tp, :pm_params => pm_params, :b => b, :times => alltimes)
@@ -60,28 +61,30 @@ function main_folded_pm()
         mpo_1 = folded_tMPO(b, b_im, time_sites)
 
 
-        ll, rr, ds2_pm  = ITransverse.powermethod_sweep(init_mps, mpo_1, mpo_Z, pm_params) 
+        # ll, rr, ds2_pm  = ITransverse.powermethod_sweep(init_mps, mpo_1, mpo_X, pm_params) 
 
-        @show maxlinkdim(ll), maxlinkdim(rr)
-        ev = compute_expvals(ll, rr, ["Z"], b)
+        # @show maxlinkdim(ll), maxlinkdim(rr)
+        # ev = compute_expvals(ll, rr, ["Z"], b)
 
-        @show ev
-        ll, rr, ds2_pm  = powermethod(init_mps, mpo_1, mpo_Z, pm_params) 
+        # @show ev
+        ll, rr, ds2_pm  = powermethod(init_mps, mpo_1, mpo_X, pm_params) 
 
-        ev = compute_expvals(ll, rr, ["Z"], b)
+        ev = compute_expvals(ll, rr, ["X","Z"], b)
         @show ev
 
         push!(rvecs, rr)
         push!(evs, ev)
         push!(ds2s, ds2_pm)
 
+        push!(r2s, ITransverse.rtm2_contracted_normalized(ll, rr))
     end
 
-    return rvecs, evs, ds2s, ts, infos
+    return rvecs, evs, ds2s, r2s, ts, infos
 end
 
 
 
-rvecs, evs, ds2s, alltimes, infos = main_folded_pm()
+rvecs, evs, ds2s, r2s, alltimes, infos = main_folded_pm()
 
 println(evs)
+

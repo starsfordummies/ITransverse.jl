@@ -72,9 +72,6 @@ export build_H_ising,
     build_expH_potts_symmetric_svd,
     build_expH_random_symm_svd_1o
 
-export up_state, down_state, plus_state
-export vX, vZ, vI
-
 
 include("tmpo/tmpo_params.jl")
 export tMPOParams, ising_tp

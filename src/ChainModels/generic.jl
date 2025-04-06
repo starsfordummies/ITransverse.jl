@@ -35,11 +35,17 @@ end
 
 
 
-up_state = Vector{ComplexF64}([1, 0])
-down_state = Vector{ComplexF64}([0, 1])
-plus_state = Vector{ComplexF64}([1 / sqrt(2), 1 / sqrt(2)])
-minus_state = Vector{ComplexF64}([1 / sqrt(2), -1 / sqrt(2)])
+const up_state = ComplexF64[1+0im, 0+0im]
+const down_state = ComplexF64[0, 1+0im]
+const plus_state = ComplexF64[1 / sqrt(2), 1 / sqrt(2)]
+const minus_state = ComplexF64[1 / sqrt(2), -1 / sqrt(2)]
 
-vX = ComplexF64[0,1,1,0]
-vZ = ComplexF64[1,0,0,-1]
-vI = ComplexF64[1,0,0,1]
+const vX = ComplexF64[0,1,1,0]
+const vZ = ComplexF64[1,0,0,-1]
+const vI = ComplexF64[1,0,0,1]
+
+
+# space_sites = siteinds("S=1/2", 80)
+# hisi = build_H_ising(space_sites, tp.mp)
+# p0 = random_mps(space_sites)
+# _, gs = dmrg(hisi, p0, nsweeps=6)

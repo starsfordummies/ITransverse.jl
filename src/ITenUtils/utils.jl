@@ -1,7 +1,7 @@
-function dictfromlist(v::Vector)
-    dd = Dict()
+function dictfromlist(v::Vector{T}, ValueType=Any) where T
+    dd = Dict{T, Vector{ValueType}}()
     for key in v
-        dd[key] = []
+        dd[key] = ValueType[]  
     end
     return dd
 end
