@@ -92,6 +92,10 @@ ITensors.op(::OpName"τplusτdag",::SiteType"S1_Z3") =
      010
 ```
  """
+ function build_H_potts(sites_potts, mp::PottsParams)
+    build_H_potts(sites_potts, mp.JSS, mp.ftau)
+ end
+
 function build_H_potts(sites_potts, JJ::Real, ff::Real)
  
     N = length(sites_potts)
@@ -267,6 +271,10 @@ end
 Builds exp(Hpotts) with the expression a la Murg (sin/cos alike)
 Bond dimension is 3
 """
+function build_expH_potts_murg(sites, mp::PottsParams, dt::Number)
+    build_expH_potts_murg(sites, mp.JSS, mp.ftau, dt)
+end
+
 function build_expH_potts_murg(sites, 
     J::Real, fpotts::Real,
     dt::Number)
