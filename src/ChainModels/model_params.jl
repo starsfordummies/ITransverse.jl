@@ -15,7 +15,15 @@ struct IsingParams <: ModelParams
     direction::String
 end
 
+# Defaults
+IsingParams() = IsingParams(1.0, -1.05, 0.5)
+
 IsingParams(Jtwo, gperp, hpar; direction="XXZ") = IsingParams(Jtwo, gperp, hpar, direction)
 
 # allow for changes on the fly of params 
 IsingParams(x::IsingParams; Jtwo=x.Jtwo, gperp=x.gperp, hpar=x.hpar, direction=x.direction) = IsingParams(Jtwo, gperp, hpar; direction)
+
+struct PottsParams <: ModelParams
+    JSS::Float64
+    ftau::Float64
+end
