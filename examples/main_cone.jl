@@ -3,7 +3,7 @@ using ITransverse.ITenUtils
 #using Plots
 
 using ITransverse
-using ITransverse: vX, vZ, vI
+using ITransverse: vX, vZ, vI, plus_state, up_state
 
 function main_cone()
 
@@ -20,15 +20,15 @@ function main_cone()
     #up_state = Vector{ComplexF64}([1,0])
     #plus_state = Vector{ComplexF64}([1/sqrt(2),1/sqrt(2)])
 
-    init_state = plus_state
+    init_state = up_state
 
     cutoff = 1e-10
-    maxbondim = 200
-    direction = "left"
+    maxbondim = 256
+    direction = "right"
 
     truncp = TruncParams(cutoff, maxbondim, direction)
 
-    Nsteps = 50
+    Nsteps = 70
 
     #time_sites = siteinds("S=3/2", 1)
 

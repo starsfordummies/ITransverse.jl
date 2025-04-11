@@ -87,6 +87,7 @@ function apply_extend_ite(A::MPO, ψ::MPS; truncate::Bool=false, cutoff::Float64
     return ψc
 end
 
+
 """
 One step of the light cone algorithm: takes left and right tMPS ll, rr,
 the time MPO and the operator O
@@ -138,9 +139,9 @@ function run_cone(psi::MPS,
 
     Id = ComplexF64[1,0,0,1]
 
-    chis = []
-    overlaps = []
-    times = [] 
+    chis = Int64[]
+    overlaps = ComplexF64[]
+    times = typeof(b.tp.dt)[]
 
     entropies = dictfromlist(which_ents)
     expvals = dictfromlist(which_evs)
@@ -148,21 +149,21 @@ function run_cone(psi::MPS,
     # For checkpoints, we want to save CPU data 
     tp_cp =  tMPOParams(tp; bl=tocpu(tp.bl), tr=tocpu(tp.tr))
     
-    infos = Dict(:times => [], :tp => tp_cp, :coneparams => cp, :dtype => NDTensors.unwrap_array_type(tp.bl))
+    infos = Dict(:times => similar(times), :tp => tp_cp, :coneparams => cp, :dtype => NDTensors.unwrap_array_type(tp.bl))
 
     time_dim = dim(b.WWc,1)
 
     if truncp.direction == "right"
-        sweep_str = "<<"
+        sweep_str = "psi0 << Op"
     elseif  truncp.direction == "left"
-        sweep_str = ">>"
+        sweep_str = "psi0 >> Op"
     else
-        sweep_str = "??"
+        sweep_str = "??????"
     end
 
     nsteps = nT_final - length(psi)
 
-    p = Progress(nsteps; desc="[cone|$(opt_method)] $(sweep_str) $cutoff=$(truncp.cutoff), maxbondim=$(truncp.maxbondim))", showspeed=true) 
+    p = Progress(nsteps; desc="[cone|$(opt_method)] [$(sweep_str)] $cutoff=$(truncp.cutoff), maxbondim=$(truncp.maxbondim))", showspeed=true) 
 
     for _ = 1:nsteps
         
@@ -183,8 +184,7 @@ function run_cone(psi::MPS,
             rr = apply_extend(tmpo,rr; truncate=true, cutoff=truncp.cutoff, maxdim=truncp.maxbondim)
             ll = rr
         else
-            @error "no valid update method specified"
-            @error "RTM_LR|RTM_R|RDM"
+            error("no valid update method specified ($(opt_method)): use RTM_LR|RTM_R|RDM")
         end
 
 
