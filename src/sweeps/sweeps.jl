@@ -97,6 +97,8 @@ function truncate_rsweep(psi::MPS, phi::MPS, truncp::TruncParams; fast::Bool=fal
 end
 function truncate_rsweep(psi::MPS, phi::MPS; cutoff::Real=1e-12, chi_max::Int=max(maxlinkdim(psi),maxlinkdim(phi)), fast::Bool=false)
 
+    #@info "Called truncate"
+
     #elt = eltype(psi[1])
     mpslen = length(psi)
 
@@ -218,7 +220,9 @@ end
 
 """ Inplace version of truncate_rsweep. Modifies input MPS !
  Returns generalized SVD entropies  """
-function truncate_rsweep!(psi::MPS, phi::MPS; cutoff::Real=1e-12, chi_max::Int=max(maxlinkdim(psi),maxlinkdim(phi)))
+function truncate_rsweep!(psi::MPS, phi::MPS; cutoff::Real=1e-12, chi_max=nothing)
+
+    chi_max = something(chi_max, max(maxlinkdim(psi),maxlinkdim(phi)))
 
     #elt = eltype(psi[1])
     mpslen = length(psi)
@@ -249,18 +253,18 @@ function truncate_rsweep!(psi::MPS, phi::MPS; cutoff::Real=1e-12, chi_max::Int=m
         XU = dag(U) 
         XUinv =  U
 
-        XV = dag(Vdag) 
+        #XV = dag(Vdag) 
         XVinv = Vdag
 
         # right_env *= XU
         # right_env *= XV
-        right_env = S./sum(S)
+        right_env = S/norm_factor
         # Set updated matrices
         psi[ii] = Ai * XU  
-        phi[ii] = Bi * XV
+        phi[ii] = Bi * dag(Vdag) # XV
 
-        Snorm = tocpu(right_env)
-        ents_sites[ii-1] = scalar((-Snorm*log.(Snorm)))
+        #Snorm = tocpu(right_env)
+        #ents_sites[ii-1] = scalar((-Snorm*log.(Snorm)))
 
         #@info "setting psi[$(ii)]"
 
