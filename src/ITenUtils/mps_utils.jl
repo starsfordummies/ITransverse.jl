@@ -317,4 +317,7 @@ end
 
 
 
-
+""" Measures infidelity 1 - |<psi|phi>|^2/(<psi|psi><phi|phi>) """
+function infidelity(psi::MPS, phi::MPS)
+    return 1. - abs2(inner(psi,phi))/norm(psi)^2/norm(phi)^2
+end
