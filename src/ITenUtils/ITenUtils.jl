@@ -79,7 +79,8 @@ export symmetrize,
     check_id_matrix,
     check_diag_matrix,
     randmat_decayspec,
-    matrix_svd
+    matrix_svd,
+    vectorized_identity
 
 # gen_svdeig_symm.jl
 export

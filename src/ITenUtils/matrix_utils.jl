@@ -155,3 +155,10 @@ function matrix_svd(
 
     return ITensors.TruncSVD(U, S, V, spec, u, v)
 end
+
+""" Given d^2 length, builds a vectorized identity (length d^2) """
+function vectorized_identity(dsquared::Int)
+    d = Int(sqrt(dsquared))
+    #@assert d^2 == len "Input length must be a perfect square"
+    return vec(Matrix{Float64}(I, d, d))
+end
