@@ -3,6 +3,10 @@
 
 abstract type ModelParams end
 
+# function ModelParams(nT::NTuple)
+
+# end
+
 function ModelParams(phys_space, Jtwo, gperp, hpar)
     @warn "Warning, ModelParams(site, J,g,h) is deprecated - use IsingParams(Jxx, gz, hx) for Ising instead"
     return IsingParams(Jtwo, gperp, hpar)
@@ -14,6 +18,15 @@ struct IsingParams <: ModelParams
     hpar::Float64
     direction::String
 end
+
+struct XXZParams <: ModelParams
+    J_XY::Float64
+    J_ZZ::Float64
+    hz::Float64
+end
+
+
+XXZParams(J_ZZ,hz) = XXZParams(1.0, J_ZZ,hz)
 
 # Defaults
 IsingParams() = IsingParams(1.0, -1.05, 0.5)

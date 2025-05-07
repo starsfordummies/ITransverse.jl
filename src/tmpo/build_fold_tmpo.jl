@@ -149,9 +149,16 @@ end
 =# 
 
 #Legacy, remove eventually ?
-function folded_tMPO(b::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::AbstractVector = [1,0,0,1])
+function folded_tMPO(b::FoldtMPOBlocks, ts::Vector{<:Index}; kwargs...)
+    
+    s = inds(b.WWc)[4]
+    local_dim = Int(sqrt(dim(s)))
+
+    fold_op = get(kwargs, :fold_op, [diagm(ones(local_dim))...])
+    
+
     @assert b.tp.nbeta == 0
-    folded_tMPO(b,b, ts, fold_op)
+    folded_tMPO(b,b, ts; fold_op)
 end
 
 
@@ -159,13 +166,19 @@ end
 """ Given building blocks and time sites, builds folded tMPO associated with `fold_op`. 
 Defaults to closing with identity if no operator is specified. Builds `b.tp.nbeta` steps of b_im blocks
     at the beginning of the tMPO. """
-function folded_tMPO(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::AbstractVector = [1,0,0,1])
+function folded_tMPO(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index}; kwargs...)
 
     @assert b.tp.nbeta <= length(ts)
 
     @info "Building folded tMPO for (im+real) $(b.tp.nbeta)+$(length(ts)-b.tp.nbeta) sites "
     WWc = b.WWc
     WWc_im = b_im.WWc
+
+
+    s = inds(b.WWc)[4]
+    local_dim = Int(sqrt(dim(s)))
+
+    fold_op = get(kwargs, :fold_op, [diagm(ones(local_dim))...])
 
     #match indices for real-imag so it's easier to work with them 
     replaceinds!(WWc_im, inds(WWc_im), inds(WWc))
@@ -195,9 +208,16 @@ end
 """ Build folded tMPO with an extra site at the beginning for the initial state.
 The extra site should already be incorporated in the `ts` index list (and we check whether the dimensions match),
  so effectively we're building a tMPO for Nt = length(ts)-1 timesteps  """
-function folded_tMPO_in(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::AbstractVector = [1,0,0,1])
+function folded_tMPO_in(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index}; kwargs...)
 
     @assert b.tp.nbeta <= length(ts)
+
+
+    s = inds(b.WWc)[4]
+    local_dim = Int(sqrt(dim(s)))
+
+    fold_op = get(kwargs, :fold_op, [diagm(ones(local_dim))...])
+
     WWc = b.WWc
     WWc_im = b_im.WWc
 
@@ -282,7 +302,12 @@ function folded_left_tMPS_in(T::MPO)
 end
 
 """ Builds a folded tMPO extended by one site to the top (ie. end) with the tensor WWl """
-function folded_tMPO_L(b::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::AbstractVector = [1,0,0,1])
+function folded_tMPO_L(b::FoldtMPOBlocks, ts::Vector{<:Index}; kwargs...)
+    s = inds(b.WWc)[4]
+    local_dim = Int(sqrt(dim(s)))
+
+    fold_op = get(kwargs, :fold_op, [diagm(ones(local_dim))...])
+
     oo = MPO(fill(b.WWc, length(ts)))
     oo[end] = b.WWl
     rind = ind(b.WWc,3)
@@ -302,8 +327,16 @@ end
 
 
 """ Builds a folded tMPO extended by one site to the top (ie. end) with the tensor `b.WWl` """
-function folded_tMPO_L(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::AbstractVector = [1,0,0,1])
+function folded_tMPO_L(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index};)
+
     @assert b.tp.nbeta < length(ts)
+
+    s = inds(b.WWl)[1]
+    local_dim = Int(sqrt(dim(s)))
+
+    fold_op = get(kwargs, :fold_op, [diagm(ones(local_dim))...])
+
+
     WWc = b.WWc
     WWc_im = b_im.WWc
 
@@ -334,7 +367,14 @@ end
 
 
 
-function folded_tMPO_R(b::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::AbstractVector = [1,0,0,1])
+function folded_tMPO_R(b::FoldtMPOBlocks, ts::Vector{<:Index}; kwargs... )
+    
+    s = inds(b.WWr)[end]
+    local_dim = Int(sqrt(dim(s)))
+
+    fold_op = get(kwargs, :fold_op, [diagm(ones(local_dim))...])
+
+    
     oo = MPO(fill(b.WWc, length(ts)))
     oo[end] = b.WWr
     rind = ind(b.WWc,3)
@@ -414,11 +454,15 @@ function folded_right_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index})
         psi[ii] = replaceinds(psi[ii], inds(b.WWr), newinds)
     end
 
+    localdim = Int(sqrt(dim(l)))
+    # @show s
+    # @show r
+    # @show l
     #@show b.WWr
     #@show ts
     dttype = NDTensors.unwrap_array_type(b.WWc)
     psi[1] = psi[1] * b.rho0 * delta(ind(b.rho0,1), ll[1])
-    psi[end] = psi[end] * adapt(dttype, ITensor([1,0,0,1], ll[end]))
+    psi[end] = psi[end] * adapt(dttype, ITensor([diagm(ones(localdim))...], ll[end]))
 
     return psi 
 end

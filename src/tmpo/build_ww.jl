@@ -11,10 +11,9 @@ L--o--R   =>    p--o--p'
 ```
 """
 function rotate_90clockwise(W::ITensor; L=nothing, R=nothing, P=nothing, Ps=nothing)
-    
-    xPtR = Index(dim(P),"time,virtR")
-    xPstL = Index(dim(P),"time,virtL")
-    xLtP = Index(1)
+    xPtR  = addtags(Index(dim(Ps),tags="time,virtR"), tags(Ps))
+    xPstL = addtags(Index(dim(P),tags="time,virtL"), tags(P))
+    xLtP  = Index(1)
 
     if !isnothing(L)
         xLtP = Index(dim(L),"time,site")
@@ -115,9 +114,8 @@ function build_WWc(eH_space::MPO)
     CwR = combiner(wR,wR''; tags="cwR")
 
     # we flip the p<>* legs on the backwards, shouldn't matter if we have p<>p*
-    Cp = combiner(space_p,space_p'''; tags="cp")
-    Cps = combiner(space_p',space_p''; tags="cps")
-
+    Cp = addtags(combiner(space_p,space_p'''; tags="cp"), tags(space_p))
+    Cps = addtags(combiner(space_p',space_p''; tags="cps"), tags(space_p))
     WWc = WWc * CwL * CwR * Cp * Cps
 
     #Return indices as well

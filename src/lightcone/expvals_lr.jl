@@ -88,7 +88,7 @@ function expval_LR(ll::MPS, rr::MPS, op::AbstractVector, b::FoldtMPOBlocks)
 
     # Assuming here siteinds(ll) and (rr) match
     time_sites = siteinds(rr)
-    tmpo = folded_tMPO(b, time_sites, op)
+    tmpo = folded_tMPO(b, time_sites; fold_op=op)
     expval_LR(ll, tmpo, rr)
     
 end
@@ -186,33 +186,41 @@ function compute_expvals(ll::AbstractMPS, rr::AbstractMPS, op_list::Vector{Strin
         op_list = ["X", "Z", "Pz", "Sp", "Sm", "XX", "ZZ", "eps"]
     end
 
+    s_folded = inds(b.WWc)[end]
+
+    phys_space = string(split(string(tags(s_folded)),",")[1])[2:end]
+    s_unfolded = siteinds(phys_space,1)[1]
+    local_dim = dim(s_unfolded)
+    Id = [diagm(ones(local_dim))...]
+    
     allevs = Dict{String,ComplexF64}()
 
-    ev_L1R = expval_LR(ll, rr, [1,0,0,1], b)
+
+    ev_L1R = expval_LR(ll, rr, Id, b)
 
     #two-col exp value is expensive, only compute if necessary
     ev_L11R = haskey(op_list, "XX") || haskey(op_list, "ZZ") || haskey(op_list, "eps") ? expval_LR(ll, rr, [1,0,0,1], [1,0,0,1], b) : 1.0
 
-    for op in op_list
-        if op == "X"
-            allevs[op] = expval_LR(ll, rr, [0,1,1,0], b)/ev_L1R
-        elseif op == "Z"
-            allevs[op] = expval_LR(ll, rr, [1,0,0,-1], b)/ev_L1R
-        elseif op == "Pz"
-            allevs[op] = expval_LR(ll, rr, [1,0,0,0], b)/ev_L1R
-        elseif op == "Sp"
-                allevs[op] = expval_LR(ll, rr, [0,1,0,0], b)/ev_L1R
-        elseif op == "Sm"
-                allevs[op] = expval_LR(ll, rr, [0,0,1,0], b)/ev_L1R
-        elseif op == "XX"
-                allevs[op] = expval_LR(ll, rr, [0,1,1,0], [0,1,1,0], b)/ev_L1R
-        elseif op == "ZZ"
-                allevs[op] = expval_LR(ll, rr, [1,0,0,-1], [1,0,0,-1], b)/ev_L1R
-        elseif op == "eps"
+    for op_String in op_list
+        
+        if op_String == "Pz"
+            allevs[op_String] = expval_LR(ll, rr, [1,zeros(local_dim^2-1)...], b)/ev_L1R
+        # elseif op == "Sp"
+        #         allevs[op] = expval_LR(ll, rr, [0,1,0,0], b)/ev_L1R
+        # elseif op == "Sm"
+        #         allevs[op] = expval_LR(ll, rr, [0,0,1,0], b)/ev_L1R
+        elseif op_String == "XX"
+                σx = [dim(s) * matrix(op_String(s,"Sx"))...]
+                allevs[op_String] = expval_LR(ll, rr, σx, σx, b)/ev_L1R
+        elseif op_String == "ZZ"
+                σz = [dim(s) * matrix(op_String(s,"Sz"))...]
+                allevs[op_String] = expval_LR(ll, rr, σz, σz, b)/ev_L1R
+        elseif op_String == "eps"
             ϵ_op = ITransverse.ChainModels.epsilon_brick_ising(b.tp.mp)
-            allevs[op] = expval_LR_ops(ll, rr, ϵ_op, b)/ev_L11R
+            allevs[op_String] = expval_LR_ops(ll, rr, ϵ_op, b)/ev_L11R
         else
-            @warn "$(op) not implemented"
+            current_mat_op = [matrix(op(s_unfolded,op_String))...]
+            allevs[op_String] = expval_LR(ll, rr, current_mat_op, b)/ev_L1R
         end
     end
 

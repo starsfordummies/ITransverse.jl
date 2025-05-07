@@ -26,10 +26,13 @@ function FoldtMPOBlocks(tp::tMPOParams, init_state::ITensor = tp.bl)
     WWl, WWc, WWr = build_WW(tp::tMPOParams)
 
     R, P, Ps = inds(WWl)
+    # Ps, R, P = inds(WWl)
     WWl, _ = rotate_90clockwise(WWl; R,P,Ps)
     L, R, P, Ps = inds(WWc)
+    # Ps, L, R, P = inds(WWc)
     WWc, rotated_inds= rotate_90clockwise(WWc; L,R,P,Ps)
     L, P, Ps = inds(WWr)
+    # Ps, L, P = inds(WWr)
     WWr, _ = rotate_90clockwise(WWr; L,P,Ps)
 
     # Match the inds of all three tensors FIXME do we want this? 
