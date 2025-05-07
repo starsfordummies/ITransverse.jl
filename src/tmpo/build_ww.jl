@@ -10,7 +10,10 @@ L--o--R   =>    p--o--p'
    |p              |R
 ```
 """
-function rotate_90clockwise(W::ITensor; L=nothing, R=nothing, P=nothing, Ps=nothing)
+
+#= 
+""" This is actually likely in the wrong direction - use the other function """ 
+function _rotate_90clockwise(W::ITensor; L=nothing, R=nothing, P=nothing, Ps=nothing)
     
     xPtR = Index(dim(P),"time,virtR")
     xPstL = Index(dim(P),"time,virtL")
@@ -36,12 +39,21 @@ function rotate_90clockwise(W::ITensor; L=nothing, R=nothing, P=nothing, Ps=noth
 
     return W, rotated_inds
 end
+=#
 
 
 """
+Given an MPO tensor `W` and the relevant indices,
+We rotate our space vectors to the *right* by 90°, ie 
+
 (L,R,P,P') => (P',P,R,L)
+```
+   |p'             |L
+L--o--R   =>    p--o--p'
+   |p              |R
+```
 """
-function rotate_90clockwisen(W::ITensor; L=nothing, R=nothing, P=nothing, Ps=nothing)
+function rotate_90clockwise(W::ITensor; L=nothing, R=nothing, P=nothing, Ps=nothing)
 
     dim_rotV = dim(P)
     dim_rotP = isnothing(L) ? dim(R) : dim(L)
@@ -73,11 +85,8 @@ end
 
 
 
-
-
 """ Convention we stick to for all the following: indices for tMPO WWl before rotations are  L, R, P, P' """
-function build_WW(tp::tMPOParams)
-    eH = build_expH(tp)
+function build_WW(eH::MPO)
 
     @info "Building WW tensors using $(tp.expH_func), parameters $(tp.mp)"
     WWl,       iCwR, iCp, iCps = build_WWl(eH)
@@ -85,10 +94,13 @@ function build_WW(tp::tMPOParams)
     WWc, iCwL, iCwR, iCp, iCps = build_WWc(eH)
     check_symmetry_itensor_mpo(WWc, iCwL, iCwR, iCp, iCps)
 
-
     return WWl, WWc, WWr
 end
 
+function build_WW(tp::tMPOParams)
+    eH = build_expH(tp)
+    build_WW(eH)
+end
     
 
 """ Builds the bulk tensor for the *folded* time MPO
@@ -96,12 +108,13 @@ Returns the *unrotated* combined indices as well: vL, vR, p, p'
 """
 function build_WWc(tp::tMPOParams)
     eH = build_expH(tp)
-    WWc, iCwL, iCwR, iCp, iCps = build_WWc(eH)
+    build_WWc(eH)
 end
 
 function build_WWc(eH_space::MPO)
 
-    _, Wc, _ = eH_space.data
+    #_, Wc, _ = eH_space.data
+    Wc = eH_space[2]
 
     space_p = siteind(eH_space,2)
 
@@ -132,11 +145,12 @@ end
 """ Builds folded unrotated right edge tensor of the network """ 
 function build_WWr(eH_space::MPO)
 
-    _, _, Wr = eH_space.data
+    #_, _, Wr = eH_space.data
+    Wr = eH_space[end]
 
     space_p = siteind(eH_space,3)
 
-    (_, vL) = linkinds(eH_space)
+    vL = linkinds(eH_space)[2]
 
     # Build W Wdagger - put double prime on Wconj for safety
     WWr = Wr * dag(prime(Wr,2))
@@ -162,11 +176,12 @@ end
 """ Builds folded unrotated left edge tensor of the network """ 
 function build_WWl(eH_space::MPO)
 
-    Wl, _, _ = eH_space.data
+    #Wl, _, _ = eH_space.data
+    Wl = eH_space[1]
 
     space_p = siteind(eH_space,1)
 
-    (vR, _) = linkinds(eH_space)
+    vR = linkinds(eH_space)[1]
 
     # Build W Wdagger - put double prime on Wconj for safety
     WWl = Wl * dag(prime(Wl,2))

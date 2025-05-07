@@ -6,7 +6,6 @@ struct FwtMPOBlocks
     tp::tMPOParams
     rot_inds::Dict
 
-  
     function FwtMPOBlocks(Wl::ITensor,Wc::ITensor,Wr::ITensor, tp::tMPOParams,rot_inds::Dict) 
 
         # The data type of the bottom-left term in tp dictates whether the *full* thing will lie on GPU
@@ -38,9 +37,9 @@ function FwtMPOBlocks(tp::tMPOParams)
 
     # rotate 90deg 
 
-    Wl, rotated_inds = rotate_90clockwisen(Wl;      R=iL,P=ilP,Ps=ilPs)
-    Wc, rotated_inds = rotate_90clockwisen(Wc; L=iL,R=iR,P=icP,Ps=icPs)
-    Wr, rotated_inds = rotate_90clockwisen(Wr; L=iR,     P=irP,Ps=irPs)
+    Wl, rotated_inds = rotate_90clockwise(Wl;      R=iL,P=ilP,Ps=ilPs)
+    Wc, rotated_inds = rotate_90clockwise(Wc; L=iL,R=iR,P=icP,Ps=icPs)
+    Wr, rotated_inds = rotate_90clockwise(Wr; L=iR,     P=irP,Ps=irPs)
 
     rot_inds = Dict() #TODO
 
