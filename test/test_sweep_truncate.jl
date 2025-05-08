@@ -106,7 +106,7 @@ end
         @test norm(a-atr2) < 1e-14
         @test norm(b-btr2) < 1e-14
         @test s1 ≈ s2 
-        @test s1 ≈ s3
+        # @test s1 ≈ s3   # truncate_rsweep!() does not return entropies anymore for speed
         
         @info inner(atr,atr2)/norm(atr)/norm(atr2)
         @info inner(btr,btr2)/norm(btr)/norm(btr2)
