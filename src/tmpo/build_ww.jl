@@ -11,7 +11,7 @@ L--o--R   =>    p--o--p'
 ```
 """
 
-
+#= 
 """ This is actually likely in the wrong direction - use the other function """ 
 function rotate_90clockwise(W::ITensor; L=nothing, R=nothing, P=nothing, Ps=nothing)
     
@@ -123,7 +123,7 @@ function _3rotate_90clockwise(W::ITensor; L=nothing, R=nothing, P=nothing, Ps=no
     return W, rotated_inds
 end
 
-
+=#
 
 """ Convention we stick to for all the following: indices for tMPO WWl before rotations are  L, R, P, P'
 Builds Folded and UNROTATED tensors, just W * Wdag and joined indices """
