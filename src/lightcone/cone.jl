@@ -102,11 +102,11 @@ function extend_tmps_cone(ll::MPS, op_L::Vector{<:Number}, op_R::Vector{<:Number
 
     @assert length(ts) == length(ll)+1 
 
-    tmpo = folded_tMPO_R(b, ts, op_R)
+    tmpo = folded_tMPO_R(b, ts; fold_op=op_R)
 
     psi_R = apply_extend(tmpo, rr)
 
-    tmpo = folded_tMPO_L(b, ts, op_L) 
+    tmpo = folded_tMPO_L(b, ts; fold_op=op_L) 
     # =swapprime(folded_tMPO(tp, time_sites; fold_op=op_L), 0, 1, "Site")
 
     psi_L = apply_extend(tmpo, ll)

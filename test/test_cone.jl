@@ -2,7 +2,7 @@ using ITensors, ITensorMPS
 using Test
 
 using ITransverse
-using ITransverse: vX
+using ITransverse: vX, plus_state
 
 
 JXX = 1.0  

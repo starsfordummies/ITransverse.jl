@@ -11,9 +11,9 @@ L--o--R   =>    p--o--p'
 ```
 """
 
-#= 
+
 """ This is actually likely in the wrong direction - use the other function """ 
-function _rotate_90clockwise(W::ITensor; L=nothing, R=nothing, P=nothing, Ps=nothing)
+function rotate_90clockwise(W::ITensor; L=nothing, R=nothing, P=nothing, Ps=nothing)
     
     xPtR = Index(dim(P),"time,virtR")
     xPstL = Index(dim(P),"time,virtL")
@@ -39,21 +39,26 @@ function _rotate_90clockwise(W::ITensor; L=nothing, R=nothing, P=nothing, Ps=not
 
     return W, rotated_inds
 end
-=#
+
 
 
 """
 Given an MPO tensor `W` and the relevant indices,
 We rotate our space vectors to the *right* by 90°, ie 
 
-(L,R,P,P') => (P',P,R,L)
+(L,R,P,P') => (P',P,L,R)
 ```
-   |p'             |L
-L--o--R   =>    p--o--p'
-   |p              |R
+
+^                  ^
+|       |p'        |     |L
+t    L--o--R   =>  x  p--o--p'
+|       |p         |     |R
+|                  |
+----x--->          -----t--->  
+
 ```
 """
-function rotate_90clockwise(W::ITensor; L=nothing, R=nothing, P=nothing, Ps=nothing)
+function _2rotate_90clockwise(W::ITensor; L=nothing, R=nothing, P=nothing, Ps=nothing)
 
     dim_rotV = dim(P)
     dim_rotP = isnothing(L) ? dim(R) : dim(L)
@@ -84,20 +89,63 @@ function rotate_90clockwise(W::ITensor; L=nothing, R=nothing, P=nothing, Ps=noth
 end
 
 
+""" Try to do it right this time
+(L,R,P,P') => (P',P,L,R)
+ """
+function _3rotate_90clockwise(W::ITensor; L=nothing, R=nothing, P=nothing, Ps=nothing)
 
-""" Convention we stick to for all the following: indices for tMPO WWl before rotations are  L, R, P, P' """
+    dim_rotV = dim(P)
+    dim_rotP = isnothing(L) ? dim(R) : dim(L)
+
+    irotL = Index(dim_rotV,"time,virt,L")
+    irotR = Index(dim_rotV,"time,virt,R")
+    irotP = Index(dim_rotP,"time,site")
+    irotPs = Index(dim_rotP,"time,site")'
+
+    if ndims(W) == 4 
+        W = replaceinds(W, (L,R,P,Ps) ,(irotPs, irotP, irotL, irotR))
+        W = permute(W, (irotL, irotR, irotP, irotPs))
+
+    # For rank 3 tensors we think of them as MPS tensors and always get them a physical leg
+    elseif ndims(W) == 3 && isnothing(L) # Wl 
+        W = replaceinds(W, (R,P,Ps) ,(irotP, irotL, irotR))
+        W = permute(W, (irotL, irotR, irotP))  # should be Ps but we already unprime here 
+
+    elseif ndims(W) == 3 && isnothing(R) # Wr 
+        W = replaceinds(W, (L,P,Ps) ,(irotP, irotL, irotR))
+        W = permute(W, (irotL, irotR, irotP))
+    else
+        @error "Trying to rotate a Wtensor with $ndims(W) legs, not sure what to do"
+    end
+
+    rotated_inds = Dict(:L => irotL, :R => irotR, :P => irotP, :Ps => irotPs )
+
+    return W, rotated_inds
+end
+
+
+
+""" Convention we stick to for all the following: indices for tMPO WWl before rotations are  L, R, P, P'
+Builds Folded and UNROTATED tensors, just W * Wdag and joined indices """
 function build_WW(eH::MPO)
 
-    @info "Building WW tensors using $(tp.expH_func), parameters $(tp.mp)"
+    space_phys = Index(maxlinkdim(eH)^2, "Site,space")
+    space_vleft = Index(dim(siteind(eH,2))^2, "Link,space")
+    space_vright = Index(dim(siteind(eH,2))^2, "Link,space")
+
     WWl,       iCwR, iCp, iCps = build_WWl(eH)
+    WWl = replaceinds(WWl, (iCwR, iCp, iCps),  (space_vright, space_phys, space_phys'))
     WWr, iCwL,       iCp, iCps = build_WWr(eH)
+    WWr = replaceinds(WWr, (iCwL, iCp, iCps),  (space_vleft, space_phys, space_phys'))
     WWc, iCwL, iCwR, iCp, iCps = build_WWc(eH)
     check_symmetry_itensor_mpo(WWc, iCwL, iCwR, iCp, iCps)
+    WWc = replaceinds(WWc, (iCwL, iCwR, iCp, iCps),  (space_vleft, space_vright, space_phys, space_phys'))
 
-    return WWl, WWc, WWr
+    return WWl, WWc, WWr,  (space_vleft, space_vright, space_phys, space_phys')
 end
 
 function build_WW(tp::tMPOParams)
+    @info "Building WW tensors using $(tp.expH_func), parameters $(tp.mp)"
     eH = build_expH(tp)
     build_WW(eH)
 end

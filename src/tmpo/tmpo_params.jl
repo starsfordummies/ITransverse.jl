@@ -5,7 +5,6 @@ struct tMPOParams{T <:Union{Float64,ComplexF64}, T2 <: ModelParams}
     nbeta::Int64
     bl::ITensor  # bottom -> left(rotated)
     tr::ITensor  # top -> right(rotated)
-
 end
 
 function tMPOParams(dt::Number,
@@ -13,10 +12,8 @@ function tMPOParams(dt::Number,
     mp::ModelParams,
     nbeta::Int64,
     bl::Vector{<:Number},  # bottom -> left(rotated)
-    tr::Vector{<:Number}) 
-
-    
-    work_type = ComplexF64
+    tr::Vector{<:Number}; 
+    work_type::Type = ComplexF64)
 
     blt = adapt(work_type,ITensor(bl, Index(length(bl), "bl")))
     trt = adapt(work_type,ITensor(tr, Index(length(tr), "tr")))
@@ -28,9 +25,8 @@ function tMPOParams(dt::Number,
     mp::ModelParams,
     nbeta::Int64,
     bl::ITensor,  # bottom -> left(rotated)
-    tr::Vector{<:Number}) 
-
-    work_type = ComplexF64
+    tr::Vector{<:Number},
+    work_type::Type = ComplexF64)
 
     trt = adapt(work_type,ITensor(tr, Index(length(tr), "tr")))
     return tMPOParams(dt, expH_func, mp, nbeta, bl, trt)
