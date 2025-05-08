@@ -17,7 +17,7 @@ function test_symmpm(Tstart::Int, Tend::Int, nbeta::Int; Tstep::Int=1)
     init_state = zero_state
 
 
-    cutoff = 1e-16
+    cutoff = 1e-14
     maxbondim = 140
     itermax = 800
     eps_converged = 1e-6
@@ -62,7 +62,6 @@ function test_symmpm(Tstart::Int, Tend::Int, nbeta::Int; Tstep::Int=1)
         push!(allpsis[:svd], psi_trunc)
 
         pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM_EIG")
-
 
         psi_trunc, ds2 = powermethod_sym(start_mps, mpo, pm_params)
 

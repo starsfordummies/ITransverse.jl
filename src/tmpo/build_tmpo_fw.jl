@@ -123,11 +123,14 @@ function fw_tMPOn(b::FwtMPOBlocks, b_im::FwtMPOBlocks, time_sites::Vector{<:Inde
 
     # Rotated indices already 
     Wc = b.Wc
-    (icL, icR, icP, icPs) = inds(Wc)
+
+    #(icL, icR, icP, icPs) = inds(Wc)
+    (icL, icR, icP, icPs) = (b.rot_inds[:L], b.rot_inds[:R], b.rot_inds[:P], b.rot_inds[:Ps]) 
+
     Wc_im = b_im.Wc
 
     Wr = b.Wr
-    (irL, irR, irP) = inds(Wr)
+    (irL, irR, irP) =  (b.rot_inds[:L], b.rot_inds[:R], b.rot_inds[:P]) 
 
     Wr_im = b_im.Wr
 

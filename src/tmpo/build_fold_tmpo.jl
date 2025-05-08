@@ -170,11 +170,15 @@ function folded_tMPO_L(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Ind
     end
     
     oo[end] = b.WWl
-    virtual_ind = ind(b.WWc,3)
+    virtual_ind = b.rot_inds[:R]
     ll = [Index(dim(virtual_ind),"Link,time_fold,l=$(ii-1)") for ii in 1:length(ts)+1]
     for ii in eachindex(oo)
-        newinds = (ts[ii],ts[ii]',ll[ii+1],ll[ii])
-        oo[ii] = replaceinds(oo[ii], inds(WWc), newinds)
+        WWinds =  (b.rot_inds[:P],b.rot_inds[:Ps],b.rot_inds[:R],b.rot_inds[:L] )
+        newinds = (ts[ii],           ts[ii]',          ll[ii+1],    ll[ii])
+        oo[ii] = replaceinds(oo[ii], WWinds, newinds)
+
+        # newinds = (ts[ii],ts[ii]',ll[ii+1],ll[ii])
+        # oo[ii] = replaceinds(oo[ii], inds(WWc), newinds)
     end
 
     dttype = NDTensors.unwrap_array_type(b.WWc)
@@ -213,11 +217,15 @@ function folded_tMPO_R(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Ind
 
     oo[end] = b.WWr
 
-    rind = ind(b.WWc,3)
+    rind = b.rot_inds[:R]
     ll = [Index(dim(rind),"Link,time_fold,l=$(ii-1)") for ii in 1:length(ts)+1]
     for ii in eachindex(oo)
-        newinds = (ts[ii],ts[ii]',ll[ii+1],ll[ii])
-        oo[ii] = replaceinds(oo[ii], inds(WWc), newinds)
+        WWinds =  (b.rot_inds[:P],b.rot_inds[:Ps],b.rot_inds[:R],b.rot_inds[:L] )
+        newinds = (ts[ii],           ts[ii]',          ll[ii+1],    ll[ii])
+        oo[ii] = replaceinds(oo[ii], WWinds, newinds)
+
+        # newinds = (ts[ii],ts[ii]',ll[ii+1],ll[ii])
+        # oo[ii] = replaceinds(oo[ii], inds(WWc), newinds)
     end
 
     dttype = NDTensors.unwrap_array_type(b.WWc)
@@ -234,11 +242,15 @@ end
 """ Builds a tMPS using the WWl tensors in `b` """ 
 function folded_left_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index})
     psi = MPS(fill(b.WWl, length(ts)))
-    s, r, l = inds(b.WWl)
-    ll = [Index(dim(r),"Link,time_fold,l=$(ii-1)") for ii in 1:length(ts)+1]
+    # s, r, l = inds(b.WWl)
+
+    ll = [Index(dim(b.rot_inds[:R]),"Link,time_fold,l=$(ii-1)") for ii in 1:length(ts)+1]
     for ii in eachindex(psi)
+        # newinds = (ts[ii],ll[ii+1],ll[ii])
+        # psi[ii] = replaceinds(psi[ii], inds(b.WWl), newinds)
+        WWinds =  (b.rot_inds[:P],b.rot_inds[:R],b.rot_inds[:L] )
         newinds = (ts[ii],ll[ii+1],ll[ii])
-        psi[ii] = replaceinds(psi[ii], inds(b.WWl), newinds)
+        psi[ii] = replaceinds(psi[ii], WWinds, newinds)
     end
 
     dttype = NDTensors.unwrap_array_type(b.WWc)
@@ -251,11 +263,14 @@ end
 """ Builds a tMPS using the WWr tensors in `b` """ 
 function folded_right_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index})
     psi = MPS(fill(b.WWr, length(ts)))
-    s, r, l = inds(b.WWr)
-    ll = [Index(dim(r),"Link,time_fold,l=$(ii-1)") for ii in 1:length(ts)+1]
+    #s, r, l = inds(b.WWr)
+    ll = [Index(dim(b.rot_inds[:R]),"Link,time_fold,l=$(ii-1)") for ii in 1:length(ts)+1]
     for ii in eachindex(psi)
+        # newinds = (ts[ii],ll[ii+1],ll[ii])
+        # psi[ii] = replaceinds(psi[ii], inds(b.WWr), newinds)
+        WWinds =  (b.rot_inds[:P],b.rot_inds[:R],b.rot_inds[:L] )
         newinds = (ts[ii],ll[ii+1],ll[ii])
-        psi[ii] = replaceinds(psi[ii], inds(b.WWr), newinds)
+        psi[ii] = replaceinds(psi[ii], WWinds, newinds)
     end
 
     #@show b.WWr
@@ -288,8 +303,12 @@ function folded_tMPO_doublebeta(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vec
     virtual_ind = ind(b.WWc,3)
     ll = [Index(dim(virtual_ind),"Link,time_fold,l=$(ii-1)") for ii in 1:length(ts)+1]
     for ii in eachindex(oo)
-        newinds = (ts[ii],ts[ii]',ll[ii+1],ll[ii])
-        oo[ii] = replaceinds(oo[ii], inds(WWc), newinds)
+        # newinds = (ts[ii],ts[ii]',ll[ii+1],ll[ii])
+        # oo[ii] = replaceinds(oo[ii], inds(WWc), newinds)
+        WWinds =  (b.rot_inds[:P],b.rot_inds[:Ps],b.rot_inds[:R],b.rot_inds[:L] )
+        newinds = (ts[ii],           ts[ii]',          ll[ii+1],    ll[ii])
+        oo[ii] = replaceinds(oo[ii], WWinds, newinds)
+
     end
 
     dttype = NDTensors.unwrap_array_type(b.WWc)
