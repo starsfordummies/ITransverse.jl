@@ -121,8 +121,8 @@ function truncate_rsweep(psi::MPS, phi::MPS; cutoff::Real=1e-12, chi_max::Int=ma
 
         @assert order(right_env) == 2
 
-        #U,S,Vdag = svd(right_env, ind(right_env,1); cutoff=cutoff, maxdim=chi_max)
-        U,S,Vdag = matrix_svd(right_env; cutoff=cutoff, maxdim=chi_max)
+        U,S,Vdag = svd(right_env, ind(right_env,1); cutoff=cutoff, maxdim=chi_max)
+        #U,S,Vdag = matrix_svd(right_env; cutoff=cutoff, maxdim=chi_max)
         norm_factor = sum(S)
 
         XU = dag(U)
@@ -246,8 +246,8 @@ function truncate_rsweep!(psi::MPS, phi::MPS; cutoff::Real=1e-12, chi_max=nothin
 
         @assert order(right_env) == 2
 
-        #U,S,Vdag = svd(right_env, ind(right_env,1); cutoff=cutoff, maxdim=chi_max)
-        U,S,Vdag = matrix_svd(right_env; cutoff=cutoff, maxdim=chi_max)
+        U,S,Vdag = svd(right_env, ind(right_env,1); cutoff=cutoff, maxdim=chi_max)
+        #U,S,Vdag = matrix_svd(right_env; cutoff=cutoff, maxdim=chi_max)
         norm_factor = sum(S)
         
         XU = dag(U) 
