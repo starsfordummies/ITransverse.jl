@@ -14,8 +14,20 @@ function tMPOParams(dt::Number,
     bl::ITensor,  # bottom -> left(rotated)
     tr::Vector{<:Number})
 
-    trt = ITensor(tr, Index(length(tr), "tr"))
+    trt = ITensor(ComplexF64.(tr), Index(length(tr), "tr"))
     return tMPOParams(dt, expH_func, mp, nbeta, bl, trt)
+end
+
+function tMPOParams(dt::Number,
+    expH_func::Function,
+    mp::ModelParams,
+    nbeta::Int64,
+    bl::Vector{<:Number},
+    tr::Vector{<:Number})
+
+    blt = ITensor(ComplexF64.(bl), Index(length(bl), "bl"))
+    trt = ITensor(ComplexF64.(tr), Index(length(tr), "tr"))
+    return tMPOParams(dt, expH_func, mp, nbeta, blt, trt)
 end
 
 tMPOParams(
@@ -23,23 +35,16 @@ tMPOParams(
     expH_func::Function,
     mp::ModelParams,
     nbeta::Int64,
-    bl::Vector{<:Number}) = tMPOParams(dt, expH_func, mp, nbeta, bl, [1,0,0,1])
-
-tMPOParams(
-    dt::Number,
-    expH_func::Function,
-    mp::ModelParams,
-    nbeta::Int64,
-    bl::ITensor) = tMPOParams(dt, expH_func, mp, nbeta, bl,  ITensor([1,0,0,1], Index(length(tr), "tr")))
+    bl::ITensor) = tMPOParams(dt, expH_func, mp, nbeta, bl,  ITensor(ComplexF64.([1,0,0,1]), Index(4, "tr")))
 
 
  # allow for changes on the fly of params
 tMPOParams(x::tMPOParams; 
-    dt::Number = x.dt,
-    expH_func::Function=x.expH_func, 
-    mp::ModelParams=x.mp,
-    nbeta::Int64=x.nbeta,
-    bl=x.bl, 
+    dt = x.dt,
+    expH_func = x.expH_func, 
+    mp = x.mp,
+    nbeta = x.nbeta,
+    bl = x.bl, 
     tr = x.tr) = tMPOParams(dt, expH_func, mp, nbeta, bl, tr)
 
 
