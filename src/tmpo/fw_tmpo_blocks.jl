@@ -8,7 +8,7 @@ struct FwtMPOBlocks
     tp::tMPOParams
     rot_inds::Dict
 
-    function FwtMPOBlocks(Wl::ITensor,Wc::ITensor,Wr::ITensor, tp::tMPOParams,rot_inds::Dict) 
+    function FwtMPOBlocks(Wl::ITensor,Wc::ITensor,Wr::ITensor, tp::tMPOParams, rot_inds::Dict) 
 
         # The data type of the bottom-left term in tp dictates whether the *full* thing will lie on GPU
         dttype = NDTensors.unwrap_array_type(tp.bl)
