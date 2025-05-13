@@ -181,3 +181,7 @@ function itensor_to_vector(t::ITensor)
         error("Only rank-1 and rank-2 tensors are supported (got rank = $r)")
     end
 end
+
+function vector_to_itensor(x::AbstractVector{<:Number}, ttag::AbstractString)
+    return ITensor(ComplexF64.(x), Index(length(x), ttag))
+end

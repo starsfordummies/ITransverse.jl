@@ -1,6 +1,7 @@
 """ Initializes the light cone folded and rotated temporal MPS |R> given `tMPOParams`
 builds a (length n) tMPS with (time_fold)  legs.
 Our convention is that after rotation the initial state goes to the *left* 
+and the eventual operator to the *right*
 Returns (psi[the light cone right MPS], b[the folded tMPO building blocks])"""
 
 function init_cone(tp::tMPOParams, n::Int=3)

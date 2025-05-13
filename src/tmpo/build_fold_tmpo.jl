@@ -161,7 +161,15 @@ function folded_tMPO_L(b::FoldtMPOBlocks, ts::Vector{<:Index}; kwargs...)
 end
 
 
-""" Builds a folded tMPO extended by one site to the top (ie. end) with the tensor `b.WWl` """
+""" Builds a folded tMPO extended by one site to the top (ie. end) with the tensor `b.WWl`. 
+After rotation 90deg clockwise, should look like
+```
+     |  |  |  |
+rho0-o--o--o--o--o-fold_op
+     |  |  |  |  |
+````
+
+"""
 function folded_tMPO_L(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index}; kwargs...)
     @assert b.tp.nbeta < length(ts)
     WWc = b.WWc
@@ -202,11 +210,19 @@ end
 
 
 function folded_tMPO_R(b::FoldtMPOBlocks, ts::Vector{<:Index}; kwargs...)
+    @assert b.tp.nbeta == 0
     folded_tMPO_R(b, b, ts; kwargs...)
 end
 
 
-""" Builds a folded tMPO extended by one site to the top (ie. end) with the tensor `b.WWr`` """
+""" Builds a folded tMPO extended by one site to the top (ie. end) with the tensor `b.WWr`` 
+After rotation 90deg clockwise, should look like
+```
+     |  |  |  |  |
+rho0-o--o--o--o--o-fold_op
+     |  |  |  |  
+````
+"""
 function folded_tMPO_R(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index}; kwargs...)
     @assert b.tp.nbeta < length(ts)
 
@@ -256,7 +272,7 @@ function folded_left_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index})
         # newinds = (ts[ii],ll[ii+1],ll[ii])
         # psi[ii] = replaceinds(psi[ii], inds(b.WWl), newinds)
         WWinds =  (b.rot_inds[:P],b.rot_inds[:R],b.rot_inds[:L] )
-        newinds = (ts[ii],ll[ii+1],ll[ii])
+        newinds = (ts[ii],       ll[ii+1],         ll[ii])
         psi[ii] = replaceinds(psi[ii], WWinds, newinds)
     end
 
@@ -267,7 +283,8 @@ function folded_left_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index})
     return psi 
 end
 
-""" Builds a tMPS using the WWr tensors in `b` """ 
+""" Builds a tMPS using the WWr tensors in `b` 
+ p' indices are converted to unprimed p for the physical inds """ 
 function folded_right_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index})
     psi = MPS(fill(b.WWr, length(ts)))
     #s, r, l = inds(b.WWr)
@@ -275,8 +292,8 @@ function folded_right_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index})
     for ii in eachindex(psi)
         # newinds = (ts[ii],ll[ii+1],ll[ii])
         # psi[ii] = replaceinds(psi[ii], inds(b.WWr), newinds)
-        WWinds =  (b.rot_inds[:P],b.rot_inds[:R],b.rot_inds[:L] )
-        newinds = (ts[ii],ll[ii+1],ll[ii])
+        WWinds =  (b.rot_inds[:Ps],b.rot_inds[:R],b.rot_inds[:L] )
+        newinds = (ts[ii],         ll[ii+1],       ll[ii])
         psi[ii] = replaceinds(psi[ii], WWinds, newinds)
     end
 

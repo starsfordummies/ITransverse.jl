@@ -7,35 +7,48 @@ struct tMPOParams{T<:Union{Float64,ComplexF64}, MP, F}
     tr::ITensor
 end
 
-function tMPOParams(dt::Number,
-    expH_func::Function,
-    mp::ModelParams,
-    nbeta::Int64,
-    bl::ITensor,  # bottom -> left(rotated)
-    tr::Vector{<:Number})
-
-    trt = ITensor(ComplexF64.(tr), Index(length(tr), "tr"))
-    return tMPOParams(dt, expH_func, mp, nbeta, bl, trt)
+function to_itensor(x::ITensor, name::AbstractString)
+    return x
 end
 
-function tMPOParams(dt::Number,
-    expH_func::Function,
-    mp::ModelParams,
-    nbeta::Int64,
-    bl::Vector{<:Number},
-    tr::Vector{<:Number})
-
-    blt = ITensor(ComplexF64.(bl), Index(length(bl), "bl"))
-    trt = ITensor(ComplexF64.(tr), Index(length(tr), "tr"))
-    return tMPOParams(dt, expH_func, mp, nbeta, blt, trt)
+function to_itensor(x::AbstractVector{<:Number}, name::AbstractString)
+    return ITensor(ComplexF64.(x), Index(length(x), name))
 end
 
-tMPOParams(
+function build_default_tr(mp::ModelParams)
+    close_id = op("I", siteind(mp.phys_space))  # Make identity op
+    return close_id * combiner(inds(close_id), tags="tr")
+end
+
+# Master constructor
+function tMPOParams(
     dt::Number,
     expH_func::Function,
     mp::ModelParams,
-    nbeta::Int64,
-    bl::ITensor) = tMPOParams(dt, expH_func, mp, nbeta, bl,  ITensor(ComplexF64.([1,0,0,1]), Index(4, "tr")))
+    nbeta::Int,
+    bl_in
+)
+    blt = to_itensor(bl_in, "bl")
+
+    # handle tr cases
+    trt = build_default_tr(mp)
+  
+    return tMPOParams(dt, expH_func, mp, nbeta, blt, trt)
+end
+
+function tMPOParams(
+    dt::Number,
+    expH_func::Function,
+    mp::ModelParams,
+    nbeta::Int,
+    bl_in::Union{Vector,ITensor},
+    tr_in::Vector
+)
+    blt = to_itensor(bl_in, "bl")
+    trt = to_itensor(tr_in, "tr")
+
+    return tMPOParams(dt, expH_func, mp, nbeta, blt, trt)
+end
 
 
  # allow for changes on the fly of params
