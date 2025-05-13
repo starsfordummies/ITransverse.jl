@@ -7,6 +7,7 @@ struct ConeParams{T<:Number}
     checkpoint::Int
 end
 
+""" Defaults for everything except truncp """
 ConeParams(; truncp::TruncParams,
     opt_method::String = "RTM_LR",
     optimize_op::Vector{<:Number} = [1,0,0,1],

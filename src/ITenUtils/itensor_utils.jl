@@ -1,3 +1,5 @@
+using LinearAlgebra
+using ITensors
 using .ITenUtils: check_diag_matrix
 
 """ Builds a random symmetric ITensor of size `(n,n)`
@@ -160,4 +162,22 @@ function phys_ind(A::ITensor)
     end
 
     return physind
+end
+
+""" Given an index, builds an ITensor containing vectorized identity of the appropriate size """
+function vectorized_identity(ind::Index)
+    d = Int(sqrt(dim(ind)))
+    #@assert d^2 == len "Input length must be a perfect square"
+    return ITensor(vec(Matrix{Float64}(I, d, d)), ind)
+end
+
+function itensor_to_vector(t::ITensor)
+    r = order(t)
+    if r == 1
+        return collect(t.tensor)  # returns Vector
+    elseif r == 2
+        return vec(collect(t.tensor))  # flatten 2D to 1D
+    else
+        error("Only rank-1 and rank-2 tensors are supported (got rank = $r)")
+    end
 end

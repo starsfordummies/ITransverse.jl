@@ -22,9 +22,10 @@ and contract with  the initial state `init_state` on the *left* and the operator
 
 
 #Legacy, remove eventually ?
-function folded_tMPO(b::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::AbstractVector = [1,0,0,1])
+function folded_tMPO(b::FoldtMPOBlocks, ts::Vector{<:Index}; kwargs...)
     @assert b.tp.nbeta == 0
-    folded_tMPO(b,b, ts, fold_op)
+
+    folded_tMPO(b,b, ts; kwargs...)
 end
 
 
@@ -32,10 +33,11 @@ end
 """ Given building blocks and time sites, builds folded tMPO associated with `fold_op`. 
 Defaults to closing with identity if no operator is specified. Builds `b.tp.nbeta` steps of b_im blocks
     at the beginning of the tMPO. """
-function folded_tMPO(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::AbstractVector)
-    folded_tMPO(b, b_im, ts; fold_op=fold_op)
-end
+# function folded_tMPO(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::AbstractVector)
+#     folded_tMPO(b, b_im, ts; fold_op=fold_op)
+# end
 
+""" Accepted kwargs: fold_op, outputlevel """ 
 function folded_tMPO(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index}; kwargs...)
 
     outputlevel::Int = get(kwargs,:outputlevel, 0)
@@ -71,6 +73,11 @@ function folded_tMPO(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index
     # s = inds(b.WWc)[4]
   
     fold_op = get(kwargs, :fold_op, vectorized_identity(dim(virtual_ind)))
+
+    #Inefficient but general 
+    if fold_op isa ITensor
+        fold_op = itensor_to_vector(fold_op)
+    end
 
     oo[end] *= adapt(dttype, ITensor(fold_op, ll[end]))
 

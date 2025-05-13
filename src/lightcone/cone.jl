@@ -137,7 +137,7 @@ function run_cone(psi::MPS,
     ll = deepcopy(psi)
     rr = deepcopy(psi)
 
-    Id = vectorized_identity(dim(b.rot_inds[:P]))
+    Id = vectorized_identity(dim(b.rot_inds[:R]))
 
     chis = Int64[]
     overlaps = ComplexF64[]

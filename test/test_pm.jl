@@ -28,7 +28,7 @@ using Test
     
     init_mps = folded_right_tMPS(b, time_sites)
 
-    mpo_X = folded_tMPO(b, time_sites, sigX)
+    mpo_X = folded_tMPO(b, time_sites; fold_op=sigX)
     mpo_1 = folded_tMPO(b, time_sites)
 
     pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM_LR")

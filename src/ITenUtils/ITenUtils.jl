@@ -80,7 +80,8 @@ export symmetrize,
     check_diag_matrix,
     randmat_decayspec,
     matrix_svd,
-    vectorized_identity
+    vectorized_identity,
+    itensor_to_vector
 
 # gen_svdeig_symm.jl
 export
