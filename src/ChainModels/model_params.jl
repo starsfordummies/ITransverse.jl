@@ -13,6 +13,11 @@ struct IsingParams <: ModelParams
     gperp::Float64
     hpar::Float64
     direction::String
+    phys_space::String
+
+    function IsingParams(Jtwo::Float64, gperp::Float64, hpar::Float64, direction::String)
+        new(Jtwo, gperp, hpar, direction, "S=1/2")
+    end
 end
 
 # Defaults
@@ -26,4 +31,34 @@ IsingParams(x::IsingParams; Jtwo=x.Jtwo, gperp=x.gperp, hpar=x.hpar, direction=x
 struct PottsParams <: ModelParams
     JSS::Float64
     ftau::Float64
+    hS::Float64
+    phys_space::String
+    function PottsParams(Jtwo::Float64, ftau::Float64, hpar::Float64=0.)
+        new(Jtwo, ftau, hpar, "S=1")
+    end
 end
+
+struct XXZParams <: ModelParams
+    J_XY::Float64
+    J_ZZ::Float64
+    hz::Float64
+    phys_space::String
+
+    function XXZParams(J_XY::Float64, J_ZZ::Float64, hz::Float64=0.)
+        new(J_XY, J_ZZ, hz, "S=1/2")
+    end
+end
+
+struct XXZSpin1Params <: ModelParams
+    J_XY::Float64
+    J_ZZ::Float64
+    hz::Float64
+    phys_space::String
+
+    function XXZSpin1Params(J_XY::Float64, J_ZZ::Float64, hz::Float64=0.)
+        new(J_XY, J_ZZ, hz, "S=1")
+    end
+end
+
+XXZParams(J_ZZ,hz) = XXZParams(1.0, J_ZZ, hz)
+XXZSpin1Params(J_ZZ,hz) = XXZSpin1Params(1.0, J_ZZ, hz)

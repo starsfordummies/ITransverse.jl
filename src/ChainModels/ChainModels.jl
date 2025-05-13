@@ -12,7 +12,7 @@ include("potts.jl")
 include("xxzmodel.jl")
 include("random_mpo.jl")
 
-export ModelParams, IsingParams, PottsParams
+export ModelParams, IsingParams, PottsParams, XXZParams, XXZSpin1Params
 
 # export  build_expH, build_expHim
 

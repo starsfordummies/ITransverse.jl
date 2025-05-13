@@ -1,3 +1,5 @@
+""" XXZ Spin 1/2 model - TODO: Update to use XXZParams """
+
 """ TODO Haven't checked this in a while, tread with care"""
 function build_H_XXZ_manual(sites, JXX::Real, hz::Real )
     """ Builds manually (no autompo) H ising Hamiltonian, convention 
