@@ -253,9 +253,9 @@ function folded_left_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index})
         psi[ii] = replaceinds(psi[ii], WWinds, newinds)
     end
 
-    dttype = NDTensors.unwrap_array_type(b.WWc)
+    dttype = NDTensors.unwrap_array_type(b.WWl)
     psi[1] *= b.rho0 * delta(ind(b.rho0,1), ll[1])
-    psi[end] *= adapt(dttype, ITensor([1,0,0,1], ll[end]))
+    psi[end] *= adapt(dttype, vectorized_identity(ll[end]))
 
     return psi 
 end
@@ -277,7 +277,7 @@ function folded_right_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index})
     #@show ts
     dttype = NDTensors.unwrap_array_type(b.WWc)
     psi[1] = psi[1] * b.rho0 * delta(ind(b.rho0,1), ll[1])
-    psi[end] = psi[end] * adapt(dttype, ITensor([1,0,0,1], ll[end]))
+    psi[end] = psi[end] * adapt(dttype, vectorized_identity(ll[end]))
 
     return psi 
 end
@@ -319,9 +319,13 @@ function folded_tMPO_doublebeta(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vec
 
 end
 
-"""Quick way to get init mps, just close the corresponding MPO with [1,0,0,0] to one side. 
+
+
+""" This works for murg construction, need to check how it does with the others... """
+
+"""Quick way to get init mps from an MPO Murg, just close the corresponding MPO with [1,0,0,0] to one side. 
 Nornalization might be not the best """
-function folded_right_tMPS(T::MPO)
+function folded_right_tMPS_murg(T::MPO)
 
     psi = MPS(deepcopy(T.data))
 
@@ -338,7 +342,7 @@ end
 
 """Quick way to get init mps, just close the corresponding MPO with [1,0,0,0] to one side. 
 Nornalization might be not the best """
-function folded_right_tMPS_in(T::MPO)
+function folded_right_tMPS_in_murg(T::MPO)
 
     psi = MPS(deepcopy(T.data))
 
@@ -354,6 +358,6 @@ end
 
 
 #TODO 
-function folded_left_tMPS_in(T::MPO)
-    return folded_right_tMPS_in(T)
+function folded_left_tMPS_in_murg(T::MPO)
+    return folded_right_tMPS_in_murg(T)
 end
