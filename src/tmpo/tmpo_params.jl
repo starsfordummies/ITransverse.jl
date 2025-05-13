@@ -48,6 +48,6 @@ tMPOParams(x::tMPOParams;
     tr = x.tr) = tMPOParams(dt, expH_func, mp, nbeta, bl, tr)
 
 
-# quick defaults for parallel field Ising, for playing around: J=1 hz=0.4, gx=0, init_state= |+>
+""" quick defaults for parallel field Ising, for playing around: J=1 hz=0.4, gx=0, init_state= |+> """
 ising_tp() = tMPOParams(0.1, build_expH_ising_murg, 
     IsingParams(1.0, 0.4, 0.0), 0, [1.0+0im,1]/sqrt(2), [1,0,0,1])
