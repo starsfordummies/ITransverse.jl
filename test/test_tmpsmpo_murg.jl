@@ -18,7 +18,7 @@ zero_state = Vector{ComplexF64}([1,0])
 Nsteps = 10
 
 mpo_X = folded_tMPO(b, time_sites)
-left_mps = folded_right_tMPS_murg(b, time_sites)
+left_mps = folded_right_tMPS(b, time_sites)
 
 w2 = mpo_X[2]
 a2 = left_mps[2]
