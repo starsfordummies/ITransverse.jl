@@ -193,12 +193,13 @@ end
 """ Builds folded unrotated right edge tensor of the network """ 
 function build_WWr(eH_space::MPO)
 
+    LL = length(eH_space)
     #_, _, Wr = eH_space.data
     Wr = eH_space[end]
 
-    space_p = siteind(eH_space,3)
+    space_p = siteind(eH_space,LL)
 
-    vL = linkinds(eH_space)[2]
+    vL = linkinds(eH_space)[LL-1]
 
     # Build W Wdagger - put double prime on Wconj for safety
     WWr = Wr * dag(prime(Wr,2))
