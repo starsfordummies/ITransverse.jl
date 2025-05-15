@@ -16,7 +16,7 @@ function to_itensor(x::AbstractVector{<:Number}, name::AbstractString)
 end
 
 function build_default_tr(mp::ModelParams)
-    close_id = op("I", siteind(mp.phys_space))  # Make identity op
+    close_id = op("I", mp.phys_site)  # Make identity op
     return close_id * combiner(inds(close_id), tags="tr")
 end
 
