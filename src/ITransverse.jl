@@ -112,16 +112,16 @@ export PMParams
 
 include("power_method/pm.jl")
 include("power_method/symm_pm.jl")
-include("power_method/pm_finite.jl")
 #from power_method.jl
 export powermethod
 
 export powermethod_sym
 
-export pm_finite
+include("generic/contract_finite.jl")
 
+export contract_finite
 
-include("lightcone/expvals_lr.jl")
+include("generic/expvals_lr.jl")
 export expval_LR, compute_expvals
 
 include("lightcone/cone_params.jl")

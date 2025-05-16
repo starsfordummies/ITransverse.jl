@@ -1,6 +1,6 @@
 """ Applies MPOs in MPO_list to a random MPS. 
 TODO: all MPOs must share same physical sites... """
-function pm_finite(MPO_list)
+function contract_finite(left_edge::MPS, MPO_list, right_edge::MPS)
 
     cutoff = 1e-8
     maxbondim = 128
