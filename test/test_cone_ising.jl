@@ -49,7 +49,7 @@ _, _, _, expvals_lr, _, _, _ = run_cone(c0, b, cone_params, Nsteps)
 @test abs(expvals_lr["X"][end] - expvals["X"][end]) < 0.001
 @show(expvals_lr["X"][end])
 
-cone_params = ConeParams(;truncp, opt_method="RTM_R", optimize_op, which_evs=["X","Z"], checkpoint=0)
+cone_params = ConeParams(;truncp, opt_method="RTM_R", optimize_op, which_evs=["X","Z","XX"], checkpoint=0)
 _, _, _, expvals_r, _, _, _ = run_cone(c0, b, cone_params, Nsteps)
 @test abs(expvals_lr["X"][end] - expvals_r["X"][end]) < 1e-6
 @show(expvals_r["X"][end])

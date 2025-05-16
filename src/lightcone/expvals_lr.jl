@@ -1,20 +1,5 @@
-
 """ Given <L|, MPO,|R> computes exp value <L|op_mpo|R>  (here L is *not* conjugated!)
-Version with ITensors' apply(), in principle slower 
-No normalization is done here.  """
-function expval_LR_apply(ll::MPS, op_mpo::MPO, rr::MPS)
-
-    @assert length(ll) == length(op_mpo) == length(rr)
-    orr = applyn(op_mpo, rr)
-
-    ev_LOR = overlap_noconj(ll,orr)
-
-    return ev_LOR
-
-end
-
-""" Given <L|, MPO,|R> computes exp value <L|op_mpo|R>  (here L is *not* conjugated!)
-in a supposedly efficient way. No normalization is done here.  """
+in a supposedly efficient way. No normalization and no compression is done here.  """
 function expval_LR(ll::MPS, op_mpo::MPO, rr::MPS; match_inds::Bool=false)
 
     if match_inds
@@ -40,7 +25,7 @@ end
 
 
 """ Given <L|MPO, MPO,|R> computes exp value <L|op_mpo|R>  (here L is *not* conjugated!)
-in a supposedly efficient way. No normalization is done here.  """
+in a supposedly efficient way. No normalization nor compression is done here.  """
 function expval_LR(ll::MPS, opL::MPO, opR::MPO, rr::MPS; match_inds::Bool=false)
 
     if match_inds
@@ -65,31 +50,20 @@ function expval_LR(ll::MPS, opL::MPO, opR::MPO, rr::MPS; match_inds::Bool=false)
 end
 
 
-
-
-
-""" Build exp value <L|O|R> for a single vectorized operator `op`, given as a 1D array 
-   Does *NOT* normalize here by <L|1|R>, need to do it separately.
-   Slower version which uses ITensors' apply(), allows to truncate intermediate MPO """
-function expval_LR_apply(ll::MPS, rr::MPS, op::AbstractVector, b::FoldtMPOBlocks; maxdim=nothing)
-
-    time_sites = siteinds(rr)
-    tmpo = folded_tMPO(b, time_sites, op)
-    psiOR = isnothing(maxdim) ? applyn(tmpo, rr) : apply(tmpo,rr; alg="naive", maxdim)
-    LOR = overlap_noconj(ll,psiOR)
-
-    return LOR
-
+function expval_LR(ll::MPS, rr::MPS, operators::Tuple, b::FoldtMPOBlocks; match_inds::Bool=false)
+    expval_LR(ll, rr,  operators..., b; match_inds)
 end
+
+
 
 """ Build exp value <L|O|R> for a single vectorized operator `op`, given as a 1D array 
    Does *NOT* normalize here by <L|1|R>, need to do it separately. """
-function expval_LR(ll::MPS, rr::MPS, op::AbstractVector, b::FoldtMPOBlocks)
+function expval_LR(ll::MPS, rr::MPS, op::AbstractVector, b::FoldtMPOBlocks; match_inds::Bool=false)
 
     # Assuming here siteinds(ll) and (rr) match
     time_sites = siteinds(rr)
-    tmpo = folded_tMPO(b, time_sites, op)
-    expval_LR(ll, tmpo, rr)
+    tmpo = folded_tMPO(b, time_sites; fold_op=op)
+    expval_LR(ll, tmpo, rr; match_inds)
     
 end
 
@@ -100,42 +74,16 @@ function expval_LR(ll::MPS, rr::MPS, opL::AbstractVector, opR::AbstractVector, b
     time_sites = siteinds(ll)
     # TODO CHECK do we need to swap legs on the left ? 
     #tmpoL = swapprime(folded_tMPO(b, time_sites, opL), 0, 1, "Site")
-    tmpoL = folded_tMPO(b, time_sites, opL)
+    tmpoL = folded_tMPO(b, time_sites, fold_op=opL)
 
     time_sites = siteinds(rr)
-    tmpoR = folded_tMPO(b, time_sites, opR)
+    tmpoR = folded_tMPO(b, time_sites, fold_op=opR)
 
-    expval_LR(ll, opL, opR, rr)
+    expval_LR(ll, tmpoL, tmpoR, rr)
 
 end
 
 
-""" Build exp value <L|opLopR|R> for a pair of local operator `opL` and `opR` using apply() """ 
-function expval_LR_apply(ll::MPS, rr::MPS, opL::AbstractVector, opR::AbstractVector, b::FoldtMPOBlocks)
-
-    time_sites = siteinds(ll)
-    tmpo = folded_tMPO(b, time_sites, opL)
-    psi_L = applyn(tmpo, ll)
-
-    time_sites = siteinds(rr)
-    tmpo = swapprime(folded_tMPO(b, time_sites, opR), 0, 1, "Site")
-    psi_R = applyn(tmpo, rr)
-
-    ev_LOOR = overlap_noconj(psi_L,psi_R)
-
-    # time_sites = siteinds(ll)
-    # tmpo = folded_tMPO(b, time_sites)
-    # psi_L = applyn(tmpo, ll)
-
-    # time_sites = siteinds(rr)
-    # tmpo = swapprime(folded_tMPO(b, time_sites), 0, 1, "Site")
-    # psi_R = applyn(tmpo, rr)
-
-    # ev_L11R = overlap_noconj(psi_L,psi_R)
-
-    return ev_LOOR
-
-end
 
 
 
@@ -183,36 +131,31 @@ function compute_expvals(ll::AbstractMPS, rr::AbstractMPS, op_list::Vector{Strin
     # TODO truncate on apply MPO in expval_... 
 
     if op_list[1] == "all"
-        op_list = ["X", "Z", "Pz", "Sp", "Sm", "XX", "ZZ", "eps"]
+        op_list = ["X", "Z", "Pz", "Sp", "Sm", "XX", "ZZ", "eps_ising"]
     end
 
     allevs = Dict{String,ComplexF64}()
 
-    ev_L1R = expval_LR(ll, rr, [1,0,0,1], b)
+    #Normalization 
+    idN = vectorized_identity(dim(b.rot_inds[:R]))
+    ev_L1R = expval_LR(ll, rr, (idN), b)
 
     #two-col exp value is expensive, only compute if necessary
-    ev_L11R = haskey(op_list, "XX") || haskey(op_list, "ZZ") || haskey(op_list, "eps") ? expval_LR(ll, rr, [1,0,0,1], [1,0,0,1], b) : 1.0
+    ev_L11R = haskey(op_list, "XX") || haskey(op_list, "ZZ") || haskey(op_list, "eps") ? expval_LR(ll, rr, (idN, idN), b) : 1.0
 
     for op in op_list
-        if op == "X"
-            allevs[op] = expval_LR(ll, rr, [0,1,1,0], b)/ev_L1R
-        elseif op == "Z"
-            allevs[op] = expval_LR(ll, rr, [1,0,0,-1], b)/ev_L1R
-        elseif op == "Pz"
-            allevs[op] = expval_LR(ll, rr, [1,0,0,0], b)/ev_L1R
-        elseif op == "Sp"
-                allevs[op] = expval_LR(ll, rr, [0,1,0,0], b)/ev_L1R
-        elseif op == "Sm"
-                allevs[op] = expval_LR(ll, rr, [0,0,1,0], b)/ev_L1R
-        elseif op == "XX"
-                allevs[op] = expval_LR(ll, rr, [0,1,1,0], [0,1,1,0], b)/ev_L1R
-        elseif op == "ZZ"
-                allevs[op] = expval_LR(ll, rr, [1,0,0,-1], [1,0,0,-1], b)/ev_L1R
-        elseif op == "eps"
+        if op == "eps_ising"  # do this separately
             ϵ_op = ITransverse.ChainModels.epsilon_brick_ising(b.tp.mp)
             allevs[op] = expval_LR_ops(ll, rr, ϵ_op, b)/ev_L11R
-        else
-            @warn "$(op) not implemented"
+        elseif op == "XX" 
+            allevs[op] = expval_LR(ll, rr, [0,1,1,0], [0,1,1,0], b)/ev_L11R
+        elseif  op == "ZZ"
+            allevs[op] = expval_LR(ll, rr, [1,0,0,-1], [1,0,0,-1], b)/ev_L11R
+  
+        else  # Basically all one-site operators should be handled by ITensors (+ appropriate overloading)
+
+            opv = vectorized_op(op, b.tp.mp.phys_site)
+            allevs[op] = expval_LR(ll, rr, opv, b)/ev_L1R
         end
     end
 
@@ -350,5 +293,53 @@ function expval_LR_apply_list_sym_2(rr::MPS, op_list::AbstractVector, b::FoldtMP
     LR = overlap_noconj(psiOR,psiOR)
 
     return LR * prod(norm_factors), LR, norm_factors, psiOR
+
+end
+
+
+
+""" Given <L|, MPO,|R> computes exp value <L|op_mpo|R>  (here L is *not* conjugated!)
+Version with ITensors' apply(), in principle slower 
+No normalization is done here.  """
+function expval_LR_apply(ll::MPS, op_mpo::MPO, rr::MPS)
+
+    @assert length(ll) == length(op_mpo) == length(rr)
+    orr = applyn(op_mpo, rr)
+
+    ev_LOR = overlap_noconj(ll,orr)
+
+    return ev_LOR
+
+end
+
+
+""" Build exp value <L|O|R> for a single vectorized operator `op`, given as a 1D array 
+   Does *NOT* normalize here by <L|1|R>, need to do it separately.
+   Slower version which uses ITensors' apply(), allows to truncate intermediate MPO """
+function expval_LR_apply(ll::MPS, rr::MPS, op::AbstractVector, b::FoldtMPOBlocks; maxdim=nothing)
+
+    time_sites = siteinds(rr)
+    tmpo = folded_tMPO(b, time_sites, op)
+    psiOR = isnothing(maxdim) ? applyn(tmpo, rr) : apply(tmpo,rr; alg="naive", maxdim)
+    LOR = overlap_noconj(ll,psiOR)
+
+    return LOR
+
+end
+
+""" Build exp value <L|opLopR|R> for a pair of local operator `opL` and `opR` using apply() """ 
+function expval_LR_apply(ll::MPS, rr::MPS, opL::AbstractVector, opR::AbstractVector, b::FoldtMPOBlocks)
+
+    time_sites = siteinds(ll)
+    tmpo = folded_tMPO(b, time_sites, opL)
+    psi_L = applyn(tmpo, ll)
+
+    time_sites = siteinds(rr)
+    tmpo = swapprime(folded_tMPO(b, time_sites, opR), 0, 1, "Site")
+    psi_R = applyn(tmpo, rr)
+
+    ev_LOOR = overlap_noconj(psi_L,psi_R)
+
+    return ev_LOOR
 
 end

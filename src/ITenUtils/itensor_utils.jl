@@ -172,16 +172,17 @@ function vectorized_identity(ind::Index)
 end
 
 function itensor_to_vector(t::ITensor)
-    r = order(t)
-    if r == 1
-        return collect(t.tensor)  # returns Vector
-    elseif r == 2
-        return vec(collect(t.tensor))  # flatten 2D to 1D
-    else
-        error("Only rank-1 and rank-2 tensors are supported (got rank = $r)")
-    end
+    #r = order(t)
+    #@assert r == 1 | r == 2 
+    # Just unwrap it 
+    return t.tensor.storage.data 
 end
 
 function vector_to_itensor(x::AbstractVector{<:Number}, ttag::AbstractString)
     return ITensor(ComplexF64.(x), Index(length(x), ttag))
+end
+
+""" This is maybe not too fast but should be general and generalizable enough """
+function vectorized_op(operator, site)
+   itensor_to_vector(ITensors.op(operator, site))
 end
