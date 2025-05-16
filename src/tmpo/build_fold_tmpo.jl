@@ -261,10 +261,27 @@ function folded_tMPO_R(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Ind
 
 end
 
+function folded_left_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index}; kwargs...)
+    @assert b.tp.nbeta == 0
+    folded_left_tMPS(b,b,ts;kwargs...)
+end
+function folded_right_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index}; kwargs...)
+    @assert b.tp.nbeta == 0
+    folded_right_tMPS(b,b,ts;kwargs...)
+end
 
 """ Builds a tMPS using the WWl tensors in `b` """ 
-function folded_left_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index})
+function folded_left_tMPS(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index}; kwargs...)
     psi = MPS(fill(b.WWl, length(ts)))
+    
+    WWl_im = b_im.WWl
+
+    #match indices for real-imag so it's easier to work with them 
+    replaceinds!(WWl_im, inds(WWl_im), inds(b.WWl))
+
+     for ib = 1:b.tp.nbeta
+        psi[ib] = WWl_im
+    end
     # s, r, l = inds(b.WWl)
 
     ll = [Index(dim(b.rot_inds[:R]),"Link,time_fold,l=$(ii-1)") for ii in 1:length(ts)+1]
@@ -278,15 +295,26 @@ function folded_left_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index})
 
     dttype = NDTensors.unwrap_array_type(b.WWl)
     psi[1] *= b.rho0 * delta(ind(b.rho0,1), ll[1])
-    psi[end] *= adapt(dttype, vectorized_identity(ll[end]))
+
+    fold_op = get(kwargs, :fold_op, vectorized_identity(ll[end]))
+    psi[end] = psi[end] * adapt(dttype, ITensor(fold_op, ll[end]))
 
     return psi 
 end
 
 """ Builds a tMPS using the WWr tensors in `b` 
  p' indices are converted to unprimed p for the physical inds """ 
-function folded_right_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index})
+function folded_right_tMPS(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index}; kwargs...)
     psi = MPS(fill(b.WWr, length(ts)))
+      
+    WWr_im = b_im.WWr
+
+    #match indices for real-imag so it's easier to work with them 
+    replaceinds!(WWr_im, inds(WWr_im), inds(b.WWr))
+
+     for ib = 1:b.tp.nbeta
+        psi[ib] = WWr_im
+    end
     #s, r, l = inds(b.WWr)
     ll = [Index(dim(b.rot_inds[:R]),"Link,time_fold,l=$(ii-1)") for ii in 1:length(ts)+1]
     for ii in eachindex(psi)
@@ -301,7 +329,9 @@ function folded_right_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index})
     #@show ts
     dttype = NDTensors.unwrap_array_type(b.WWc)
     psi[1] = psi[1] * b.rho0 * delta(ind(b.rho0,1), ll[1])
-    psi[end] = psi[end] * adapt(dttype, vectorized_identity(ll[end]))
+    
+    fold_op = get(kwargs, :fold_op, vectorized_identity(ll[end]))
+    psi[end] = psi[end] * adapt(dttype, ITensor(fold_op, ll[end]))
 
     return psi 
 end

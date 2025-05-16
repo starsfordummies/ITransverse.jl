@@ -2,6 +2,9 @@
 TODO: all MPOs must share same physical sites... """
 function contract_finite(left_edge::MPS, MPO_list, right_edge::MPS)
 
+    LL = length(MPO_list)
+    @assert LL % 2 == 0
+
     cutoff = 1e-8
     maxbondim = 128
 
@@ -9,15 +12,20 @@ function contract_finite(left_edge::MPS, MPO_list, right_edge::MPS)
 
     ts = [siteind(MPO_list[1], i) for i in eachindex(MPO_list[1])]
     #left = random_mps(siteinds(MPO_list[1], linkdims=1)) 
-    rr = random_mps(ts, linkdims=1) 
+    ll = left_edge
+    rr = right_edge
 
-    p = Progress(length(MPO_list); showspeed=true)  #barlen=40
+    p = Progress(div(LL,2) ; showspeed=true)  #barlen=40
 
-    for Wj in MPO_list
-        rr, vn_ent = pm_step(Wj, rr, truncp)
-        next!(p; showvalues = [(:Info,"[Smax=$(maximum(vn_ent)), chi=$(maxlinkdim(rr))" )])
+    for jj = 1:div(LL,2)
+        ll = applys(MPO_list[jj], rr; cutoff, maxdim=maxbondim)
+        rr = apply(MPO_list[LL-jj+1], rr; cutoff, maxdim=maxbondim)
+
+        next!(p; showvalues = [(:Info,"chi=$(maxlinkdim(rr))" )])
 
     end
+
+    overlap_noconj(ll,rr)
 
 end
 

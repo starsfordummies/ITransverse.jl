@@ -100,6 +100,7 @@ include("tmpo/build_fold_tmpo.jl")
 export 
      folded_tMPO,
      folded_tMPO_R,
+     folded_left_tMPS,
      folded_right_tMPS,
      folded_tMPO_in,
      folded_right_tMPS_in
