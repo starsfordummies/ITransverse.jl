@@ -12,7 +12,7 @@ function init_cone(tp::tMPOParams, n::Int=3)
     
     ts = [Index(time_dim, tags="Site,n=1,time_fold")]
 
-    psi = folded_right_tMPS(b, ts)
+    psi = folded_right_tMPS(b, ts; fold_op=[1,0,0,1])
 
     for jj = 2:n
         push!(ts, Index(time_dim, tags="Site,n=$(jj),time_fold"))
