@@ -126,17 +126,20 @@ end
 =#
 
 """ Convention we stick to for all the following: indices for tMPO WWl before rotations are  L, R, P, P'
-Builds Folded and UNROTATED tensors, just W * Wdag and joined indices """
+Builds *Folded* but ***UN-ROTATED*** tensors, just W * Wdag and joined indices """
 function build_WW(eH::MPO)
 
-    space_phys = Index(maxlinkdim(eH)^2, "Site,space")
-    space_vleft = Index(dim(siteind(eH,2))^2, "Link,space")
-    space_vright = Index(dim(siteind(eH,2))^2, "Link,space")
+    # I'll use the Same indices for all tensors
+    space_phys = Index(dim(siteind(eH,2))^2, "Site,space")
+    space_vleft = Index(linkdim(eH,1)^2, "Link,space")
+    space_vright = Index(linkdim(eH,2)^2, "Link,space")
 
     WWl,       iCwR, iCp, iCps = build_WWl(eH)
     WWl = replaceinds(WWl, (iCwR, iCp, iCps),  (space_vright, space_phys, space_phys'))
+
     WWr, iCwL,       iCp, iCps = build_WWr(eH)
     WWr = replaceinds(WWr, (iCwL, iCp, iCps),  (space_vleft, space_phys, space_phys'))
+
     WWc, iCwL, iCwR, iCp, iCps = build_WWc(eH)
     check_symmetry_itensor_mpo(WWc, iCwL, iCwR, iCp, iCps)
     WWc = replaceinds(WWc, (iCwL, iCwR, iCp, iCps),  (space_vleft, space_vright, space_phys, space_phys'))
