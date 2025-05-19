@@ -61,7 +61,7 @@ export rho2,
     diagonalize_rtm_right_gen_sym,
     diagonalize_rtm_left_gen_sym
 
-export ModelParams, IsingParams, PottsParams
+export ModelParams, IsingParams, PottsParams, XXZParams, NoParams
 
 export TruncParams
 
@@ -71,6 +71,8 @@ export build_H_ising,
     build_expH_potts_murg, 
     build_expH_potts_symmetric_svd,
     build_expH_random_symm_svd_1o
+
+export timeEvo_MPO_2ndOrder
 
 
 include("tmpo/tmpo_params.jl")
