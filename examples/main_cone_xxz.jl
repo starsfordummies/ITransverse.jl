@@ -36,14 +36,14 @@ Nsteps = 10
 
 #time_sites = siteinds("S=3/2", 1)
 
-mp = ITransverse.ChainModels.XXZParams(J_XY, J_ZZ, hz)
+mp = XXZParams(J_XY, J_ZZ, hz)
 #tp = tMPOParams(dt, build_expH_ising_murg, mp, nbeta, init_state, Id)
 
 # tp = tMPOParams(dt, ITransverse.ChainModels.build_expH_ising_symm_svd, mp, nbeta, init_state, vI)
 
 ss = siteinds("S=1", 3)
 
-return_MPO_XXZ(sites, p,dt) = ITransverse.ChainModels.timeEvo_MPO_2ndOrder(sites, fill("Id", 3), zeros(3), ["S+", "S-", "Sz"], [0.5*p.J_XY, 0.5*p.J_XY, p.J_ZZ], ["S-", "S+", "Sz"], ones(3), "Sz", p.hz, dt)
+return_MPO_XXZ(sites, p,dt) = timeEvo_MPO_2ndOrder(sites, fill("Id", 3), zeros(3), ["S+", "S-", "Sz"], [0.5*p.J_XY, 0.5*p.J_XY, p.J_ZZ], ["S-", "S+", "Sz"], ones(3), "Sz", p.hz, dt)
 
 eHxxz = return_MPO_XXZ(ss, mp, dt)
 b =  FoldtMPOBlocks(eHxxz, ITensor(init_state, Index(9)), ITensor(vectorized_identity(9), Index(9)))
