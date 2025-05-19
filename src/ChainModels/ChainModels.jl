@@ -11,6 +11,7 @@ include("ising_parallel.jl")
 include("potts.jl")
 include("xxzmodel.jl")
 include("random_mpo.jl")
+include("exph_generic.jl")
 
 export ModelParams, IsingParams, PottsParams, XXZParams, NoParams
 
@@ -43,5 +44,6 @@ export build_expH_random_symm_svd_1o
 #     build_expH_XXZ_murg,
 #     build_expH_XXZZ_murg_from_ising
 
+export timeEvo_MPO_2ndOrder
 
 end
