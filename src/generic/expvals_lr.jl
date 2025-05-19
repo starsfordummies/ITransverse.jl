@@ -176,7 +176,7 @@ function expval_LR_apply_list(ll::MPS, rr::MPS, op_list::AbstractVector, b::Fold
 
     psiOR = deepcopy(rr)
     for op in op_list
-        tmpo = folded_tMPO(b, b_im, time_sites, op)
+        tmpo = folded_tMPO(b, b_im, time_sites; fold_op=op)
         psiOR = isnothing(maxdim) ? applyn(tmpo, psiOR) : apply(tmpo,psiOR; alg="naive", maxdim)
     end
 

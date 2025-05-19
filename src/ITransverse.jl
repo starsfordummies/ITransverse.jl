@@ -103,7 +103,7 @@ export
      folded_left_tMPS,
      folded_right_tMPS,
      folded_tMPO_in,
-     folded_right_tMPS_in
+     folded_right_tMPS_in_murg
 
    #  apply_extend
     
