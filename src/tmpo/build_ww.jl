@@ -170,11 +170,16 @@ function build_WWl(eH_space::MPO)
     WWl = Wl * dag(prime(Wl,2))
 
     # Combine indices appropriately 
-    CvR = combiner(vR,vR''; tags="cwR")
+    CvR = dag(combiner(dag(vR), vR''; tags="cwR"))
 
     # we flip the p<>* legs on the backwards, shouldn't matter if we have p<>p*
-    Cps = combiner(space_p',space_p''; tags="cps")
-    Cp = combiner(space_p,space_p'''; tags="cp")
+    Cps = dag(combiner((space_p'), dag(space_p''); tags="cps"))
+    Cp = combiner((space_p), (space_p'''); tags="cp")
+
+    @show inds(WWl)
+    @show inds(CvR)
+    @show inds(Cp)
+    @show inds(Cps)
 
     WWl = WWl * CvR * Cp * Cps
 
