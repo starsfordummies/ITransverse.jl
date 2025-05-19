@@ -91,9 +91,9 @@ function FoldtMPOBlocks(b::FoldtMPOBlocks;
 end
 
 """ Allow to pass a spatial MPO for U(t) and other tMPO params as input and build everything else from that """ 
-function FoldtMPOBlocks(dt::Number, eH_space_mpo::MPO, init_state::ITensor, top_op::ITensor, nbeta::Int=0) 
+function FoldtMPOBlocks(eH_space_mpo::MPO, init_state::ITensor, top_op::ITensor, nbeta::Int=0) 
 
-    phys_site = siteind(eH_space_mpo[2])
+    phys_site = siteind(eH_space_mpo,2)
 
     WWl, WWc, WWr,  (L, R, P, Ps) = build_WW(eH_space_mpo)
 
@@ -145,7 +145,7 @@ function FoldtMPOBlocks(dt::Number, eH_space_mpo::MPO, init_state::ITensor, top_
     end
 
     mp = NoParams(phys_site)
-    tp = tMPOParams(dt, nothing, mp, nbeta, init_state, top_op)
+    tp = tMPOParams(NaN, nothing, mp, nbeta, init_state, top_op)
     inds_ww = Dict(:Ps => time_P',:P => time_P, :L => time_L, :R=> time_R) # TODO
     return FoldtMPOBlocks(WWl, WWc, WWr, rho0, tp, inds_ww)
 end

@@ -330,9 +330,21 @@ function folded_right_tMPS(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<
     dttype = NDTensors.unwrap_array_type(b.WWr)
     psi[1] = psi[1] * b.rho0 * delta(ind(b.rho0,1), ll[1])
     
+
     fold_op = get(kwargs, :fold_op, vectorized_identity(ll[end]))
-    #@info fold_op
-    psi[end] = psi[end] * adapt(dttype, ITensor(fold_op, ll[end]))
+    @info fold_op
+
+
+    if isa(fold_op, ITensor)
+            @info "ITensor" fold_op
+            replaceind!(fold_op, ind(fold_op,1), ll[end])
+
+    else
+        fold_op = ITensor(fold_op, ll[end])
+    end
+
+    @info fold_op
+    psi[end] = psi[end] * adapt(dttype, fold_op)
 
     return psi 
 end
