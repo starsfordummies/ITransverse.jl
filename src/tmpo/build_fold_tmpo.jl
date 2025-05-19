@@ -332,18 +332,18 @@ function folded_right_tMPS(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<
     
 
     fold_op = get(kwargs, :fold_op, vectorized_identity(ll[end]))
-    @info fold_op
+    #@info fold_op
 
 
     if isa(fold_op, ITensor)
-            @info "ITensor" fold_op
+            #@info "ITensor" fold_op
             replaceind!(fold_op, ind(fold_op,1), ll[end])
 
     else
         fold_op = ITensor(fold_op, ll[end])
     end
 
-    @info fold_op
+    #@info fold_op
     psi[end] = psi[end] * adapt(dttype, fold_op)
 
     return psi 
