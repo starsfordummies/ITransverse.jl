@@ -24,6 +24,8 @@ optimize_op = [diagm(ones(ComplexF64,local_dim))...]
 #up_state = Vector{ComplexF64}([1,0])
 #plus_state = Vector{ComplexF64}([1/sqrt(2),1/sqrt(2)])
 
+sites = siteinds("S=1",3; conserve_qns=false)
+
 up_spin1 = [1.0+0.0im, 0.0, 0.0]
 
 up_spin_Ising = [1.0+0.0im, 0.0]
@@ -39,7 +41,7 @@ direction = "right"
 
 truncp = TruncParams(cutoff, maxbondim, direction)
 
-Nsteps = 10
+Nsteps = 20
 
 #time_sites = siteinds("S=3/2", 1)
 
@@ -55,22 +57,22 @@ return_MPO_XXZ(p,dt) = ITransverse.ChainModels.timeEvo_MPO_2ndOrder(sites, fill(
 
 @show return_MPO_XXZ(mp,dt)
 
-tp_Ising = tMPOParams(dt, ITransverse.ChainModels.build_expH_ising_symm_svd, mp_Ising, nbeta, init_state_Ising, vI)
+# tp_Ising = tMPOParams(dt, ITransverse.ChainModels.build_expH_ising_symm_svd, mp_Ising, nbeta, init_state_Ising, vI)
 
-Wl, Wc, Wr = ITransverse.build_WW(tp_Ising)
+# Wl, Wc, Wr = ITransverse.build_WW(tp_Ising)
 
 
 tp = tMPOParams(dt, f_XXZ, mp, nbeta, init_state, optimize_op)
 
-FoldtMPOBlocks(tp)
+FoldtMPOBlocks(tp);
 
-c0, b = init_cone(tp)
+c0, b = init_cone(tp);
 
 
 
 cone_params = ConeParams(;truncp, opt_method="RDM", optimize_op, which_evs=["Sx","Sz"], which_ents=["VN"], checkpoint=20)
 
-psi, psiR, chis, expvals, entropies, infos, last_cp = run_cone(c0, b, cone_params, Nsteps)
+psi, psiR, chis, expvals, entropies, infos, last_cp = run_cone(c0, b, cone_params, Nsteps;)
 
 # return  psi, psiR, chis, expvals, entropies, infos, last_cp
 
