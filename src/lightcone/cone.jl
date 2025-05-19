@@ -5,14 +5,17 @@ and the eventual operator to the *right*
 Returns (psi[the light cone right MPS], b[the folded tMPO building blocks])"""
 
 function init_cone(tp::tMPOParams, n::Int=3)
-
     b = FoldtMPOBlocks(tp)
+    init_cone(b, n)
+end
+
+function init_cone(b::FoldtMPOBlocks, n::Int=3)
 
     time_dim = dim(b.WWc,1)
     
     ts = [Index(time_dim, tags="Site,n=1,time_fold")]
 
-    psi = folded_right_tMPS(b, ts; fold_op=[1,0,0,1])
+    psi = folded_right_tMPS(b, ts)
 
     for jj = 2:n
         push!(ts, Index(time_dim, tags="Site,n=$(jj),time_fold"))
@@ -20,8 +23,9 @@ function init_cone(tp::tMPOParams, n::Int=3)
         psi = apply_extend(m, psi)
     end
 
-    return psi, b 
+    return psi, b
 end
+
 
 
 """ Given an MPO A and a MPS ψ, with length(A) = length(ψ)+1, 
