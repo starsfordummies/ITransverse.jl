@@ -182,7 +182,8 @@ function vector_to_itensor(x::AbstractVector{<:Number}, ttag::AbstractString)
     return ITensor(ComplexF64.(x), Index(length(x), ttag))
 end
 
-""" This is maybe not too fast but should be general and generalizable enough """
+""" This is maybe not too fast but should be general and generalizable enough.
+Given an operator as string, like "X" or "Sp", builds it for the input physical site and returns an Array with its (vectorized) elements.  """
 function vectorized_op(operator, site)
    itensor_to_vector(ITensors.op(operator, site))
 end

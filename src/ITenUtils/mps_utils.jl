@@ -316,7 +316,31 @@ function mpo_from_arrays(array_list, ss = siteinds(size(array_list[1],2), length
 end
 
 
+function productMPO(phys_sites, list_of_operators=fill("I",length(phys_sites)))
+    Ws = [op(list_of_operators[ii], phys_sites, ii) for ii in eachindex(phys_sites)]
+    MPO(Ws)
+end
 
+
+function folded_productMPS(phys_sites, list_of_operators=fill("I",length(phys_sites)), folded_sites=siteinds(dim(phys_sites[1])^2, length(phys_sites)))
+    
+    NN = length(phys_sites)
+    links = [Index(1, "Link, n=$n") for n in 1:NN-1]
+    WsFold = Vector{ITensor}(undef, NN)
+    WsFold[1] = ITensor(vectorized_op(list_of_operators[1], phys_sites[1]), folded_sites[1], links[1])
+    for jj = 2:NN-1
+        WsFold[jj] = ITensor(vectorized_op(list_of_operators[jj], phys_sites[jj]), links[jj-1], folded_sites[jj], links[jj])
+    end
+    WsFold[end] = ITensor(vectorized_op(list_of_operators[end], phys_sites[end]), links[end], folded_sites[end])
+    
+    return MPS(WsFold)
+
+end
+
+
+function fidelity(psi::MPS, phi::MPS)
+    return abs2(inner(psi,phi))/norm(psi)^2/norm(phi)^2
+end
 """ Measures infidelity 1 - |<psi|phi>|^2/(<psi|psi><phi|phi>) """
 function infidelity(psi::MPS, phi::MPS)
     return 1. - abs2(inner(psi,phi))/norm(psi)^2/norm(phi)^2
