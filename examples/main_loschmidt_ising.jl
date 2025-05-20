@@ -27,8 +27,6 @@ function ising_loschmidt(tp::tMPOParams, Tstart::Int, Tend::Int, nbeta::Int; Tst
 
     @info ("Optimizing for T=$(allts) with $(tp.nbeta) imag steps ")
     @info ("Initial state $(tp.bl)")
-    @info ("Final state $(tp.tr)")
-
 
 
     b = FwtMPOBlocks(tp)
@@ -44,9 +42,7 @@ function ising_loschmidt(tp::tMPOParams, Tstart::Int, Tend::Int, nbeta::Int; Tst
 
         time_sites = addtags(siteinds("S=1/2", Nsteps; conserve_qns=false), "time")
 
-        #mpo, start_mps = fw_tMPO(tp, time_sites)
-        #mpo, start_mps = fw_tMPOn(tp, time_sites)
-        mpo, start_mps = fw_tMPOn(b, b_im, time_sites)
+        mpo, start_mps = fw_tMPOn(b, b_im, time_sites, tr=tp.bl)
 
         psi_trunc, ds2 = powermethod_sym(start_mps, mpo, pm_params)
 
@@ -113,7 +109,7 @@ function main_ising_loschmidt()
     @info ("Initial state $(init_state)  => quench @ $(mp) ")
     
     Tmin = 20
-    Tmax = 160
+    Tmax = 80
     Tstep = 2
 
 

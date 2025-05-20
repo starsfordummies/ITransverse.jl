@@ -13,8 +13,7 @@ Adapt.adapt_structure(to, x::tMPOParams) = tMPOParams(
     expH_func,  # This is safe even for functions (identity)
     x.mp,          # assumes ModelParams is also adapt-compatible
     x.nbeta,
-    adapt(to, x.bl),
-    adapt(to, x.tr)
+    adapt(to, x.bl)
 )
 
 

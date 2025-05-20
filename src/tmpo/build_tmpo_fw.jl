@@ -10,6 +10,8 @@ The structure built (Loschmidt style) after rotation is
                       (nbeta)                     (nbeta)
 ```
  """
+
+ #= 
 function fw_tMPO(eH::MPO, eHi::MPO, 
     left_state::Vector{<:Number}, 
     right_state::Vector{<:Number},
@@ -89,14 +91,14 @@ function fw_tMPO(tp::tMPOParams, time_sites::Vector{<:Index})
 
     fw_tMPO(eH, eHi, tp.bl, tp.tr, tp.nbeta, time_sites)
 end
-
+=#
 
 
 
 # Alternate versions using building blocks
 
 
-function fw_tMPOn(tp::tMPOParams, time_sites::Vector{<:Index})
+function fw_tMPOn(tp::tMPOParams, time_sites::Vector{<:Index}; kwargs...)
 
     b = FwtMPOBlocks(tp)
 
@@ -104,18 +106,16 @@ function fw_tMPOn(tp::tMPOParams, time_sites::Vector{<:Index})
 
     b_im = FwtMPOBlocks(tpim)
 
-    fw_tMPOn(b, b_im, time_sites)
+    fw_tMPOn(b, b_im, time_sites; kwargs...)
 end
 
 
 function fw_tMPOn(b::FwtMPOBlocks, b_im::FwtMPOBlocks, time_sites::Vector{<:Index}; 
-    left_state::ITensor = b.tp.bl, right_state::ITensor = b.tp.tr)
+    bl::ITensor = b.tp.bl, tr)
 
     tp = b.tp
 
     nbeta = tp.nbeta 
-    #left_state = tp.bl
-    #right_state = tp.tr 
 
     @assert nbeta < length(time_sites) - 2
 
@@ -124,7 +124,6 @@ function fw_tMPOn(b::FwtMPOBlocks, b_im::FwtMPOBlocks, time_sites::Vector{<:Inde
     # Rotated indices already 
     Wc = b.Wc
 
-    #(icL, icR, icP, icPs) = inds(Wc)
     (icL, icR, icP, icPs) = (b.rot_inds[:L], b.rot_inds[:R], b.rot_inds[:P], b.rot_inds[:Ps]) 
 
     Wc_im = b_im.Wc
@@ -160,16 +159,16 @@ function fw_tMPOn(b::FwtMPOBlocks, b_im::FwtMPOBlocks, time_sites::Vector{<:Inde
 
 
     # Contract edges with boundary states, label linkinds
-    tMPO[1] = tMPO[1] * left_state * delta(ind(left_state,1), icL) * delta(icR, rot_links_mpo[1]) 
-    tMPS[1] = tMPS[1] * left_state * delta(ind(left_state,1), irL) * delta(irR, rot_links_mps[1]) 
+    tMPO[1] = tMPO[1] * bl * delta(ind(bl,1), icL) * delta(icR, rot_links_mpo[1]) 
+    tMPS[1] = tMPS[1] * bl * delta(ind(bl,1), irL) * delta(irR, rot_links_mps[1]) 
 
     for ii = 2:Nsteps-1
         tMPO[ii] = tMPO[ii] * delta(icL, rot_links_mpo[ii-1]) * delta(icR, rot_links_mpo[ii]) 
         tMPS[ii] = tMPS[ii] * delta(irL, rot_links_mps[ii-1]) * delta(irR, rot_links_mps[ii]) 
     end
 
-    tMPO[end] = (tMPO[end] * delta(icL, rot_links_mpo[Nsteps-1])) * (dag(right_state) * delta(ind(right_state,1),icR))
-    tMPS[end] = (tMPS[end] * delta(irL, rot_links_mps[Nsteps-1])) * (dag(right_state) * delta(ind(right_state,1),irR))
+    tMPO[end] = (tMPO[end] * delta(icL, rot_links_mpo[Nsteps-1])) * (dag(tr) * delta(ind(tr,1),icR))
+    tMPS[end] = (tMPS[end] * delta(irL, rot_links_mps[Nsteps-1])) * (dag(tr) * delta(ind(tr,1),irR))
 
     return tMPO, tMPS
 
@@ -182,18 +181,16 @@ in-U(β)-U(β)-..U(β)-U(idt)-U(idt)-U(idt)-U(idt)-fin
    Returns tMPO and tMPS     
 """
 function fw_tMPOn_initbetaonly(b::FwtMPOBlocks, b_im::FwtMPOBlocks, time_sites::Vector{<:Index}; 
-    left_state::ITensor = b.tp.bl, right_state::ITensor = b.tp.tr)
+    bl::ITensor = b.tp.bl, tr)
 
     tp = b.tp
 
     # CPU or GPU ?
     dttype = NDTensors.unwrap_array_type(b.Wc)
-    left_state = adapt(dttype, left_state)
-    right_state = adapt(dttype, right_state)
+    bl = adapt(dttype, bl)
+    right_state = adapt(dttype, tr)
 
     nbeta = tp.nbeta
-    #left_state = tp.bl
-    #right_state = tp.tr 
 
     @assert nbeta < length(time_sites) - 1
 
@@ -231,16 +228,16 @@ function fw_tMPOn_initbetaonly(b::FwtMPOBlocks, b_im::FwtMPOBlocks, time_sites::
 
 
     # Contract edges with boundary states, label linkinds
-    tMPO[1] = tMPO[1] * left_state * delta(ind(left_state,1), icL) * delta(icR, rot_links_mpo[1]) 
-    tMPS[1] = tMPS[1] * left_state * delta(ind(left_state,1), irL) * delta(irR, rot_links_mps[1]) 
+    tMPO[1] = tMPO[1] * bl * delta(ind(bl,1), icL) * delta(icR, rot_links_mpo[1]) 
+    tMPS[1] = tMPS[1] * bl * delta(ind(bl,1), irL) * delta(irR, rot_links_mps[1]) 
 
     for ii = 2:Nsteps-1
         tMPO[ii] = tMPO[ii] * delta(icL, rot_links_mpo[ii-1]) * delta(icR, rot_links_mpo[ii]) 
         tMPS[ii] = tMPS[ii] * delta(irL, rot_links_mps[ii-1]) * delta(irR, rot_links_mps[ii]) 
     end
 
-    tMPO[end] = (tMPO[end] * delta(icL, rot_links_mpo[Nsteps-1])) * (dag(right_state) * delta(ind(right_state,1),icR))
-    tMPS[end] = tMPS[end] * delta(irL, rot_links_mps[Nsteps-1]) * (dag(right_state) * delta(ind(right_state,1),irR))
+    tMPO[end] = (tMPO[end] * delta(icL, rot_links_mpo[Nsteps-1])) * (dag(tr) * delta(ind(tr,1),icR))
+    tMPS[end] = tMPS[end] * delta(irL, rot_links_mps[Nsteps-1]) * (dag(tr) * delta(ind(tr,1),irR))
 
     return tMPO, tMPS
 
@@ -252,10 +249,10 @@ function rand_ising_fwtmpo(time_sites=siteinds("S=1/2",20))
 
     plus_state = Vector{ComplexF64}([1 / sqrt(2), 1 / sqrt(2)])
     mp = IsingParams(1.0, -rand(), rand())
-    tp = tMPOParams(0.1, build_expH_ising_murg, mp, 0, plus_state, plus_state)
+    tp = tMPOParams(0.1, build_expH_ising_murg, mp, 0, plus_state)
     b = FwtMPOBlocks(tp)
 
-    ww, _ = fw_tMPOn(b, b, time_sites)
+    ww, _ = fw_tMPOn(b, b, time_sites; tr=plus_state)
 
     return ww
 end
