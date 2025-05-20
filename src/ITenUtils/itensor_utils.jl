@@ -178,9 +178,14 @@ function itensor_to_vector(t::ITensor)
     return t.tensor.storage.data 
 end
 
-function vector_to_itensor(x::AbstractVector{<:Number}, ttag::AbstractString)
-    return ITensor(ComplexF64.(x), Index(length(x), ttag))
+function to_itensor(x::ITensor, name::AbstractString)
+    return x
 end
+
+function to_itensor(x::AbstractVector{<:Number}, name::AbstractString)
+    return ITensor(ComplexF64.(x), Index(length(x), name))
+end
+
 
 """ This is maybe not too fast but should be general and generalizable enough.
 Given an operator as string, like "X" or "Sp", builds it for the input physical site and returns an Array with its (vectorized) elements.  """

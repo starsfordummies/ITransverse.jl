@@ -7,13 +7,6 @@ struct tMPOParams{T<:Union{Float64,ComplexF64}, MP, F}
     tr::ITensor
 end
 
-function to_itensor(x::ITensor, name::AbstractString)
-    return x
-end
-
-function to_itensor(x::AbstractVector{<:Number}, name::AbstractString)
-    return ITensor(ComplexF64.(x), Index(length(x), name))
-end
 
 function build_default_tr(mp::ModelParams)
     close_id = op("I", mp.phys_site)  # Make identity op

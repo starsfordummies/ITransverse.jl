@@ -82,7 +82,7 @@ export symmetrize,
     matrix_svd,
     vectorized_identity,
     itensor_to_vector,
-    vector_to_itensor,
+    to_itensor,
     vectorized_op
 
 # gen_svdeig_symm.jl
