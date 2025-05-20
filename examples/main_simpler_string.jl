@@ -1,7 +1,4 @@
-!true && include("../src/ITransverse.jl")
-!true && include("../src/ChainModels/ChainModels.jl")
-
-using ITensors, JLD2
+using ITensors, ITensorMPS, JLD2
 using ITransverse
 using ProgressMeter
 #using ITransverse.ITenUtils
@@ -9,7 +6,6 @@ using ProgressMeter
 function simpler_string(length_string::Int,ts::Int, nbeta::Int; Jxx::Real=1,hz::Real, hx::Real=0.0)
 
     tp = tMPOParams(0.1, build_expH_ising_murg, IsingParams(Jxx, hz, hx), nbeta, [1,0])
-    tp_proj = tMPOParams(tp; tr=[1,0,0,0])
 
     cutoff = 1e-12
     maxbondim = 128
@@ -33,7 +29,7 @@ function simpler_string(length_string::Int,ts::Int, nbeta::Int; Jxx::Real=1,hz::
 
     tmpo_id  = ITransverse.folded_tMPO_doublebeta(b, b_im, time_sites) # , P_up)
 
-    init_mps = folded_right_tMPS(tmpo_id)
+    init_mps = ITransverse.folded_right_tMPS_murg(tmpo_id)
     init_mps = ITransverse.normbyfactor(init_mps, sqrt(ITransverse.overlap_noconj(init_mps, init_mps))) 
 
 

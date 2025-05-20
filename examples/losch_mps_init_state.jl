@@ -1,6 +1,7 @@
 using ITensors, JLD2
 using ITensorMPS
 using ITransverse
+using ITransverse: plus_state
 
 JXX = 1.0
 hz = 1.0

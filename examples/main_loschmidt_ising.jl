@@ -1,6 +1,7 @@
 using ITensors, JLD2
 using ITensorMPS
 using ITransverse
+using ITransverse: plus_state
 
 function ising_loschmidt(tp::tMPOParams, Tstart::Int, Tend::Int, nbeta::Int; Tstep::Int=1)
 
@@ -109,11 +110,11 @@ function main_ising_loschmidt()
     @info ("Initial state $(init_state)  => quench @ $(mp) ")
     
     Tmin = 20
-    Tmax = 80
+    Tmax = 38
     Tstep = 2
 
 
-    tp = tMPOParams(dt,  ITransverse.ChainModels.build_expH_ising_murg_new, mp, nbeta, init_state, init_state)
+    tp = tMPOParams(dt,  ITransverse.ChainModels.build_expH_ising_murg_new, mp, nbeta, init_state)
     psis1, ds2s, leading_eigs, leading_eigsq, overlapsLR, entropies, maxents = ising_loschmidt(tp, Tmin, Tmax, nbeta; Tstep)
 
     rr2s = []
