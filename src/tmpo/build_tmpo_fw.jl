@@ -15,7 +15,7 @@ The structure built (Loschmidt style) after rotation is
 # Alternate versions using building blocks
 
 
-function fw_tMPOn(tp::tMPOParams, time_sites::Vector{<:Index}; kwargs...)
+function fw_tMPO(tp::tMPOParams, time_sites::Vector{<:Index}; kwargs...)
 
     b = FwtMPOBlocks(tp)
 
@@ -23,11 +23,11 @@ function fw_tMPOn(tp::tMPOParams, time_sites::Vector{<:Index}; kwargs...)
 
     b_im = FwtMPOBlocks(tpim)
 
-    fw_tMPOn(b, b_im, time_sites; kwargs...)
+    fw_tMPO(b, b_im, time_sites; kwargs...)
 end
 
 
-function fw_tMPOn(b::FwtMPOBlocks, b_im::FwtMPOBlocks, time_sites::Vector{<:Index}; 
+function fw_tMPO(b::FwtMPOBlocks, b_im::FwtMPOBlocks, time_sites::Vector{<:Index}; 
     bl::ITensor = b.tp.bl, tr)
 
     tp = b.tp
@@ -97,7 +97,7 @@ in-U(β)-U(β)-..U(β)-U(idt)-U(idt)-U(idt)-U(idt)-fin
    |___nbeta_____|     
    Returns tMPO and tMPS     
 """
-function fw_tMPOn_initbetaonly(b::FwtMPOBlocks, b_im::FwtMPOBlocks, time_sites::Vector{<:Index}; 
+function fw_tMPO_initbetaonly(b::FwtMPOBlocks, b_im::FwtMPOBlocks, time_sites::Vector{<:Index}; 
     bl::ITensor = b.tp.bl, tr)
 
     tp = b.tp
@@ -169,7 +169,7 @@ function rand_ising_fwtmpo(time_sites=siteinds("S=1/2",20))
     tp = tMPOParams(0.1, build_expH_ising_murg, mp, 0, plus_state)
     b = FwtMPOBlocks(tp)
 
-    ww, _ = fw_tMPOn(b, b, time_sites; tr=plus_state)
+    ww, _ = fw_tMPO(b, b, time_sites; tr=plus_state)
 
     return ww
 end

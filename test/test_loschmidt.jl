@@ -26,7 +26,7 @@ tpim = tMPOParams(tp; dt=-im*tp.dt)
 b_im = FwtMPOBlocks(tpim)
 
 
-mpo, start_mps = fw_tMPOn(b, b_im, time_sites)
+mpo, start_mps = fw_tMPO(b, b_im, time_sites)
 
 mycutoff=1e-12
 itermax=600

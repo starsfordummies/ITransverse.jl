@@ -7,30 +7,13 @@ struct tMPOParams{T<:Union{Float64,ComplexF64}, MP, F}
 end
 
 
-# function build_default_tr(mp::ModelParams)
-#     close_id = op("I", mp.phys_site)  # Make identity op
-#     return close_id * combiner(inds(close_id), tags="tr")
-# end
-
 # Master constructor
 function tMPOParams(
     dt::Number,
     expH_func::Function,
     mp::ModelParams,
     nbeta::Int,
-    bl_in
-)
-    blt = to_itensor(bl_in, "bl")
-
-    return tMPOParams(dt, expH_func, mp, nbeta, blt)
-end
-
-function tMPOParams(
-    dt::Number,
-    expH_func::Function,
-    mp::ModelParams,
-    nbeta::Int,
-    bl_in::Union{Vector,ITensor},
+    bl_in::AbstractVector
 )
     blt = to_itensor(bl_in, "bl")
 
@@ -48,5 +31,6 @@ tMPOParams(x::tMPOParams;
 
 
 """ quick defaults for parallel field Ising, for playing around: J=1 hz=0.4, gx=0, init_state= |+> """
-ising_tp() = tMPOParams(0.1, build_expH_ising_murg, 
-    IsingParams(1.0, 0.4, 0.0), 0, [1.0+0im,1]/sqrt(2))
+function ising_tp() 
+    return tMPOParams(0.1, build_expH_ising_murg, IsingParams(1.0, 0.4, 0.0), 0, [1.0+0im,1]/sqrt(2))
+end

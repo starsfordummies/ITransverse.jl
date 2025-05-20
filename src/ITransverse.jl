@@ -97,7 +97,7 @@ include("tmpo/build_tmpo_fw.jl")
 
 #from build_tmpo_[fw|expval].jl
 export
-    fw_tMPOn
+    fw_tMPO
 
 include("tmpo/build_fold_tmpo.jl")
 

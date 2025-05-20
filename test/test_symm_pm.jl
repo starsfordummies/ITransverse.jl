@@ -53,8 +53,7 @@ function test_symmpm(Tstart::Int, Tend::Int, nbeta::Int; Tstep::Int=1)
 
         time_sites = addtags(siteinds("S=1/2", Nsteps; conserve_qns=false), "time")
 
-        #mpo, start_mps = fw_tMPO(tp, time_sites)
-        mpo, start_mps = fw_tMPOn(b, b_im, time_sites)
+        mpo, start_mps = fw_tMPO(b, b_im, time_sites)
 
         pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM_EIG")
 
