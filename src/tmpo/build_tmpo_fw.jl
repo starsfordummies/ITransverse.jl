@@ -30,6 +30,8 @@ end
 function fw_tMPO(b::FwtMPOBlocks, b_im::FwtMPOBlocks, time_sites::Vector{<:Index}; 
     bl::ITensor = b.tp.bl, tr)
 
+    tr = to_itensor(tr, "tr")
+
     tp = b.tp
 
     nbeta = tp.nbeta 

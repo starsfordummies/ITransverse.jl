@@ -1,4 +1,4 @@
-using ITensors
+using ITensors, ITensorMPS
 using ITransverse
 using Test
 
@@ -25,7 +25,7 @@ function test_symmpm(Tstart::Int, Tend::Int, nbeta::Int; Tstep::Int=1)
     truncp = TruncParams(cutoff, maxbondim)
 
     mp = IsingParams(JXX, hz, gx)
-    tp = tMPOParams(dt, build_expH_ising_murg, mp, nbeta, init_state, init_state)
+    tp = tMPOParams(dt, build_expH_ising_murg, mp, nbeta, init_state)
 
     b = FwtMPOBlocks(tp)
 
@@ -53,7 +53,7 @@ function test_symmpm(Tstart::Int, Tend::Int, nbeta::Int; Tstep::Int=1)
 
         time_sites = addtags(siteinds("S=1/2", Nsteps; conserve_qns=false), "time")
 
-        mpo, start_mps = fw_tMPO(b, b_im, time_sites)
+        mpo, start_mps = fw_tMPO(b, b_im, time_sites; tr=init_state)
 
         pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM_EIG")
 
@@ -93,9 +93,9 @@ end
 @test norm(allents[:eig]["S1.0"] - allents[:rdm]["S1.0"] )/norm(allents[:eig]["S1.0"]) < 0.001
 
 @info norm(allents[:eig]["S2.0"])
+
 @test norm(allents[:eig]["S2.0"] - allents[:svd]["S2.0"] )/norm(allents[:eig]["S2.0"]) < 0.001
 @test norm(allents[:eig]["S2.0"] - allents[:rdm]["S2.0"] )/norm(allents[:eig]["S2.0"]) < 0.001
-
 
 @info "Difference EIG-SVD: $(allents[:eig]["S1.0"][20] - allents[:svd]["S1.0"][20])"
 @info "Difference EIG-RDM: $(allents[:eig]["S1.0"][20] - allents[:rdm]["S1.0"][20])"
