@@ -19,16 +19,11 @@ function fw_tMPO(tp::tMPOParams, time_sites::Vector{<:Index}; kwargs...)
 
     b = FwtMPOBlocks(tp)
 
-    tpim = tMPOParams(tp; dt=-im*tp.dt)
-
-    b_im = FwtMPOBlocks(tpim)
-
-    fw_tMPO(b, b_im, time_sites; kwargs...)
+    fw_tMPO(b, time_sites; kwargs...)
 end
 
 
-function fw_tMPO(b::FwtMPOBlocks, b_im::FwtMPOBlocks, time_sites::Vector{<:Index}; 
-    bl::ITensor = b.tp.bl, tr)
+function fw_tMPO(b::FwtMPOBlocks, time_sites::Vector{<:Index};  bl::ITensor = b.tp.bl, tr)
 
     tr = to_itensor(tr, "tr")
 
@@ -45,12 +40,12 @@ function fw_tMPO(b::FwtMPOBlocks, b_im::FwtMPOBlocks, time_sites::Vector{<:Index
 
     (icL, icR, icP, icPs) = (b.rot_inds[:L], b.rot_inds[:R], b.rot_inds[:P], b.rot_inds[:Ps]) 
 
-    Wc_im = b_im.Wc
+    Wc_im = b.Wc_im
 
     Wr = b.Wr
     (irL, irR, irP) =  (b.rot_inds[:L], b.rot_inds[:R], b.rot_inds[:P]) 
 
-    Wr_im = b_im.Wr
+    Wr_im = b.Wr_im
 
     # Make same indices for real and imag, it's easier aftwards 
     replaceinds!(Wc_im, inds(Wc_im), inds(Wc))
@@ -99,8 +94,7 @@ in-U(β)-U(β)-..U(β)-U(idt)-U(idt)-U(idt)-U(idt)-fin
    |___nbeta_____|     
    Returns tMPO and tMPS     
 """
-function fw_tMPO_initbetaonly(b::FwtMPOBlocks, b_im::FwtMPOBlocks, time_sites::Vector{<:Index}; 
-    bl::ITensor = b.tp.bl, tr)
+function fw_tMPO_initbetaonly(b::FwtMPOBlocks, time_sites::Vector{<:Index}; bl::ITensor = b.tp.bl, tr)
 
     tp = b.tp
 
@@ -118,12 +112,12 @@ function fw_tMPO_initbetaonly(b::FwtMPOBlocks, b_im::FwtMPOBlocks, time_sites::V
     # Rotated indices already 
     Wc = b.Wc
     (icL, icR, icP, icPs) = (b.rot_inds[:L], b.rot_inds[:R], b.rot_inds[:P], b.rot_inds[:Ps]) 
-    Wc_im = b_im.Wc
+    Wc_im = b.Wc_im
 
     Wr = b.Wr
     (irL, irR, irP) = (b.rot_inds[:L], b.rot_inds[:R], b.rot_inds[:P]) 
 
-    Wr_im = b_im.Wr
+    Wr_im = b.Wr_im
 
     # Make same indices for real and imag, it's easier aftwards 
     replaceinds!(Wc_im, inds(Wc_im), inds(Wc))
@@ -171,7 +165,7 @@ function rand_ising_fwtmpo(time_sites=siteinds("S=1/2",20))
     tp = tMPOParams(0.1, build_expH_ising_murg, mp, 0, plus_state)
     b = FwtMPOBlocks(tp)
 
-    ww, _ = fw_tMPO(b, b, time_sites; tr=plus_state)
+    ww, _ = fw_tMPO(b, time_sites; tr=plus_state)
 
     return ww
 end
