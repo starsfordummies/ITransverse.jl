@@ -24,16 +24,12 @@ tp = tMPOParams(dt,  ITransverse.ChainModels.build_expH_ising_murg_new, mp, nbet
 
 b = FwtMPOBlocks(tp)
 
-tpim = tMPOParams(tp; dt=-im*tp.dt)
-
-b_im = FwtMPOBlocks(tpim)
-
 
 Nsteps = 10+2 
 
 time_sites = addtags(siteinds("S=1/2", Nsteps; conserve_qns=false), "time")
 
-tmpo, start_mps = fw_tMPO(b, b_im, time_sites; tr=init_state)
+tmpo, start_mps = fw_tMPO(b, time_sites; tr=init_state)
 
 vL = Index(5) 
 vR = Index(5)

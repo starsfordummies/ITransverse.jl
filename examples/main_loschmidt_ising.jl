@@ -32,10 +32,6 @@ function ising_loschmidt(tp::tMPOParams, Tstart::Int, Tend::Int, nbeta::Int; Tst
 
     b = FwtMPOBlocks(tp)
 
-    tpim = tMPOParams(tp; dt=-im*tp.dt)
-
-    b_im = FwtMPOBlocks(tpim)
-
     for ts in allts
 
         Ntime_steps = ts
@@ -43,7 +39,7 @@ function ising_loschmidt(tp::tMPOParams, Tstart::Int, Tend::Int, nbeta::Int; Tst
 
         time_sites = addtags(siteinds("S=1/2", Nsteps; conserve_qns=false), "time")
 
-        mpo, start_mps = fw_tMPO(b, b_im, time_sites, tr=tp.bl)
+        mpo, start_mps = fw_tMPO(b, time_sites, tr=tp.bl)
 
         psi_trunc, ds2 = powermethod_sym(start_mps, mpo, pm_params)
 
