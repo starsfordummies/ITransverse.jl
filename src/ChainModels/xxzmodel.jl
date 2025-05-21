@@ -1,3 +1,5 @@
+using ITransverse.ITenUtils: symm_svd
+
 """ XXZ Spin 1/2 model - TODO: Update to use XXZParams """
 
 """ TODO Haven't checked this in a while, tread with care"""
@@ -72,30 +74,21 @@ end
 
 
 
-""" Builds with autompo H XX Hamiltonian, convention 
-H = -( J(XX+YY) + 2*hZ ) 
-specify JXX and hZ as input params 
-"""
-function build_H_XX(sites, JXX::Real, hz::Real)
-
-    build_H_XXZ(sites, JXX, 0, hz)
-end
-
 """ Builds with autompo H XXZ Hamiltonian, convention 
 H = -( J(XX+YY+ Δ*ZZ) + 2*hZ ) 
 specify JXX, ΔZZ and hZ as input params 
 """
-function build_H_XXZ(sites, JXX::Real, ΔZZ::Real, hz::Real)
+function build_H_XXZ(sites, JXY::Real, ΔZZ::Real, hz::Real)
 
     # Input operator terms which define a Hamiltonian
     N = length(sites)
     os = OpSum()
 
     for j in 1:(N - 1)
-        os += -JXX,     "X", j, "X", j + 1
-        os += -JXX,     "Y", j, "Y", j + 1
+        os += -JXY,     "X", j, "X", j + 1
+        os += -JXY,     "Y", j, "Y", j + 1
         if abs(ΔZZ) > 1e-10 
-            os += -JXX*ΔZZ, "Z", j, "Z", j + 1
+            os += -JXY*ΔZZ, "Z", j, "Z", j + 1
         end
     end
 
@@ -108,7 +101,9 @@ function build_H_XXZ(sites, JXX::Real, ΔZZ::Real, hz::Real)
     # Convert these terms to MPO
     return MPO(os, sites)
 end
-
+function build_H_XXZ(sites, mp::XXZParams)
+    build_H_XXZ(sites, mp.J_XY, mp.J_ZZ, mp.hz)
+end
 
 
 """ Builds with autompo H XXZ Hamiltonian using S+ and S- operators, convention 
@@ -138,78 +133,10 @@ function build_H_XXZ_SpSm(sites, JXX::Real, ΔZZ::Real, hz::Real)
     # Convert these terms to MPO
     return MPO(os, sites)
 end
+function build_H_XXZ_SpSm(sites, mp::XXZParams)
+    build_H_XXZ_SpSm(sites, mp.J_XY, mp.J_ZZ, mp.hz)
+end
 
-
-
-
-
-# !This is not implemented yet 
-# """ Symmetric version of Murg exp(-i*H_XXZ*t) """
-# function build_expH_XXZ_murg(
-#     sites,
-#     JXX::Real,
-#     ΔZZ::Real,
-#     hz::Real,
-#     dt::Number)
-
-
-#     @assert ΔZZ < 0.001  # for now 
-
-#     # For real dt this does REAL time evolution 
-#     # I should have already taken into account both the - sign in exp(-iHt) 
-#     # and the overall minus in Ising H= -(JXX+Z)
-
-#     dt = JXX*dt
-
-#     cosg = cos(hz*dt*0.5)
-#     sing = sin(hz*dt*0.5)
-
-
-#     N = length(sites)
-#     U_t = MPO(N)
-
-#     link_dimension = 2
-
-#     linkindices = [Index(link_dimension, "Link,l=$(n-1)") for n = 1:N+1]
-
-
-#     for n = 1:N
-#         # siteindex s
-#         s = sites[n]
-
-#         # left link index ll with daggered QN conserving direction (if applicable)
-#         ll = dag(linkindices[n])
-#         # right link index rl
-#         rl = linkindices[n+1]
-
-#         combz = (1 - 2*sing^2)*op(sites, "Id", n) + im*2*sing*cosg*op(sites, "Z", n)
-#         X = op(sites, "X", n)
-
-#         if n == 1
-#             #U_t[n] = ITensor(ComplexF64, dag(s), s', dag(rl))
-#             U_t[n] = onehot(rl => 1) * sqrt(cos(dt))*combz
-#             U_t[n] += onehot(rl => 2) * sqrt(im*sin(dt))*X
-#         elseif n == N
-#             #U_t[n] = ITensor(ComplexF64, ll, dag(s), s')
-#             U_t[n] = onehot(ll => 1) * sqrt(cos(dt))*combz
-#             U_t[n] += onehot(ll => 2) * sqrt(im*sin(dt))*X
-
-#         else
-#             #U_t[n] = ITensor(ComplexF64, ll, dag(s), s', dag(rl))
-
-#             U_t[n] = onehot(ll => 1, rl =>1) * cos(dt)*combz
-#             U_t[n] += onehot(ll => 1, rl =>2) * sqrt(im*sin(dt))*sqrt(cos(dt))*X
-#             U_t[n] += onehot(ll => 2, rl =>1) * sqrt(im*sin(dt))*sqrt(cos(dt))*X
-#             U_t[n] += onehot(ll => 2, rl =>2) * im*sin(dt)*combz
-#         end
-
-
-#     end
-
-#     return U_t
-
-
-# end
 
 
 
