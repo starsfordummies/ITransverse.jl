@@ -7,24 +7,26 @@ struct FoldtMPOBlocks
     WWl::ITensor
     WWc::ITensor
     WWr::ITensor
+    WWl_im::ITensor
+    WWc_im::ITensor
+    WWr_im::ITensor
     rho0::ITensor
     tp::tMPOParams
     rot_inds::Dict
 
-    function FoldtMPOBlocks(WWl::ITensor,WWc::ITensor,WWr::ITensor,
+    function FoldtMPOBlocks(WWl::ITensor,WWc::ITensor,WWr::ITensor, WWl_im::ITensor,WWc_im::ITensor,WWr_im::ITensor,
         rho0::ITensor,tp::tMPOParams,rot_inds::Dict) 
 
         # The data type of the bottom-left term in tp dictates whether the *full* thing will lie on GPU
         dttype = NDTensors.unwrap_array_type(tp.bl)
 
-        new( adapt(dttype,WWl), adapt(dttype,WWc), adapt(dttype, WWr), adapt(dttype, rho0), tp, rot_inds)
+        new(adapt(dttype,WWl), adapt(dttype,WWc), adapt(dttype, WWr), 
+            adapt(dttype,WWl_im), adapt(dttype,WWc_im), adapt(dttype, WWr_im), 
+            adapt(dttype, rho0), tp, rot_inds)
     end
 end
 
 
-# function FoldtMPOBlocks(eH::MPO)
-#     return FoldtMPOBlocks(WWl, WWc, WWr, rho0, tp, inds_ww)
-# end
 
 """ Starting from tMPOParams, builds the tensors making the rotated+folded tMPO
 (L,R,P,P') => (P',P,L,R)
@@ -40,6 +42,16 @@ function FoldtMPOBlocks(tp::tMPOParams, init_state::ITensor = tp.bl)
     WWl = replaceinds(WWl, (L,R,P,Ps),(time_P',time_P,time_L, time_R))
     WWc = replaceinds(WWc, (L,R,P,Ps),(time_P',time_P,time_L, time_R))
     WWr = replaceinds(WWr, (L,R,P,Ps),(time_P',time_P,time_L, time_R))
+
+    # Same indices on WW and WW_im 
+
+    tpim = tMPOParams(tp; dt = -im*tp.dt)
+    WWl_im, WWc_im, WWr_im,  (L, R, P, Ps) = build_WW(tpim::tMPOParams)
+   
+    WWl_im = replaceinds(WWl_im, (L,R,P,Ps),(time_P',time_P,time_L, time_R))
+    WWc_im = replaceinds(WWc_im, (L,R,P,Ps),(time_P',time_P,time_L, time_R))
+    WWr_im = replaceinds(WWr_im, (L,R,P,Ps),(time_P',time_P,time_L, time_R))
+
    
     # Handling of initial state 
     # We can accept either an initial state or initial folded state (DM)
@@ -81,17 +93,19 @@ function FoldtMPOBlocks(tp::tMPOParams, init_state::ITensor = tp.bl)
     end
 
     inds_ww = Dict(:Ps => time_P',:P => time_P, :L => time_L, :R=> time_R) # TODO
-    return FoldtMPOBlocks(WWl, WWc, WWr, rho0, tp, inds_ww)
+    return FoldtMPOBlocks(WWl, WWc, WWr, WWl_im, WWc_im, WWr_im, rho0, tp, inds_ww)
 end
 
 """ Allow changing elements of FoldtMPOBlocks """
 function FoldtMPOBlocks(b::FoldtMPOBlocks; 
-    WWl=b.WWl, WWc=b.WWc, WWr=b.WWr, rho0=b.rho0, tp=b.tp, rot_inds=b.rot_inds)
-    return FoldtMPOBlocks(WWl, WWc, WWr, rho0, tp, rot_inds)
+    WWl=b.WWl, WWc=b.WWc, WWr=b.WWr, WWl_im=b.WWl_im, WWc_im=b.WWc_im, WWr_im=b.WWr_im, rho0=b.rho0, tp=b.tp, rot_inds=b.rot_inds)
+    return FoldtMPOBlocks(WWl, WWc, WWr, WWl_im, WWc_im, WWr_im, rho0, tp, rot_inds)
 end
 
 """ Allow to pass a spatial MPO for U(t) and other tMPO params as input and build everything else from that """ 
-function FoldtMPOBlocks(eH_space_mpo::MPO, init_state::ITensor, top_op::ITensor, nbeta::Int=0) 
+function FoldtMPOBlocks(eH_space_mpo::MPO, init_state::ITensor, top_op::ITensor) 
+
+    #TODO Done like this, we don't support beta yet 
 
     phys_site = siteind(eH_space_mpo,2)
 
@@ -145,7 +159,7 @@ function FoldtMPOBlocks(eH_space_mpo::MPO, init_state::ITensor, top_op::ITensor,
     end
 
     mp = NoParams(phys_site)
-    tp = tMPOParams(NaN, nothing, mp, nbeta, init_state, top_op)
+    tp = tMPOParams(NaN, nothing, mp, 0, init_state)
     inds_ww = Dict(:Ps => time_P',:P => time_P, :L => time_L, :R=> time_R) # TODO
-    return FoldtMPOBlocks(WWl, WWc, WWr, rho0, tp, inds_ww)
+    return FoldtMPOBlocks(WWl, WWc, WWr, WWl, WWc, WWr, rho0, tp, inds_ww)
 end

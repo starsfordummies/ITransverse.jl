@@ -20,14 +20,11 @@ function simpler_string(length_string::Int,ts::Int, nbeta::Int; Jxx::Real=1,hz::
 
     ev = [] 
 
-    tpim = tMPOParams(tp; dt=-im*tp.dt)
-
     b = FoldtMPOBlocks(tp)
-    b_im = FoldtMPOBlocks(tpim)
     
     time_sites = siteinds(4, ts + 2*nbeta)
 
-    tmpo_id  = ITransverse.folded_tMPO_doublebeta(b, b_im, time_sites) # , P_up)
+    tmpo_id  = ITransverse.folded_tMPO_doublebeta(b, time_sites) # , P_up)
 
     init_mps = ITransverse.folded_right_tMPS_murg(tmpo_id)
     init_mps = ITransverse.normbyfactor(init_mps, sqrt(ITransverse.overlap_noconj(init_mps, init_mps))) 
@@ -51,8 +48,7 @@ function simpler_string(length_string::Int,ts::Int, nbeta::Int; Jxx::Real=1,hz::
 
     trunc_method = "RDM"
 
-    #normalization, _ = ITransverse.expval_LR_apply_list_sym(init_mps, op_string, "Id", b, b_im; method="RTM", maxdim=64)
-    normalization, temp1,temp2 = ITransverse.expval_LR_apply_list_sym_2(init_mps, op_string, b, b_im; method=trunc_method, maxdim=maxbondim)
+    normalization, temp1,temp2 = ITransverse.expval_LR_apply_list_sym_2(init_mps, op_string, b; method=trunc_method, maxdim=maxbondim)
 
     @info normalization
     @info temp1
@@ -75,8 +71,7 @@ function simpler_string(length_string::Int,ts::Int, nbeta::Int; Jxx::Real=1,hz::
 
         #@info ii, op_string
 
-        #ev, _ = ITransverse.expval_LR_apply_list_sym(init_mps, op_string, "Pz", b, b_im, method="RTM")
-        ev, temp1, temp2, psiOR  = ITransverse.expval_LR_apply_list_sym_2(init_mps, op_string, b, b_im, method=trunc_method, maxdim=maxbondim)
+        ev, temp1, temp2, psiOR  = ITransverse.expval_LR_apply_list_sym_2(init_mps, op_string, b, method=trunc_method, maxdim=maxbondim)
         logev = log(temp1) + sum(log.(temp2))
         @info ev
         @info temp1

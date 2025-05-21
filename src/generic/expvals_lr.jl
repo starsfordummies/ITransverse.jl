@@ -170,13 +170,13 @@ end
 """ Build exp value <L|O|R> for a single vectorized operator `op`, given as a 1D array 
    Does *NOT* normalize here by <L|1|R>, need to do it separately.
    Slower version which uses ITensors' apply(), allows to truncate intermediate MPO """
-function expval_LR_apply_list(ll::MPS, rr::MPS, op_list::AbstractVector, b::FoldtMPOBlocks,  b_im::FoldtMPOBlocks; maxdim=256)
+function expval_LR_apply_list(ll::MPS, rr::MPS, op_list::AbstractVector, b::FoldtMPOBlocks; maxdim=256)
 
     time_sites = siteinds(rr)
 
     psiOR = deepcopy(rr)
     for op in op_list
-        tmpo = folded_tMPO(b, b_im, time_sites; fold_op=op)
+        tmpo = folded_tMPO(b, time_sites; fold_op=op)
         psiOR = isnothing(maxdim) ? applyn(tmpo, psiOR) : apply(tmpo,psiOR; alg="naive", maxdim)
     end
 
@@ -192,10 +192,10 @@ end
 """ Given an input MPS |B>, an operator list, and a "middle" operator X, builds tMPO columns with all the operators in the list 
 and applies them to the MPS, building O1*O2*..*ON|B> = |OB> . Then computes the exp value <BO|X|OB>, so it
 should be thought as a symmetric string +1 extra operator in the middle."""
-function expval_LR_apply_list_sym(rr::MPS, op_list::AbstractVector, op_mid::String, b::FoldtMPOBlocks,  b_im::FoldtMPOBlocks; maxdim=256, cutoff=1e-10, method="RDM")
+function expval_LR_apply_list_sym(rr::MPS, op_list::AbstractVector, op_mid::String, b::FoldtMPOBlocks; maxdim=256, cutoff=1e-10, method="RDM")
 
     time_sites = siteinds(rr)
-    tmpo_id  = folded_tMPO_doublebeta(b, b_im, time_sites)
+    tmpo_id  = folded_tMPO_doublebeta(b, time_sites)
 
     psiOR = deepcopy(rr)
  
@@ -209,7 +209,7 @@ function expval_LR_apply_list_sym(rr::MPS, op_list::AbstractVector, op_mid::Stri
             @error "No valid operator given"
         end
 
-        tmpo = folded_tMPO_doublebeta(b, b_im, time_sites, op)
+        tmpo = folded_tMPO_doublebeta(b, time_sites, op)
 
         if method == "RTM"
             #@info "1: " linkdims(psiIR)
@@ -238,9 +238,9 @@ function expval_LR_apply_list_sym(rr::MPS, op_list::AbstractVector, op_mid::Stri
     LR = overlap_noconj(psiOR,psiOR)
 
     if op_mid == "Id"
-        tmpo = folded_tMPO_doublebeta(b, b_im, time_sites)
+        tmpo = folded_tMPO_doublebeta(b, time_sites)
     elseif op_mid == "Pz"
-        tmpo = folded_tMPO_doublebeta(b, b_im, time_sites, ComplexF64[1,0,0,0])
+        tmpo = folded_tMPO_doublebeta(b, time_sites, ComplexF64[1,0,0,0])
     else 
         @error "Wrong op ?", op_mid
     end
@@ -257,7 +257,7 @@ end
 """ Given an input MPS |B>, an operator list, and a "middle" operator X, builds tMPO columns with all the operators in the list 
 and applies them to the MPS, building O1*O2*..*ON|B> = |OB> . Then computes the exp value <BO|X|OB>, so it
 should be thought as a symmetric string +1 extra operator in the middle."""
-function expval_LR_apply_list_sym_2(rr::MPS, op_list::AbstractVector, b::FoldtMPOBlocks,  b_im::FoldtMPOBlocks; maxdim=256, cutoff=1e-10, method="RDM")
+function expval_LR_apply_list_sym_2(rr::MPS, op_list::AbstractVector, b::FoldtMPOBlocks; maxdim=256, cutoff=1e-10, method="RDM")
 
     time_sites = siteinds(rr)
     psiOR = deepcopy(rr)
@@ -274,7 +274,7 @@ function expval_LR_apply_list_sym_2(rr::MPS, op_list::AbstractVector, b::FoldtMP
             @error "Operator $(str_op) not implemented yet"
         end
 
-        tmpo = folded_tMPO_doublebeta(b, b_im, time_sites, op)
+        tmpo = folded_tMPO_doublebeta(b, time_sites, op)
 
         if method == "RTM"
           
@@ -319,7 +319,7 @@ end
 function expval_LR_apply(ll::MPS, rr::MPS, op::AbstractVector, b::FoldtMPOBlocks; maxdim=nothing)
 
     time_sites = siteinds(rr)
-    tmpo = folded_tMPO(b, time_sites, op)
+    tmpo = folded_tMPO(b, time_sites; fold_op=op)
     psiOR = isnothing(maxdim) ? applyn(tmpo, rr) : apply(tmpo,rr; alg="naive", maxdim)
     LOR = overlap_noconj(ll,psiOR)
 
@@ -331,11 +331,11 @@ end
 function expval_LR_apply(ll::MPS, rr::MPS, opL::AbstractVector, opR::AbstractVector, b::FoldtMPOBlocks)
 
     time_sites = siteinds(ll)
-    tmpo = folded_tMPO(b, time_sites, opL)
+    tmpo = folded_tMPO(b, time_sites, fold_op=opL)
     psi_L = applyn(tmpo, ll)
 
     time_sites = siteinds(rr)
-    tmpo = swapprime(folded_tMPO(b, time_sites, opR), 0, 1, "Site")
+    tmpo = swapprime(folded_tMPO(b, time_sites, fold_op=opR), 0, 1, "Site")
     psi_R = applyn(tmpo, rr)
 
     ev_LOOR = overlap_noconj(psi_L,psi_R)

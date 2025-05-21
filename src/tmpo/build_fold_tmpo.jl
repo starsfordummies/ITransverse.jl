@@ -21,24 +21,10 @@ and contract with  the initial state `init_state` on the *left* and the operator
 """
 
 
-#Legacy, remove eventually ?
-function folded_tMPO(b::FoldtMPOBlocks, ts::Vector{<:Index}; kwargs...)
-    @assert b.tp.nbeta == 0
 
-    folded_tMPO(b,b, ts; kwargs...)
-end
-
-
-###### New ver with beta 
-""" Given building blocks and time sites, builds folded tMPO associated with `fold_op`. 
-Defaults to closing with identity if no operator is specified. Builds `b.tp.nbeta` steps of b_im blocks
-    at the beginning of the tMPO. """
-# function folded_tMPO(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::AbstractVector)
-#     folded_tMPO(b, b_im, ts; fold_op=fold_op)
-# end
 
 """ Accepted kwargs: fold_op, outputlevel """ 
-function folded_tMPO(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index}; kwargs...)
+function folded_tMPO(b::FoldtMPOBlocks, ts::Vector{<:Index}; kwargs...)
 
     outputlevel::Int = get(kwargs,:outputlevel, 0)
     #@info outputlevel
@@ -46,8 +32,9 @@ function folded_tMPO(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index
 
     @assert b.tp.nbeta <= length(ts)
 
-    WWc = b.WWc
-    WWc_im = b_im.WWc
+    (; WWc, WWc_im) = b 
+    #WWc = b.WWc
+    #WWc_im = b.WWc
 
     #match indices for real-imag so it's easier to work with them 
     replaceinds!(WWc_im, inds(WWc_im), inds(WWc))
@@ -89,11 +76,12 @@ end
 """ Build folded tMPO with an extra site at the beginning for the initial state.
 The extra site should already be incorporated in the `ts` index list (and we check whether the dimensions match),
  so effectively we're building a tMPO for Nt = length(ts)-1 timesteps  """
-function folded_tMPO_in(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index}; kwargs...)
+function folded_tMPO_in(b::FoldtMPOBlocks, ts::Vector{<:Index}; kwargs...)
 
     @assert b.tp.nbeta <= length(ts)
-    WWc = b.WWc
-    WWc_im = b_im.WWc
+    (; WWc, WWc_im) = b 
+    #WWc = b.WWc
+    #WWc_im = b.WWc
 
     #match indices for real-imag so it's easier to work with them 
     replaceinds!(WWc_im, inds(WWc_im), inds(WWc))
@@ -155,12 +143,6 @@ function folded_tMPO_in(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:In
 end
 
 
-""" Builds a folded tMPO extended by one site to the top (ie. end) with the tensor WWl """
-function folded_tMPO_L(b::FoldtMPOBlocks, ts::Vector{<:Index}; kwargs...)
-    folded_tMPO_L(b, b, ts; kwargs...)
-end
-
-
 """ Builds a folded tMPO extended by one site to the top (ie. end) with the tensor `b.WWl`. 
 After rotation 90deg clockwise, should look like
 ```
@@ -170,10 +152,11 @@ rho0-o--o--o--o--o-fold_op
 ````
 
 """
-function folded_tMPO_L(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index}; kwargs...)
+function folded_tMPO_L(b::FoldtMPOBlocks, ts::Vector{<:Index}; kwargs...)
     @assert b.tp.nbeta < length(ts)
-    WWc = b.WWc
-    WWc_im = b_im.WWc
+    (; WWc, WWc_im) = b 
+    #WWc = b.WWc
+    #WWc_im = b.WWc
 
     #match indices for real-imag so it's easier to work with them 
     replaceinds!(WWc_im, inds(WWc_im), inds(WWc))
@@ -209,12 +192,6 @@ end
 
 
 
-function folded_tMPO_R(b::FoldtMPOBlocks, ts::Vector{<:Index}; kwargs...)
-    @assert b.tp.nbeta == 0
-    folded_tMPO_R(b, b, ts; kwargs...)
-end
-
-
 """ Builds a folded tMPO extended by one site to the top (ie. end) with the tensor `b.WWr`` 
 After rotation 90deg clockwise, should look like
 ```
@@ -223,11 +200,12 @@ rho0-o--o--o--o--o-fold_op
      |  |  |  |  
 ````
 """
-function folded_tMPO_R(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index}; kwargs...)
+function folded_tMPO_R(b::FoldtMPOBlocks, ts::Vector{<:Index}; kwargs...)
     @assert b.tp.nbeta < length(ts)
 
-    WWc = b.WWc
-    WWc_im = b_im.WWc
+    (; WWc, WWc_im) = b 
+    #WWc = b.WWc
+    #WWc_im = b.WWc
 
     #match indices for real-imag so it's easier to work with them 
     replaceinds!(WWc_im, inds(WWc_im), inds(WWc))
@@ -261,23 +239,16 @@ function folded_tMPO_R(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Ind
 
 end
 
-function folded_left_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index}; kwargs...)
-    @assert b.tp.nbeta == 0
-    folded_left_tMPS(b,b,ts;kwargs...)
-end
-function folded_right_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index}; kwargs...)
-    @assert b.tp.nbeta == 0
-    folded_right_tMPS(b,b,ts;kwargs...)
-end
+
 
 """ Builds a tMPS using the WWl tensors in `b` """ 
-function folded_left_tMPS(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index}; kwargs...)
-    psi = MPS(fill(b.WWl, length(ts)))
-    
-    WWl_im = b_im.WWl
+function folded_left_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index}; kwargs...)
+    (; WWl, WWl_im) = b 
 
+    psi = MPS(fill(WWl, length(ts)))
+    
     #match indices for real-imag so it's easier to work with them 
-    replaceinds!(WWl_im, inds(WWl_im), inds(b.WWl))
+    replaceinds!(WWl_im, inds(WWl_im), inds(WWl))
 
      for ib = 1:b.tp.nbeta
         psi[ib] = WWl_im
@@ -293,7 +264,7 @@ function folded_left_tMPS(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:
         psi[ii] = replaceinds(psi[ii], WWinds, newinds)
     end
 
-    dttype = NDTensors.unwrap_array_type(b.WWl)
+    dttype = NDTensors.unwrap_array_type(WWl)
     psi[1] *= b.rho0 * delta(ind(b.rho0,1), ll[1])
 
     fold_op = get(kwargs, :fold_op, vectorized_identity(ll[end]))
@@ -304,13 +275,14 @@ end
 
 """ Builds a tMPS using the WWr tensors in `b` 
  p' indices are converted to unprimed p for the physical inds """ 
-function folded_right_tMPS(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index}; kwargs...)
-    psi = MPS(fill(b.WWr, length(ts)))
-      
-    WWr_im = b_im.WWr
+function folded_right_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index}; kwargs...)
 
+    (; WWr, WWr_im) = b 
+ 
+    psi = MPS(fill(WWr, length(ts)))
+      
     #match indices for real-imag so it's easier to work with them 
-    replaceinds!(WWr_im, inds(WWr_im), inds(b.WWr))
+    replaceinds!(WWr_im, inds(WWr_im), inds(WWr))
 
      for ib = 1:b.tp.nbeta
         psi[ib] = WWr_im
@@ -351,12 +323,12 @@ end
 
 
 """ Puts imaginary time on *both* edges of the folded tMPO """
-function folded_tMPO_doublebeta(b::FoldtMPOBlocks, b_im::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::AbstractVector = [1,0,0,1])
-
+function folded_tMPO_doublebeta(b::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::AbstractVector = [1,0,0,1])
+    # TODO NEED TO UPDATE TO NEWER CONVENTIONS 
     @assert 2*b.tp.nbeta <= length(ts)
-    WWc = b.WWc
-    WWc_im = b_im.WWc
-
+    (; WWc, WWc_im) = b 
+    #WWc = b.WWc
+    #WWc_im = b.WWc
     #match indices for real-imag so it's easier to work with them 
     replaceinds!(WWc_im, inds(WWc_im), inds(WWc))
 
