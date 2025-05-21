@@ -16,9 +16,6 @@ Nsteps = nbeta + Ntime_steps + nbeta
 
 time_sites = addtags(siteinds("S=1/2", Nsteps; conserve_qns=false), "time")
 
-#mpo_L, start_mps = build_ising_fw_tMPO_regul_beta(build_expH_ising_murg, JXX, hz, dt, nbeta, time_sites, init_state)
-#psi_trunc, ds2s_murg_s = powermethod_sym(start_mps, mpo_L, pm_params)
-
 b = FwtMPOBlocks(tp)
 
 
