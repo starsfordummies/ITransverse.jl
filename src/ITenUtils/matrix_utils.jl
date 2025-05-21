@@ -27,7 +27,7 @@ end
 """ Checks if a matrix is diagonal within a given cutoff
 """
 
-function check_diag_matrix(d::AbstractMatrix, cutoff::Float64=1e-8, verbose::Bool=false)
+function check_diag_matrix(d::AbstractMatrix; cutoff::Float64=1e-8, verbose::Bool=false)
 
     isdiag = true
 

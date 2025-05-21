@@ -35,7 +35,7 @@ end
 
 function LinearAlgebra.isdiag(a::ITensor)
     @assert ndims(a) == 2
-    check_diag_matrix(matrix(a), cutoff=1e-10)
+    check_diag_matrix(matrix(a); cutoff=1e-10)
 end
 
 
