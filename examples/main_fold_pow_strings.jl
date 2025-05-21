@@ -40,11 +40,7 @@ function main_folded_pm(itermax::Int,length_string::Int; ts::Int=10,Jxx::Float64
     #tp = tMPOParams(tp;bl =[1,0,0,0])
     tp_proj =  tMPOParams(tp_proj; nbeta=4)
 
-    tpim = tMPOParams(tp; dt=-im*tp.dt)
-
-
     b = FoldtMPOBlocks(tp)
-    b_im = FoldtMPOBlocks(tpim)
     
     infos = Dict("tp" => tp, "pm_params" => pm_params)
 
@@ -55,8 +51,8 @@ function main_folded_pm(itermax::Int,length_string::Int; ts::Int=10,Jxx::Float64
     
     init_mps = folded_right_tMPS(b, time_sites)
 
-    mpo_P_up = folded_tMPO(b, b_im, time_sites, P_up)
-    mpo_1 = folded_tMPO(b, b_im, time_sites)
+    mpo_P_up = folded_tMPO(b, time_sites; fold_op=P_up)
+    mpo_1 = folded_tMPO(b, time_sites)
 
     #Here I am using the power method to find the the left and right environments after itermax which I interpret as the spatial size of the system 
     println("itermax no string= ", itermax)

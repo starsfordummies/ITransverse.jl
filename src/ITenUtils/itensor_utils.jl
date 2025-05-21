@@ -33,9 +33,9 @@ function isid(a::ITensor, cutoff::Float64=1e-8)
 end
 
 
-function isdiag(a::ITensor, cutoff::Float64=1e-8)
+function LinearAlgebra.isdiag(a::ITensor)
     @assert ndims(a) == 2
-    check_diag_matrix(matrix(a), cutoff)
+    check_diag_matrix(matrix(a), cutoff=1e-8)
 end
 
 

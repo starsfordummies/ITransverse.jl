@@ -29,12 +29,6 @@ function test_symmpm(Tstart::Int, Tend::Int, nbeta::Int; Tstep::Int=1)
 
     b = FwtMPOBlocks(tp)
 
-    tpim = tMPOParams(tp; dt=-im*tp.dt)
-
-    b_im = FwtMPOBlocks(tpim)
-
-    ds2s = Vector{Float64}[]
-
     Ntime_steps = Tstart
     Nsteps = Ntime_steps + 2 * nbeta
 
@@ -53,7 +47,7 @@ function test_symmpm(Tstart::Int, Tend::Int, nbeta::Int; Tstep::Int=1)
 
         time_sites = addtags(siteinds("S=1/2", Nsteps; conserve_qns=false), "time")
 
-        mpo, start_mps = fw_tMPO(b, b_im, time_sites; tr=init_state)
+        mpo, start_mps = fw_tMPO(b, time_sites; tr=init_state)
 
         pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM_EIG")
 

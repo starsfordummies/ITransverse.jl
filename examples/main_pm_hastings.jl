@@ -12,19 +12,21 @@ using ITransverse: vX, vZ, vI
 function main_folded_pm()
 
     tp = ising_tp()
-    tp =  tMPOParams(0.1, build_expH_ising_murg, IsingParams(1.0, 0.7, 0.0), 0, [1,1])
+    tp =  tMPOParams(0.1, build_expH_ising_murg, 
+    IsingParams(1.0, 0.5, 0.0), 0, [1,0], [1,0,0,0])
+    #IsingParams(1.0, 0.7, 0.0), 0, [1,1], [1,1,1,1]/2)
 
     tp = tMPOParams(tp; nbeta=0)
 
-
     b = FoldtMPOBlocks(tp)
 
-    cutoff = 1e-8
+
+    cutoff = 1e-12
     maxbondim = 80
     itermax = 500
     eps_converged=1e-8
 
-    truncp = TruncParams(cutoff, maxbondim)
+    truncp = TruncParams(cutoff, maxbondim, "left")  # "left" = start from initial state (Hastings)
 
     pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM_R")
 
@@ -38,7 +40,7 @@ function main_folded_pm()
     r2s = [] 
 
 
-    ts = 100:100
+    ts = 10:10:80
     alltimes = ts.* tp.dt
 
     infos = Dict(:tp => tp, :pm_params => pm_params, :b => b, :times => alltimes)
@@ -50,19 +52,10 @@ function main_folded_pm()
 
         init_mps = folded_right_tMPS(b, time_sites)
 
-        mpo_X = folded_tMPO(b, time_sites; fold_op=vX)
-        mpo_Z = folded_tMPO(b, time_sites; fold_op=vZ)
-
         mpo_1 = folded_tMPO(b, time_sites)
 
-
-        # ll, rr, ds2_pm  = ITransverse.powermethod_sweep(init_mps, mpo_1, mpo_X, pm_params) 
-
-        # @show maxlinkdim(ll), maxlinkdim(rr)
-        # ev = compute_expvals(ll, rr, ["Z"], b)
-
         # @show ev
-        ll, rr, ds2_pm  = powermethod(init_mps, mpo_1, mpo_X, pm_params) 
+        ll, rr, ds2_pm  = powermethod(init_mps, mpo_1, mpo_1, pm_params) 
 
         ev = compute_expvals(ll, rr, ["X","Z"], b)
         @show ev

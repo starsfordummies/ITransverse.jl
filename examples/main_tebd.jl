@@ -8,10 +8,10 @@ gx = -0.5
 #H= JXX - 2.0 * 0.525 Z + 2 * 0.25 X
 dt = 0.10
 
-zero_state = Vector{ComplexF64}([1, 0])
-plus_state = Vector{ComplexF64}([1 / sqrt(2), 1 / sqrt(2)])
+# zero_state = Vector{ComplexF64}([1, 0])
+# plus_state = Vector{ComplexF64}([1 / sqrt(2), 1 / sqrt(2)])
 
-init_state = plus_state
+init_state = ITransverse.plus_state
 #init_state = zero_state
 
 nbeta = 0
@@ -54,3 +54,16 @@ scatter!(p2,trange, resu2["chis"])
 scatter!(p2,trange, resu3["chis"],marker=:x)
 
 plot(p1,p2)
+
+
+sitesp = siteinds("S=1", 20)
+mpp = PottsParams(1, 0.8)
+tp = tMPOParams(dt, ITransverse.ChainModels.build_expH_potts_murg, mpp, nbeta, init_state, init_state)
+
+pp = plot()
+truncp = TruncParams(truncp; maxbondim=64)
+resu3 = tebd_ev(sitesp, tp, 60, ["Σ","τplusτdag"], truncp)
+plot!(pp, resu3["τplusτdag"], label="64")
+truncp = TruncParams(truncp; maxbondim=256)
+resu3 = tebd_ev(sitesp, tp, 60, ["Σ","τplusτdag"], truncp)
+plot!(pp, resu3["τplusτdag"], label="256")

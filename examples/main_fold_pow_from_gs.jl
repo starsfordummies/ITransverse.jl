@@ -41,11 +41,8 @@ function main_folded_pm()
 
     tp = tMPOParams(tp; nbeta=0, bl = gs1)
 
-    tpim = tMPOParams(tp; dt=-im*tp.dt)
-
 
     b = FoldtMPOBlocks(tp)
-    b_im = FoldtMPOBlocks(tpim)
 
 
     infos = Dict("tp" => tp, "pm_params" => pm_params)
@@ -58,8 +55,8 @@ function main_folded_pm()
         time_sites = siteinds(4, Nsteps)
         pushfirst!(time_sites, Index(dim(b.rho0,1),tags="rho0"))
 
-        mpo_X = folded_tMPO_in(b, b_im, time_sites, sigX)
-        mpo_1 = folded_tMPO_in(b, b_im, time_sites)
+        mpo_X = folded_tMPO_in(b, time_sites; fold_op=sigX)
+        mpo_1 = folded_tMPO_in(b, time_sites)
 
         
         init_mps = folded_right_tMPS_in_murg(mpo_1)

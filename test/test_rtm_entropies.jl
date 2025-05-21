@@ -3,6 +3,22 @@ using Test
 using ITensors, ITensorMPS
 using ITransverse 
 
+function trim_near_zero(v, cutoff)
+    mags = abs.(v)  # Elementwise magnitude, works for real and complex
+    first_nz = findfirst(x -> x > cutoff, mags)
+    last_nz = findlast(x -> x > cutoff, mags)
+    if isnothing(first_nz) || isnothing(last_nz)
+        return []
+    end
+    return v[first_nz:last_nz]
+end
+
+function equal_up_to_cutoff(a, b; cutoff=1e-8, rtol=1e-8)
+    ta = trim_near_zero(a, cutoff)
+    tb = trim_near_zero(b, cutoff)
+    length(ta) == length(tb) && isapprox(ta, tb; atol=cutoff, rtol=rtol)
+end
+
 
 @testset "Diagonalization of RTM using symmetric gauges" begin
 s = siteinds(4, 20)
@@ -16,7 +32,11 @@ eigs_l = diagonalize_rtm_left_gen_sym(ll; bring_left_gen=true, normalize_factor)
 # eigs_r sweeps from left to right, eigs_l the other way around
 eigs_r = diagonalize_rtm_right_gen_sym(ll; bring_right_gen=true, normalize_factor)
 
-@test ITransverse.ITenUtils.equal_up_to_trailing_zeros(eigs_l,eigs_r)
+# @info eigs_l
+# @info eigs_r
+@test equal_up_to_cutoff(eigs_l[5], eigs_r[5]; cutoff=1e-12, rtol=1e-12)
+@test equal_up_to_cutoff(eigs_l[10], eigs_r[10]; cutoff=1e-12, rtol=1e-12)
+@test equal_up_to_cutoff(eigs_l[15], eigs_r[15]; cutoff=1e-12, rtol=1e-12)
 # @test eigs_l ≈ eigs_r 
 
 

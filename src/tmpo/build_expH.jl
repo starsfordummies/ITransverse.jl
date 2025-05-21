@@ -5,7 +5,7 @@ end
 
 """ Exp(-τH) for imaginary time evolution """
 function build_expHim(tp::tMPOParams)
-    tp.expH_func(tp.mp, dt=-im*tp.dt )
+    tp.expH_func(tp.mp, -im*tp.dt )
 end
 
 """ Quick building a FwtMPOBlocks or FoldtMPOBlocks struct for playing around """
