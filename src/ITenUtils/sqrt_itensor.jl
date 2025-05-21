@@ -11,7 +11,7 @@ function Base.sqrt(a::ITensor, is::Tuple{<:Index, <:Index}=inds(a))
 
     
     # If the matrix is approx diagonal,
-    if isdiag(a, 1e-10) # make back to diagonal and sqrt it
+    if isdiag(a) # make back to diagonal and sqrt it
         sq_a = diag_itensor(sqrt.(array(diag(a))), is)
     else # Schur decomp for sqrt is not implemented on GPU so we need to do some back-forth..
         dmtype = promote_type(NDTensors.unwrap_array_type(a))
