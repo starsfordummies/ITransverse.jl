@@ -65,8 +65,8 @@ function build_WWc(eH_space::MPO)
     CwR = combiner(wR,wR''; tags="cwR")
 
     # we flip the p<>* legs on the backwards, shouldn't matter if we have p<>p*
-    Cp = combiner(space_p,space_p'''; tags="cp")
-    Cps = combiner(space_p',space_p''; tags="cps")
+    Cp = combiner(space_p,space_p''; tags="cp")
+    Cps = combiner(space_p',space_p'''; tags="cps")
 
     WWc = WWc * CwL * CwR * Cp * Cps
 
@@ -97,8 +97,8 @@ function build_WWr(eH_space::MPO)
     CvL = combiner(vL,vL''; tags="cwL")
 
     # we flip the p<>* legs on the backwards, shouldn't matter if we have p<>p*
-    Cps = combiner(space_p',space_p''; tags="cps")
-    Cp = combiner(space_p,space_p'''; tags="cp")
+    Cps = combiner(space_p,space_p''; tags="cps")
+    Cp = combiner(space_p',space_p'''; tags="cp")
 
     WWr = WWr * CvL * Cp * Cps
 
@@ -128,8 +128,8 @@ function build_WWl(eH_space::MPO)
     CvR = combiner(vR,vR''; tags="cwR")
 
     # we flip the p<>* legs on the backwards, shouldn't matter if we have p<>p*
-    Cps = combiner(space_p',space_p''; tags="cps")
-    Cp = combiner(space_p,space_p'''; tags="cp")
+    Cps = combiner(space_p,space_p''; tags="cps")
+    Cp = combiner(space_p',space_p'''; tags="cp")
 
     WWl = WWl * CvR * Cp * Cps
 
