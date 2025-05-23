@@ -239,15 +239,13 @@ end
 """ Shorthand for apply + swap indices """
 function applys(O::MPO, psi::AbstractMPS; cutoff=nothing, maxdim=nothing)
     #apply(swapprime(O, 0, 1, "Site"), psi; cutoff, maxdim)
-    contract(O, prime(siteinds,psi);  cutoff, maxdim)
-
+    psiO = contract(O, prime(siteinds,psi);  cutoff, maxdim)
 end
 
 """ Shorthand for apply with no truncation + swap indices """
 function applyns(O::MPO, psi::AbstractMPS)
     #apply(swapprime(O, 0, 1, "Site"), psi, alg="naive", truncate=false)
-    contract(O, prime(siteinds,psi), alg="naive", truncate=false)
-
+    psiO = contract(O, prime(siteinds,psi), alg="naive", truncate=false)
 end
 
 

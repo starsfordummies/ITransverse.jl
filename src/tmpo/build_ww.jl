@@ -27,7 +27,7 @@ function build_WW(eH::MPO)
     WWr = replaceinds(WWr, (iCwL, iCp, iCps),  (space_vleft, space_phys, space_phys'))
 
     WWc, iCwL, iCwR, iCp, iCps = build_WWc(eH)
-    check_symmetry_itensor_mpo(WWc, iCwL, iCwR, iCp, iCps)
+    #check_symmetry_itensor_mpo(WWc, iCwL, iCwR, iCp, iCps)
     WWc = replaceinds(WWc, (iCwL, iCwR, iCp, iCps),  (space_vleft, space_vright, space_phys, space_phys'))
 
     return WWl, WWc, WWr,  (space_vleft, space_vright, space_phys, space_phys')

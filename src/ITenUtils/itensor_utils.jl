@@ -75,6 +75,27 @@ function symmetrize(a::ITensor; tol=1e-6)
     return (a + swapinds(a, inds(a)...))/2
 end
 
+""" Computes norm difference of tensor vs itself with two indices (i,j) swapped"""
+function normdiff_under_swap(T::ITensor, i::Index, j::Index)
+    iinds = inds(T)
+    i1, i2 = findfirst(==(i), iinds), findfirst(==(j), iinds)
+    perm = collect(1:length(iinds))
+    perm[i1], perm[i2] = perm[i2], perm[i1]
+    return norm(permute(T, iinds).tensor - permute(T, iinds[perm]).tensor) 
+end
+
+""" Checks if ITensor T is symmetric under swap of indices (i,j) (up to atol) """
+function check_symmetry_swap(T::ITensor, i::Index, j::Index; atol=1e-12)
+    norm_difference = normdiff_under_swap(T, i, j)
+    if norm_difference < atol
+        @info("Tensor Symmetric $i <-> $j")
+        return true 
+    else
+        @warn "Tensor *Not* Symmetric $i <-> $j, normdiff = $(norm_difference)"
+        return false
+    end
+end
+
 """checks whether an MPO tensor is symmetric - if we don't specify indices, try to guess from labels """
 function check_symmetry_itensor_mpo(T::ITensor)
     (space_p1, space_p) = inds(T, "Site")
@@ -106,26 +127,6 @@ function check_symmetry_itensor_mpo(T::ITensor, wL::Index, wR::Index, space_p1::
 end
 
 
-""" Easier to follow check for whether a given ITensor is symmetric in the `inds_to_permute` index pair 
-Does a few allocations so it's maybe more expensive but it's meant for small tensors anyway """
-function check_symmetry_itensor(T::ITensor, inds_to_permute)
-  
-    @assert length(inds_to_permute) == 2  # I only know how to swap pairs 
-
-    other_inds = uniqueinds(T, inds_to_permute)
-
-    Tten = Array(T, inds_to_permute, other_inds)
-    Tten_swapped = Array(T, reverse(inds_to_permute), other_inds)
-
-
-    ddelta = norm(Tten - Tten_swapped)
-    if  ddelta < 1e-12
-        @info("Tensor Symmetric in $inds_to_permute")
-    else
-        @warn("Tensor *not* symmetric normdiff=$ddelta in $inds_to_permute")
-    end
-
-end
 
 
 

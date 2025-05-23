@@ -20,7 +20,7 @@ struct FwtMPOBlocks
     end
 end
 
-function FwtMPOBlocks(tp::tMPOParams; build_imag::Bool=true)
+function FwtMPOBlocks(tp::tMPOParams; build_imag::Bool=true, check_sym::Bool=true)
      # TODO: build_imag iff nbeta != 0 ? 
 
     eH = build_expH(tp)
@@ -39,7 +39,14 @@ function FwtMPOBlocks(tp::tMPOParams; build_imag::Bool=true)
 
     (iLink1, iLink2) = linkinds(eH)
 
-    check_symmetry_itensor_mpo(Wc, iLink1, iLink2, icP, icP')
+    if check_sym
+        @info "Checking symmetry MPO tensor on physical(space) => bond(time) indices"
+        check_symmetry_swap(Wc, icP, icP')
+        @info "Checking symmetry MPO tensor on bond(space) => phys(time) indices"
+        check_symmetry_swap(Wc, iLink1, iLink2)
+    end
+
+    #check_symmetry_itensor_mpo(Wc, iLink1, iLink2, icP, icP')
 
     # rotate 90deg 
 
