@@ -21,7 +21,8 @@ export quick_mps, myrMPO,
     overlap_noconj, 
     applyn, applyns, applys,
     isid,
-    mergedicts!
+    mergedicts!,
+    fidelity
 
 include("sweeps/trunc_params.jl")
 include("sweeps/sweeps.jl")

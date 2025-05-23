@@ -64,7 +64,8 @@ export quick_mps, quick_mpo,
     match_siteinds, match_siteinds!,
     replace_linkinds!,
     phys_ind,
-    gaugefix_left
+    gaugefix_left,
+    fidelity
 
 
 # moreutils.jl
