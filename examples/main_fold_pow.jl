@@ -38,7 +38,7 @@ function main_folded_pm()
     r2s = [] 
 
 
-    ts = 100:100
+    ts = 40:40
     alltimes = ts.* tp.dt
 
     infos = Dict(:tp => tp, :pm_params => pm_params, :b => b, :times => alltimes)

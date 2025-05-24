@@ -47,7 +47,7 @@ function main_folded_pm()
 
     infos = Dict("tp" => tp, "pm_params" => pm_params)
 
-    ts = 50:1:50
+    ts = 30:1:30
     alltimes = ts.* tp.dt
 
     for Nsteps in ts

@@ -92,7 +92,7 @@ end
 
 
 eevs = []
-for ts = 60:4:60
+for ts = 40:4:40
     lens_pz, allevs, logevs, trt2s = simpler_string(12, ts, 4, hz=1.0)
     push!(eevs, allevs, logevs, trt2s)
 end

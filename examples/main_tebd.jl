@@ -28,16 +28,16 @@ truncp = TruncParams(cutoff, maxbondim)
 mp = IsingParams(JXX, hz, gx)
 
 
-tp = tMPOParams(dt, build_expH_ising_murg, mp, nbeta, init_state, init_state)
+tp = tMPOParams(dt, build_expH_ising_murg, mp, nbeta, init_state)
 #tp = tMPOParams(dt, build_expH_ising_symm_svd, mp, nbeta, init_state, init_state)
 resu = tebd_ev(ss, tp, 60, ["X","Z"], truncp)
 
 
-tp = tMPOParams(dt, build_expH_ising_symm_svd, mp, nbeta, init_state, init_state)
+tp = tMPOParams(dt, build_expH_ising_symm_svd, mp, nbeta, init_state)
 resu2 = tebd_ev(ss, tp, 60, ["X","Z"], truncp)
 
 
-tp = tMPOParams(dt, ITransverse.ChainModels.build_expH_ising_murg_new, mp, nbeta, init_state, init_state)
+tp = tMPOParams(dt, ITransverse.ChainModels.build_expH_ising_murg_new, mp, nbeta, init_state)
 resu3 = tebd_ev(ss, tp, 60, ["X","Z"], truncp)
 
 trange = 0.2:0.1:6.1
@@ -58,7 +58,7 @@ plot(p1,p2)
 
 sitesp = siteinds("S=1", 20)
 mpp = PottsParams(1, 0.8)
-tp = tMPOParams(dt, ITransverse.ChainModels.build_expH_potts_murg, mpp, nbeta, init_state, init_state)
+tp = tMPOParams(dt, ITransverse.ChainModels.build_expH_potts_murg, mpp, nbeta, init_state)
 
 pp = plot()
 truncp = TruncParams(truncp; maxbondim=64)

@@ -106,7 +106,7 @@ function main_ising_loschmidt()
     @info ("Initial state $(init_state)  => quench @ $(mp) ")
     
     Tmin = 20
-    Tmax = 38
+    Tmax = 24
     Tstep = 2
 
 

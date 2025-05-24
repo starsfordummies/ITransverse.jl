@@ -11,10 +11,8 @@ using ITransverse: vX, vZ, vI
 
 function main_folded_pm()
 
-    tp = ising_tp()
-    tp =  tMPOParams(0.1, build_expH_ising_murg, 
-    IsingParams(1.0, 0.5, 0.0), 0, [1,0], [1,0,0,0])
-    #IsingParams(1.0, 0.7, 0.0), 0, [1,1], [1,1,1,1]/2)
+    #tp = ising_tp()
+    tp =  tMPOParams(0.1, build_expH_ising_murg, IsingParams(1.0, 0.5, 0.0), 0, [1,0])
 
     tp = tMPOParams(tp; nbeta=0)
 
@@ -40,7 +38,7 @@ function main_folded_pm()
     r2s = [] 
 
 
-    ts = 10:10:80
+    ts = 40:10:40
     alltimes = ts.* tp.dt
 
     infos = Dict(:tp => tp, :pm_params => pm_params, :b => b, :times => alltimes)
