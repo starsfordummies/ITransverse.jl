@@ -183,6 +183,11 @@ function to_itensor(x::ITensor, name::AbstractString)
     return x
 end
 
+function to_itensor(x::ITensor, idx::Index)
+    @assert ndims(x) == 1
+    return replaceind(x, ind(x,1), idx)
+end
+
 function to_itensor(x::AbstractVector{<:Number}, name::AbstractString)
     return ITensor(ComplexF64.(x), Index(length(x), name))
 end
