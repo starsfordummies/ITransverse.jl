@@ -36,6 +36,8 @@ export build_H_potts_manual,
 
 export build_expH_random_symm_svd_1o
 # from xxzmodel.jl
+export build_expH_XXZ_2o
+
 # export build_H_XXZ_manual,
 #     #build_H_XXZ_manual_lowtri,
 #     build_H_XXZ,

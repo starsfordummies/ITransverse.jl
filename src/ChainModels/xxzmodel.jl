@@ -1,100 +1,21 @@
 using ITransverse.ITenUtils: symm_svd
 
-""" XXZ Spin 1/2 model - TODO: Update to use XXZParams """
-
-""" TODO Haven't checked this in a while, tread with care"""
-function build_H_XXZ_manual(sites, JXX::Real, hz::Real )
-    """ Builds manually (no autompo) H ising Hamiltonian, convention 
-    H = -( JXX + hZ ) 
-    specify J and h as input params 
-    """
-
-    # link_dimension
-    link_dimension = 3
-    
-    N = length(sites)
-
-    # hasqns(sites) ? error("The transverse field Ising model does not conserve total Spin Z") : true
-
-    # generate "regular" link indeces (i.e. without conserved QNs)
-    linkindices = [Index(link_dimension, "Link,l=$(n-1)") for n = 1:N+1]
-
-    H = MPO(sites)
-
-
-
-    """ use UPPER triangular convention:  
-        | 1 C D  |                             0          
-    H = |   A B  |   ,   L = [1 0 0] ,    R =  0
-        |     1  |                             1
-    """
-
-    for n = 1:N
-        # siteindex s
-        s = sites[n]
-        # left link index ll with daggered QN conserving direction (if applicable)
-        ll = dag(linkindices[n])
-        # right link index rl
-        rl = linkindices[n+1]
-    
-        # init empty ITensor 
-        H[n] = ITensor(Float64, ll, dag(s), s', rl)
-
-        Id = op(sites, "Id", n)
-        CC = op(sites, "X",  n)
-        BB = op(sites, "X",  n) * (- JXX)
-        DD = op(sites, "Z",  n) * (- hz)
-        #AA = 0.
-        if n == 1
-            println("UPTRI inputs: $JXX and $hz")
-            println("BB = $(BB)")
-            println("CC = $(CC)")
-            end
-        # add both Identities as netral elements in the MPS at corresponding location (setelement function)
-        H[n] += onehot(ll => 1, rl => 1) * Id
-        H[n] += onehot(ll => 1, rl => 2) * CC # σˣ
-        H[n] += onehot(ll => 1, rl => 3) * DD # hz σᶻ
-        H[n] += onehot(ll => 2, rl => 3) * BB # Jxx σˣ
-        H[n] += onehot(ll => 3, rl => 3) * Id
-
-
-        #H[n] += onehot(ll =>2 , rl => 2) * op(sites, "Id", n) * λ  # λ Id,  on the diagonal
-    end
-
-    L = onehot(linkindices[1] => 1)
-    R = onehot(dag(linkindices[N+1]) => 3)
-
-
-    H[1] *= L
-    H[N] *= R
-
-    return H
-end
-
-
-
 
 """ Builds with autompo H XXZ Hamiltonian, convention 
 H = -( J(XX+YY+ Δ*ZZ) + 2*hZ ) 
 specify JXX, ΔZZ and hZ as input params 
 """
-function build_H_XXZ(sites, JXY::Real, ΔZZ::Real, hz::Real)
+function build_H_XXZ(sites, JXY::Real, ΔZZ::Real)
 
     # Input operator terms which define a Hamiltonian
     N = length(sites)
     os = OpSum()
 
     for j in 1:(N - 1)
-        os += -JXY,     "X", j, "X", j + 1
-        os += -JXY,     "Y", j, "Y", j + 1
+        os += -JXY,     "Sx", j, "Sx", j + 1
+        os += -JXY,     "Sy", j, "Sy", j + 1
         if abs(ΔZZ) > 1e-10 
-            os += -JXY*ΔZZ, "Z", j, "Z", j + 1
-        end
-    end
-
-    if abs(hz) > 1e-10
-        for j in 1:N
-            os += -2*hz, "Z", j
+            os += -JXY*ΔZZ, "Sz", j, "Sz", j + 1
         end
     end
 
@@ -102,7 +23,7 @@ function build_H_XXZ(sites, JXY::Real, ΔZZ::Real, hz::Real)
     return MPO(os, sites)
 end
 function build_H_XXZ(sites, mp::XXZParams)
-    build_H_XXZ(sites, mp.J_XY, mp.J_ZZ, mp.hz)
+    build_H_XXZ(sites, mp.J_XY, mp.J_ZZ)
 end
 
 
@@ -120,7 +41,7 @@ function build_H_XXZ_SpSm(sites, JXX::Real, ΔZZ::Real, hz::Real)
         os += -JXX/2,     "S+", j, "S-", j + 1
         os += -JXX/2,     "S-", j, "S+", j + 1
         if abs(ΔZZ) > 1e-10 
-            os += -JXX*ΔZZ, "Z", j, "Z", j + 1
+            os += -JXX*ΔZZ, "Sz", j, "Sz", j + 1
         end
     end
 
@@ -475,3 +396,15 @@ function build_expH_XX_svd(
 
 
 end
+
+function build_expH_XXZ_2o_spin1(p,dt) 
+    s = siteinds("S=1", 3)
+    build_expH_XXZ_2o(s, p,dt) 
+end
+
+function build_expH_XXZ_2o_spinhalf(p,dt) 
+    s = siteinds("S=1/2", 3)
+    build_expH_XXZ_2o(s, p,dt) 
+end
+
+build_expH_XXZ_2o(sites, p,dt) = timeEvo_MPO_2ndOrder(sites, fill("Id", 3), zeros(3), ["S+", "S-", "Sz"], [0.5*p.J_XY, 0.5*p.J_XY, p.J_ZZ], ["S-", "S+", "Sz"], ones(3), "Sz", p.hz, dt)
