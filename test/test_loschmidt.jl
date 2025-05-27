@@ -19,7 +19,8 @@ time_sites = addtags(siteinds("S=1/2", Nsteps; conserve_qns=false), "time")
 b = FwtMPOBlocks(tp)
 
 
-mpo, start_mps = fw_tMPO(b, time_sites; tr = tp.bl)
+mpo= fw_tMPO(b, time_sites; tr = tp.bl)
+start_mps = fw_right_tMPS(b, time_sites; tr = tp.bl)
 
 mycutoff=1e-12
 itermax=600
