@@ -45,7 +45,9 @@ include("entropies/rdm_svd_entropies.jl")
 include("entropies/gen_sym_entropies.jl")
 include("entropies/diagonalize_sym_rtm.jl")
 include("entropies/compute_rho2.jl")
+include("entropies/spectrum_rtm.jl")
 
+export generalized_vn_entropy_symmetric_spectrum
 
 export vn_entanglement_entropy, 
     renyi_entanglement_entropy!,
