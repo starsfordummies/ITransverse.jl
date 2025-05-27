@@ -192,6 +192,10 @@ function to_itensor(x::AbstractVector{<:Number}, name::AbstractString)
     return ITensor(ComplexF64.(x), Index(length(x), name))
 end
 
+function to_itensor(x::AbstractVector{<:Number}, idx::Index)
+    return ITensor(ComplexF64.(x), idx)
+end
+
 
 """ This is maybe not too fast but should be general and generalizable enough.
 Given an operator as string, like "X" or "Sp", builds it for the input physical site and returns an Array with its (vectorized) elements.  """
