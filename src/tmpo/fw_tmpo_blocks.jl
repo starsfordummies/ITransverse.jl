@@ -20,23 +20,44 @@ struct FwtMPOBlocks
     end
 end
 
-function FwtMPOBlocks(tp::tMPOParams; build_imag::Bool=true, check_sym::Bool=true)
+
+function FwtMPOBlocks(tp::tMPOParams; kwargs...)
      # TODO: build_imag iff nbeta != 0 ? 
 
     eH = build_expH(tp)
+    FwtMPOBlocks(eH; tp, kwargs...)
+end
 
-    Wl, Wc, Wr = eH.data
 
-    #space_pL = siteind(eH,1)
-    ilP = siteind(eH,1)
-    ilPs = ilP'
+function FwtMPOBlocks(eH::MPO; tp=nothing, init_state = nothing, build_imag::Bool=true, check_sym::Bool=true)
 
-    icP = siteind(eH,2)
-    icPs = icP'
+    @assert length(eH) == 3
 
-    irP = siteind(eH,3)
-    irPs = irP'
+    if isnothing(init_state)
+        @info "No init state specified, defaulting to tp.bl"
+        @info "tp.bl = $(tp.bl)"
+        init_state = to_itensor(tp.bl, "bl")
+    end
 
+    init_state = to_itensor(init_state, "bl")
+
+    if isnothing(tp)
+        phys_site = siteind(eH,2)
+        mp = NoParams(phys_site)
+        tp = tMPOParams(NaN, nothing, mp, 0, init_state)
+        build_imag = false
+    end
+
+    # Check whether the initial state makes sense 
+    @assert dim(init_state) == dim(siteind(eH,2))
+
+    @info "Updating init_state in tMPOParams to $(init_state)"
+    tp = tMPOParams(tp; bl=to_itensor(init_state, "bl"))
+ 
+
+    (Wl, Wc, Wr) = eH
+
+    (ilP, icP, irP) = firstsiteinds(eH)
     (iLink1, iLink2) = linkinds(eH)
 
     if check_sym
@@ -46,21 +67,16 @@ function FwtMPOBlocks(tp::tMPOParams; build_imag::Bool=true, check_sym::Bool=tru
         check_symmetry_swap(Wc, iLink1, iLink2)
     end
 
-    #check_symmetry_itensor_mpo(Wc, iLink1, iLink2, icP, icP')
-
-    # rotate 90deg 
 
     time_P = Index(dim(iLink1),"Site,time")
     time_vL = Index(dim(icP),"Link,time")
-    time_vR = Index(dim(icPs),"Link,time")
-
-    rot_inds = Dict(:Ps => time_P',:P => time_P, :L => time_vL, :R=> time_vR) 
+    time_vR = Index(dim(icP'),"Link,time")
 
 
     """  (L,R,P,P') => (P',P,L,R) """
-    Wl = replaceinds(Wl, (iLink1,ilP,ilPs), (time_P, time_vL, time_vR))
-    Wc = replaceinds(Wc, (iLink1,iLink2,icP,icPs), (time_P', time_P,time_vL, time_vR))
-    Wr = replaceinds(Wr, (iLink2,irP,irPs), (time_P,time_vL, time_vR))
+    Wl = replaceinds(Wl, (iLink1,ilP,ilP'), (time_P, time_vL, time_vR))
+    Wc = replaceinds(Wc, (iLink1,iLink2,icP,icP'), (time_P', time_P,time_vL, time_vR))
+    Wr = replaceinds(Wr, (iLink2,irP,irP'), (time_P,time_vL, time_vR))
 
 
     #######################
@@ -76,22 +92,17 @@ function FwtMPOBlocks(tp::tMPOParams; build_imag::Bool=true, check_sym::Bool=tru
 
         Wl_im, Wc_im, Wr_im = eHim.data
 
-        #space_pL = siteind(eH,1)
-        ilP = siteind(eHim,1)
-        ilPs = ilP'
-
-        icP = siteind(eHim,2)
-        icPs = icP'
-
-        irP = siteind(eHim,3)
-        irPs = irP'
+        (ilP, icP, irP) = firstsiteinds(eHim)
 
         (iLink1, iLink2) = linkinds(eHim)
 
-        Wl_im = replaceinds(Wl_im, (iLink1,ilP,ilPs), (time_P, time_vL, time_vR))
-        Wc_im = replaceinds(Wc_im, (iLink1,iLink2,icP,icPs), (time_P', time_P,time_vL, time_vR))
-        Wr_im = replaceinds(Wr_im, (iLink2,irP,irPs), (time_P,time_vL, time_vR))
+        Wl_im = replaceinds(Wl_im, (iLink1,ilP,ilP'), (time_P, time_vL, time_vR))
+        Wc_im = replaceinds(Wc_im, (iLink1,iLink2,icP,icP'), (time_P', time_P,time_vL, time_vR))
+        Wr_im = replaceinds(Wr_im, (iLink2,irP,irP'), (time_P,time_vL, time_vR))
     end
-    
+
+
+    rot_inds = Dict(:Ps => time_P',:P => time_P, :L => time_vL, :R=> time_vR) 
+
     return FwtMPOBlocks(Wl, Wc, Wr, Wl_im, Wc_im, Wr_im, tp, rot_inds)
 end

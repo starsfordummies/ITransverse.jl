@@ -27,39 +27,37 @@ and contract with  the initial state `init_state` on the *left* and the operator
 function folded_tMPO(b::FoldtMPOBlocks, ts::Vector{<:Index}; kwargs...)
 
     outputlevel::Int = get(kwargs,:outputlevel, 0)
-    #@info outputlevel
     outputlevel > 1 && @info "Building folded tMPO for (im+real) $(b.tp.nbeta)+$(length(ts)-b.tp.nbeta) sites "
 
-    @assert b.tp.nbeta <= length(ts)
+    (; tp, WWc, WWc_im, rot_inds, rho0) = b
+    @assert tp.nbeta <= length(ts)
 
-    WWc = b.WWc
-    
-    WWc_im = b.WWc
     #match indices for real-imag so it's easier to work with them 
     replaceinds!(WWc_im, inds(WWc_im), inds(WWc))
 
     oo = MPO(fill(WWc, length(ts)))
 
-    for ib = 1:b.tp.nbeta
+    for ib = 1:tp.nbeta
         oo[ib] = WWc_im
     end
 
-    virtual_ind = b.rot_inds[:R]
+    virtual_ind = rot_inds[:R]
 
     tlinks = [Index(dim(virtual_ind),"Link,time_fold,l=$(ii-1)") for ii in 1:length(ts)+1]
     #@info ll 
     for ii in eachindex(oo)
-        WWinds =  (b.rot_inds[:P],b.rot_inds[:Ps],b.rot_inds[:L], b.rot_inds[:R], )
-        newinds = (ts[ii],           ts[ii]',          tlinks[ii],      tlinks[ii+1])
+        WWinds =  (rot_inds[:P], rot_inds[:Ps], rot_inds[:L], rot_inds[:R], )
+        newinds = (ts[ii],        ts[ii]',       tlinks[ii],   tlinks[ii+1])
         oo[ii] = replaceinds(oo[ii], WWinds, newinds)
     end
 
-    dttype = NDTensors.unwrap_array_type(b.WWc)
-    oo[1] = oo[1] * replaceind(b.rho0, ind(b.rho0,1), tlinks[1])
+    dttype = NDTensors.unwrap_array_type(WWc)
+    oo[1] = oo[1] * replaceind(rho0, ind(rho0,1), tlinks[1])
 
     # s = inds(b.WWc)[4]
   
-    fold_op = get(kwargs, :fold_op, vectorized_identity(dim(virtual_ind)))
+    fold_op = get(kwargs, :fold_op, vectorized_identity(tlinks[end]))
+    outputlevel > 1 && @info "fold_op = $(vector(fold_op))"
 
     fold_op = to_itensor(fold_op, tlinks[end])
   
@@ -70,6 +68,7 @@ function folded_tMPO(b::FoldtMPOBlocks, ts::Vector{<:Index}; kwargs...)
 end
 
 
+#= 
 """ Builds a tMPS using the WWl tensors in `b` """ 
 function folded_left_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index}; kwargs...)
     (; WWl, WWl_im) = b 
@@ -139,6 +138,58 @@ function folded_right_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index}; kwargs...)
 
     return psi 
 end
+=# 
+
+function folded_left_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index}; kwargs...)
+    folded_tMPS(b,ts; LR=:left, kwargs...)
+end
+function folded_right_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index}; kwargs...)
+    folded_tMPS(b,ts; LR=:right, kwargs...)
+end
+
+function folded_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index}; LR::Symbol=:right, kwargs...)
+    if LR == :left
+        WW = b.WWl
+        WW_im = b.WWl_im
+        WWinds = (b.rot_inds[:P], b.rot_inds[:L], b.rot_inds[:R])
+        get_newinds = (ii, tlinks) -> (ts[ii], tlinks[ii], tlinks[ii+1])
+        edge_contract = (psi, b, tlinks) -> psi[1] *= replaceind(b.rho0, ind(b.rho0,1), tlinks[1])
+    elseif LR == :right
+        WW = b.WWr
+        WW_im = b.WWr_im
+        WWinds = (b.rot_inds[:Ps], b.rot_inds[:R], b.rot_inds[:L])
+        get_newinds = (ii, tlinks) -> (ts[ii], tlinks[ii+1], tlinks[ii])
+        edge_contract = (psi, b, tlinks) -> psi[1] = psi[1] * b.rho0 * delta(ind(b.rho0,1), tlinks[1])
+    else
+        error("Unknown LR: $(LR)")
+    end
+
+    psi = MPS(fill(WW, length(ts)))
+    replaceinds!(WW_im, inds(WW_im), inds(WW))
+
+    for ib = 1:b.tp.nbeta
+        psi[ib] = WW_im
+    end
+
+    tlinks = [Index(dim(b.rot_inds[:R]), "Link,time_fold,l=$(ii-1)") for ii in 1:length(ts)+1]
+
+    for ii in eachindex(psi)
+        newinds = get_newinds(ii, tlinks)
+        psi[ii] = replaceinds(psi[ii], WWinds, newinds)
+    end
+
+    dttype = NDTensors.unwrap_array_type(WW)
+    edge_contract(psi, b, tlinks)
+
+    fold_op = get(kwargs, :fold_op, vectorized_identity(tlinks[end]))
+    psi[end] = psi[end] * adapt(dttype, to_itensor(fold_op, tlinks[end]))
+
+    return psi
+end
+
+
+
+
 
 
 """ Puts imaginary time on *both* edges of the folded tMPO """
