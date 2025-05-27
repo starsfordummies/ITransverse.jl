@@ -46,7 +46,7 @@ ss = siteinds("S=1", 3)
 return_MPO_XXZ(sites, p,dt) = timeEvo_MPO_2ndOrder(sites, fill("Id", 3), zeros(3), ["S+", "S-", "Sz"], [0.5*p.J_XY, 0.5*p.J_XY, p.J_ZZ], ["S-", "S+", "Sz"], ones(3), "Sz", p.hz, dt)
 
 eHxxz = return_MPO_XXZ(ss, mp, dt)
-b =  FoldtMPOBlocks(eHxxz, ITensor(init_state, Index(9)))
+b =  FoldtMPOBlocks(eHxxz; init_state=ITensor(init_state, Index(9)))
 
 c0, b = init_cone(b)
 

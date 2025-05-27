@@ -1,7 +1,7 @@
 using ITensors, JLD2
 using ITensorMPS
 using ITransverse
-using ITransverse: plus_state
+using ITransverse: plus_state, up_state
 
 function ising_loschmidt(tp::tMPOParams, Tstart::Int, Tend::Int, nbeta::Int; Tstep::Int=1)
 
@@ -39,7 +39,8 @@ function ising_loschmidt(tp::tMPOParams, Tstart::Int, Tend::Int, nbeta::Int; Tst
 
         time_sites = addtags(siteinds("S=1/2", Nsteps; conserve_qns=false), "time")
 
-        mpo, start_mps = fw_tMPO(b, time_sites, tr=tp.bl)
+        mpo = fw_tMPO(b, time_sites, tr=tp.bl)
+        start_mps = fw_right_tMPS(b, time_sites, tr=tp.bl)
 
         psi_trunc, ds2 = powermethod_sym(start_mps, mpo, pm_params)
 
@@ -97,8 +98,8 @@ function main_ising_loschmidt()
 
     nbeta = 2
 
-    init_state = plus_state
-    #init_state = zero_state
+    # init_state = plus_state
+    init_state = up_state
 
     mp = IsingParams(JXX, hz, gx)
 
@@ -124,19 +125,6 @@ function main_ising_loschmidt()
 
     return collect(Tmin:Tstep:Tmax), rr2s, ir2s, entropies 
 
-    # tp = tMPOParams(dt, ITransverse.ChainModels.build_expH_ising_murg_new, mp, nbeta, init_state, init_state)
-    # psis2, ds2s, leading_eigs2, leading_eigsq, overlapsLR, entropies2, maxents2 = ising_loschmidt(tp, Tmin, Tmax, nbeta; Tstep)
-
-    # tp = tMPOParams(dt, build_expH_ising_symm_svd, mp, nbeta, init_state, init_state)
-    # psis3, ds2s, leading_eigs3, leading_eigsq, overlapsLR, entropies3, maxents3 = ising_loschmidt(tp, Tmin, Tmax, nbeta; Tstep)
-
-    # @show inner(psis1[end],psis2[end])/((norm(psis1[end]))*(norm(psis2[end])))
-    # @show inner(psis2[end],psis3[end])/((norm(psis2[end]))*(norm(psis3[end])))
-    # @show inner(psis1[end],psis3[end])/((norm(psis1[end]))*(norm(psis3[end])))
-
-    # @show leading_eigs[end], leading_eigs2[end], leading_eigs3[end] 
-
-    #return maxents, maxents2, maxents3, entropies, entropies2, entropies3, leading_eigs
 
 end
 
