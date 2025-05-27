@@ -97,18 +97,18 @@ export get_Wc, get_Wl, get_Wr
 include("tmpo/build_tmpo_fw.jl")
 
 #from build_tmpo_[fw|expval].jl
-export
-    fw_tMPO
+export 
+    fw_tMPO, 
+    fw_right_tMPS, 
+    fw_left_tMPS
 
 include("tmpo/build_fold_tmpo.jl")
 
 #from build_fold_tmpo.jl
 export 
      folded_tMPO,
-     folded_tMPO_R,
      folded_left_tMPS,
      folded_right_tMPS,
-     folded_tMPO_in,
      folded_right_tMPS_in_murg
 
    #  apply_extend
@@ -130,6 +130,9 @@ export contract_finite
 
 include("generic/expvals_lr.jl")
 export expval_LR, compute_expvals
+
+include("lightcone/extended_tmpo.jl")
+export folded_tMPO_R, folded_tMPO_in
 
 include("lightcone/cone_params.jl")
 export ConeParams

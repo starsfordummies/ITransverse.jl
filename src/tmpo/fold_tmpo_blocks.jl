@@ -37,8 +37,7 @@ end
 
 """ Builds FoldtMPOBlocks tensors making the rotated+folded tMPO (L,R,P,P') => (P',P,L,R)
 from either tMPOParameters or directly from an MPO of U=exp(iHt) defined on spatial links """
-function FoldtMPOBlocks(x::Union{tMPOParams, MPO}, init_state=nothing; check_sym::Bool=true)
-    # --- Step 1: Build MPO blocks and indices ---
+function FoldtMPOBlocks(x::Union{tMPOParams, MPO}; init_state=nothing, build_imag::Bool=true, check_sym::Bool=true)
 
     WWl, WWc, WWr, (L, R, P, Ps) = build_WW(x)
     time_P = Index(dim(L), "Site,time")
@@ -57,23 +56,14 @@ function FoldtMPOBlocks(x::Union{tMPOParams, MPO}, init_state=nothing; check_sym
     WWr = replaceinds(WWr, (L,R,P,Ps),(time_P',time_P,time_L, time_R))
 
   
-
-    WWl_im, WWc_im, WWr_im = WWl, WWc, WWr
-
     tp = if x isa tMPOParams
         # tMPOParams mode
         # Build -im*dt version
-        tpim = tMPOParams(x; dt = -im*x.dt)
-        WWl_im, WWc_im, WWr_im, (L, R, P, Ps) = build_WW(tpim)
-
-        WWl_im = replaceinds(WWl_im, (L,R,P,Ps),(time_P',time_P,time_L, time_R))
-        WWc_im = replaceinds(WWc_im, (L,R,P,Ps),(time_P',time_P,time_L, time_R))
-        WWr_im = replaceinds(WWr_im, (L,R,P,Ps),(time_P',time_P,time_L, time_R))
-
+  
         if isnothing(init_state)
             init_state = x.bl
         end
-        tp = x
+        tp = tMPOParams(x; bl=to_itensor(init_state, "bl"))
     else # x isa MPO 
 
         if isnothing(init_state)
@@ -82,12 +72,25 @@ function FoldtMPOBlocks(x::Union{tMPOParams, MPO}, init_state=nothing; check_sym
             init_state = to_itensor(init_state, "bl")
         end
 
+        build_imag = false
         phys_site = siteind(x,2)
         mp = NoParams(phys_site)
         tp = tMPOParams(NaN, nothing, mp, 0, init_state)
     end
 
 
+    WWl_im, WWc_im, WWr_im = WWl, WWc, WWr
+
+    if build_imag
+        tpim = tMPOParams(x; dt = -im*x.dt)
+        WWl_im, WWc_im, WWr_im, (L, R, P, Ps) = build_WW(tpim)
+
+        WWl_im = replaceinds(WWl_im, (L,R,P,Ps),(time_P',time_P,time_L, time_R))
+        WWc_im = replaceinds(WWc_im, (L,R,P,Ps),(time_P',time_P,time_L, time_R))
+        WWr_im = replaceinds(WWr_im, (L,R,P,Ps),(time_P',time_P,time_L, time_R))
+    end
+
+    init_state = tp.bl
 
     iP = phys_ind(init_state)
     physdim_init = dim(iP)
