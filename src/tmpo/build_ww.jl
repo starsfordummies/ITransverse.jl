@@ -15,7 +15,7 @@ L--o--R   =>    p--o--p'
 Builds *Folded* but ***UN-ROTATED*** tensors, just W * Wdag and joined indices """
 function build_WW(eH::MPO)
 
-    # I'll use the Same indices for all tensors
+    # Same indices for all tensors
     space_phys = Index(dim(siteind(eH,2))^2, "Site,space")
     space_vleft = Index(linkdim(eH,1)^2, "Link,space")
     space_vright = Index(linkdim(eH,2)^2, "Link,space")
@@ -97,8 +97,8 @@ function build_WWr(eH_space::MPO)
     CvL = combiner(vL,vL''; tags="cwL")
 
     # we flip the p<>* legs on the backwards, shouldn't matter if we have p<>p*
-    Cps = combiner(space_p,space_p''; tags="cps")
-    Cp = combiner(space_p',space_p'''; tags="cp")
+    Cp = combiner(space_p,space_p''; tags="cp")
+    Cps = combiner(space_p',space_p'''; tags="cps")
 
     WWr = WWr * CvL * Cp * Cps
 
@@ -128,8 +128,8 @@ function build_WWl(eH_space::MPO)
     CvR = combiner(vR,vR''; tags="cwR")
 
     # we flip the p<>* legs on the backwards, shouldn't matter if we have p<>p*
-    Cps = combiner(space_p,space_p''; tags="cps")
-    Cp = combiner(space_p',space_p'''; tags="cp")
+    Cp = combiner(space_p,space_p''; tags="cp")
+    Cps = combiner(space_p',space_p'''; tags="cps")
 
     WWl = WWl * CvR * Cp * Cps
 
