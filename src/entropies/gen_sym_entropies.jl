@@ -124,9 +124,10 @@ function diagonalize_rtm_symmetric(psiL::MPS; bring_left_gen::Bool=true, normali
 
         @assert order(right_env) == 2 
         #println(left_env)
-        eigss, _ = eigen(right_env, inds(right_env)[1],inds(right_env)[2], sortby=abs, rev=true)
+        eigss, _ = eigen(right_env, inds(right_env)[1],inds(right_env)[2])
         #gen_ent_cut = sum(eigss.*log.(eigss))
         
+        eigss = vector(diag(eigss))
         
         if normalize_eigs
             eigss = eigss/sum(eigss) 
