@@ -41,31 +41,29 @@ function fw_tMPO(b::FwtMPOBlocks, time_sites::Vector{<:Index};  bl::ITensor = b.
 
     for ii = 1:nbeta
         tMPO[ii] = replaceinds(Wc_im, (icP, icPs), (time_sites[ii],time_sites[ii]'))
-        #(Wc_im) * delta(icP, time_sites[ii]) * delta(icPs, time_sites[ii]')
     end
     for ii = nbeta+1:Nsteps-nbeta
         tMPO[ii] = replaceinds(Wc, (icP, icPs), (time_sites[ii],time_sites[ii]') )
-        #tMPO[ii] = tMPO[ii] * delta(icP, time_sites[ii]) * delta(icPs, time_sites[ii]') 
 
     end
     for ii = Nsteps-nbeta+1:Nsteps
         tMPO[ii] = replaceinds(dag(Wc_im), (icP, icPs), (time_sites[ii],time_sites[ii]'))
-        #tMPO[ii] = dag(Wc_im) * delta(icPs, time_sites[ii]') * delta(icP, time_sites[ii]) 
     end
 
 
-    # Contract edges with boundary states, label linkinds
+    # Label linkinds
     # TODO phys ind of bl and tr must be first one here (in case thye're not product states)
 
     tMPO[1] = replaceinds(tMPO[1], (icL, icR), (ind(bl,1), time_links[1]))   
-    tMPO[1] = tMPO[1] * bl  
 
     for ii = 2:Nsteps-1
-        #tMPO[ii] = tMPO[ii] * delta(icL, time_links[ii-1]) * delta(icR, time_links[ii]) 
         tMPO[ii] = replaceinds(tMPO[ii], (icL, icR), (time_links[ii-1],time_links[ii]))
     end
 
     tMPO[end] = replaceinds(tMPO[end], (icL, icR), (time_links[end], ind(tr,1)))
+
+    # Contract boundary states (bottom/left - top/right)
+    tMPO[1] = tMPO[1] * bl  
     tMPO[end] = tMPO[end] * dag(tr)
 
     return tMPO
