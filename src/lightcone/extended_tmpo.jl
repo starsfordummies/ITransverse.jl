@@ -166,3 +166,14 @@ function folded_tMPO_R(b::FoldtMPOBlocks, ts::Vector{<:Index}; kwargs...)
 
 end
 
+
+""" Given an MPO of length N and an MPS (or MPO) of length N-1, extends the target object to the *right* """
+function apply_extend!(w::MPO, dest::Union{MPS,MPO})
+    @assert length(w) == length(dest) + 1
+
+    last_tensor = pop!(w.data)
+    opsi = applyn(w, dest)
+    push!(opsi.data, last_tensor)
+
+    return opsi
+end
