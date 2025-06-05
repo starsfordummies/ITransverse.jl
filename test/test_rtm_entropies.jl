@@ -2,6 +2,7 @@ using Test
 
 using ITensors, ITensorMPS
 using ITransverse 
+using ITransverse: diagonalize_rtm_right_gen_sym
 
 function trim_near_zero(v, cutoff)
     mags = abs.(v)  # Elementwise magnitude, works for real and complex
@@ -24,13 +25,12 @@ end
 s = siteinds(4, 20)
 
 ll = random_mps(ComplexF64, s, linkdims=40)
-normalize_factor = rand()*10.
 
 @info "Checking whether eigenvalues computed in left and right gauges match"
-eigs_l = diagonalize_rtm_left_gen_sym(ll; bring_left_gen=true, normalize_factor)
+eigs_l = diagonalize_rtm_symmetric(ll; bring_left_gen=true)
 
 # eigs_r sweeps from left to right, eigs_l the other way around
-eigs_r = diagonalize_rtm_right_gen_sym(ll; bring_right_gen=true, normalize_factor)
+eigs_r = diagonalize_rtm_right_gen_sym(ll; bring_right_gen=true, normalize_factor=sqrt(overlap_noconj(ll,ll)))
 
 # @info eigs_l
 # @info eigs_r
@@ -100,7 +100,7 @@ end
     psic = deepcopy(psi)
 
     eigs_r = diagonalize_rtm_right_gen_sym(psi; bring_right_gen=true)
-    eigs_l = diagonalize_rtm_left_gen_sym(psi; bring_left_gen=true)
+    eigs_l = diagonalize_rtm_symmetric(psi; bring_left_gen=true)
 
     all_ents = build_entropies(eigs_r, [2.0])
     
@@ -110,5 +110,5 @@ end
 
     @test all_ents["S2.0"] ≈ r2_cut
     
-    end
+end
     

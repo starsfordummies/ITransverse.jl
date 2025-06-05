@@ -79,7 +79,7 @@ allpsis = test_symmpm(40, 40, 2)
 allents = Dict()
 
 for (k,v) in allpsis
-    eigs = diagonalize_rtm_left_gen_sym(v[1]; bring_left_gen=true)
+    eigs = diagonalize_rtm_symmetric(v[1]; bring_left_gen=true)
     allents[k] = build_entropies(eigs, [0.5,1,2])
 end
 

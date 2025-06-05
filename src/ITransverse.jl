@@ -59,9 +59,7 @@ export vn_entanglement_entropy,
 
 # from compute_rho2.jl
 export rho2, 
-    rtm2_contracted, 
-    diagonalize_rtm_right_gen_sym,
-    diagonalize_rtm_left_gen_sym
+    rtm2_contracted
 
 export ModelParams, IsingParams, PottsParams, XXZParams, NoParams
 

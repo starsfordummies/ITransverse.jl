@@ -1,6 +1,6 @@
 """
 Diagonalize RTM for a *symmetric* environment (psiL,psiL) at a given `cut`
-    Assuming we're in LEFT GENERALIZED SYMMETRIC canonical form, we build *right* environments 
+    If we are in *left* generalized symmetric canonical form, we build *right* environments 
     for the RTM and diagonalize them:
 
     `   
@@ -12,7 +12,7 @@ Diagonalize RTM for a *symmetric* environment (psiL,psiL) at a given `cut`
 
     `
 """
-function diagonalize_rtm_left_gen_sym(psiL::MPS, cut::Int; bring_left_gen::Bool=false)
+function diagonalize_rtm_left_gen_sym(psiL::MPS, cut::Int; bring_left_gen::Bool=true)
 
     @assert cut > 1 
     @assert cut < length(psiL)
@@ -53,61 +53,6 @@ function diagonalize_rtm_left_gen_sym(psiL::MPS, cut::Int; bring_left_gen::Bool=
     
 end
 
-
-
-"""
-Generalized entropy for a *symmetric* environment (psiL,psiL)
-    Assuming we're in LEFT GENERALIZED canonical form 
-    Returns a list of vectors of eigenvalues, one for each cut 
-"""
-function diagonalize_rtm_left_gen_sym(psiL::MPS; bring_left_gen::Bool=false, normalize_factor::Number=1.0)
-
-    psi_gauged = psiL/normalize_factor
-    
-    # we can enforce to bring it in left symmetric gen. canonical form 
-    if bring_left_gen
-        psi_gauged = gen_canonical_left(psi_gauged)
-        psi_gauged[1] /= sqrt(overlap_noconj(psi_gauged, psi_gauged))
-    end
-
-    mpslen = length(psi_gauged)
-
-    overlap = overlap_noconj(psi_gauged,psi_gauged)
-    if abs(1-overlap) > 1e-4
-        @warn "overlap not 1: $(overlap)"
-    end
-    
-    eigs_rtm_t = []
-
-    right_env = ITensor(1.)
-
-    psiR = prime(linkinds, psi_gauged)
-
-    # Start from the right 
-    @showprogress for ii = mpslen:-1:2
-        Ai = psi_gauged[ii]
-        Bi = psiR[ii]
-
-        right_env = Ai * right_env 
-        right_env = Bi * right_env
-
-        @assert order(right_env) == 2 
-        eigss, _ = eigen(right_env, inds(right_env)[1],inds(right_env)[2])
-        
-        if abs(sum(eigss) - 1.) > 0.01
-            @warn "RTM not well normalized? Σeigs-1=$(abs(sum(eigss) - 1.)) "
-        end
-
-        push!(eigs_rtm_t, diag(matrix(eigss)))
-    
-    end
-
-    # Maybe we want to reverse the resulting entropies, since we're sweeping from right to left
-    # we can also remove zeros we don't care for
-    eigs_rtm_t = reverse([ ee[abs.(ee) .> 1e-20] for ee in eigs_rtm_t ])
-    return eigs_rtm_t
-    
-end
 
 
 
@@ -157,4 +102,58 @@ function diagonalize_rtm_right_gen_sym(psi::MPS; bring_right_gen::Bool=false, no
 
     
     return eigs_rtm_t
+end
+
+
+""" Diagonalizes the RTM by bringing psi into generalized left canonical form.
+Returns a list of Nsites-1 vectors of eigenvalues """
+function diagonalize_rtm_symmetric(psiL::MPS; bring_left_gen::Bool=true, normalize_eigs::Bool=true, sort_by_largest::Bool=true, cutoff::Float64=1e-12)
+ 
+    if bring_left_gen
+        psiL = gen_canonical_left(psiL)
+    end
+
+    mpslen = length(psiL)
+    #links = linkinds(psiL)
+
+    overlap = overlap_noconj(psiL,psiL)
+    if abs(1-overlap) > 1e-4 && !normalize_eigs
+        @warn" overlap not 1: $(overlap)"
+    end
+    
+    eigenvalues_rtm = []
+    
+    right_env = ITensor(1.)
+
+    psiR = prime(linkinds, psiL)
+
+    # Start from the right and work backwards
+    for ii = mpslen:-1:2
+    
+        right_env = psiL[ii] * right_env 
+        right_env = psiR[ii] * right_env
+
+        @assert order(right_env) == 2 
+        eigss, _ = eigen(right_env, inds(right_env)[1],inds(right_env)[2])
+        
+        eigss = vector(diag(eigss))
+        
+        if normalize_eigs
+            eigss = eigss/sum(eigss) 
+        else # If we don't normalize, warn if normalization is off
+            if abs(sum(eigss) - 1.) > 0.01
+                @warn "RTM not well normalized? Σeigs = 1-$(abs(sum(eigss) - 1.)) "
+            end
+        end
+
+        if sort_by_largest
+            eigss = sort(filter(x -> abs(x) >= cutoff, eigss), by=abs, rev=true)
+        end
+
+        push!(eigenvalues_rtm, eigss)
+    
+    end
+
+    return reverse(eigenvalues_rtm)
+    
 end
