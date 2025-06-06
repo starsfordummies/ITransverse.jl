@@ -17,9 +17,71 @@ function fw_tMPO(tp::tMPOParams, time_sites::Vector{<:Index}; kwargs...)
 end
 
 
-function fw_tMPO(b::FwtMPOBlocks, time_sites::Vector{<:Index};  bl::ITensor = b.tp.bl, tr)
+# function fw_tMPO(b::FwtMPOBlocks, time_sites::Vector{<:Index};  bl::ITensor = b.tp.bl, tr)
 
-    tr = to_itensor(tr, "tr")
+#     tr = to_itensor(tr, "tr")
+
+#     (; tp, Wc, Wc_im, rot_inds) = b
+
+#     nbeta = tp.nbeta 
+
+#     @assert nbeta == 0 || nbeta < length(time_sites) - 2
+
+#     Nsteps = length(time_sites)
+
+#     (icL, icR, icP, icPs) = (rot_inds[:L], rot_inds[:R], rot_inds[:P], rot_inds[:Ps]) 
+
+#     # Make same indices for real and imag, it's easier aftwards 
+#     replaceinds!(Wc_im, inds(Wc_im), inds(Wc))
+
+#     time_links = [Index(dim(icL), "Link,rotl=$ii") for ii in 1:(Nsteps - 1)]
+
+
+#     tMPO =  MPO(fill(Wc, Nsteps))
+
+#     for ii = 1:nbeta
+#         tMPO[ii] = replaceinds(Wc_im, (icP, icPs), (time_sites[ii],time_sites[ii]'))
+#     end
+#     for ii = nbeta+1:Nsteps-nbeta
+#         tMPO[ii] = replaceinds(Wc, (icP, icPs), (time_sites[ii],time_sites[ii]') )
+
+#     end
+#     for ii = Nsteps-nbeta+1:Nsteps
+#         tMPO[ii] = replaceinds(dag(Wc_im), (icP, icPs), (time_sites[ii],time_sites[ii]'))
+#     end
+
+
+#     # Label linkinds
+#     # TODO phys ind of bl and tr must be first one here (in case thye're not product states)
+
+#     tMPO[1] = replaceinds(tMPO[1], (icL, icR), (ind(bl,1), time_links[1]))   
+
+#     for ii = 2:Nsteps-1
+#         tMPO[ii] = replaceinds(tMPO[ii], (icL, icR), (time_links[ii-1],time_links[ii]))
+#     end
+
+#     tMPO[end] = replaceinds(tMPO[end], (icL, icR), (time_links[end], ind(tr,1)))
+
+#     # Contract boundary states (bottom/left - top/right)
+#     tMPO[1] = tMPO[1] * bl  
+#     tMPO[end] = tMPO[end] * dag(tr)
+
+#     return tMPO
+
+# end
+
+
+function fw_tMPO(b::FwtMPOBlocks, time_sites::Vector{<:Index};  bl::ITensor = b.tp.bl, tr)
+    ww = fw_tMPO_opentr(b, time_sites; bl)
+    tr_link = only(inds(ww[end],"Link,tr"))
+    tr = to_itensor(tr, tr_link)
+    ww[end] *= tr
+    return ww
+end
+
+
+""" Forward tMPO with open top-right leg (so we can plug anything afterwards) """
+function fw_tMPO_opentr(b::FwtMPOBlocks, time_sites::Vector{<:Index};  bl::ITensor = b.tp.bl)
 
     (; tp, Wc, Wc_im, rot_inds) = b
 
@@ -34,7 +96,7 @@ function fw_tMPO(b::FwtMPOBlocks, time_sites::Vector{<:Index};  bl::ITensor = b.
     # Make same indices for real and imag, it's easier aftwards 
     replaceinds!(Wc_im, inds(Wc_im), inds(Wc))
 
-    time_links = [Index(dim(icL), "Link,rotl=$ii") for ii in 1:(Nsteps - 1)]
+    time_links = [Index(dim(icL), "Link,rotl=$ii") for ii in 1:(Nsteps-1)]
 
 
     tMPO =  MPO(fill(Wc, Nsteps))
@@ -60,79 +122,12 @@ function fw_tMPO(b::FwtMPOBlocks, time_sites::Vector{<:Index};  bl::ITensor = b.
         tMPO[ii] = replaceinds(tMPO[ii], (icL, icR), (time_links[ii-1],time_links[ii]))
     end
 
-    tMPO[end] = replaceinds(tMPO[end], (icL, icR), (time_links[end], ind(tr,1)))
+    tMPO[end] = replaceinds(tMPO[end], (icL, icR), (time_links[end] , Index(dim(icR), "Link,tr") ))
 
-    # Contract boundary states (bottom/left - top/right)
+    # Contract boundary states (bottom/left)
     tMPO[1] = tMPO[1] * bl  
-    tMPO[end] = tMPO[end] * dag(tr)
 
     return tMPO
-
-end
-
-
-function fw_tMPOtMPS(b::FwtMPOBlocks, time_sites::Vector{<:Index};  bl::ITensor = b.tp.bl, tr)
-
-    tr = to_itensor(tr, "tr")
-
-    tp = b.tp
-
-    nbeta = tp.nbeta 
-
-    @assert nbeta < length(time_sites) - 2
-
-    Nsteps = length(time_sites)
-
-    # Rotated indices already 
-    Wc = b.Wc
-
-    (icL, icR, icP, icPs) = (b.rot_inds[:L], b.rot_inds[:R], b.rot_inds[:P], b.rot_inds[:Ps]) 
-
-    Wc_im = b.Wc_im
-
-    Wr = b.Wr
-    (irL, irR, irP) =  (b.rot_inds[:L], b.rot_inds[:R], b.rot_inds[:P]) 
-
-    Wr_im = b.Wr_im
-
-    # Make same indices for real and imag, it's easier aftwards 
-    replaceinds!(Wc_im, inds(Wc_im), inds(Wc))
-    replaceinds!(Wr_im, inds(Wr_im), inds(Wr))
-
-    rot_links_mpo = [Index(dim(icL), "Link,rotl=$ii") for ii in 1:(Nsteps - 1)]
-    rot_links_mps = sim(rot_links_mpo)
-
-
-    tMPO =  MPO(fill(Wc, Nsteps))
-    tMPS =  MPS(fill(Wr, Nsteps))
-
-    for ii = 1:nbeta
-        tMPO[ii] = (Wc_im) * delta(icP, time_sites[ii]) * delta(icPs, time_sites[ii]')
-        tMPS[ii] = (Wr_im) * delta(irP, time_sites[ii]) 
-    end
-    for ii = nbeta+1:Nsteps-nbeta
-        tMPO[ii] = tMPO[ii] * delta(icP, time_sites[ii]) * delta(icPs, time_sites[ii]') 
-        tMPS[ii] = tMPS[ii] * delta(irP, time_sites[ii])
-    end
-    for ii = Nsteps-nbeta+1:Nsteps
-        tMPO[ii] = dag(Wc_im) * delta(icPs, time_sites[ii]') * delta(icP, time_sites[ii]) 
-        tMPS[ii] = dag(Wr_im) * delta(irP, time_sites[ii]) 
-    end
-
-
-    # Contract edges with boundary states, label linkinds
-    tMPO[1] = tMPO[1] * bl * delta(ind(bl,1), icL) * delta(icR, rot_links_mpo[1]) 
-    tMPS[1] = tMPS[1] * bl * delta(ind(bl,1), irL) * delta(irR, rot_links_mps[1]) 
-
-    for ii = 2:Nsteps-1
-        tMPO[ii] = tMPO[ii] * delta(icL, rot_links_mpo[ii-1]) * delta(icR, rot_links_mpo[ii]) 
-        tMPS[ii] = tMPS[ii] * delta(irL, rot_links_mps[ii-1]) * delta(irR, rot_links_mps[ii]) 
-    end
-
-    tMPO[end] = (tMPO[end] * delta(icL, rot_links_mpo[Nsteps-1])) * (dag(tr) * delta(ind(tr,1),icR))
-    tMPS[end] = (tMPS[end] * delta(irL, rot_links_mps[Nsteps-1])) * (dag(tr) * delta(ind(tr,1),irR))
-
-    return tMPO, tMPS
 
 end
 
