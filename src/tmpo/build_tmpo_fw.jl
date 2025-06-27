@@ -17,67 +17,6 @@ function fw_tMPO(tp::tMPOParams, time_sites::Vector{<:Index}; kwargs...)
 end
 
 
-# function fw_tMPO(b::FwtMPOBlocks, time_sites::Vector{<:Index};  bl::ITensor = b.tp.bl, tr)
-
-#     tr = to_itensor(tr, "tr")
-
-#     (; tp, Wc, Wc_im, rot_inds) = b
-
-#     nbeta = tp.nbeta 
-
-#     @assert nbeta == 0 || nbeta < length(time_sites) - 2
-
-#     Nsteps = length(time_sites)
-
-#     (icL, icR, icP, icPs) = (rot_inds[:L], rot_inds[:R], rot_inds[:P], rot_inds[:Ps]) 
-
-#     # Make same indices for real and imag, it's easier aftwards 
-#     replaceinds!(Wc_im, inds(Wc_im), inds(Wc))
-
-#     time_links = [Index(dim(icL), "Link,rotl=$ii") for ii in 1:(Nsteps - 1)]
-
-
-#     tMPO =  MPO(fill(Wc, Nsteps))
-
-#     for ii = 1:nbeta
-#         tMPO[ii] = replaceinds(Wc_im, (icP, icPs), (time_sites[ii],time_sites[ii]'))
-#     end
-#     for ii = nbeta+1:Nsteps-nbeta
-#         tMPO[ii] = replaceinds(Wc, (icP, icPs), (time_sites[ii],time_sites[ii]') )
-
-#     end
-#     for ii = Nsteps-nbeta+1:Nsteps
-#         tMPO[ii] = replaceinds(dag(Wc_im), (icP, icPs), (time_sites[ii],time_sites[ii]'))
-#     end
-
-
-#     # Label linkinds
-#     # TODO phys ind of bl and tr must be first one here (in case thye're not product states)
-
-#     tMPO[1] = replaceinds(tMPO[1], (icL, icR), (ind(bl,1), time_links[1]))   
-
-#     for ii = 2:Nsteps-1
-#         tMPO[ii] = replaceinds(tMPO[ii], (icL, icR), (time_links[ii-1],time_links[ii]))
-#     end
-
-#     tMPO[end] = replaceinds(tMPO[end], (icL, icR), (time_links[end], ind(tr,1)))
-
-#     # Contract boundary states (bottom/left - top/right)
-#     tMPO[1] = tMPO[1] * bl  
-#     tMPO[end] = tMPO[end] * dag(tr)
-
-#     return tMPO
-
-# end
-
-
-function fw_tMPO(b::FwtMPOBlocks, time_sites::Vector{<:Index};  bl::ITensor = b.tp.bl, tr)
-    ww = fw_tMPO_opentr(b, time_sites; bl)
-    tr_link = only(inds(ww[end],"Link,tr"))
-    tr = to_itensor(tr, tr_link)
-    ww[end] *= tr
-    return ww
-end
 
 
 """ Forward tMPO with open top-right leg (so we can plug anything afterwards) """
@@ -130,6 +69,21 @@ function fw_tMPO_opentr(b::FwtMPOBlocks, time_sites::Vector{<:Index};  bl::ITens
     return tMPO
 
 end
+
+
+function fw_tMPO(ww::MPO, tr)
+    tr_link = only(inds(ww[end],"Link,tr"))
+    tr = to_itensor(tr, tr_link)
+    ww[end] *= tr
+    return ww
+end
+
+
+function fw_tMPO(b::FwtMPOBlocks, time_sites::Vector{<:Index};  bl::ITensor = b.tp.bl, tr)
+    ww = fw_tMPO_opentr(b, time_sites; bl)
+    fw_tMPO(ww, tr)
+end
+
 
 
 """ Builds forward tMPO with nbeta steps on one side only: 
