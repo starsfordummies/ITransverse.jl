@@ -174,7 +174,8 @@ end
 
 
 """
-Just bring the MPS to generalized *left* canonical form without truncating (as far as possible)
+Bring the MPS to generalized *left* canonical form without truncating (as far as possible)
+This is symmetric, so we use symmetric eigenvalue decomposition, A => O D O^T with O complex orthogonal 
 """
 function gen_canonical_left(in_mps::MPS)
     temp = deepcopy(in_mps)

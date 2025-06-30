@@ -236,8 +236,24 @@ function run_cone(psi::MPS,
         if haskey(entropies, "VN")
             push!(entropies["VN"], vn_entanglement_entropy(rr))
         end
-         if haskey(entropies, "GENR2")
+        if haskey(entropies, "GENR2")
             push!(entropies["GENR2"], rtm2_contracted(ll,rr))
+        end
+        if haskey(entropies, "GENR2_Pz")
+            ts2 = deepcopy(ts)
+            push!(ts2, Index(time_dim, tags="Site,n=$(length(rr)+1),time_fold"))
+            tmpo = folded_tMPO_R(b, ts2, fold_op=[1,0,0,0])
+            rr2 = apply_extend(tmpo, rr; truncate=true, cutoff=truncp.cutoff, maxdim=truncp.maxbondim)
+            tmpo = folded_tMPO_L(b, ts2, fold_op=[1,0,0,0])
+            ll2 = apply_extend(tmpo, ll; truncate=true, cutoff=truncp.cutoff, maxdim=truncp.maxbondim)
+            push!(entropies["GENR2_Pz"], rtm2_contracted(ll2,rr2))
+        end
+        if haskey(entropies, "GENVN_Pz")
+            ts2 = deepcopy(ts)
+            push!(ts2, Index(time_dim, tags="Site,n=$(length(rr)+1),time_fold"))
+            tmpo = folded_tMPO_R(b, ts2, fold_op=[1,0,0,0])
+            rr2 = apply_extend(tmpo, rr; truncate=true, cutoff=truncp.cutoff, maxdim=truncp.maxbondim)
+            push!(entropies["GENVN_Pz"], generalized_vn_entropy_symmetric(rr2))
         end
         if haskey(entropies, "GENVN")
             push!(entropies["GENVN"], generalized_vn_entropy_symmetric(ll))
