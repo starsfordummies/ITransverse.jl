@@ -41,6 +41,7 @@ which I think only works with the "naive" algorithm. We don't perform any trunca
         o-o-o-o-o-o
 ``` 
 """
+#TODO LIKELY SUPERSEDED 
 function apply_extend(A::MPO, ψ::MPS; truncate::Bool=false, cutoff::Float64=1e-14, maxdim::Int=maxlinkdim(A) * maxlinkdim(ψ))
 
     @assert length(A) == length(ψ)+1
@@ -119,11 +120,30 @@ function extend_tmps_cone(ll::MPS, op_L::Vector{<:Number}, op_R::Vector{<:Number
     #ll, rr, ents, ov = truncate_rsweep(psi_L,psi_R; cutoff=truncp.cutoff, chi_max=truncp.maxbondim)
     ll, rr, ents = truncate_sweep(psi_L,psi_R, truncp)
     
-
     return ll, rr, ents
 
 end
 
+
+function extend_tmps_cone_LOR(ll::MPS, op_L::Vector{<:Number}, op_R::Vector{<:Number}, rr::MPS, 
+    ts::Vector{<:Index}, b::FoldtMPOBlocks, truncp::TruncParams)
+
+    @assert length(ts) == length(ll)+1 
+
+    tmpoR = folded_tMPO_R(b, ts; fold_op=op_R)
+
+    psi_R = apply_extend(tmpoR, rr)
+
+    tmpo = folded_tMPO(b, ts; fold_op=op_L) 
+
+    LO = applyns(tmpo, psi_R)
+
+    #ll, rr, ents, ov = truncate_rsweep(psi_L,psi_R; cutoff=truncp.cutoff, chi_max=truncp.maxbondim)
+    _, rr, ents = truncate_sweep(LO,psi_R, truncp)
+    
+    return ll, rr, ents
+
+end
 
 
 
@@ -214,9 +234,15 @@ function run_cone(psi::MPS,
         #ent = vn_entanglement_entropy(ll)
         #TODO Compute entropies
         if haskey(entropies, "VN")
-            #@info "computing VN ent"
             push!(entropies["VN"], vn_entanglement_entropy(rr))
         end
+         if haskey(entropies, "GENR2")
+            push!(entropies["GENR2"], rtm2_contracted(ll,rr))
+        end
+        if haskey(entropies, "GENVN")
+            push!(entropies["GENVN"], generalized_vn_entropy_symmetric(ll))
+        end
+
 
         if checkpoint > 0 && length(ll) > 50 && length(ll) % checkpoint == 0
             fn_cp = "cp_cone_$(length(ll))_chi_$(chis[end]).jld2"
