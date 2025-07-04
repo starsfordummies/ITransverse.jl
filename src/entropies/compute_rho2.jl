@@ -171,7 +171,7 @@ function rtm2_bruteforce(psi::MPS, phi::MPS)
 
     s = siteinds(psi)
     replace_siteinds!(phi, s)
-    rho = outer(dag(psi)',phi)
+    rho = outer(psi',phi)
     ss = siteinds(rho)
 
     rho_contracted = ITensor(1.)
