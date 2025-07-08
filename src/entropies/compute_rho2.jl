@@ -73,7 +73,7 @@ function rtm2_contracted(psi::MPS, phi::MPS, cut::Int; normalize_factor::Number=
     psi = noprime(psi)
     phi = noprime(phi)
 
-    phi = sim(linkinds,phi)/normalize_factor
+    phi = sim(linkinds,phi)
 
     #replace_siteinds!(phi, siteinds(psi))
     match_siteinds!(psi, phi)
@@ -102,8 +102,9 @@ function rtm2_contracted(psi::MPS, phi::MPS, cut::Int; normalize_factor::Number=
     #@info "2: $(inds(tr_rho2))"
     tr_rho2 *= swapprime(tr_rho2, 1=>0)
     
-    return scalar(tr_rho2)
+    return scalar(tr_rho2)/normalize_factor^2
 end
+
 
 """ Same as before but using matrices - result should be the same, useful for debugging """
 function rtm2_contracted_m(psi::MPS, phi::MPS, cut::Int; normalize_factor::Number=1.0)
@@ -115,7 +116,7 @@ function rtm2_contracted_m(psi::MPS, phi::MPS, cut::Int; normalize_factor::Numbe
 
     phi = deepcopy(phi)
 
-    phi = sim(linkinds,phi)/normalize_factor
+    phi = sim(linkinds,phi)
 
     #replace_siteinds!(phi, siteinds(psi))
     match_siteinds!(psi, phi)
@@ -138,7 +139,7 @@ function rtm2_contracted_m(psi::MPS, phi::MPS, cut::Int; normalize_factor::Numbe
     mL = Matrix(left, inds(left))
     mR = Matrix(right, reverse(inds(left)))
 
-    return tr(mL * mR * mL * mR)
+    return tr(mL * mR * mL * mR)/normalize_factor^2
     
 end
 
@@ -172,7 +173,7 @@ function rtm2_bruteforce(psi::MPS, phi::MPS)
     s = siteinds(psi)
     replace_siteinds!(phi, s)
     rho = outer(psi',phi)
-    ss = siteinds(rho)
+    #ss = siteinds(rho)
 
     rho_contracted = ITensor(1.)
     for jj in eachindex(rho)
