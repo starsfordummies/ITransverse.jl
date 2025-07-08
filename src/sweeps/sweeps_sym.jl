@@ -3,8 +3,8 @@ using ITensors.Adapt: adapt
 
 """ 
 Symmetric case: Truncates a single MPS optimizing overlap (psi (no conj) |psi)
-By doing first a Right sweep to standard (right-orthogonal) canonical form 
-followed by a Left sweep with truncation on the generalized SVs 
+By doing first a Right <<< sweep to standard (right-orthogonal) canonical form 
+followed by a Left >>> sweep with truncation on the generalized SVs 
 returns psi_ortho (in generalized symmetric *left* canonical form) normalized to (psi|psi)=1
 and ents_sites = log(sum(S_i)) for each site
 """
