@@ -5,9 +5,9 @@ using ITransverse: plus_state, up_state
 
 function ising_loschmidt(tp::tMPOParams, Tstart::Int, Tend::Int, nbeta::Int; Tstep::Int=1)
 
-    cutoff = 1e-10
-    maxbondim = 60
-    itermax = 500
+    cutoff = 1e-14
+    maxbondim = 128
+    itermax = 800
     eps_converged = 1e-6
 
     truncp = TruncParams(cutoff, maxbondim)
@@ -66,7 +66,8 @@ function ising_loschmidt(tp::tMPOParams, Tstart::Int, Tend::Int, nbeta::Int; Tst
         push!(leading_eigs, leading_eig)
         push!(leading_eigsq, leading_sq)
         push!(overlapsLR, normalization)
-        push!(entropies, [sgen, sgen_sv, svn])
+        #push!(entropies, [sgen, sgen_sv, svn])
+        push!(entropies, sgen)
         push!(maxents, [maximum(real(sgen)), maximum(real(sgen_sv)), maximum(svn)])
 
 
@@ -94,9 +95,9 @@ function main_ising_loschmidt()
     #H= JXX - 2.0 * 0.525 Z + 2 * 0.25 X
 
 
-    dt = 0.1
+    dt = 0.05
 
-    nbeta = 2
+    nbeta = 100
 
     # init_state = plus_state
     init_state = up_state
@@ -106,9 +107,9 @@ function main_ising_loschmidt()
 
     @info ("Initial state $(init_state)  => quench @ $(mp) ")
     
-    Tmin = 20
-    Tmax = 24
-    Tstep = 2
+    Tmin = 0
+    Tmax = 1
+    Tstep = 6
 
 
     tp = tMPOParams(dt,  ITransverse.ChainModels.build_expH_ising_murg_new, mp, nbeta, init_state)
@@ -116,16 +117,50 @@ function main_ising_loschmidt()
 
     rr2s = []
     ir2s = []
+    r2s= []
     for psi in psis1
-        r2 = rtm2_contracted(psi, psi, normalize_factor=overlap_noconj(psi,psi))
+        vn = ITransverse.generalized_vn_entropy_symmetric(psi, normalize_eigs=true)
+        r2 = ITransverse.generalized_r2_entropy_symmetric(psi, normalize_eigs=true)
+
         r2 = -log.(r2)
+
+        push!(r2s, r2)
         push!(rr2s, maximum(real(r2)))
         push!(ir2s, maximum(imag(r2)))
     end
 
-    return collect(Tmin:Tstep:Tmax), rr2s, ir2s, entropies 
+    return collect(Tmin:Tstep:Tmax), rr2s, ir2s, entropies, r2s 
 
 
 end
 
 results = main_ising_loschmidt();
+
+
+function zm(z, Nt, Nbeta)
+    if z <= Nbeta
+        return (z/(2*Nbeta), 0)
+    elseif z > Nbeta && z <= Nt+Nbeta
+        return (0.5, (z - Nbeta)/Nt)
+    elseif z > Nt + Nbeta && z <= Nt + 2*Nbeta
+        return (0.5 + (z - Nbeta - Nt)/(2*Nbeta), 1)
+    else
+        error("z does not match any specified condition")
+    end
+end
+      
+phi(Toverbeta0, x, y) = 1/12 * atan( Toverbeta0 ,  1 + pi*(x-y)*cot(-pi*x))
+
+function build_phi(Nt, Nbeta)
+
+    phis = zeros(Nt+2*Nbeta)
+
+    for iz = 1:Nt+2*Nbeta
+        (y, x) = zm(iz,Nt,Nbeta)
+        @info (y, x)
+
+        phis[iz] = phi(Nt/(2*Nbeta), x, y)
+    end
+
+    return phis
+end
