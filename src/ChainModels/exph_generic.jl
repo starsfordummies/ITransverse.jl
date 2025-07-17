@@ -48,15 +48,56 @@ function bulk_timeEvo_ITensor_2ndOrder(
   D = JD * op(sites, DString, n)
   # D = JD * Op(DString, n)
 
+  return bulk_timeEvo_ITensor_2ndOrder(
+  linkindices,
+  As,
+  Bs,
+  Cs,
+  D,
+  τ::Number;
+  )
+end
+
+function bulk_timeEvo_ITensor_2ndOrder(
+  linkindices,
+  As::Vector{ITensor},
+  Bs::Vector{ITensor},
+  Cs::Vector{ITensor},
+  D::ITensor,
+  τ::Number;
+)
+  # s = sites[n]
+  # left link index ll with daggered QN conserving direction (if applicable)
+  ll = dag(linkindices[1])
+  # right link index rl
+  rl = linkindices[2]
+  # Id = op(sites, "Id", n)
+
+  NrOfTerms = length(As)
+
+  local_dim = dim(inds(As[1])[1])
+
+  # check if all coupling terms have the same length
+  @assert length(unique([length(As), length(Bs), length(Cs)])) == 1
+
+  # # A is possible exponential decay so test for "0"
+  # As = map(x -> x[1] * op(sites, x[2], n), zip(JAs, AStrings))
+  # Bs = map(x -> x[1] * op(sites, x[2], n), zip(JBs, BStrings)) # JB * op(sites, BString, n)
+  # Cs = map(x -> x[1] * op(sites, x[2], n), zip(JCs, CStrings)) # JC * op(sites, CString, n)
+  # D = JD * op(sites, DString, n)
+  # # D = JD * Op(DString, n)
+
   # Init ITensor inside MPO
   # U_t[n] = ITensor(ComplexF64, ll, dag(s), s', rl)
+  s = inds(As[1])[2]
+  local_Id = ITensors.diag_itensor(ones(local_dim), inds(As[1]))
 
   # first element
   firstelement =
-    iszero(D) ? setelt(ll[1]) * (setelt(rl[1])) * op(sites, "Id", n) :
+    iszero(D) ? setelt(ll[1]) * (setelt(rl[1])) * local_Id :
     setelt(ll[1]) *
     setelt(rl[1]) *
-    (op(sites, "Id", n) + τ * D + (τ^2 / 2) * replaceprime(D' * D, 2, 1) + (τ^3 / 6) * replaceprime(D'' * D' * D, 3, 1))
+    (local_Id + τ * D + (τ^2 / 2) * replaceprime(D' * D, 2, 1) + (τ^3 / 6) * replaceprime(D'' * D' * D, 3, 1))
 
   # first row
   Cterm = mapreduce(
