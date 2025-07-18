@@ -89,7 +89,7 @@ function bulk_timeEvo_ITensor_2ndOrder(
 
   # Init ITensor inside MPO
   # U_t[n] = ITensor(ComplexF64, ll, dag(s), s', rl)
-  s = inds(As[1])[2]
+  s = unique(noprime(inds(As[1])))[1]
   local_Id = ITensors.diag_itensor(ones(local_dim), inds(As[1]))
 
   # first element
@@ -208,19 +208,39 @@ function Left_timeEvo_ITensor_2ndOrder(
   JD::Number,
   τ::Number;
 )
-  NrOfTerms = length(CStrings)
-  # right link index rl
-  rl = linkindices[1]
-  n = 1
 
   Cs = map(x -> x[1] * op(sites, x[2], 1), zip(JCs, CStrings)) # JC * op(sites, CString, n)
   D = JD * op(sites, DString, 1)
 
+  return Left_timeEvo_ITensor_2ndOrder(
+    linkindices[1],
+    Cs,
+    D,
+    τ;
+  )
+end
+
+
+function Left_timeEvo_ITensor_2ndOrder(
+  right_link,
+  Cs::Vector{ITensor},
+  D::ITensor,
+  τ::Number;
+)
+  NrOfTerms = length(Cs)
+  # right link index rl
+  rl = right_link
+  # n = 1
+
+  s = unique(noprime(inds(D)))[1]
+  local_dim = dim(s)
+  local_Id = ITensors.diag_itensor(ones(local_dim), inds(D))
+
   # first element
   firstelement =
-    iszero(D) ? setelt(rl[1]) * op(sites, "Id", n) :
+    iszero(D) ? setelt(rl[1]) * local_Id :
     setelt(rl[1]) *
-    (op(sites, "Id", n) + τ * D + (τ^2 / 2) * replaceprime(D' * D, 2, 1) + (τ^3 / 6) * replaceprime(D'' * D' * D, 3, 1))
+    (local_Id + τ * D + (τ^2 / 2) * replaceprime(D' * D, 2, 1) + (τ^3 / 6) * replaceprime(D'' * D' * D, 3, 1))
 
   # first row
   Cterm =
@@ -237,7 +257,7 @@ function Left_timeEvo_ITensor_2ndOrder(
     [firstelement, Cterm, Csquared_term]
   # )
   ),
-    sites[1]', rl, sites[1]
+    s', rl, s
   )
 end
 
@@ -253,9 +273,9 @@ function Right_timeEvo_ITensor_2ndOrder(
   L = length(sites)
   n = L
   # left link index ll with daggered QN conserving direction (if applicable)
-  ll = dag(linkindices[L-1])
+  left_link = dag(linkindices[L-1])
 
-  NrOfTerms = length(BStrings)
+  # 
 
   # A is possible exponential decay so test for "0"
   # As = map(x -> x[1] * op(sites, x[2], n), zip(JAs, AStrings))
@@ -263,11 +283,35 @@ function Right_timeEvo_ITensor_2ndOrder(
   # Cs = map(x -> x[1] * op(sites, x[2], n), zip(JCs, CStrings)) # JC * op(sites, CString, n)
   D = JD * op(sites, DString, n)
 
+  return Right_timeEvo_ITensor_2ndOrder(
+    left_link,
+    Bs,
+    D,
+    τ;
+  )
+end
+
+function Right_timeEvo_ITensor_2ndOrder(
+  left_link,
+  Bs::Vector{ITensor},
+  D::ITensor,
+  τ::Number;
+)
+
+  # left link index ll with daggered QN conserving direction (if applicable)
+  ll = dag(left_link)
+
+  NrOfTerms = length(Bs)
+
+  s = unique(noprime(inds(D)))[1]
+  local_dim = dim(s)
+  local_Id = ITensors.diag_itensor(ones(local_dim), inds(D))
+
   # first element
   firstelement =
-    iszero(D) ? setelt(ll[1]) * op(sites, "Id", n) :
+    iszero(D) ? setelt(ll[1]) * local_Id :
     setelt(ll[1]) *
-    (op(sites, "Id", n) + τ * D + (τ^2 / 2) * replaceprime(D' * D, 2, 1) + (τ^3 / 6) * replaceprime(D'' * D' * D, 3, 1))
+    (local_Id + τ * D + (τ^2 / 2) * replaceprime(D' * D, 2, 1) + (τ^3 / 6) * replaceprime(D'' * D' * D, 3, 1))
 
   # first column (exept first row)
   Bterm = mapreduce(
@@ -287,7 +331,7 @@ function Right_timeEvo_ITensor_2ndOrder(
     [firstelement, Bterm, Bsquared_term]
   # )
   ),
-  sites[L]', ll, sites[L]
+  s', ll, s
   )
 end
 
