@@ -56,7 +56,7 @@ function main_folded_pm(itermax::Int,length_string::Int; ts::Int=10,Jxx::Float64
 
     #Here I am using the power method to find the the left and right environments after itermax which I interpret as the spatial size of the system 
     println("itermax no string= ", itermax)
-    rr, ll, ds2_pm  = powermethod(init_mps, mpo_1, mpo_P_up, pm_params) 
+    rr, ll, ds2_pm  = powermethod_op(init_mps, mpo_1, mpo_P_up, pm_params) 
 
 
     itermax = Int((length_string-1)/2)

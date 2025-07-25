@@ -97,7 +97,7 @@ function main_ising_loschmidt()
 
     dt = 0.05
 
-    nbeta = 100
+    nbeta = 8
 
     # init_state = plus_state
     init_state = up_state

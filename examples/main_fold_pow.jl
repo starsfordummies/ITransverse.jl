@@ -62,7 +62,7 @@ function main_folded_pm()
         # ev = compute_expvals(ll, rr, ["Z"], b)
 
         # @show ev
-        ll, rr, ds2_pm  = powermethod(init_mps, mpo_1, mpo_X, pm_params) 
+        ll, rr, ds2_pm  = powermethod_op(init_mps, mpo_1, mpo_X, pm_params) 
 
         ev = compute_expvals(ll, rr, ["X","Z"], b)
         @show ev

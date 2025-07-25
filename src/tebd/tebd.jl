@@ -52,6 +52,9 @@ function tebd(psi0::MPS, tp::tMPOParams, Nt::Int, ops::Vector{<:String}, truncp:
 
     LL = length(psi0)
 
+    @info "Evolving L=$(LL) for T=$(Nt)x$(dt)"
+    @info "Params $(tp.mp)"
+
     for nt = 1:Nt
         # println("timestep N°=$(nt)\ttime=$(t)")
         psi_t = apply(eH, psi_t; maxdim = truncp.maxbondim, cutoff = truncp.cutoff, normalize = true)

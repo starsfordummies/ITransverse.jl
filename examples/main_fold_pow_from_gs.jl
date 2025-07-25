@@ -62,7 +62,7 @@ function main_folded_pm()
         init_mps = folded_right_tMPS_in_murg(mpo_1)
 
 
-        rr, ll, ds2_pm  = powermethod(init_mps, mpo_1, mpo_X, pm_params) 
+        rr, ll, ds2_pm  = powermethod_op(init_mps, mpo_1, mpo_X, pm_params) 
 
         ev = 0. #compute_expvals(ll, rr, ["X"], b)
 

@@ -53,7 +53,7 @@ function main_folded_pm()
         mpo_1 = folded_tMPO(b, time_sites)
 
         # @show ev
-        ll, rr, ds2_pm  = powermethod(init_mps, mpo_1, mpo_1, pm_params) 
+        ll, rr, ds2_pm  = powermethod_op(init_mps, mpo_1, mpo_1, pm_params) 
 
         ev = compute_expvals(ll, rr, ["X","Z"], b)
         @show ev

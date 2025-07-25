@@ -33,7 +33,7 @@ We could also return the (optimized) LO and OR calculated, but if we converge th
 by applying the relevant MPO to the resulting leading eigenvectors.
 
 """
-function powermethod(in_mps::MPS, in_mpo_1::MPO, in_mpo_O::MPO, pm_params::PMParams)
+function powermethod_op(in_mps::MPS, in_mpo_1::MPO, in_mpo_O::MPO, pm_params::PMParams)
 
     (; opt_method, itermax, eps_converged, truncp) = pm_params
     (; cutoff, maxbondim, direction) = truncp
