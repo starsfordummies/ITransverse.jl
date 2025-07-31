@@ -52,7 +52,7 @@ export sqrt
 export mergedicts!, mergedicts, dictfromlist
 
 #from utils.jl
-export quick_mps, quick_mpo, 
+export quick_mps, quick_mpo, pMPS,
     quick_psipsio, myrMPO,
     overlap_noconj, 
     check_symmetry_itensor_mpo, 

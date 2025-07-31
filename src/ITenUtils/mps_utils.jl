@@ -1,3 +1,32 @@
+function pMPS(ss::Vector{<:Index}, site_tensor::AbstractVector{<:Number})
+    psi = MPS(ss)
+    for j in eachindex(psi)
+        psi[j] = ITensor(site_tensor, inds(psi[j]))
+    end
+    return psi
+end
+
+function pMPS(N::Int, site_tensor::AbstractVector{<:Number})
+    ss = siteinds("S=1/2", N)
+    pMPS(ss, site_tensor)
+end
+
+
+function pMPS(ss::Vector{<:Index}, site_tensors::AbstractVector{<:AbstractVector{<:Number}})
+    psi = MPS(ss)
+    for j in eachindex(psi)
+        psi[j] = ITensor(site_tensors[j], inds(psi[j]))
+    end
+    return psi
+end
+
+function pMPS(site_tensors::AbstractVector{<:AbstractVector{<:Number}})
+    N = length(site_tensors)
+    ss = siteinds("S=1/2", N)
+    pMPS(ss, site_tensors)
+end
+
+
 """ Quick random MPS for playing around """
 function quick_mps(len::Int=10, chi::Int=32)
     s = siteinds("S=1/2", len)
