@@ -33,19 +33,15 @@ function tebd_ev(ss::Vector{<:Index}, tp::tMPOParams, Nt::Int, ops::Vector{<:Str
 
 end
 
+
 """ Basic TEBD to just evolve psi0 for Nt steps """
 function tebd(psi0::MPS, tp::tMPOParams, Nt::Int, truncp::TruncParams)
 
     dt = 0.1
 
     eH = tp.expH_func(siteinds(psi0), tp.mp, tp.dt)
-    #eH = build_expH_ising_murg(ss, 1.0, 0.7, 0.8, dt)
 
     psi_t = deepcopy(psi0)
-
-    evs = dictfromlist(ops)
-
-    chis = []
 
     LL = length(psi0)
 
@@ -55,15 +51,9 @@ function tebd(psi0::MPS, tp::tMPOParams, Nt::Int, truncp::TruncParams)
     for nt = 1:Nt
         # println("timestep N°=$(nt)\ttime=$(t)")
         psi_t = apply(eH, psi_t; maxdim = truncp.maxbondim, cutoff = truncp.cutoff, normalize = true)
-        for op in keys(evs)
-            push!(evs[op], expect(psi_t, op)[LL÷2])
-        end
-        push!(chis, maxlinkdim(psi_t))
-
         @info "T=$(dt*nt), chi=$(maxlinkdim(psi_t))"
     end
 
-    evs["chis"] = chis
-    return evs, psi_t
+    return psi_t
 
 end
