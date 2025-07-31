@@ -54,7 +54,8 @@ export vn_entanglement_entropy,
     generalized_vn_entropy_symmetric,
     generalized_svd_vn_entropy_symmetric,
     generalized_svd_vn_entropy,
-    diagonalize_rtm_symmetric
+    diagonalize_rtm_symmetric,
+    gen_renyi2
 
 
 # from compute_rho2.jl
@@ -119,7 +120,7 @@ export PMParams
 include("power_method/pm.jl")
 include("power_method/symm_pm.jl")
 #from power_method.jl
-export powermethod
+export powermethod_op
 
 export powermethod_sym
 

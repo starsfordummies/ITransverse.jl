@@ -1,4 +1,9 @@
-""" Basic truncate sweep: first brings to regular RIGHT ortho form,
+""" Basic truncate sweeps based on RTM """
+
+
+""" 
+Left truncation sweep. 
+First brings to regular RIGHT ortho form,
 then performs a LEFT generalized canonical sweep with SVD/EIG truncation.
 Returns 
 1,2) copies of the two input MPS

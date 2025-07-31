@@ -230,7 +230,7 @@ function normbyfactor(psi::AbstractMPS, factor::Number )
 
 end
 
-""" Shorthand for simple apply with naive algorithm and no truncation """
+""" Shorthand for simple apply(alg="naive", truncate=false) """
 function applyn(O::MPO, psi::AbstractMPS)
     apply(O, psi, alg="naive", truncate=false)
 end

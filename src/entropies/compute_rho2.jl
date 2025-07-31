@@ -11,17 +11,7 @@ function rtm2_contracted(psi::MPS, phi::MPS; normalize_factor::Number=1.0)
     return r2s
 end
 
-""" Same as rtm2_contracted() with normalize_factor= overlap_noconj(psi,phi)"""
-function rtm2_contracted_normalized(psi::MPS, phi::MPS)
-    r2s = []
-    normalize_factor = overlap_noconj(psi,phi)
-    abs(normalize_factor) > 1e10 || abs(normalize_factor) < 1e-10 && @warn "overlap overflow? $(normalize_factor)"
-    @showprogress for jj in eachindex(psi)[1:end-1]
-        push!(r2s, rtm2_contracted(psi, phi, jj; normalize_factor))
-    end
 
-    return r2s
-end
 
 
 
@@ -206,3 +196,25 @@ function rtm2_bruteforce(psi::MPS, phi::MPS)
     return r2s
 end
 
+
+""" Returns generalized Tsallis 2 entropy from the RTM |PHI><PSI|/<PSI|PHI> """
+function gen_tsallis2(psi::MPS, phi::MPS)
+    # normalize 
+    phi = phi / overlap_noconj(psi,phi)
+    @assert overlap_noconj(psi, phi) ≈ 1.0 
+   
+    trace_tau2 = rtm2_contracted(psi, phi)
+    
+    t2 = [ -trt2 .+ 1 for trt2 in trace_tau2]
+end
+
+""" Returns generalized Renyi 2 entropy from the RTM |PHI><PSI|/<PSI|PHI> """
+function gen_renyi2(psi::MPS, phi::MPS)
+    # normalize 
+    phi = phi / overlap_noconj(psi,phi)
+    @assert overlap_noconj(psi, phi) ≈ 1.0 
+   
+    trace_tau2 = rtm2_contracted(psi, phi)
+    
+    r2 = [ -log.(trt2) for trt2 in trace_tau2]
+end
