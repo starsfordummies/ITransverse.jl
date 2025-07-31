@@ -11,6 +11,12 @@ function pMPS(N::Int, site_tensor::AbstractVector{<:Number})
     pMPS(ss, site_tensor)
 end
 
+function pMPS(N::Int, site_tensor::ITensor)
+    ss = siteinds("S=1/2", N)
+    @assert ndims(site_tensor) == 1
+    pMPS(ss, site_tensor.tensor.storage)
+end
+
 
 function pMPS(ss::Vector{<:Index}, site_tensors::AbstractVector{<:AbstractVector{<:Number}})
     psi = MPS(ss)

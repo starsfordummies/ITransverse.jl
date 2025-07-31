@@ -29,21 +29,18 @@ function tebd_ev(ss::Vector{<:Index}, tp::tMPOParams, Nt::Int, ops::Vector{<:Str
     end
 
     evs["chis"] = chis
-    return evs 
+    return evs, psi_t
 
 end
 
-""" Basic TEBD to compute the half-chain expectation value of an operator at a given time,
-starting from an input MPS """
-function tebd(psi0::MPS, tp::tMPOParams, Nt::Int, ops::Vector{<:String}, truncp::TruncParams)
+""" Basic TEBD to just evolve psi0 for Nt steps """
+function tebd(psi0::MPS, tp::tMPOParams, Nt::Int, truncp::TruncParams)
 
     dt = 0.1
 
     eH = tp.expH_func(siteinds(psi0), tp.mp, tp.dt)
     #eH = build_expH_ising_murg(ss, 1.0, 0.7, 0.8, dt)
 
-    #initial state
-    #psi0 = productMPS(ss, "+")
     psi_t = deepcopy(psi0)
 
     evs = dictfromlist(ops)
