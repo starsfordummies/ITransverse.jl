@@ -106,3 +106,18 @@ function FwtMPOBlocks(eH::MPO; tp=nothing, init_state = nothing, build_imag::Boo
 
     return FwtMPOBlocks(Wl, Wc, Wr, Wl_im, Wc_im, Wr_im, tp, rot_inds)
 end
+
+
+
+
+
+Adapt.adapt_structure(to, b::FwtMPOBlocks) = FwtMPOBlocks(
+    adapt(to, b.Wl), 
+    adapt(to, b.Wc), 
+    adapt(to, b.Wr),
+    adapt(to, b.Wl_im), 
+    adapt(to, b.Wc_im), 
+    adapt(to, b.Wr_im),
+    adapt(to, b.tp), 
+    b.rot_inds
+)

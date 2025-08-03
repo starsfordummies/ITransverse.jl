@@ -34,3 +34,11 @@ tMPOParams(x::tMPOParams;
 function ising_tp() 
     return tMPOParams(0.1, build_expH_ising_murg, IsingParams(1.0, 0.4, 0.0), 0, [1.0+0im,1]/sqrt(2))
 end
+
+Adapt.adapt_structure(to, x::tMPOParams) = tMPOParams(
+    x.dt,
+    x.expH_func,  # This is safe even for functions (identity)
+    x.mp,          # assumes ModelParams is also adapt-compatible
+    x.nbeta,
+    adapt(to, x.bl)
+)

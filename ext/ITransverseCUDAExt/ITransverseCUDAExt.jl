@@ -1,4 +1,4 @@
-module ITransverseGPUExt
+module ITransverseCUDAExt
 
 using CUDA
 using ITensors
@@ -7,23 +7,11 @@ using NDTensors
 using ITensors.Adapt
 using ITransverse 
 
-
-Adapt.adapt_structure(to, x::tMPOParams) = tMPOParams(
-    dt,
-    expH_func,  # This is safe even for functions (identity)
-    x.mp,          # assumes ModelParams is also adapt-compatible
-    x.nbeta,
-    adapt(to, x.bl)
-)
-
-
-Adapt.adapt_structure(to, b::FwtMPOBlocks) = FwtMPOBlocks(
-    adapt(to, b.Wl), 
-    adapt(to, b.Wc), 
-    adapt(to, b.Wr),
-    adapt(to, b.tp), 
-    b.rot_inds
-)
+function Base.show(io::IO, arr::CUDA.AbstractGPUArray)
+    CUDA.@allowscalar begin
+        invoke(Base.show, Tuple{IO, typeof(arr)}, io, arr)
+    end
+end
 
 function ITransverse.ITenUtils.togpu(x) 
     return NDTensors.cu(x)
@@ -45,4 +33,4 @@ function ITransverse.ITenUtils.tocpu(x::ITensor)
     return x
 end
 
-end #module ITransverseGPUExt
+end

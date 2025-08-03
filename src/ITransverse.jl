@@ -6,8 +6,7 @@ using NDTensors
 using ITensors
 using ITensorMPS
 using ProgressMeter
-using ITensors.Adapt: adapt
-
+using ITensors.Adapt
 
 include("ITenUtils/ITenUtils.jl")
 using .ITenUtils
