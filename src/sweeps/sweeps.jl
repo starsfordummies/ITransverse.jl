@@ -66,9 +66,7 @@ function truncate_lsweep(psi::MPS, phi::MPS; cutoff::Real, chi_max::Int)
     psi_ortho[end] = XUinv * psi_ortho[end]
     phi_ortho[end] = XVinv * phi_ortho[end]
 
-    #gen_overlap = scalar(tocpu((left_env * ( psi_ortho[end] *  phi_ortho[end] ) )))
-
-    return psi_ortho, phi_ortho, ents_sites #, gen_overlap
+    return psi_ortho, phi_ortho, ents_sites 
 
 end
 
@@ -268,10 +266,6 @@ function truncate_rsweep!(psi::MPS, phi::MPS; cutoff::Real=1e-12, chi_max=nothin
         psi[ii] = Ai * XU  
         phi[ii] = Bi * dag(Vdag) # XV
 
-        #Snorm = tocpu(right_env)
-        #ents_sites[ii-1] = scalar((-Snorm*log.(Snorm)))
-
-        #@info "setting psi[$(ii)]"
 
     end
 

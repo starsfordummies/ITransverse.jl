@@ -25,31 +25,6 @@ function diagonalize_rdm!(psi::MPS, cut::Int)
 end
 
 
-
-#= 
-""" Computes the Von Neumann entanglement entropy of an MPS `psi` at a given `cut` 
-It is a (!) function cause we orthogonalize along the way, gauging `psi` """
-function vn_entanglement_entropy!(psi::MPS, cut::Int)
-
-    orthogonalize!(psi, cut)
-
-    if cut == 1
-        _,S,_ = svd(psi[cut], (siteind(psi,cut)))
-    else
-        _,S,_ = svd(psi[cut], (linkind(psi, cut-1), siteind(psi,cut)))
-    end
-
-    S2 = S.^2
-    SvN = - S2 * log.(S2)
-
-    #SvN = scalar(tocpu(SvN))
-    SvN = sum(SvN) # hack to get it to CPU .. 
-
-    return SvN
-end
-=#
-
-
 vn_from_sv(sv::ITensor; normalize::Bool=true) = vn_from_sv(tensor(NDTensors.cpu(sv)); normalize)
 
 function vn_from_sv(sv::Tensor; normalize::Bool=true)
