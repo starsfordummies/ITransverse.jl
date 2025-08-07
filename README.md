@@ -1,7 +1,7 @@
 # ITransverse.jl
 
 This package provides several routines for the transverse contraction of 2D tensor networks [[1-5]](#literature),
-it was mainly developed for the characterization of temporal matrix product states 
+it was mainly developed for the characterization of temporal matrix product states
 for describing the time evolution of one-dimensional quantum many-body systems.
 
 It is built on top of the excellent [ITensors](https://github.com/ITensor/ITensors.jl) library, and tries to reuse most of its features whenever possible.
@@ -24,17 +24,17 @@ The 2D tensor network associated with the time evolution of a quantum chain is
 ^          |  |  |  |  |  |  |  |
 |          o--o--o--o--o--o--o--o
 |          |  |  |  |  |  |  |  |
-| t        o--o--o--o--o--o--o--o  U(dt)
+| time     o--o--o--o--o--o--o--o  U(dt)
 |          |  |  |  |  |  |  |  |
 |          o--o--o--o--o--o--o--o  U(dt)
 |          |  |  |  |  |  |  |  |
 |          o--o--o--o--o--o--o--o  |psi0>
 |
-|------------------------------------->   x
+|------------------------------------->  space
 
 ```
 
-Suppose we are interested in calculating the expectation value of a local operator on a given site (or few sites), 
+Suppose we are interested in calculating the expectation value of a local operator on a given site (or few sites),
 the network is  
 
 
@@ -62,7 +62,7 @@ v          |  |  |  |  |  |  |  |
 
 ```
 
-This can be __folded__ in a smaller network with doubled tensors, 
+This can be __folded__ in a smaller network with doubled tensors,
 
 ```
    
@@ -83,9 +83,9 @@ where `=` and `H` denote doubled horizontal and vertical legs,
 and `^` are just vectorized identities to close the network from the top. 
 ```
 
-Rather than working with top and bottom, we can introduce left and right "temporal MPS" (tMPS), 
-with respect to the central MPO columns (which can be seen as transfer matrices). The full contraction 
-of the network is then given by 
+Rather than working with top and bottom, we can introduce left and right "temporal MPS" (tMPS),
+with respect to the central MPO columns (which can be seen as transfer matrices). The full contraction
+of the network is then given by
 
 ```
 
@@ -148,7 +148,7 @@ old virtual indices of the MPO as new _temporal physical_ indices. In the same w
 
 More specifically, our current convention is the following:
 
-We rotate our space vectors to the *right* by 90°, ie 
+We rotate our space vectors to the __right__ by 90°, ie
 
 ```
     |p'               |L                 |p'new
@@ -233,31 +233,19 @@ in some structs like `FoldtMPOBlocks` and `FwtMPOBlocks` and build the tMPOS fro
 
 ## Sweeps and truncation methods
 
-Depending on the algorithm chosen, we can truncate either by performing the standard optimization based on reduced density 
-matrices (`RDM`) associated with the left and right vectors individually, or optimize the overlap <L|R> or <L|Operators|R>, 
-depending on the problem. For this, the algorithms are rather based on optimizing reduced *transition* matrices, 
+Depending on the algorithm chosen, we can truncate either by performing the standard optimization based on reduced density
+matrices (`RDM`) associated with the left and right vectors individually, or optimize the overlap <L|R> or <L|Operators|R>,
+depending on the problem. For this, the algorithms are rather based on optimizing reduced _transition_ matrices,
 so we label them as `RTMxx`
 
-As a flowchart, it goes like
-```mermaid
-  flowchart TD;
-      A["Symmetric L = R ?"]
-      A -- Yes --> B["RTM or RDM?"];
-      A -- No --> C["RTM or RDM?"];
-      B -- RDM --> J["Truncate on SV of L"];
-      B -- RTM --> D["Truncate on SV or Eigenvalues?"];
-      D -- SV --> E[Symmetric SVD Autonne-Takagi of R*R];
-      D -- EIG --> F[Symmetric Eigenvalue decomp of R*R];
-      C -- RDM --> G["Truncate on SV of L and R separately*"];
-      C -- RTM --> H["Truncate on SV of RTM LR"] 
-```
+
 
 ## Power method 
 
 ### Update including operator 
 
-the function is `powermethod`, which is the relevant one for a setup like folded tMPO 
-(we need to update including an operator or the dominant tMPS end up being trivial).
+the function is `powermethod_op()`, which is the relevant one for a setup like folded tMPO, where
+we need to update including an operator, or the dominant tMPS end up being trivial.
 
 ### Update without an operator 
 
@@ -277,25 +265,20 @@ We initialize the cone using `init_cone(tp::tMPOParams)`, then evolve it using `
 We provide tools for diagonalizing the RTMs and computing all sorts of generalized entropies from them. One can 
 - diagonalize directly the RTM T_t (for very short tMPS only, of course)
 - compute Tr(T_t^2) by contracting twice the left and right dominant vectors
-- *If* we have a symmetric RTM (<L| = <Rbar|) we can put the RTM in a symmetric gauge where we have orthogonal matrices,
+- __If__ we have a symmetric RTM (<L| = <Rbar|), we can put the RTM in a symmetric gauge where we have orthogonal matrices,
   so that we can compute the eigenvalues by diagonalizing site by site some environments of size ~chi^2
 
 # Models
 
-So far Ising with transverse + parallel fields has been thoroughly tested and should work, the relevant function
-to build the exp(Hising) we use is `build_expH_ising_murg`
+The Ising model with transverse + parallel fields has been thoroughly tested and should work, the relevant function
+to build the exp(Hising) we use is `build_expH_ising_murg`.
 
-The Potts model is also defined and should work, but is probably currently broken with the latest million API changes 
-
-The XXZ model is also implemented, but I haven't checked in a million years 
+We also provide implementations for the Potts and XXZ models.
 
 # WIP: GPU Extensions 
 
 In principle it should work by simply doing a `using CUDA` and by putting the tMPOParams on GPU, `NDTensors.gpu(tp::tMPOParams)`. 
 The idea is that the programs build everything down from there on GPU. 
-There are likely bugs 
-
-
 
 # Literature 
 
