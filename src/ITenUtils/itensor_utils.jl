@@ -179,8 +179,10 @@ function itensor_to_vector(t::ITensor)
     return t.tensor.storage.data 
 end
 
-function to_itensor(x::ITensor, name::AbstractString)
-    return x
+function to_itensor(x::ITensor, name::String)
+    @assert ndims(x) == 1 
+    idx = Index(dim(x), name)
+    return replaceind(x, ind(x,1), idx)
 end
 
 function to_itensor(x::ITensor, idx::Index)
@@ -188,12 +190,12 @@ function to_itensor(x::ITensor, idx::Index)
     return replaceind(x, ind(x,1), idx)
 end
 
-function to_itensor(x::AbstractVector{<:Number}, name::AbstractString)
-    return ITensor(ComplexF64.(x), Index(length(x), name))
+function to_itensor(x::AbstractVector, name::String)
+    return ITensor(complex(x), Index(length(x), name))
 end
 
-function to_itensor(x::AbstractVector{<:Number}, idx::Index)
-    return ITensor(ComplexF64.(x), idx)
+function to_itensor(x::AbstractVector, idx::Index)
+    return ITensor(complex(x), idx)
 end
 
 

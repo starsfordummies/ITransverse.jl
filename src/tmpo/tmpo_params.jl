@@ -6,6 +6,14 @@ struct tMPOParams{T<:Union{Float64,ComplexF64}, MP, F}
     bl::ITensor
 end
 
+function Base.show(io::IO, tp::tMPOParams)
+    println("tMPOParams")
+    println("dt:           $(tp.dt)    nbeta : $(tp.nbeta)")
+    println("exp(H) func:  $(tp.expH_func)")
+    println("Model params: $(tp.mp)")
+    println("Init state:   $(Array(tp.bl.tensor))")
+end
+
 
 # Master constructor
 function tMPOParams(
@@ -37,8 +45,8 @@ end
 
 Adapt.adapt_structure(to, x::tMPOParams) = tMPOParams(
     x.dt,
-    x.expH_func,  # This is safe even for functions (identity)
-    x.mp,          # assumes ModelParams is also adapt-compatible
+    x.expH_func,  
+    x.mp,         
     x.nbeta,
     adapt(to, x.bl)
 )
