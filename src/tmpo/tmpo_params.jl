@@ -11,7 +11,7 @@ function Base.show(io::IO, tp::tMPOParams)
     println("dt:           $(tp.dt)    nbeta : $(tp.nbeta)")
     println("exp(H) func:  $(tp.expH_func)")
     println("Model params: $(tp.mp)")
-    println("Init state:   $(Array(tp.bl.tensor))")
+    println("Init state:   $(array(tp.bl))")
 end
 
 

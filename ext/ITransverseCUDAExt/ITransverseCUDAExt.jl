@@ -4,6 +4,7 @@ using CUDA
 using ITensors
 using ITensorMPS
 using NDTensors
+using NDTensors: cu 
 using ITensors.Adapt
 using ITransverse 
 
@@ -12,6 +13,8 @@ function Base.show(io::IO, arr::CUDA.AbstractGPUArray)
         invoke(Base.show, Tuple{IO, typeof(arr)}, io, arr)
     end
 end
+
+NDTensors.cu(x::tMPOParams) = tMPOParams(x; bl = NDTensors.cu(x.bl))
 
 function ITransverse.ITenUtils.togpu(x) 
     return NDTensors.cu(x)
