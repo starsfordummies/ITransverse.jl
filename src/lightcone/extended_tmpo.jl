@@ -168,12 +168,19 @@ end
 
 
 """ Given an MPO of length N and an MPS (or MPO) of length N-1, extends the target object to the *right* """
-function apply_extend!(w::MPO, dest::Union{MPS,MPO})
-    @assert length(w) == length(dest) + 1
+function apply_extend!(w::MPO, psi::Union{MPS,MPO}; cutoff=nothing, maxdim=nothing)
+    @assert length(w) == length(psi) + 1
+    @assert length(w) > 1 
 
     last_tensor = pop!(w.data)
-    opsi = applyn(w, dest)
+    opsi = apply(w, psi, alg="naive") #, cutoff, maxdim)
+
+    @info "before: $(length(opsi))"
     push!(opsi.data, last_tensor)
+    @info "after: $(length(opsi))"
+
+    # put it back
+    push!(w.data, last_tensor)
 
     return opsi
 end
