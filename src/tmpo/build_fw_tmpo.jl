@@ -19,7 +19,7 @@ end
 
 
 
-""" Forward tMPO with open top-right leg (so we can plug anything afterwards) """
+""" Forward tMPO with open top (=right, after rotation) leg, so we can plug anything afterwards """
 function fw_tMPO_opentr(b::FwtMPOBlocks, time_sites::Vector{<:Index};  bl::ITensor = b.tp.bl)
 
     (; tp, Wc, Wc_im, rot_inds) = b

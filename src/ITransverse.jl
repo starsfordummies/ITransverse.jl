@@ -93,7 +93,7 @@ export FoldtMPOBlocks, FwtMPOBlocks
 export get_Wc, get_Wl, get_Wr
  #build_WWl, build_WWc, build_WWr, build_WW
 
-include("tmpo/build_tmpo_fw.jl")
+include("tmpo/build_fw_tmpo.jl")
 
 #from build_tmpo_[fw|expval].jl
 export 
