@@ -18,7 +18,6 @@ end
 
 
 
-
 """ Forward tMPO with open top (=right, after rotation) leg, so we can plug anything afterwards """
 function fw_tMPO_opentr(b::FwtMPOBlocks, time_sites::Vector{<:Index};  bl::ITensor = b.tp.bl)
 
@@ -199,7 +198,8 @@ function fw_tMPS(
     elseif LR == :right
         W = b.Wr
         W_im = b.Wr_im
-        (iL, iR, iP) = (b.rot_inds[:L], b.rot_inds[:R], b.rot_inds[:P])
+        # Wr has p' index only, rename it here to phys
+        (iL, iR, iP) = (b.rot_inds[:L], b.rot_inds[:R], b.rot_inds[:Ps])
     else
         error("Unknown LR: $(LR)")
     end
