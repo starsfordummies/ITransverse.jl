@@ -1,9 +1,6 @@
 """ Initializes the light cone folded and rotated temporal MPS |R> given `tMPOParams`
 builds a (length n) tMPS with (time_fold)  legs.
-Our convention is that after rotation the initial state goes to the *left* 
-and the eventual operator to the *right*
 Returns (psi[the light cone right MPS], b[the folded tMPO building blocks])"""
-
 function init_cone(tp::tMPOParams, n::Int=3)
     b = FoldtMPOBlocks(tp)
     init_cone(b, n)
@@ -20,7 +17,7 @@ function init_cone(b::FoldtMPOBlocks, n::Int=3)
     for jj = 2:n
         push!(ts, Index(time_dim, tags="Site,n=$(jj),time_fold"))
         m = folded_tMPO_R(b,ts)
-        psi = apply_extend(m, psi)
+        psi = applyn(m, psi)
     end
 
     return psi, b
@@ -41,6 +38,8 @@ which I think only works with the "naive" algorithm. We don't perform any trunca
         o-o-o-o-o-o
 ``` 
 """
+
+#= 
 #TODO LIKELY SUPERSEDED 
 function apply_extend(A::MPO, ψ::MPS; truncate::Bool=false, cutoff::Float64=1e-14, maxdim::Int=maxlinkdim(A) * maxlinkdim(ψ))
 
@@ -145,7 +144,7 @@ function extend_tmps_cone_LOR(ll::MPS, op_L::Vector{<:Number}, op_R::Vector{<:Nu
 
 end
 
-
+=#
 
 function run_cone(psi::MPS, 
     b::FoldtMPOBlocks,

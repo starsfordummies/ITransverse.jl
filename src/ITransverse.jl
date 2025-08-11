@@ -130,13 +130,15 @@ export contract_finite
 include("generic/expvals_lr.jl")
 export expval_LR, compute_expvals
 
-include("lightcone/extended_tmpo.jl")
+include("lightcone/cone_tmpo.jl")
 export folded_tMPO_R, folded_tMPO_in
 
 include("lightcone/cone_params.jl")
 export ConeParams
 
-include("lightcone/cone.jl")
+include("lightcone/extend_cone.jl")
+
+include("lightcone/run_cone.jl")
 
 export init_cone, run_cone
 
