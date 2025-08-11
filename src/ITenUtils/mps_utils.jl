@@ -442,7 +442,7 @@ function check_mps_sanity(psi::MPS)
         false
     elseif length(linkinds(psi)) != length(psi.data)-1
         false
-    elseif ndims(psi[1]) != 2 && ndims(psi[end]) != 2 && all(x -> x == 3, ndims(psi[2:end-1]))
+    elseif ndims(psi[1]) != 2 || ndims(psi[end]) != 2 || !all(x -> ndims(x) == 3, psi[2:end-1])
         false
     else
         true
