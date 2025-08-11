@@ -27,7 +27,9 @@ include("utils.jl")
 
 include("matrix_utils.jl")
 include("itensor_utils.jl")
+
 include("mps_utils.jl")
+include("apply_contract.jl")
 
 # Symmetric SVD/EIG decompositions
 include("svd_sym.jl")
