@@ -8,15 +8,30 @@ function expval_LR(ll::MPS, op_mpo::MPO, rr::MPS; match_inds::Bool=false)
         end
     end
 
-    @assert length(ll) == length(op_mpo) == length(rr)
+    nL = length(ll)
+    nR = length(rr)
+
+
   
     #O = ll[1]' * (op_mpo[1] * rr[1])
     O = ITensor(1)
 
-    for ii in eachindex(ll)#[2:end]
+    for ii in 1:min(nL, nR)
         O = O * rr[ii]
         O = O * op_mpo[ii]
         O = O * ll[ii]'
+    end
+
+    if nL > nR 
+        for ii = nR+1:nL
+            O = O * op_mpo[ii]
+            O = O * ll[ii]'
+        end
+    elseif nL < nR
+        for ii = nL+1:nR
+            O = O * rr[ii]
+            O = O * op_mpo[ii]
+        end
     end
 
     return scalar(O)
