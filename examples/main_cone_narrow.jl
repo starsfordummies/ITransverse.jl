@@ -25,7 +25,7 @@ function main_cone()
     
     truncp = TruncParams(cutoff, maxbondim, direction)
 
-    Nsteps = 30
+    Nsteps = 50
 
     #time_sites = siteinds("S=3/2", 1)
 
