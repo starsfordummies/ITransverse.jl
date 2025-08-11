@@ -132,115 +132,12 @@ function replace_linkinds!(psi::MPS, newtags::String="")
 end
 
 
-""" TODO have a look at this if we can do better """
-function extend_mps(in_mps::MPS, new_sites)
-
-    new_mps = deepcopy(in_mps)
-
-    # add trivial link to the last matrix of in_mps
-    last_mat = new_mps[end]
-    lastinds = inds(last_mat)
-    last_r = Index(1, "Link,l="*string(length(in_mps)))
-    new_mps[end] = ITensor(last_mat.tensor.storage.data, (lastinds,last_r))
-
-
-    # add one matrix at the end 
-    new_last = ITensor(2., last_r, new_sites[end])
-
-    push!(new_mps.data, new_last)
-
-    return new_mps
-
-end
-
 function extend_sites(old_sites::Vector{<:Index}, sitetype::String, sitetags::String)
     new_sites = copy(old_sites)
     final_site = addtags(siteind(sitetype, length(old_sites)+1), sitetags)
 
     push!(new_sites, final_site)
     return new_sites
-end
-
-
-function extend_mps_factorize(in_mps::MPS; site_type::String="S=1/2", tags::String="")
-
-    new_sites = extend_sites(siteinds(in_mps), site_type, tags)
-    lastinds = inds(in_mps[end])
-
-    last_mat = in_mps[end] * ITensor(1., new_sites[end])
-
-    a, b =  factorize(last_mat, lastinds, tags="v", cutoff=1e-14)
-
-    new_mps = deepcopy(in_mps)
-
-    new_mps[end] = a
-    push!(new_mps.data, b)
-    
-    return new_mps
-
-end
-
-
-
-
-function extend_mps_factorize(in_mps::MPS, new_sites::Vector{<:Index}) 
-
-    @assert length(new_sites) == length(in_mps) + 1 
-
-    lastinds = inds(in_mps[end])
-
-    last_mat = in_mps[end] * ITensor(1., new_sites[end])
-
-    # u,s,vd = svd(last_mat, lastinds, lefttags="Link,l=$(length(in_mps))", righttags="Link,l=$(length(in_mps))", cutoff=1e-14)
-    # u_sqs = u * sqrt.(s) 
-    # sqs_vd = sqrt.(s) * vd 
-
-    #a, b =  factorize(last_mat, lastinds, tags="Link,l=$(length(in_mps))", cutoff=1e-14)
-    a, b =  factorize(last_mat, lastinds, tags="v", cutoff=1e-14)
-
-
-    new_mps = deepcopy(in_mps)
-
-    # for ii in eachindex(new_mps)
-    #     replace_siteinds!(new_mps[ii], new_sites[ii])
-    # end
-    # for ii in eachindex(in_mps)
-    #     replaceind!(in_mps[ii], siteinds(in_mps)[ii], new_sites[ii])
-    # end
-
-    new_mps[end] = a
-    push!(new_mps.data, b)
-    
-    replace_siteinds!(new_mps, new_sites)
-
-    return new_mps
-
-end
-
-function extend_mps_v(in_mps::MPS, new_sites::Vector{<:Index})
-
-    new_mps = deepcopy(in_mps)
-
-    # add trivial link to the last matrix of in_mps
-    last_mat = new_mps[end]
-    lastinds = inds(last_mat)
-    last_l = linkinds(in_mps)[end]
-    last_r = Index(1, "v")
-    println(last_l, new_sites[end-1], last_r)
-    new_mps[end] = ITensor(last_mat.tensor.storage.data, (last_l, new_sites[end-1],last_r))
-
-
-    # add one matrix at the end 
-    new_last = ITensor(1., last_r, new_sites[end])
-
-    push!(new_mps.data, new_last)
-
-    # just to be sure.. (inplace?)
-    replace_siteinds(new_mps,new_sites)
-
-    @assert siteinds(new_mps) == new_sites
-    return new_mps
-
 end
 
 
