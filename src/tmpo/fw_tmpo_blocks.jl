@@ -22,8 +22,6 @@ end
 
 
 function FwtMPOBlocks(tp::tMPOParams; kwargs...)
-     # TODO: build_imag iff nbeta != 0 ? 
-
     eH = build_expH(tp)
     FwtMPOBlocks(eH; tp, kwargs...)
 end
@@ -76,7 +74,8 @@ function FwtMPOBlocks(eH::MPO; tp=nothing, init_state = nothing, build_imag::Boo
     """  (L,R,P,P') => (P',P,L,R) """
     Wl = replaceinds(Wl, (iLink1,ilP,ilP'), (time_P, time_vL, time_vR))
     Wc = replaceinds(Wc, (iLink1,iLink2,icP,icP'), (time_P', time_P,time_vL, time_vR))
-    Wr = replaceinds(Wr, (iLink2,irP,irP'), (time_P,time_vL, time_vR))
+    # TODO CHECK here I set p' for the Wr
+    Wr = replaceinds(Wr, (iLink2,irP,irP'), (time_P',time_vL, time_vR))
 
 
     #######################
@@ -98,7 +97,8 @@ function FwtMPOBlocks(eH::MPO; tp=nothing, init_state = nothing, build_imag::Boo
 
         Wl_im = replaceinds(Wl_im, (iLink1,ilP,ilP'), (time_P, time_vL, time_vR))
         Wc_im = replaceinds(Wc_im, (iLink1,iLink2,icP,icP'), (time_P', time_P,time_vL, time_vR))
-        Wr_im = replaceinds(Wr_im, (iLink2,irP,irP'), (time_P,time_vL, time_vR))
+        # TODO CHECK here I set p' for the Wr
+        Wr_im = replaceinds(Wr_im, (iLink2,irP,irP'), (time_P',time_vL, time_vR))
     end
 
 
