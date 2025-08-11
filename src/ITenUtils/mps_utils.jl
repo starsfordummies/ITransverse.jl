@@ -390,7 +390,7 @@ end
 
 """ If we have dangling tensors at the right edge of an MPS """
 function contract_dangling!(psi::AbstractMPS)
-    while ndims(psi[end]) == 1 && hascommoninds(psi[end], psi[end-1])
+    while length(psi) > 1 && ndims(psi[end]) == 1 && hascommoninds(psi[end], psi[end-1]) 
         psi[end-1] = psi[end] * psi[end-1]
         pop!(psi.data)
     end
