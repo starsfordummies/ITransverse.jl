@@ -435,3 +435,17 @@ function contractn(A::MPO, ψ::MPS; truncate=false, kwargs...)
 
     return ψ_out
 end
+
+function check_mps_sanity(psi::MPS)
+    good = if length(siteinds(psi)) != length(psi.data)
+        @warn "length/sites: $(length(siteinds(psi))) != $(length(psi.data))"
+        false
+    elseif length(linkinds(psi)) != length(psi.data)-1
+        false
+    elseif ndims(psi[1]) != 2 && ndims(psi[end]) != 2 && all(x -> x == 3, ndims(psi[2:end-1]))
+        false
+    else
+        true
+    end
+    return good
+end
