@@ -266,8 +266,8 @@ function normbyfactor(psi::AbstractMPS, factor::Number )
 end
 
 """ Shorthand for simple apply(alg="naive", truncate=false) """
-function applyn(O::MPO, psi::AbstractMPS, kwargs...)
-    replaceprime(contractn(O, psi, kwargs...),  1 => 0)
+function applyn(O::MPO, psi::AbstractMPS; kwargs...)
+    replaceprime(contractn(O, psi; kwargs...),  1 => 0)
 end
 
 
@@ -278,9 +278,9 @@ function applys(O::MPO, psi::AbstractMPS; cutoff=nothing, maxdim=nothing)
 end
 
 """ Shorthand for apply with no truncation + swap indices """
-function applyns(O::MPO, psi::AbstractMPS)
+function applyns(O::MPO, psi::AbstractMPS; kwargs...)
     #apply(swapprime(O, 0, 1, "Site"), psi, alg="naive", truncate=false)
-    replaceprime(contractn(O, prime(siteinds,psi), alg="naive", truncate=false), 1 => 0)
+    replaceprime(contractn(O, prime(siteinds,psi); kwargs...), 1 => 0)
 end
 
 

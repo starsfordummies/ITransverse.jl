@@ -167,30 +167,29 @@ function folded_tMPO_R(b::FoldtMPOBlocks, ts::Vector{<:Index}; kwargs...)
 end
 
 
-""" Given an MPO of length N and an MPS (or MPO) of length N-1, extends the target object to the *right* """
-function apply_extend!(w::MPO, psi::Union{MPS,MPO}; cutoff=nothing, maxdim=nothing)
-    @assert length(w) == length(psi) + 1
-    @assert length(w) > 1 
+# """ Given an MPO of length N and an MPS (or MPO) of length N-1, extends the target object to the *right* """
+# function apply_extend!(w::MPO, psi::Union{MPS,MPO}; cutoff=nothing, maxdim=nothing)
+#     @assert length(w) == length(psi) + 1
+#     @assert length(w) > 1 
 
-    last_tensor = pop!(w.data)
-    opsi = apply(w, psi, alg="naive") #, cutoff, maxdim)
+#     last_tensor = pop!(w.data)
+#     opsi = apply(w, psi, alg="naive") #, cutoff, maxdim)
 
-    @info "before: $(length(opsi))"
-    push!(opsi.data, last_tensor)
-    @info "after: $(length(opsi))"
+#     @info "before: $(length(opsi))"
+#     push!(opsi.data, last_tensor)
+#     @info "after: $(length(opsi))"
 
-    # put it back
-    push!(w.data, last_tensor)
+#     # put it back
+#     push!(w.data, last_tensor)
 
-    return opsi
-end
+#     return opsi
+# end
 
 
 """ tMPO with n_edge boundary tensors. The new time sites `ts` must be already of the (extended) length """
-function folded_tMPO_ext(b::FoldtMPOBlocks, ts::Vector{<:Index}; LR::String, n_ext::Int=1, kwargs...)
+function folded_tMPO_ext(b::FoldtMPOBlocks, ts::Vector{<:Index}; LR::String, n_ext::Int=1, fold_op = nothing)
     @assert b.tp.nbeta + n_ext < length(ts) # extending on imag time not implemented yet
     (; WWc, WWc_im, WWl, WWr) = b 
-
 
     WWedge = LR == "L" ? WWl : WWr
 
@@ -224,7 +223,7 @@ function folded_tMPO_ext(b::FoldtMPOBlocks, ts::Vector{<:Index}; LR::String, n_e
     oo[1] *= b.rho0 * delta(ind(b.rho0,1), tl[1])
 
     # Contract last tensor with operator
-    fold_op = get(kwargs, :fold_op, vectorized_identity(dim(virtual_ind)))
+    fold_op = something(fold_op, vectorized_identity(dim(virtual_ind)))
     oo[end] *= adapt(dttype, ITensor(fold_op, tl[end]))
 
     return oo

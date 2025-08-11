@@ -16,7 +16,7 @@ function init_cone(b::FoldtMPOBlocks, n::Int=3)
 
     for jj = 2:n
         push!(ts, Index(time_dim, tags="Site,n=$(jj),time_fold"))
-        m = folded_tMPO_R(b,ts)
+        m = folded_tMPO_ext(b,ts; LR="R")
         psi = applyn(m, psi)
     end
 
@@ -39,120 +39,13 @@ which I think only works with the "naive" algorithm. We don't perform any trunca
 ``` 
 """
 
-#= 
-#TODO LIKELY SUPERSEDED 
-function apply_extend(A::MPO, ψ::MPS; truncate::Bool=false, cutoff::Float64=1e-14, maxdim::Int=maxlinkdim(A) * maxlinkdim(ψ))
-
-    @assert length(A) == length(ψ)+1
-
-    if length(ψ) == 1
-        result = deepcopy(ψ) 
-        result[1] = noprime(result[1] * A[1])
-        push!(result.data, noprime(A[2]))
-        return result
-    end
-
-    result = deepcopy(ψ) 
-    li_o = linkinds(A)
-    li_psi = linkinds(ψ)
-
-    li_comb = [combiner(lp, lo) for (lp,lo) in zip(li_psi, li_o[1:end-1])]
-
-    result[1] = result[1] * A[1]
-    result[1] = result[1] * li_comb[1]
-    result[1] = noprime(result[1])
-
-    for ii in eachindex(ψ)[2:end-1]
-        #@info ii
-        result[ii] = result[ii] * A[ii]
-        result[ii] = result[ii] * li_comb[ii-1]
-        result[ii] = result[ii] * li_comb[ii]
-        result[ii] = noprime(result[ii])
-    end
-    result[end] = result[end] * A[end-1]
-    result[end] = result[end] * li_comb[end]
-    #result[end] = result[end] * combiner(li_o[end])
-    result[end] = noprime(result[end])
-
-    push!(result.data, noprime(A[end])) # * combiner(li_o[end])))
-    
-    if truncate
-        truncate!(result; cutoff, maxdim)
-    end
-
-    return result
-end
-
-""" Apply+extend version with ITensors utils """
-function apply_extend_ite(A::MPO, ψ::MPS; truncate::Bool=false, cutoff::Float64=1e-14, maxdim::Int=maxlinkdim(A) * maxlinkdim(ψ))
-
-    ψc = deepcopy(ψ)
-    push!(ψc.data, ITensor(1))
-    ψc = apply(A, ψc; alg="naive", truncate, cutoff, maxdim)
-    return ψc
-end
-
-
-"""
-One step of the light cone algorithm: takes left and right tMPS ll, rr,
-the time MPO and the operator O
-extends the left-right tMPS by building extended tMPOs 1 and O, applying them and and optimizing 
-1) the overlap (L1|OR)  -> save new L
-2) the overlap (LO|1R)  -> save new R  (in case non symmetric)
-
-Returns the updated left-right tMPS 
-"""
-function extend_tmps_cone(ll::MPS, op_L::Vector{<:Number}, op_R::Vector{<:Number}, rr::MPS, 
-    ts::Vector{<:Index}, b::FoldtMPOBlocks, truncp::TruncParams)
-
-    @assert length(ts) == length(ll)+1 
-
-    tmpo = folded_tMPO_R(b, ts; fold_op=op_R)
-
-    psi_R = apply_extend(tmpo, rr)
-
-    tmpo = folded_tMPO_L(b, ts; fold_op=op_L) 
-    # =swapprime(folded_tMPO(tp, time_sites; fold_op=op_L), 0, 1, "Site")
-
-    psi_L = apply_extend(tmpo, ll)
-
-    #ll, rr, ents, ov = truncate_rsweep(psi_L,psi_R; cutoff=truncp.cutoff, chi_max=truncp.maxbondim)
-    ll, rr, ents = truncate_sweep(psi_L,psi_R, truncp)
-    
-    return ll, rr, ents
-
-end
-
-
-function extend_tmps_cone_LOR(ll::MPS, op_L::Vector{<:Number}, op_R::Vector{<:Number}, rr::MPS, 
-    ts::Vector{<:Index}, b::FoldtMPOBlocks, truncp::TruncParams)
-
-    @assert length(ts) == length(ll)+1 
-
-    tmpoR = folded_tMPO_R(b, ts; fold_op=op_R)
-
-    psi_R = apply_extend(tmpoR, rr)
-
-    tmpo = folded_tMPO(b, ts; fold_op=op_L) 
-
-    LO = applyns(tmpo, psi_R)
-
-    #ll, rr, ents, ov = truncate_rsweep(psi_L,psi_R; cutoff=truncp.cutoff, chi_max=truncp.maxbondim)
-    _, rr, ents = truncate_sweep(LO,psi_R, truncp)
-    
-    return ll, rr, ents
-
-end
-
-=#
-
 function run_cone(psi::MPS, 
     b::FoldtMPOBlocks,
     cp::ConeParams,
     nT_final::Int
     )
 
-    (; opt_method, optimize_op, which_evs, which_ents, checkpoint, truncp) = cp
+    (; opt_method, optimize_op, which_evs, which_ents, checkpoint, truncp, vwidth) = cp
 
     fn_cp = nothing
 
@@ -163,7 +56,7 @@ function run_cone(psi::MPS,
 
     Id = vectorized_identity(dim(b.rot_inds[:R]))
 
-    chis = Int64[]
+    chis = Int[]
     overlaps = ComplexF64[]
     times = typeof(b.tp.dt)[]
 
@@ -173,7 +66,7 @@ function run_cone(psi::MPS,
     # For checkpoints, we want to save CPU data 
     tp_cp =  tMPOParams(tp; bl=tocpu(tp.bl))
     
-    infos = Dict(:times => similar(times), :tp => tp_cp, :coneparams => cp, :dtype => NDTensors.unwrap_array_type(tp.bl))
+    infos = Dict(:times => times, :tp => tp_cp, :coneparams => cp, :dtype => NDTensors.unwrap_array_type(tp.bl))
 
     time_dim = dim(b.WWc,1)
 
@@ -187,92 +80,98 @@ function run_cone(psi::MPS,
 
     nsteps = nT_final - length(psi)
 
-    p = Progress(nsteps; desc="[cone|$(opt_method)] [$(sweep_str)] $cutoff=$(truncp.cutoff), maxbondim=$(truncp.maxbondim))", showspeed=true) 
+    p = Progress(div(nsteps, vwidth); desc="[cone(v=$vwidth)|$(opt_method)] [$(sweep_str)] $cutoff=$(truncp.cutoff), maxbondim=$(truncp.maxbondim))", showspeed=true) 
 
-    for _ = 1:nsteps
-        
-        ts = siteinds(rr)
-        #Extend timesites by 1 
-        push!(ts, Index(time_dim, tags="Site,n=$(length(rr)+1),time_fold"))
+    for nt = 1:nsteps
 
-        if opt_method == "RTM_LR"
-            # if we're worried about symmetry Left-Right, evolve separately L and R 
-            rrwork = deepcopy(rr)
-            _,rr, ents = extend_tmps_cone(ll, optimize_op, Id, rrwork, ts, b, truncp)
-            ll,_, ents = extend_tmps_cone(ll, Id, optimize_op, rrwork, ts, b, truncp)
-        elseif opt_method == "RTM_R"
-            _,rr, ents = extend_tmps_cone(ll, optimize_op, Id, rr, ts, b, truncp)
-            ll = rr
-        elseif opt_method == "RDM" # TODO Non-symmetric case with RDM ?
-            tmpo = folded_tMPO_R(b, ts)
-            rr = apply_extend(tmpo,rr; truncate=true, cutoff=truncp.cutoff, maxdim=truncp.maxbondim)
-            ll = rr
-        else
-            error("no valid update method specified ($(opt_method)): use RTM_LR|RTM_R|RDM")
-        end
+        # Only extend the cone every vwidth timesteps
+        if nt % vwidth == 0
 
-
-        overlapLR = overlap_noconj(ll,rr)
-
-        # At each step we renormalize so that the overlap <L|R>=1 !
-        ll *= sqrt(1/overlapLR)
-        rr *= sqrt(1/overlapLR)
-
-        evs_computed = compute_expvals(ll, rr, which_evs, b)
-
-        mergedicts!(expvals, evs_computed)
-
-        #@show evs_computed
-        #@show expvals
-
-        push!(chis, maxlinkdim(ll))
-        push!(overlaps, overlapLR)
-        push!(times, length(ll)*tp.dt)
-
-
-        #ent = vn_entanglement_entropy(ll)
-        #TODO Compute entropies
-        if haskey(entropies, "VN")
-            push!(entropies["VN"], vn_entanglement_entropy(rr))
-        end
-        if haskey(entropies, "GENR2")
-            push!(entropies["GENR2"], rtm2_contracted(ll,rr))
-        end
-        if haskey(entropies, "GENR2_Pz")
-            tmpo = folded_tMPO(b, ts, fold_op=[1,0,0,0])
-            rr2 = apply(tmpo, rr;  cutoff=truncp.cutoff, maxdim=truncp.maxbondim)
-            ll2 = applys(tmpo, ll; cutoff=truncp.cutoff, maxdim=truncp.maxbondim)
-            for jj = 1:7
-                rr2 = apply(tmpo, rr2;  cutoff=truncp.cutoff, maxdim=truncp.maxbondim)
-                ll2 = applys(tmpo, ll2; cutoff=truncp.cutoff, maxdim=truncp.maxbondim)
+            ts = siteinds(rr)
+            #Extend timesites by 1 
+            for jj = 1:vwidth
+                push!(ts, Index(time_dim, tags="Site,n=$(length(rr)+jj),time_fold"))
             end
-            push!(entropies["GENR2_Pz"], rtm2_contracted(ll2,rr2))
-        end
-        if haskey(entropies, "GENVN_Pz")
-            tmpo = folded_tMPO(b, ts, fold_op=[1,0,0,0])
-            rr2 = apply(tmpo, rr;  cutoff=truncp.cutoff, maxdim=truncp.maxbondim)
-            for jj = 1:11
-                rr2 = apply(tmpo, rr2;  cutoff=truncp.cutoff, maxdim=truncp.maxbondim)
-                #ll2 = applys(tmpo, ll; cutoff=truncp.cutoff, maxdim=truncp.maxbondim)
+
+            if opt_method == "RTM_LR"
+                # if we're worried about symmetry Left-Right, evolve separately L and R 
+                rrwork = deepcopy(rr)
+                _,rr, ents = extend_tmps_cone(ll, optimize_op, Id, rrwork, ts, b, truncp)
+                ll,_, ents = extend_tmps_cone(ll, Id, optimize_op, rrwork, ts, b, truncp)
+            elseif opt_method == "RTM_R"
+                _,rr, ents = extend_tmps_cone(ll, optimize_op, Id, rr, ts, b, truncp)
+                ll = rr
+            elseif opt_method == "RDM" # TODO Non-symmetric case with RDM ?
+                tmpo = folded_tMPO_ext(b, ts; LR="R", n_ext=vwidth)
+                rr = applyn(tmpo,rr; truncate=true, cutoff=truncp.cutoff, maxdim=truncp.maxbondim)
+                ll = rr
+            else
+                error("no valid update method specified ($(opt_method)): use RTM_LR|RTM_R|RDM")
             end
-            #rr2 = apply(tmpo, rr; cutoff=truncp.cutoff, maxdim=truncp.maxbondim)
-            push!(entropies["GENVN_Pz"], generalized_vn_entropy_symmetric(rr2))
+
+
+            overlapLR = overlap_noconj(ll,rr)
+
+            # At each step we renormalize so that the overlap <L|R>=1 !
+            ll *= sqrt(1/overlapLR)
+            rr *= sqrt(1/overlapLR)
+
+            evs_computed = compute_expvals(ll, rr, which_evs, b)
+
+            mergedicts!(expvals, evs_computed)
+
+            #@show evs_computed
+            #@show expvals
+
+            push!(chis, maxlinkdim(ll))
+            push!(overlaps, overlapLR)
+            push!(times, length(ll)*tp.dt)
+
+
+            #ent = vn_entanglement_entropy(ll)
+            #TODO Compute entropies
+            if haskey(entropies, "VN")
+                push!(entropies["VN"], vn_entanglement_entropy(rr))
+            end
+            if haskey(entropies, "GENR2")
+                push!(entropies["GENR2"], rtm2_contracted(ll,rr))
+            end
+            if haskey(entropies, "GENR2_Pz")
+                tmpo = folded_tMPO(b, ts, fold_op=[1,0,0,0])
+                rr2 = apply(tmpo, rr;  cutoff=truncp.cutoff, maxdim=truncp.maxbondim)
+                ll2 = applys(tmpo, ll; cutoff=truncp.cutoff, maxdim=truncp.maxbondim)
+                for jj = 1:7
+                    rr2 = apply(tmpo, rr2;  cutoff=truncp.cutoff, maxdim=truncp.maxbondim)
+                    ll2 = applys(tmpo, ll2; cutoff=truncp.cutoff, maxdim=truncp.maxbondim)
+                end
+                push!(entropies["GENR2_Pz"], rtm2_contracted(ll2,rr2))
+            end
+            if haskey(entropies, "GENVN_Pz")
+                tmpo = folded_tMPO(b, ts, fold_op=[1,0,0,0])
+                rr2 = apply(tmpo, rr;  cutoff=truncp.cutoff, maxdim=truncp.maxbondim)
+                for jj = 1:11
+                    rr2 = apply(tmpo, rr2;  cutoff=truncp.cutoff, maxdim=truncp.maxbondim)
+                    #ll2 = applys(tmpo, ll; cutoff=truncp.cutoff, maxdim=truncp.maxbondim)
+                end
+                #rr2 = apply(tmpo, rr; cutoff=truncp.cutoff, maxdim=truncp.maxbondim)
+                push!(entropies["GENVN_Pz"], generalized_vn_entropy_symmetric(rr2))
+            end
+            if haskey(entropies, "GENVN")
+                push!(entropies["GENVN"], generalized_vn_entropy_symmetric(ll))
+            end
+
+
+            if checkpoint > 0 && length(ll) > 50 && length(ll) % checkpoint == 0
+                fn_cp = "cp_cone_$(length(ll))_chi_$(chis[end]).jld2"
+                infos[:times] = length(ll) - length(expvals) : length(ll)
+                llcp = tocpu(ll)
+                rrcp = tocpu(rr)
+                jldsave(fn_cp; llcp, rrcp, chis, times, expvals, entropies, infos)
+            end
+
+            next!(p; showvalues = [(:Info,"[$(length(ll))] χ=$(maxlinkdim(ll)), (L|R) = $overlapLR " )])
+
         end
-        if haskey(entropies, "GENVN")
-            push!(entropies["GENVN"], generalized_vn_entropy_symmetric(ll))
-        end
-
-
-        if checkpoint > 0 && length(ll) > 50 && length(ll) % checkpoint == 0
-            fn_cp = "cp_cone_$(length(ll))_chi_$(chis[end]).jld2"
-            infos[:times] = length(ll) - length(expvals) : length(ll)
-            llcp = tocpu(ll)
-            rrcp = tocpu(rr)
-            jldsave(fn_cp; llcp, rrcp, chis, times, expvals, entropies, infos)
-        end
-
-        next!(p; showvalues = [(:Info,"[$(length(ll))] χ=$(maxlinkdim(ll)), (L|R) = $overlapLR " )])
-
     end
 
 

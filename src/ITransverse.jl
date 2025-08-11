@@ -131,7 +131,7 @@ include("generic/expvals_lr.jl")
 export expval_LR, compute_expvals
 
 include("lightcone/cone_tmpo.jl")
-export folded_tMPO_R, folded_tMPO_in
+export folded_tMPO_ext, folded_tMPO_in
 
 include("lightcone/cone_params.jl")
 export ConeParams
