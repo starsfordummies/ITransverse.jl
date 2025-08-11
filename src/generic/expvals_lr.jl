@@ -87,7 +87,7 @@ end
 
 
 
-""" Expval of a list of local operators, which we feed as a standard *spatial MPO*. 
+""" Expval of a local operator which we feed as a standard *spatial MPO*. 
 We do this by building tMPO with one extra site on top, and replace it by the relevant operator 
 Warning, this does *not* compute the normalization """
 function expval_LR_ops(ll::MPS, rr::MPS, ops::MPO, b::FoldtMPOBlocks)
@@ -104,8 +104,8 @@ function expval_LR_ops(ll::MPS, rr::MPS, ops::MPO, b::FoldtMPOBlocks)
     time_sites_R = siteinds(rr)
     push!(time_sites_R, new_timesite)
 
-    tMPO1= folded_tMPO_L(b, time_sites_L)
-    tMPO2= folded_tMPO_R(b, time_sites_R)
+    tMPO1= folded_tMPO_ext(b, time_sites_L, LR="L")
+    tMPO2= folded_tMPO_ext(b, time_sites_R; LR="R")
 
     e1 = ops[1] * delta(siteind(ops,1), linkinds(tMPO1)[end])
     e2 = ops[2] * delta(siteind(ops,2), linkinds(tMPO2)[end])
@@ -113,8 +113,8 @@ function expval_LR_ops(ll::MPS, rr::MPS, ops::MPO, b::FoldtMPOBlocks)
     tMPO1[end] = e1
     tMPO2[end] = e2
     
-    LO = apply_extend(tMPO1, ll)
-    OR = apply_extend(tMPO2, rr) # todo swap indices for non-symmetric MPOs
+    LO = applyns(tMPO1, ll)
+    OR = applyn(tMPO2, rr)
 
     ev_LOOR = overlap_noconj(LO, OR)
 
