@@ -43,8 +43,36 @@ psiL_chop = applyns(oooR,psiL)
 @test check_mps_sanity(psiL_chop)
 @test length(psiL_chop) == length(psiL)-n_ext
 
-# Apply Left tMPO to (equal length) Right tMPS: Extend
+# Apply Left tMPO to (equal length) Right tMPS: Chop
 psiR = random_mps(ss, linkdims=20)
 psiR_chop = applyn(oooL,psiR)
 @test check_mps_sanity(psiR_chop)
 @test length(psiR_chop) == length(psiR)-n_ext
+
+
+# What if they're only long 2 
+
+ss = siteinds(4, 2)
+psiR = random_mps(ss, linkdims=20)
+psiR.llim
+psiR.rlim
+oooL = ITransverse.folded_tMPO_ext(b, ss; LR="L", n_ext=1, fold_op=[1,0,0,1])
+
+kk = applyn(oooL,psiR)
+
+
+ITransverse.ITenUtils.contract_dangling!(kk)
+kk.llim
+kk.rlim
+ orthogonalize(kk, length(kk))
+ normalize(kk)
+
+
+ #expvals
+ss = siteinds(4, 10)
+
+psiL = random_mps(ss, linkdims=20)
+oooR = ITransverse.folded_tMPO_ext(b, ss; LR="R", n_ext=3, fold_op=[1,0,0,-1])
+psiR = random_mps(ss[1:end-3], linkdims=20)
+
+expval_LR(psiL, oooR, psiR)

@@ -28,7 +28,7 @@ function fw_tMPO_opentr(b::FwtMPOBlocks, time_sites::Vector{<:Index};  bl::ITens
     nbeta = tp.nbeta 
 
 
-    @assert nbeta < length(time_sites) 
+    @assert nbeta <= Ntot
 
     b1 = if init_beta_only 
         nbeta
@@ -106,6 +106,12 @@ in-U(β)-U(β)-..U(β)-U(idt)-U(idt)-U(idt)-U(idt)-fin
    Returns tMPO 
 """
 function fw_tMPO_initbetaonly(b::FwtMPOBlocks, time_sites::Vector{<:Index}; bl::ITensor = b.tp.bl, tr::ITensor)
+    ww = fw_tMPO_opentr(b, time_sites; init_beta_only=true, bl, tr)
+    fw_tMPO(ww, tr)
+end
+
+#= 
+function fw_tMPO_initbetaonly(b::FwtMPOBlocks, time_sites::Vector{<:Index}; bl::ITensor = b.tp.bl, tr::ITensor)
 
     tp = b.tp
 
@@ -165,28 +171,23 @@ function fw_tMPO_initbetaonly(b::FwtMPOBlocks, time_sites::Vector{<:Index}; bl::
     return tMPO, tMPS
 
 end
+=#
 
 
-""" For quick debugging, build a forward tMPO for non-integrable Ising with random params """
-function rand_ising_fwtmpo(time_sites=siteinds("S=1/2",20))
 
-    plus_state = Vector{ComplexF64}([1 / sqrt(2), 1 / sqrt(2)])
-    mp = IsingParams(1.0, -rand(), rand())
-    tp = tMPOParams(0.1, build_expH_ising_murg, mp, 0, plus_state)
+
+
+function fw_left_tMPS( b::FwtMPOBlocks, time_sites::Vector{<:Index}; kwargs...)
+    fw_tMPS(b,time_sites; LR=:left, kwargs...)
+end
+function fw_right_tMPS( b::FwtMPOBlocks, time_sites::Vector{<:Index}; kwargs...)
+    fw_tMPS(b,time_sites; LR=:right, kwargs...)
+end
+
+
+function fw_tMPS(tp::tMPOParams, time_sites::Vector{<:Index}; kwargs...)
     b = FwtMPOBlocks(tp)
-
-    ww, _ = fw_tMPO(b, time_sites; tr=plus_state)
-
-    return ww
-end
-
-
-
-function fw_left_tMPS( b::FwtMPOBlocks, time_sites::Vector{<:Index}; bl = b.tp.bl, tr)
-    fw_tMPS(b,time_sites;bl,tr, LR=:left)
-end
-function fw_right_tMPS( b::FwtMPOBlocks, time_sites::Vector{<:Index}; bl = b.tp.bl, tr)
-    fw_tMPS(b,time_sites;bl,tr, LR=:right)
+    fw_tMPS(b, time_sites; kwargs...)
 end
 
 function fw_tMPS(
@@ -194,15 +195,32 @@ function fw_tMPS(
     time_sites::Vector{<:Index};
     bl = b.tp.bl,
     tr,
-    LR::Symbol = :left
+    LR::Symbol = :right,
+    init_beta_only::Bool=false
 )
 
     bl = to_itensor(bl, "bl")
     tr = to_itensor(tr, "tr")
     tp = b.tp
     nbeta = tp.nbeta
-    @assert nbeta == 0 || nbeta < length(time_sites) - 2
-    Nsteps = length(time_sites)
+
+    Ntot = length(time_sites)
+
+    @assert nbeta <= Ntot
+
+    b1 = if init_beta_only 
+        nbeta
+    else
+        @assert iseven(nbeta)
+        div(nbeta,2)
+    end
+
+    b2 = if init_beta_only 
+        Ntot 
+    else
+        Ntot - div(nbeta,2) 
+    end
+    #@show Ntot, nbeta, b1, b2
 
     # Choose direction-dependent fields and indices
     if LR == :left
@@ -221,28 +239,45 @@ function fw_tMPS(
     # Make same indices for real and imag, it's easier afterwards 
     replaceinds!(W_im, inds(W_im), inds(W))
 
-    rot_links_mps = [Index(dim(iL), "Link,rotl=$ii") for ii in 1:(Nsteps - 1)]
+    rot_links_mps = [Index(dim(iL), "Link,rotl=$ii") for ii in 1:(Ntot - 1)]
 
-    tMPS = MPS(fill(W, Nsteps))
+    tMPS = MPS(fill(W, Ntot))
 
-    for ii = 1:nbeta
+    for ii = 1:b1
+        #@info "$(ii) im" 
         tMPS[ii] = W_im * delta(iP, time_sites[ii])
     end
-    for ii = nbeta+1:Nsteps-nbeta
+    for ii = b1+1:b2
+        #@info "$(ii) re" 
         tMPS[ii] = tMPS[ii] * delta(iP, time_sites[ii])
     end
-    for ii = Nsteps-nbeta+1:Nsteps
+    for ii = b2+1:Ntot
+        #@info "$(ii) im" 
         tMPS[ii] = dag(W_im) * delta(iP, time_sites[ii])
     end
 
     # Contract edges with boundary states, label linkinds
     tMPS[1] = tMPS[1] * bl * delta(ind(bl,1), iL) * delta(iR, rot_links_mps[1])
 
-    for ii = 2:Nsteps-1
+    for ii = 2:Ntot-1
         tMPS[ii] = tMPS[ii] * delta(iL, rot_links_mps[ii-1]) * delta(iR, rot_links_mps[ii])
     end
 
-    tMPS[end] = (tMPS[end] * delta(iL, rot_links_mps[Nsteps-1])) * (dag(tr) * delta(ind(tr,1), iR))
+    tMPS[end] = (tMPS[end] * delta(iL, rot_links_mps[Ntot-1])) * (dag(tr) * delta(ind(tr,1), iR))
 
     return tMPS
+end
+
+
+""" For quick debugging, build a forward tMPO for non-integrable Ising with random params """
+function rand_ising_fwtmpo(time_sites=siteinds("S=1/2",20))
+
+    plus_state = Vector{ComplexF64}([1 / sqrt(2), 1 / sqrt(2)])
+    mp = IsingParams(1.0, -rand(), rand())
+    tp = tMPOParams(0.1, build_expH_ising_murg, mp, 0, plus_state)
+    b = FwtMPOBlocks(tp)
+
+    ww, _ = fw_tMPO(b, time_sites; tr=plus_state)
+
+    return ww
 end
