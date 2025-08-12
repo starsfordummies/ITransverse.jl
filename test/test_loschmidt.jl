@@ -6,13 +6,13 @@ tp = ising_tp()
 
 maxbondim=100
 Ntime_steps = 60
-nbeta =2 
+nbeta = 4
 
 mp = IsingParams(1, 1, 0)
 
-tp = tMPOParams(tp; nbeta=2, mp=mp)
+tp = tMPOParams(tp; nbeta, mp=mp)
 
-Nsteps = nbeta + Ntime_steps + nbeta
+Nsteps = nbeta + Ntime_steps
 
 time_sites = addtags(siteinds("S=1/2", Nsteps; conserve_qns=false), "time")
 
