@@ -19,34 +19,49 @@ end
 
 
 """ Forward tMPO with open top (=right, after rotation) leg, so we can plug anything afterwards """
-function fw_tMPO_opentr(b::FwtMPOBlocks, time_sites::Vector{<:Index};  bl::ITensor = b.tp.bl)
+function fw_tMPO_opentr(b::FwtMPOBlocks, time_sites::Vector{<:Index};  bl::ITensor = b.tp.bl, init_beta_only::Bool=false)
+
+
+    Ntot = length(time_sites)
 
     (; tp, Wc, Wc_im, rot_inds) = b
-
     nbeta = tp.nbeta 
 
-    @assert nbeta == 0 || nbeta < length(time_sites) - 2
 
-    Nsteps = length(time_sites)
+    @assert nbeta < length(time_sites) 
+
+    b1 = if init_beta_only 
+        nbeta
+    else
+        @assert iseven(nbeta)
+        div(nbeta,2)
+    end
+
+    b2 = if init_beta_only 
+        Ntot 
+    else
+        Ntot - div(nbeta,2) 
+    end
 
     (icL, icR, icP, icPs) = (rot_inds[:L], rot_inds[:R], rot_inds[:P], rot_inds[:Ps]) 
 
     # Make same indices for real and imag, it's easier aftwards 
     replaceinds!(Wc_im, inds(Wc_im), inds(Wc))
 
-    time_links = [Index(dim(icL), "Link,rotl=$ii") for ii in 1:(Nsteps-1)]
+    time_links = [Index(dim(icL), "Link,rotl=$ii") for ii in 1:(Ntot-1)]
 
+    tMPO =  MPO(fill(Wc, Ntot))
 
-    tMPO =  MPO(fill(Wc, Nsteps))
-
-    for ii = 1:nbeta
+    for ii = 1:b1
+        #@info "$(ii) imag"
         tMPO[ii] = replaceinds(Wc_im, (icP, icPs), (time_sites[ii],time_sites[ii]'))
     end
-    for ii = nbeta+1:Nsteps-nbeta
+    for ii = b1+1:b2
         tMPO[ii] = replaceinds(Wc, (icP, icPs), (time_sites[ii],time_sites[ii]') )
 
     end
-    for ii = Nsteps-nbeta+1:Nsteps
+    for ii = b2+1:Ntot
+        #@info "$(ii) imag"
         tMPO[ii] = replaceinds(dag(Wc_im), (icP, icPs), (time_sites[ii],time_sites[ii]'))
     end
 
@@ -56,7 +71,7 @@ function fw_tMPO_opentr(b::FwtMPOBlocks, time_sites::Vector{<:Index};  bl::ITens
 
     tMPO[1] = replaceinds(tMPO[1], (icL, icR), (ind(bl,1), time_links[1]))   
 
-    for ii = 2:Nsteps-1
+    for ii = 2:Ntot-1
         tMPO[ii] = replaceinds(tMPO[ii], (icL, icR), (time_links[ii-1],time_links[ii]))
     end
 
@@ -78,8 +93,8 @@ function fw_tMPO(ww::MPO, tr)
 end
 
 
-function fw_tMPO(b::FwtMPOBlocks, time_sites::Vector{<:Index};  bl::ITensor = b.tp.bl, tr)
-    ww = fw_tMPO_opentr(b, time_sites; bl)
+function fw_tMPO(b::FwtMPOBlocks, time_sites::Vector{<:Index}; tr, kwargs...)
+    ww = fw_tMPO_opentr(b, time_sites; kwargs...)
     fw_tMPO(ww, tr)
 end
 
@@ -88,7 +103,7 @@ end
 """ Builds forward tMPO with nbeta steps on one side only: 
 in-U(β)-U(β)-..U(β)-U(idt)-U(idt)-U(idt)-U(idt)-fin 
    |___nbeta_____|     
-   Returns tMPO and tMPS     
+   Returns tMPO 
 """
 function fw_tMPO_initbetaonly(b::FwtMPOBlocks, time_sites::Vector{<:Index}; bl::ITensor = b.tp.bl, tr::ITensor)
 
@@ -121,7 +136,6 @@ function fw_tMPO_initbetaonly(b::FwtMPOBlocks, time_sites::Vector{<:Index}; bl::
 
     rot_links_mpo = [Index(dim(icL), "Link,rotl=$ii") for ii in 1:(Nsteps - 1)]
     rot_links_mps = sim(rot_links_mpo)
-
 
     tMPO =  MPO(Nsteps)
     tMPS =  MPS(Nsteps)
