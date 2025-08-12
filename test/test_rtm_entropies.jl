@@ -36,7 +36,7 @@ eigs_r = diagonalize_rtm_right_gen_sym(ll; bring_right_gen=true, normalize_facto
 # @info eigs_r
 @test equal_up_to_cutoff(eigs_l[5], eigs_r[5]; cutoff=1e-12, rtol=1e-12)
 @test equal_up_to_cutoff(eigs_l[10], eigs_r[10]; cutoff=1e-12, rtol=1e-12)
-@test equal_up_to_cutoff(eigs_l[15], eigs_r[15]; cutoff=1e-12, rtol=1e-12)
+@test equal_up_to_cutoff(eigs_l[14], eigs_r[14]; cutoff=1e-12, rtol=1e-12)
 # @test eigs_l ≈ eigs_r 
 
 

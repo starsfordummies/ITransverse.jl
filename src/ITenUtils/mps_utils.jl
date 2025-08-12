@@ -132,115 +132,12 @@ function replace_linkinds!(psi::MPS, newtags::String="")
 end
 
 
-""" TODO have a look at this if we can do better """
-function extend_mps(in_mps::MPS, new_sites)
-
-    new_mps = deepcopy(in_mps)
-
-    # add trivial link to the last matrix of in_mps
-    last_mat = new_mps[end]
-    lastinds = inds(last_mat)
-    last_r = Index(1, "Link,l="*string(length(in_mps)))
-    new_mps[end] = ITensor(last_mat.tensor.storage.data, (lastinds,last_r))
-
-
-    # add one matrix at the end 
-    new_last = ITensor(2., last_r, new_sites[end])
-
-    push!(new_mps.data, new_last)
-
-    return new_mps
-
-end
-
 function extend_sites(old_sites::Vector{<:Index}, sitetype::String, sitetags::String)
     new_sites = copy(old_sites)
     final_site = addtags(siteind(sitetype, length(old_sites)+1), sitetags)
 
     push!(new_sites, final_site)
     return new_sites
-end
-
-
-function extend_mps_factorize(in_mps::MPS; site_type::String="S=1/2", tags::String="")
-
-    new_sites = extend_sites(siteinds(in_mps), site_type, tags)
-    lastinds = inds(in_mps[end])
-
-    last_mat = in_mps[end] * ITensor(1., new_sites[end])
-
-    a, b =  factorize(last_mat, lastinds, tags="v", cutoff=1e-14)
-
-    new_mps = deepcopy(in_mps)
-
-    new_mps[end] = a
-    push!(new_mps.data, b)
-    
-    return new_mps
-
-end
-
-
-
-
-function extend_mps_factorize(in_mps::MPS, new_sites::Vector{<:Index}) 
-
-    @assert length(new_sites) == length(in_mps) + 1 
-
-    lastinds = inds(in_mps[end])
-
-    last_mat = in_mps[end] * ITensor(1., new_sites[end])
-
-    # u,s,vd = svd(last_mat, lastinds, lefttags="Link,l=$(length(in_mps))", righttags="Link,l=$(length(in_mps))", cutoff=1e-14)
-    # u_sqs = u * sqrt.(s) 
-    # sqs_vd = sqrt.(s) * vd 
-
-    #a, b =  factorize(last_mat, lastinds, tags="Link,l=$(length(in_mps))", cutoff=1e-14)
-    a, b =  factorize(last_mat, lastinds, tags="v", cutoff=1e-14)
-
-
-    new_mps = deepcopy(in_mps)
-
-    # for ii in eachindex(new_mps)
-    #     replace_siteinds!(new_mps[ii], new_sites[ii])
-    # end
-    # for ii in eachindex(in_mps)
-    #     replaceind!(in_mps[ii], siteinds(in_mps)[ii], new_sites[ii])
-    # end
-
-    new_mps[end] = a
-    push!(new_mps.data, b)
-    
-    replace_siteinds!(new_mps, new_sites)
-
-    return new_mps
-
-end
-
-function extend_mps_v(in_mps::MPS, new_sites::Vector{<:Index})
-
-    new_mps = deepcopy(in_mps)
-
-    # add trivial link to the last matrix of in_mps
-    last_mat = new_mps[end]
-    lastinds = inds(last_mat)
-    last_l = linkinds(in_mps)[end]
-    last_r = Index(1, "v")
-    println(last_l, new_sites[end-1], last_r)
-    new_mps[end] = ITensor(last_mat.tensor.storage.data, (last_l, new_sites[end-1],last_r))
-
-
-    # add one matrix at the end 
-    new_last = ITensor(1., last_r, new_sites[end])
-
-    push!(new_mps.data, new_last)
-
-    # just to be sure.. (inplace?)
-    replace_siteinds(new_mps,new_sites)
-
-    @assert siteinds(new_mps) == new_sites
-    return new_mps
-
 end
 
 
@@ -264,25 +161,6 @@ function normbyfactor(psi::AbstractMPS, factor::Number )
     return psic
 
 end
-
-""" Shorthand for simple apply(alg="naive", truncate=false) """
-function applyn(O::MPO, psi::AbstractMPS; kwargs...)
-    replaceprime(contractn(O, psi; kwargs...),  1 => 0)
-end
-
-
-""" Shorthand for apply + swap indices """
-function applys(O::MPO, psi::AbstractMPS; cutoff=nothing, maxdim=nothing)
-    #apply(swapprime(O, 0, 1, "Site"), psi; cutoff, maxdim)
-    psiO = contract(O, prime(siteinds,psi);  cutoff, maxdim)
-end
-
-""" Shorthand for apply with no truncation + swap indices """
-function applyns(O::MPO, psi::AbstractMPS; kwargs...)
-    #apply(swapprime(O, 0, 1, "Site"), psi, alg="naive", truncate=false)
-    replaceprime(contractn(O, prime(siteinds,psi); kwargs...), 1 => 0)
-end
-
 
 function ITensorMPS.replace_siteinds!(M::MPO, sites)
     for j in eachindex(M)
@@ -388,61 +266,13 @@ end
 
 
 
-""" If we have dangling tensors at the right edge of an MPS """
-function contract_dangling!(psi::AbstractMPS)
-    while ndims(psi[end]) == 1 && hascommoninds(psi[end], psi[end-1])
-        psi[end-1] = psi[end] * psi[end-1]
-        pop!(psi.data)
-    end
-end
-
-
-""" Copied from ITensorMPS but adapted so that it can also extend """
-function contractn(A::MPO, ψ::MPS; truncate=false, kwargs...)
-
-    @assert length(A) >= length(ψ)
-
-    A = sim(linkinds, A)
-    ψ = sim(linkinds, ψ)
-
-    N = max(length(A), length(ψ)) 
-    n = min(length(A), length(ψ))
-
-    ψ_out = typeof(ψ)(N)
-    for j in 1:n
-        ψ_out[j] = A[j] * ψ[j]
-    end
-    for j = n+1:N
-        ψ_out[j] = A[j] 
-    end
-
-    for b in 1:(N - 1)
-        Al = linkinds(A, b)  #commoninds(A[b], A[b + 1])
-        ψl = linkinds(ψ, b) #   commoninds(ψ[b], ψ[b + 1])
-        l = [Al..., ψl...]
-        if !isempty(l)
-            C = combiner(l)
-            ψ_out[b] *= C
-            ψ_out[b + 1] *= dag(C)
-        end
-    end
-
-    contract_dangling!(ψ_out)
-
-    if truncate
-        truncate!(ψ_out; kwargs...)
-    end
-
-    return ψ_out
-end
-
 function check_mps_sanity(psi::MPS)
     good = if length(siteinds(psi)) != length(psi.data)
         @warn "length/sites: $(length(siteinds(psi))) != $(length(psi.data))"
         false
     elseif length(linkinds(psi)) != length(psi.data)-1
         false
-    elseif ndims(psi[1]) != 2 && ndims(psi[end]) != 2 && all(x -> x == 3, ndims(psi[2:end-1]))
+    elseif ndims(psi[1]) != 2 || ndims(psi[end]) != 2 || !all(x -> ndims(x) == 3, psi[2:end-1])
         false
     else
         true
