@@ -26,9 +26,9 @@ final_state = up_state
 Pfinal = kron(final_state, final_state)
 
 
-mpo_fw =          fw_tMPO(b, time_sites; tr = final_state)
-left_mps =   fw_left_tMPS(b, time_sites; tr = final_state)
-right_mps = fw_right_tMPS(b, time_sites; tr = final_state)
+mpo_fw =    fw_tMPO(b, time_sites; tr = final_state)
+left_mps =  fw_tMPS(b, time_sites; LR=:left, tr = final_state)
+right_mps = fw_tMPS(b, time_sites; LR=:right, tr = final_state)
 
 # Contract unfolded network 
 ll = left_mps

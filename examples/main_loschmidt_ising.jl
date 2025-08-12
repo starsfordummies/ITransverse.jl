@@ -40,7 +40,7 @@ function ising_loschmidt(tp::tMPOParams, Tstart::Int, Tend::Int, nbeta::Int; Tst
         time_sites = addtags(siteinds("S=1/2", Nsteps; conserve_qns=false), "time")
 
         mpo = fw_tMPO(b, time_sites, tr=tp.bl)
-        start_mps = fw_right_tMPS(b, time_sites, tr=tp.bl)
+        start_mps = fw_tMPS(b, time_sites; tr=tp.bl, LR=:right)
 
         psi_trunc, ds2 = powermethod_sym(start_mps, mpo, pm_params)
 

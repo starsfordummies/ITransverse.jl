@@ -20,7 +20,7 @@ b = FwtMPOBlocks(tp)
 
 
 mpo= fw_tMPO(b, time_sites; tr = tp.bl)
-start_mps = fw_right_tMPS(b, time_sites; tr = tp.bl)
+start_mps = fw_tMPS(b, time_sites; LR=:right, tr = tp.bl)
 
 mycutoff=1e-12
 itermax=600

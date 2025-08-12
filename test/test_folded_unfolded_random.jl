@@ -34,8 +34,8 @@ bf = FoldtMPOBlocks(random_eh, init_state=init_statef)
 
 
 mpo_fw =          fw_tMPO(b, time_sites; tr = up_state)
-left_mps =   fw_left_tMPS(b, time_sites; tr = up_state)
-right_mps = fw_right_tMPS(b, time_sites; tr = up_state)
+left_mps =   fw_tMPS(b, time_sites; LR=:left, tr = up_state)
+right_mps = fw_tMPS(b, time_sites; LR=:right, tr = up_state)
 
 mpo_fold =         folded_tMPO(bf, time_sites_fold, fold_op = Pz)
 left_fold =   folded_left_tMPS(bf, time_sites_fold, fold_op = Pz)

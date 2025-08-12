@@ -30,7 +30,7 @@ Nsteps = 10+2
 time_sites = addtags(siteinds("S=1/2", Nsteps; conserve_qns=false), "time")
 
 tmpo = fw_tMPO(b, time_sites; tr=init_state)
-start_mps = fw_right_tMPS(b, time_sites; tr=init_state)
+start_mps = fw_tMPS(b, time_sites; tr=init_state, LR=:right)
 
 vL = Index(5) 
 vR = Index(5)
