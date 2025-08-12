@@ -21,7 +21,6 @@ end
 """ Forward tMPO with open top (=right, after rotation) leg, so we can plug anything afterwards """
 function fw_tMPO_opentr(b::FwtMPOBlocks, time_sites::Vector{<:Index};  bl::ITensor = b.tp.bl, init_beta_only::Bool=false)
 
-
     Ntot = length(time_sites)
 
     (; tp, Wc, Wc_im, rot_inds) = b
@@ -207,6 +206,15 @@ function fw_tMPS(
     Ntot = length(time_sites)
 
     @assert nbeta <= Ntot
+
+    if Ntot == 1
+        W = LR == :right ? b.Wr : b.Wl
+        phys_ind =  LR == :right ? b.rot_inds[:Ps] : b.rot_inds[:P]
+        @assert nbeta == 0 # or we need to think more 
+        A = replaceinds(W, (b.rot_inds[:L], b.rot_inds[:R], phys_ind), (inds(bl)[1], inds(tr)[1], time_sites[1]))
+        A *= bl 
+        return MPS([A*tr])
+    end
 
     b1 = if init_beta_only 
         nbeta

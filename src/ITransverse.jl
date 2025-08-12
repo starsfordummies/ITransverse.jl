@@ -98,8 +98,7 @@ include("tmpo/build_fw_tmpo.jl")
 #from build_tmpo_[fw|expval].jl
 export 
     fw_tMPO, 
-    fw_right_tMPS, 
-    fw_left_tMPS
+    fw_tMPS
 
 include("tmpo/build_fold_tmpo.jl")
 
