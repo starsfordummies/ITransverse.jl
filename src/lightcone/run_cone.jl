@@ -8,6 +8,7 @@ end
 
 function init_cone(b::FoldtMPOBlocks, n::Int=10)
 
+    @assert b.tp.nbeta == 0  # not implemented yet otherwise
     time_dim = dim(b.WWc,1)
     
     ts = [Index(time_dim, tags="Site,n=1,time_fold")]

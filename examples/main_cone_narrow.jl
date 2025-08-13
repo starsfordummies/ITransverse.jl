@@ -8,8 +8,8 @@ using ITransverse: vX, vZ, vI, plus_state, up_state
 function main_cone()
 
     JXX = 1.0  
-    hz = 0.4 # 1.05
-    gx = 0.0 # 0.5
+    hz = -1.05 # 0.4
+    gx = 0.5 # 0.0
 
     dt = 0.1
 
@@ -25,7 +25,9 @@ function main_cone()
     
     truncp = TruncParams(cutoff, maxbondim, direction)
 
-    Nsteps = 50
+    Nsteps = 80
+
+    n_ext = 4
 
     #time_sites = siteinds("S=3/2", 1)
 
@@ -35,11 +37,11 @@ function main_cone()
 
     c0, b = init_cone(tp)
     #RTM_R
-    cone_params = ConeParams(;truncp, opt_method="RTM_R", optimize_op, 
+    cone_params = ConeParams(;truncp, opt_method="RDM", optimize_op, 
         which_evs=["X","Z"], 
-        which_ents=["VN","GENVN","GENR2","GENR2_Pz","GENVN_Pz"],
+        which_ents=["VN"], # ,"GENVN","GENR2"],
         checkpoint=1000,
-        vwidth=3)
+        vwidth=n_ext)
 
     psi, psiR, chis, expvals, entropies, infos, last_cp = run_cone(c0, b, cone_params, Nsteps)
 
@@ -49,5 +51,6 @@ end
 
 psi, psiR, chis, expvals, entropies, infos, last_cp = main_cone()
 
+println(infos[:times])
 println(chis)
 println(real(expvals["Z"]))

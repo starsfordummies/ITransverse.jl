@@ -40,6 +40,7 @@ function tebd(psi0::MPS, tp::tMPOParams, Nt::Int, truncp::TruncParams)
     dt = 0.1
 
     eH = tp.expH_func(siteinds(psi0), tp.mp, tp.dt)
+    eH = adapt(mapreduce(NDTensors.unwrap_array_type, promote_type, psi0), eH)
 
     psi_t = deepcopy(psi0)
 

@@ -2,16 +2,16 @@ using ITensors, ITensorMPS
 using ITransverse
 using Plots
 
-JXX = -1.0
-hz = 1.05
-gx = -0.5
+JXX = 1.0
+hz = -1.05
+gx = 0.5
 #H= JXX - 2.0 * 0.525 Z + 2 * 0.25 X
-dt = 0.10
+dt = 0.1
 
 # zero_state = Vector{ComplexF64}([1, 0])
 # plus_state = Vector{ComplexF64}([1 / sqrt(2), 1 / sqrt(2)])
 
-init_state = ITransverse.plus_state
+init_state = ITransverse.up_state
 #init_state = zero_state
 
 nbeta = 0
