@@ -6,7 +6,7 @@ function init_cone(tp::tMPOParams, n::Int=3)
     init_cone(b, n)
 end
 
-function init_cone(b::FoldtMPOBlocks, n::Int=3)
+function init_cone(b::FoldtMPOBlocks, n::Int=10)
 
     time_dim = dim(b.WWc,1)
     
@@ -18,6 +18,7 @@ function init_cone(b::FoldtMPOBlocks, n::Int=3)
         push!(ts, Index(time_dim, tags="Site,n=$(jj),time_fold"))
         m = folded_tMPO_ext(b,ts; LR="R")
         psi = applyn(m, psi)
+        orthogonalize!(psi, length(psi))
     end
 
     return psi, b
