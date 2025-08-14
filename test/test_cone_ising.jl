@@ -28,7 +28,7 @@ maxbondim = 200
 
 truncp = TruncParams(cutoff, maxbondim)
 
-Nsteps = 10
+Nsteps = 20
 
 mp = IsingParams(JXX, hz, gx)
 tp = tMPOParams(dt, build_expH_ising_murg, mp, nbeta, init_state)
@@ -52,6 +52,12 @@ _, _, _, expvals_lr, _, _, _ = run_cone(c0, b, cone_params, Nsteps)
 cone_params = ConeParams(;truncp, opt_method="RTM_R", optimize_op, which_evs=["X","Z","XX"], checkpoint=0)
 _, _, _, expvals_r, _, _, _ = run_cone(c0, b, cone_params, Nsteps)
 @test abs(expvals_lr["X"][end] - expvals_r["X"][end]) < 1e-6
+@show(expvals_r["X"][end])
+
+
+cone_params = ConeParams(;truncp, opt_method="RTM_R", optimize_op, which_evs=["X","Z","XX"], checkpoint=0, vwidth=2)
+_, _, _, expvals_r, _, _, _ = run_cone(c0, b, cone_params, Nsteps)
+@test abs(expvals_lr["X"][end] - expvals_r["X"][end]) < 1e-3
 @show(expvals_r["X"][end])
 
 end

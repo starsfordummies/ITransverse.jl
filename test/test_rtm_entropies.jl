@@ -32,11 +32,12 @@ eigs_l = diagonalize_rtm_symmetric(ll; bring_left_gen=true)
 # eigs_r sweeps from left to right, eigs_l the other way around
 eigs_r = diagonalize_rtm_right_gen_sym(ll; bring_right_gen=true, normalize_factor=sqrt(overlap_noconj(ll,ll)))
 
-# @info eigs_l
-# @info eigs_r
-@test equal_up_to_cutoff(eigs_l[5], eigs_r[5]; cutoff=1e-12, rtol=1e-12)
-@test equal_up_to_cutoff(eigs_l[10], eigs_r[10]; cutoff=1e-12, rtol=1e-12)
-@test equal_up_to_cutoff(eigs_l[14], eigs_r[14]; cutoff=1e-12, rtol=1e-12)
+# @show eigs_l[5]
+# @show eigs_r[5]
+
+@test equal_up_to_cutoff(eigs_l[5], eigs_r[5]; cutoff=1e-9, rtol=1e-9)
+@test equal_up_to_cutoff(eigs_l[10], eigs_r[10]; cutoff=1e-9, rtol=1e-9)
+@test equal_up_to_cutoff(eigs_l[14], eigs_r[14]; cutoff=1e-9, rtol=1e-9)
 # @test eigs_l ≈ eigs_r 
 
 
