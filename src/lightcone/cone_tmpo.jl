@@ -91,11 +91,17 @@ rho0-o--o--o--o--o-fold_op
 
 
 """ tMPO with n_edge boundary tensors. The new time sites `ts` must be already of the (extended) length """
-function folded_tMPO_ext(b::FoldtMPOBlocks, ts::Vector{<:Index}; LR::String, n_ext::Int=1, fold_op = nothing)
+function folded_tMPO_ext(b::FoldtMPOBlocks, ts::Vector{<:Index}; LR::Symbol, n_ext::Int=1, fold_op = nothing)
     @assert b.tp.nbeta + n_ext < length(ts) # extending on imag time not implemented yet
     (; WWc, WWc_im, WWl, WWr) = b 
 
-    WWedge = LR == "L" ? WWl : WWr
+    WWedge = if LR == :left
+        WWl 
+    elseif LR == :right 
+        WWr
+    else
+        error("Inalid LR =  ($(LR))  use :left or :right " )
+    end
 
     #match indices for real-imag so it's easier to work with them 
     replaceinds!(WWc_im, inds(WWc_im), inds(WWc))

@@ -18,6 +18,7 @@ function applyns(O::MPO, psi::AbstractMPS; kwargs...)
 end
 
 
+
 """ If we have dangling tensors at the right edge of an MPS """
 function contract_dangling!(psi::AbstractMPS)
     while length(psi) > 1 && ndims(psi[end]) == 1 && hascommoninds(psi[end], psi[end-1]) 
