@@ -8,27 +8,27 @@ using ITransverse: vX, vZ, vI, plus_state, up_state
 function main_cone()
 
     JXX = 1.0  
-    hz = 1.0 # 1.05
-    gx = 0.5 # 0.5
+    hz = 0.4 # 1.05
+    gx = 0.0 # 0.5
 
     dt = 0.1
 
     nbeta = 0
 
     optimize_op = vZ
+    init_state = up_state
+
 
     #up_state = Vector{ComplexF64}([1,0])
     #plus_state = Vector{ComplexF64}([1/sqrt(2),1/sqrt(2)])
 
-    init_state = up_state
-
     cutoff = 1e-10
-    maxbondim = 256
+    maxbondim = 4
     direction = "right"
 
     truncp = TruncParams(cutoff, maxbondim, direction)
 
-    Nsteps = 20
+    Nsteps = 60
 
     #time_sites = siteinds("S=3/2", 1)
 
@@ -37,6 +37,8 @@ function main_cone()
     tp = tMPOParams(dt, ITransverse.ChainModels.build_expH_ising_symm_svd, mp, nbeta, init_state)
 
     c0, b = init_cone(tp)
+
+    #@info length(c0)
 
     cone_params = ConeParams(;truncp, opt_method="RDM", optimize_op, which_evs=["X","Z"], which_ents=["VN"], checkpoint=20)
 

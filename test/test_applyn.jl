@@ -10,11 +10,11 @@ ss = siteinds(4, 10)
 
 n_ext = 3 
 
-oooR = ITransverse.folded_tMPO_ext(b, ss; LR="R", n_ext, fold_op=[1,0,0,-1])
+oooR = ITransverse.folded_tMPO_ext(b, ss; LR=:right, n_ext, fold_op=[1,0,0,-1])
 @test count(isempty, siteinds(oooR,plev=0)) == n_ext
 @test count(isempty, siteinds(oooR,plev=1)) == 0
 
-oooL = ITransverse.folded_tMPO_ext(b, ss; LR="L", n_ext, fold_op=[1,0,0,-1])
+oooL = ITransverse.folded_tMPO_ext(b, ss; LR=:left, n_ext, fold_op=[1,0,0,-1])
 @test count(isempty, siteinds(oooL,plev=1)) == n_ext
 @test count(isempty, siteinds(oooL,plev=0)) == 0
 
@@ -56,7 +56,7 @@ ss = siteinds(4, 2)
 psiR = random_mps(ss, linkdims=20)
 psiR.llim
 psiR.rlim
-oooL = ITransverse.folded_tMPO_ext(b, ss; LR="L", n_ext=1, fold_op=[1,0,0,1])
+oooL = ITransverse.folded_tMPO_ext(b, ss; LR=:left, n_ext=1, fold_op=[1,0,0,1])
 
 kk = applyn(oooL,psiR)
 
@@ -72,7 +72,7 @@ kk.rlim
 ss = siteinds(4, 10)
 
 psiL = random_mps(ss, linkdims=20)
-oooR = ITransverse.folded_tMPO_ext(b, ss; LR="R", n_ext=3, fold_op=[1,0,0,-1])
+oooR = ITransverse.folded_tMPO_ext(b, ss; LR=:right, n_ext=3, fold_op=[1,0,0,-1])
 psiR = random_mps(ss[1:end-3], linkdims=20)
 
 expval_LR(psiL, oooR, psiR)

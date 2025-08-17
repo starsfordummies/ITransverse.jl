@@ -1,12 +1,12 @@
 """ Initializes the light cone folded and rotated temporal MPS |R> given `tMPOParams`
 builds a (length n) tMPS with (time_fold)  legs.
 Returns (psi[the light cone right MPS], b[the folded tMPO building blocks])"""
-function init_cone(tp::tMPOParams, n::Int=3)
+function init_cone(tp::tMPOParams, n::Int=10)
     b = FoldtMPOBlocks(tp)
     init_cone(b, n)
 end
 
-function init_cone(b::FoldtMPOBlocks, n::Int=10)
+function init_cone(b::FoldtMPOBlocks, n::Int)
 
     @assert b.tp.nbeta == 0  # not implemented yet otherwise
     time_dim = dim(b.WWc,1)
@@ -17,7 +17,7 @@ function init_cone(b::FoldtMPOBlocks, n::Int=10)
 
     for jj = 2:n
         push!(ts, Index(time_dim, tags="Site,n=$(jj),time_fold"))
-        m = folded_tMPO_ext(b,ts; LR="R")
+        m = folded_tMPO_ext(b,ts; LR=:right)
         psi = applyn(m, psi)
         orthogonalize!(psi, length(psi))
     end
@@ -103,8 +103,11 @@ function run_cone(psi::MPS,
             elseif opt_method == "RTM_R"
                 _,rr, ents = extend_tmps_cone(ll, optimize_op, Id, rr, ts, b, truncp)
                 ll = rr
+            elseif opt_method == "RTM_L1O1R"
+                _,rr, ents = extend_tmps_cone(ll, optimize_op, rr, ts, b, truncp)
+                ll = rr
             elseif opt_method == "RDM" # TODO Non-symmetric case with RDM ?
-                tmpo = folded_tMPO_ext(b, ts; LR="R", n_ext=vwidth)
+                tmpo = folded_tMPO_ext(b, ts; LR=:right, n_ext=vwidth)
                 rr = applyn(tmpo,rr; truncate=true, cutoff=truncp.cutoff, maxdim=truncp.maxbondim)
                 ll = rr
             else

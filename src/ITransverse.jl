@@ -105,9 +105,9 @@ include("tmpo/build_fold_tmpo.jl")
 #from build_fold_tmpo.jl
 export 
      folded_tMPO,
+     folded_tMPS,
      folded_left_tMPS,
-     folded_right_tMPS,
-     folded_right_tMPS_in_murg
+     folded_right_tMPS
 
    #  apply_extend
     

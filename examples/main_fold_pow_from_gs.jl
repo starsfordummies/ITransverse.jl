@@ -59,7 +59,7 @@ function main_folded_pm()
         mpo_1 = folded_tMPO_in(b, time_sites)
 
         
-        init_mps = folded_right_tMPS_in_murg(mpo_1)
+        init_mps = ITransverse.folded_right_tMPS_in_murg(mpo_1)
 
 
         rr, ll, ds2_pm  = powermethod_op(init_mps, mpo_1, mpo_X, pm_params) 

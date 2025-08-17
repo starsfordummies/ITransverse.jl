@@ -119,8 +119,8 @@ function expval_LR_ops(ll::MPS, rr::MPS, ops::MPO, b::FoldtMPOBlocks)
     time_sites_R = siteinds(rr)
     push!(time_sites_R, new_timesite)
 
-    tMPO1= folded_tMPO_ext(b, time_sites_L, LR="L")
-    tMPO2= folded_tMPO_ext(b, time_sites_R; LR="R")
+    tMPO1= folded_tMPO_ext(b, time_sites_L, LR=:left)
+    tMPO2= folded_tMPO_ext(b, time_sites_R; LR=:right)
 
     e1 = ops[1] * delta(siteind(ops,1), linkinds(tMPO1)[end])
     e2 = ops[2] * delta(siteind(ops,2), linkinds(tMPO2)[end])

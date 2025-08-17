@@ -32,7 +32,7 @@ maxbondim = 200
 
 truncp = TruncParams(cutoff, maxbondim)
 
-Nsteps = 20
+Nsteps = 30
 
 mp = IsingParams(JXX, hz, gx)
 tp = tMPOParams(dt, build_expH_ising_symm_svd, mp, nbeta, init_state)
@@ -43,7 +43,7 @@ H = build_H_ising(ss,mp)
 
 
 state = tdvp(
-    H, -2.0im, psi0; time_step=-0.1im, cutoff=1e-12, (step_observer!)=obs, outputlevel=1
+    H, -3.0im, psi0; time_step=-0.1im, cutoff=1e-12, (step_observer!)=obs, outputlevel=1
   )
 
 c0,b = init_cone(tp)
@@ -52,8 +52,8 @@ cone_params = ConeParams(;truncp, opt_method="RDM", optimize_op, which_evs=["X",
 psi, psiR, chis, expvals, entropies, infos, last_cp = run_cone(c0, b, cone_params, Nsteps)
 #@show expvals["Z"]
 
-@info norm(expvals["Z"] - obs.Z[4:end])
-@test norm(expvals["Z"] - obs.Z[4:end]) < 0.05
+@info norm(expvals["Z"] - obs.Z[11:end])
+@test norm(expvals["Z"] - obs.Z[11:end]) < 0.05
 
 expvals["Z"]
-obs.Z[4:end]
+obs.Z[11:end]
