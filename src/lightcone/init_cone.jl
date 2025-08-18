@@ -6,17 +6,17 @@ function init_cone(tp::tMPOParams, n::Int=10)
     init_cone(b, n)
 end
 
-function init_cone(b::FoldtMPOBlocks, n::Int; ts=nothing)
+function init_cone(b::FoldtMPOBlocks, n::Int; LR::Symbol=:right)
 
     @assert b.tp.nbeta == 0  # not implemented yet otherwise
     time_dim = dim(b.WWc,1)
     
-    ts = something(ts, addtags(siteinds(time_dim, n; conserve_qns=false), "time_fold"))
+    ts = addtags(siteinds(time_dim, n; conserve_qns=false), "time_fold")
 
-    psi = folded_right_tMPS(b, ts[1])
+    psi = folded_tMPS(b, [ts[1]]; LR)
 
     for jj = 2:n
-        m = folded_tMPO_ext(b,ts[1:jj]; LR=:right)
+        m = folded_tMPO_ext(b,ts[1:jj]; LR)
         psi = applyn(m, psi)
         orthogonalize!(psi, length(psi))
     end
@@ -24,4 +24,46 @@ function init_cone(b::FoldtMPOBlocks, n::Int; ts=nothing)
     return psi, b
 end
 
+
+function init_cone(b::FoldtMPOBlocks, ts::Vector{Index{Int64}}; LR::Symbol=:right)
+
+    @assert b.tp.nbeta == 0  # not implemented yet otherwise
+    time_dim = dim(b.WWc,1)
+    
+    psi = folded_tMPS(b, [ts[1]]; LR)
+
+    for jj = 2:length(ts)
+        m = folded_tMPO_ext(b,ts[1:jj]; LR)
+        psi = applyn(m, psi)
+        orthogonalize!(psi, length(psi))
+    end
+
+    return psi, b
+end
+
+
+
+#= Equivalent, useful for debugging ? 
+function init_cone_alt(tp::tMPOParams, n::Int=10)
+    b = FoldtMPOBlocks(tp)
+    init_cone_alt(b, n)
+end
+function init_cone_alt(b::FoldtMPOBlocks, n::Int; LR::Symbol=:right)
+    @assert b.tp.nbeta == 0  # not implemented yet otherwise
+    time_dim = dim(b.WWc,1)
+    
+    ts = addtags(siteinds(time_dim, n; conserve_qns=false), "time_fold")
+
+    psi = folded_tMPS(b, ts; LR)
+
+    for jj = 2:n
+        m = folded_tMPO(b,ts)
+        psi = applyn(m, psi)
+        orthogonalize!(psi, length(psi))
+        orthogonalize!(psi, 1)
+    end
+
+    return psi, b
+end
+=#
 

@@ -2,14 +2,16 @@ using ITensors, ITensorMPS, JLD2
 using ITransverse.ITenUtils
 #using Plots
 
+using ProgressMeter 
+
 using ITransverse
 using ITransverse: vX, vZ, vI, plus_state, up_state
 
 function main_cone()
 
     JXX = 1.0  
-    hz = -1.05 # 0.4
-    gx = 0.5 # 0.0
+    hz = 0.4 # 0.4
+    gx = 0.0 # 0.0
 
     dt = 0.1
 
@@ -25,7 +27,7 @@ function main_cone()
     
     truncp = TruncParams(cutoff, maxbondim, direction)
 
-    Nsteps = 80
+    Nsteps = 40
 
     n_ext = 4
 
@@ -35,9 +37,14 @@ function main_cone()
     #tp = tMPOParams(dt, build_expH_ising_murg, mp, nbeta, init_state, Id)
     tp = tMPOParams(dt, ITransverse.ChainModels.build_expH_ising_symm_svd, mp, nbeta, init_state)
 
-    c0, b = init_cone(tp)
+    c0, b = ITransverse.init_cone(tp)
+    @info linkdims(c0)
+    truncate!(c0, cutoff=1e-14)
+    @info linkdims(c0)
+
+
     #RTM_R
-    cone_params = ConeParams(;truncp, opt_method="RDM", optimize_op, 
+    cone_params = ConeParams(;truncp, opt_method="RTM_SKEW", optimize_op, 
         which_evs=["X","Z"], 
         which_ents=["VN"], # ,"GENVN","GENR2"],
         checkpoint=1000,

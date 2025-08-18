@@ -21,6 +21,8 @@ function run_cone(psi::MPS,
 
     (; opt_method, optimize_op, which_evs, which_ents, checkpoint, truncp, vwidth) = cp
 
+    #@show opt_method 
+
     fn_cp = nothing
 
     tp = b.tp
@@ -78,12 +80,15 @@ function run_cone(psi::MPS,
             elseif opt_method == "RTM_L1O1R"
                 _,rr, ents = extend_tmps_cone(ll, optimize_op, rr, ts, b, truncp)
                 ll = rr
+            elseif opt_method == "RTM_SKEW"
+                _,rr, ents = extend_tmps_skew(ll, optimize_op, rr, ts, b, truncp)
+                ll = rr
             elseif opt_method == "RDM" # TODO Non-symmetric case with RDM ?
                 tmpo = folded_tMPO_ext(b, ts; LR=:right, n_ext=vwidth)
                 rr = applyn(tmpo,rr; truncate=true, cutoff=truncp.cutoff, maxdim=truncp.maxbondim)
                 ll = rr
             else
-                error("no valid update method specified ($(opt_method)): use RTM_LR|RTM_R|RDM")
+                error("no valid update method specified ($(opt_method))")
             end
 
 
@@ -140,7 +145,7 @@ function run_cone(psi::MPS,
 
             if checkpoint > 0 && length(ll) > 50 && length(ll) % checkpoint == 0
                 fn_cp = "cp_cone_$(length(ll))_chi_$(chis[end]).jld2"
-                infos[:times] = length(ll) - length(expvals) : length(ll)
+                infos[:times_range] = length(ll) - length(expvals) : length(ll)
                 llcp = tocpu(ll)
                 rrcp = tocpu(rr)
                 jldsave(fn_cp; llcp, rrcp, chis, times, expvals, entropies, infos)
@@ -154,4 +159,3 @@ function run_cone(psi::MPS,
 
     return ll, rr, chis, expvals, entropies, infos, fn_cp
 end
-
