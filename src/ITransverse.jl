@@ -137,6 +137,8 @@ export ConeParams
 
 include("lightcone/extend_cone.jl")
 
+include("lightcone/init_cone.jl")
+
 include("lightcone/run_cone.jl")
 
 export init_cone, run_cone

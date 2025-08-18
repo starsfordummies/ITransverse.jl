@@ -1,31 +1,3 @@
-""" Initializes the light cone folded and rotated temporal MPS |R> given `tMPOParams`
-builds a (length n) tMPS with (time_fold)  legs.
-Returns (psi[the light cone right MPS], b[the folded tMPO building blocks])"""
-function init_cone(tp::tMPOParams, n::Int=10)
-    b = FoldtMPOBlocks(tp)
-    init_cone(b, n)
-end
-
-function init_cone(b::FoldtMPOBlocks, n::Int)
-
-    @assert b.tp.nbeta == 0  # not implemented yet otherwise
-    time_dim = dim(b.WWc,1)
-    
-    ts = [Index(time_dim, tags="Site,n=1,time_fold")]
-
-    psi = folded_right_tMPS(b, ts)
-
-    for jj = 2:n
-        push!(ts, Index(time_dim, tags="Site,n=$(jj),time_fold"))
-        m = folded_tMPO_ext(b,ts; LR=:right)
-        psi = applyn(m, psi)
-        orthogonalize!(psi, length(psi))
-    end
-
-    return psi, b
-end
-
-
 
 """ Given an MPO A and a MPS ψ, with length(A) = length(ψ)+1, 
 Extends MPS ψ to the *right* by one site by applying the MPO,
