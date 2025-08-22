@@ -21,6 +21,8 @@ function tebd_ev(Nx::Int, tp::tMPOParams, Nt::Int, ops::Vector{<:String}, truncp
     psi0 = pMPS(ss, tp.bl.tensor.storage)
     psi_t = deepcopy(psi0)
 
+    eH = adapt(mapreduce(NDTensors.unwrap_array_type, promote_type, psi0), eH)
+
     evs = dictfromlist(ops)
 
     chis = []
