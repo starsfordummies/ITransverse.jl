@@ -1,14 +1,24 @@
 """ Basic TEBD to compute the half-chain expectation value of an operator at a given time,
 starts with product state |+> """
-function tebd_ev(ss::Vector{<:Index}, tp::tMPOParams, Nt::Int, ops::Vector{<:String}, truncp::TruncParams)
+function tebd_ev(Nx::Int, tp::tMPOParams, Nt::Int, ops::Vector{<:String}, truncp::TruncParams)
 
     dt = 0.1
+
+
+    ss =  if  hastags(tp.mp.phys_site, "S=1/2")
+        siteinds("S=1/2", Nx)
+    elseif  hastags(tp.mp.phys_site, "S=1")
+        siteinds("S=1", Nx)
+    else
+        error("No good site type ? ")
+    end
+
 
     eH = tp.expH_func(ss, tp.mp, tp.dt)
     #eH = build_expH_ising_murg(ss, 1.0, 0.7, 0.8, dt)
 
     #initial state
-    psi0 = productMPS(ss, "+")
+    psi0 = pMPS(ss, tp.bl.tensor.storage)
     psi_t = deepcopy(psi0)
 
     evs = dictfromlist(ops)
@@ -56,5 +66,31 @@ function tebd(psi0::MPS, tp::tMPOParams, Nt::Int, truncp::TruncParams)
     end
 
     return psi_t
+
+end
+
+
+""" Basic TEBD to compute the half-chain expectation value of <Z> at a given time """
+function tebd_z(Nt::Int, tp::tMPOParams)
+
+    truncp = TruncParams()
+
+    #eH = build_expH_ising_murg(ss, 1.0, 0.7, 0.8, dt)
+
+    ss = siteinds("S=1/2", 2*Nt)
+    eH = tp.expH_func(ss, tp.mp, tp.dt)
+
+    #initial state
+    psi0 = pMPS(ss, tp.bl.tensor.storage)
+    psi_t = deepcopy(psi0)
+
+    LL = length(ss)
+
+    for nt = 1:Nt
+        # println("timestep N°=$(nt)\ttime=$(t)")
+        psi_t = apply(eH, psi_t; maxdim = truncp.maxbondim, cutoff = truncp.cutoff, normalize = true)
+    end
+    
+    return expect(psi_t, "Z")[LL÷2]
 
 end
