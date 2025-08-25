@@ -6,9 +6,9 @@ end
 
 
 """ Shorthand for apply + swap indices """
-function applys(O::MPO, psi::AbstractMPS; cutoff=nothing, maxdim=nothing)
+function applys(O::MPO, psi::AbstractMPS; kwargs...)
     #apply(swapprime(O, 0, 1, "Site"), psi; cutoff, maxdim)
-    psiO = contract(O, prime(siteinds,psi);  cutoff, maxdim)
+    psiO = contract(O, prime(siteinds,psi); kwargs...)
 end
 
 """ Shorthand for apply with no truncation + swap indices """
