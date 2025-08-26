@@ -23,11 +23,11 @@ function main_cone()
     maxbondim = 512
     direction = "left"
 
-    optimize_op = vI
+    optimize_op = vZ
     
     truncp = TruncParams(cutoff, maxbondim, direction)
 
-    Nsteps = 40
+    Nsteps = 80
 
     n_ext = 4
 
