@@ -37,14 +37,11 @@ include("eig_sym.jl")
 
 #include("symmsvd_iten.jl")
 
-include("bench_data.jl")
-
 include("sqrt_itensor.jl")
 
 include("ext_functions.jl")
 
 include("size_estimate.jl")
-include("environments.jl")
 
 include("vectorize_mpo.jl")
 

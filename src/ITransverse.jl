@@ -15,6 +15,9 @@ using .ITenUtils
 include("ChainModels/ChainModels.jl")
 using .ChainModels
 
+include("BenchData/BenchData.jl")
+using .BenchData
+
 # #from utils.jl
 export quick_mps, myrMPO, pMPS,
     overlap_noconj, 
