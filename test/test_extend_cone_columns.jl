@@ -9,7 +9,7 @@ using ITransverse
 using ITransverse: vX, vZ, vI, plus_state, up_state
 using ITransverse: build_cols_cone, contract_cols, initialize_envs_rdm, overlap_envs, extend_cone!
 
-#@testset "Environments for light cone" begin
+@testset "Environments for light cone" begin
     Nt = 3
 
     JXX = 1.0  
@@ -65,5 +65,4 @@ using ITransverse: build_cols_cone, contract_cols, initialize_envs_rdm, overlap_
     @test tebd_ext_ev ≈ envs_ext_ev rtol = 1e-6
     
     @test std_ext_ev < 1e-8
-
-#end
+end

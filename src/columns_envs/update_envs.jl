@@ -13,7 +13,6 @@ function sweep_rebuild_envs_rtm!(left_envs::Environments, right_envs::Environmen
     ll = normalize(ll)
     left_envs[1] = ll
 
-
     # Update Left envs using current {right_envs} as input
     for jj in 2:NN-2
 
