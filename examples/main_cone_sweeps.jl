@@ -47,7 +47,7 @@ function main_cone_sweeps(Nsteps::Int, n_ext::Int=2)
     all_values = []
     all_chis = []
 
-    for jj = 1:10
+    for jj = 1:Nsteps
 
         # Staggered extend cone seems to give most reliable results, while not the fastest 
         if n_ext > 1
@@ -76,4 +76,4 @@ function main_cone_sweeps(Nsteps::Int, n_ext::Int=2)
     return all_ts .* dt, all_values, all_chis
     end
 
-#times, expvals, chis = main_cone_sweeps(10, 2)
+times, expvals, chis = main_cone_sweeps(10, 2)

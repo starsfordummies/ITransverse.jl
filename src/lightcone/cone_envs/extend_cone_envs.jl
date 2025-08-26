@@ -10,8 +10,9 @@ function extend_cone!(b::FoldtMPOBlocks, cc::Columns, left_envs, right_envs; fol
     half = div(NN,2)+1
 
     ts = firstsiteinds(cc[half])
+    curr_t = length(ts)
     for jj = 1:vwidth
-        push!(ts, Index(dim(ts[end]), tags="Site,n=$(length(ts)+1),time"))
+        push!(ts, Index(dim(ts[end]), tags="Site,n=$(curr_t+jj),time"))
     end
 
     newL = folded_tMPO_ext(b, ts; LR=:left, n_ext=vwidth)
