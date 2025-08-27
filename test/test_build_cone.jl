@@ -13,7 +13,7 @@ for nn = 1:6
     push!(evs_X, expval_LR(c0,c0,[0,1,1,0], b))
 end
 
-@test norm(evs_X - ITransverse.ITenUtils.bench_X_04_plus[1:6]) < 1e-12
+@test norm(evs_X - ITransverse.BenchData.bench_X_04_plus[1:6]) < 1e-12
 end
 
 
