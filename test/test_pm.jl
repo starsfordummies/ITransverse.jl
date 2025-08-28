@@ -56,9 +56,9 @@ using Test
 
     final_time = length(ll)
 
-    Δ_LR = abs(ev1 - ITransverse.ITenUtils.bench_X_04_plus[final_time])
-    Δ_R  = abs(ev2 - ITransverse.ITenUtils.bench_X_04_plus[final_time])
-    Δ_RTE =abs(ev3 - ITransverse.ITenUtils.bench_X_04_plus[final_time])
+    Δ_LR = abs(ev1 - ITransverse.BenchData.bench_X_04_plus[final_time])
+    Δ_R  = abs(ev2 - ITransverse.BenchData.bench_X_04_plus[final_time])
+    Δ_RTE =abs(ev3 - ITransverse.BenchData.bench_X_04_plus[final_time])
  
     @test abs(ev1 - ev2) < 1e-8
     @test abs(ev1 - ev3) < 1e-3

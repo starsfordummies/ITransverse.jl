@@ -1,6 +1,5 @@
 """ Basic truncate sweeps based on RTM """
 
-
 """ 
 Left truncation sweep. 
 First brings to regular RIGHT ortho form,
@@ -194,15 +193,21 @@ end
 
 
 """ Generic sweep, calls left or right according to `truncp.direction` """
-function truncate_sweep(psi::MPS, phi::MPS, truncp::TruncParams)
-    if truncp.direction == "left"
-        #@info "initial state side sweep"
-        truncate_lsweep(psi, phi, truncp)
-    elseif truncp.direction == "right"
-        #@info "operator state side sweep"
-        truncate_rsweep(psi, phi, truncp)
+function truncate_sweep(psi::MPS, phi::MPS, truncp::TruncParams; method::String="RTM")
+
+    if method == "RDM"
+        truncate!(psi, cutoff=truncp.cutoff, maxdim=truncp.maxbondim)
+        truncate!(phi, cutoff=truncp.cutoff, maxdim=truncp.maxbondim)
     else
-        @error "Sweep direction should be left|right"
+        if truncp.direction == "left"
+            #@info "initial state side sweep"
+            truncate_lsweep(psi, phi, truncp)
+        elseif truncp.direction == "right"
+            #@info "operator state side sweep"
+            truncate_rsweep(psi, phi, truncp)
+        else
+            @error "Sweep direction should be left|right"
+        end
     end
 end
 
@@ -277,4 +282,3 @@ function truncate_rsweep!(psi::MPS, phi::MPS; cutoff::Real=1e-12, chi_max=nothin
     return ents_sites
 
 end
-

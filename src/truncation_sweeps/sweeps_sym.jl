@@ -66,7 +66,6 @@ function truncate_lsweep_sym(in_psi::MPS; cutoff::Float64, chi_max::Int, method:
         push!(ents_sites, scalar(-S*log.(S)))
     end
 
-
     An = XUinv * psi_ortho[end]
 
     overlap = An * An 
