@@ -18,7 +18,6 @@ using .ChainModels
 include("BenchData/BenchData.jl")
 using .BenchData
 
-# #from utils.jl
 export quick_mps, myrMPO, pMPS,
     overlap_noconj, 
     applyn, applyns, applys,
@@ -38,8 +37,6 @@ export truncate_lsweep, truncate_rsweep, truncate_rsweep!
 export truncate_lsweep_sym, truncate_rsweep_sym
 
 export gen_canonical_left, gen_canonical_right
-
-export check_gencan_left, check_gencan_right
 
 
 include("entropies/build_entropies.jl")
@@ -120,7 +117,8 @@ include("columns_envs/update_envs.jl")
 
 export Environments, 
     initialize_envs_rdm, 
-    sweep_rebuild_envs_rtm!
+    sweep_rebuild_envs_rtm!,
+    overlap_envs
 
 include("power_method/pm_params.jl")
 

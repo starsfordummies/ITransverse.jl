@@ -12,7 +12,7 @@ function build_cols_cone(b::FoldtMPOBlocks, Nt::Int; fold_op, vwidth::Int=1)
     ts = addtags(siteinds(4, Nt; conserve_qns=false), "time")
 
     # Fix the column lengths 
-    clens = col_lengths(Nt, vwidth)
+    clens = cone_col_lengths(Nt, vwidth)
     dclens = diff(clens)
 
   
@@ -39,7 +39,7 @@ function build_cols_cone(b::FoldtMPOBlocks, Nt::Int; fold_op, vwidth::Int=1)
 
 end
 
-function col_lengths(Nt::Int, vwidth::Int)
+function cone_col_lengths(Nt::Int, vwidth::Int)
     edge_length = mod(Nt, vwidth)  # remainder when dividing Nt by vwidth
     if edge_length == 0
         edge_length = vwidth  # if zero remainder, edge_length is vwidth

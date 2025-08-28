@@ -6,7 +6,7 @@ using Test
 
 using ITransverse
 using ITransverse: vX, vZ, vI, plus_state, up_state
-using ITransverse: build_cols_cone, contract_cols, initialize_envs_rdm, overlap_envs, extend_cone!
+using ITransverse: build_cols_cone, contract_cols, extend_cone!
 
 @testset "Environments for light cone" begin
     Nt = 3

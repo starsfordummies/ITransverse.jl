@@ -7,10 +7,12 @@ using ProgressMeter
 
 using ITransverse
 using ITransverse: vX, vZ, vI, plus_state, up_state
-using ITransverse: build_cols_cone, contract_cols, initialize_envs_rdm, overlap_envs, extend_cone!
+using ITransverse: build_cols_cone, contract_cols, extend_cone!
 
 
 function main_cone_sweeps(Nsteps::Int, n_ext::Int=2)
+
+    start_nt = 4 
 
     JXX = 1.0  
     hz = -1.05 # 1.05
@@ -35,7 +37,7 @@ function main_cone_sweeps(Nsteps::Int, n_ext::Int=2)
     # c0, b = init_cone(tp)
     b = FoldtMPOBlocks(tp)
 
-    cc = build_cols_cone(b, Nt; fold_op=optimize_op, vwidth=1)
+    cc = build_cols_cone(b, start_nt; fold_op=optimize_op, vwidth=1)
 
 
     left_envs, right_envs = initialize_envs_rdm(cc, truncp_tiny; verbose=false)

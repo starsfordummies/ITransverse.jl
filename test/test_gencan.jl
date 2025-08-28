@@ -1,4 +1,5 @@
 using ITensors, ITransverse
+using ITransverse: check_gencan_left, check_gencan_right
 using Test
 
 test_linkdim= 40 
