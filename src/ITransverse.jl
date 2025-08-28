@@ -38,7 +38,6 @@ export truncate_lsweep_sym, truncate_rsweep_sym
 
 export gen_canonical_left, gen_canonical_right
 
-
 include("entropies/build_entropies.jl")
 
 include("entropies/rdm_svd_entropies.jl")

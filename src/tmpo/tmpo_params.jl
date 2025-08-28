@@ -39,9 +39,16 @@ tMPOParams(x::tMPOParams;
 
 
 """ quick defaults for parallel field Ising, for playing around: J=1 hz=0.4, gx=0, init_state= |+> """
-function ising_tp() 
-    return tMPOParams(0.1, build_expH_ising_murg, IsingParams(1.0, 0.4, 0.0), 0, [1.0+0im,1]/sqrt(2))
+function ising_tp(;integrable::Bool=true) 
+    tp = if integrable
+         tMPOParams(0.1, build_expH_ising_murg, IsingParams(1.0, 0.4, 0.0),   0, [1.0+0im,1]/sqrt(2))
+    else
+        tMPOParams(0.1,  build_expH_ising_murg, IsingParams(1.0, -1.05, 0.5), 0, [1,0])
+    end
+
+    return tp
 end
+
 
 Adapt.adapt_structure(to, x::tMPOParams) = tMPOParams(
     x.dt,
