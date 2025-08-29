@@ -1,12 +1,10 @@
 #using Revise
-using ITensors, JLD2
+using ITensors, ITensorMPS, JLD2
 using Plots
 #using LaTeXStrings
 using ITransverse
 using ProgressMeter
 #using ITransverse.ITenUtils
-
-ITensors.enable_debug_checks()
 
 
 function main_folded_pm(itermax::Int,length_string::Int; ts::Int=10,Jxx::Float64=1.0,hz::Float64=0.9,hx::Float64=0.0)
@@ -14,10 +12,8 @@ function main_folded_pm(itermax::Int,length_string::Int; ts::Int=10,Jxx::Float64
     #If I understand correctly the Ising Hamiltonian is defined as Jxx XX + hz Z +hx X
 
     #tp = ising_tp()
-    tp = tMPOParams(0.1, build_expH_ising_murg, 
-    IsingParams(Jxx, hz, hx), 0, [1,0], [1,0,0,1])
-    tp_proj = tMPOParams(0.1, build_expH_ising_murg, 
-    IsingParams(Jxx, hz, hx), 0, [1,0], [1,0,0,0])
+    tp = tMPOParams(0.1, build_expH_ising_murg,  IsingParams(Jxx, hz, hx), 0, [1,0])
+    
     cutoff = 1e-12
     maxbondim = 120
     #length_string = 10
@@ -37,8 +33,6 @@ function main_folded_pm(itermax::Int,length_string::Int; ts::Int=10,Jxx::Float64
 
 
     tp = tMPOParams(tp; nbeta=4)
-    #tp = tMPOParams(tp;bl =[1,0,0,0])
-    tp_proj =  tMPOParams(tp_proj; nbeta=4)
 
     b = FoldtMPOBlocks(tp)
     
@@ -104,14 +98,10 @@ for ts in 30:30
 x_values = 1:2:length(evs) * 2 - 1  # Create x-axis values starting at 1, 3, 5, ...
 values_evs = [ev["Pz"] for ev in evs if haskey(ev, "Pz")]
 
-plot!(ppp, x_values, log.(-abs(values_evs).+1.),title="L = $total_lenght, Jxx=$Jxx, hz=$hz,hx=$hx" , xlabel=L"l_s=\text{lenght  string}", ylabel=L"\log(1-\langle Pz^{\otimes l_s} \rangle)", legend=true, label="ts = $ts",seriestype=:scatter, markershape=:circle, markercolor=:blue, markerstrokecolor=:blue, markerstrokewidth=2, markersize=5)
-plot!(ppp, x_values, log.(-abs(values_evs).+1.), seriestype=:line, linecolor=:black)
+#plot!(ppp, title="L = $total_lenght, Jxx=$Jxx, hz=$hz,hx=$hx" , xlabel="l_s=\text{lenght  string}", ylabel="\log(1-\langle Pz^{\otimes l_s} \rangle)")
+plot!(ppp, x_values, log.(-abs.(values_evs).+1.), legend=true, label="ts = $ts",seriestype=:scatter, markershape=:circle, markercolor=:blue, markerstrokecolor=:blue, markerstrokewidth=2, markersize=5)
+plot!(ppp, x_values, log.(-abs.(values_evs).+1.), seriestype=:line, linecolor=:black)
 
 end
 # Display the plot
 plot(ppp)
-
-
-
-
-

@@ -23,21 +23,42 @@ and contract with  the initial state `init_state` on the *left* and the operator
 
 
 
-""" Accepted kwargs: fold_op, outputlevel """ 
+""" Builds folded tMPO. Of the `ts` timesites, the first `b.tp.nbeta` ones are imaginary time ones.
+ Accepted kwargs: fold_op, outputlevel::Int, init_beta_only::Bool=true """ 
 function folded_tMPO(b::FoldtMPOBlocks, ts::Vector{<:Index}; kwargs...)
 
     outputlevel::Int = get(kwargs,:outputlevel, 0)
-    outputlevel > 1 && @info "Building folded tMPO for (im+real) $(b.tp.nbeta)+$(length(ts)-b.tp.nbeta) sites "
+    init_beta_only::Bool = get(kwargs,:init_beta_only, true)
 
     (; tp, WWc, WWc_im, rot_inds, rho0) = b
-    @assert tp.nbeta <= length(ts)
 
     #match indices for real-imag so it's easier to work with them 
     replaceinds!(WWc_im, inds(WWc_im), inds(WWc))
 
-    oo = MPO(fill(WWc, length(ts)))
+    Ntot = length(ts)
+    nbeta = tp.nbeta 
 
-    for ib = 1:tp.nbeta
+    b1 = if init_beta_only 
+        nbeta
+    else
+        @assert iseven(nbeta)
+        div(nbeta,2)
+    end
+
+    b2 = init_beta_only ? Ntot : Ntot - div(nbeta,2) 
+
+    if outputlevel > 1 
+        @info "Building folded tMPO for (im+real) $(nbeta)+$(Ntot-nbeta) sites "
+    end
+
+    @assert nbeta <= length(ts)
+
+    oo = MPO(fill(WWc, Ntot))
+
+    for ib = 1:b1
+        oo[ib] = WWc_im
+    end
+    for ib = b2+1:Ntot
         oo[ib] = WWc_im
     end
 
@@ -125,8 +146,7 @@ function folded_tMPO_doublebeta(b::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op:
     # TODO NEED TO UPDATE TO NEWER CONVENTIONS 
     @assert 2*b.tp.nbeta <= length(ts)
     (; WWc, WWc_im) = b 
-    #WWc = b.WWc
-    #WWc_im = b.WWc
+  
     #match indices for real-imag so it's easier to work with them 
     replaceinds!(WWc_im, inds(WWc_im), inds(WWc))
 

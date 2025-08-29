@@ -27,4 +27,3 @@ function resume_cone(checkpoint::String, nT_final::Int, run_on::String="CPU")
     return run_cone(psi, b, cp, nT_final)
     
 end
-
