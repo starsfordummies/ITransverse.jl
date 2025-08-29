@@ -73,9 +73,7 @@ end
 
 
 """ Basic TEBD to compute the half-chain expectation value of <Z> at a given time """
-function tebd_z(Nt::Int, tp::tMPOParams)
-
-    truncp = TruncParams()
+function tebd_z(Nt::Int, tp::tMPOParams; truncp=TruncParams())
 
     #eH = build_expH_ising_murg(ss, 1.0, 0.7, 0.8, dt)
 
