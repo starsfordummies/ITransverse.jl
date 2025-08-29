@@ -166,6 +166,8 @@ function compute_expvals(ll::AbstractMPS, rr::AbstractMPS, op_list::Vector{Strin
             allevs[op] = expval_LR(ll, rr, [0,1,1,0], [0,1,1,0], b)/ev_L11R
         elseif  op == "ZZ"
             allevs[op] = expval_LR(ll, rr, [1,0,0,-1], [1,0,0,-1], b)/ev_L11R
+        elseif  op == "Pz"
+            allevs[op] = expval_LR(ll, rr, [1,0,0,0], b)/ev_L11R
   
         else  # Basically all one-site operators should be handled by ITensors (+ appropriate overloading)
 
