@@ -1,4 +1,4 @@
-using ITensors, JLD2
+using ITensors
 using ITensorMPS
 using ITransverse
 using ITransverse: plus_state
@@ -10,7 +10,7 @@ gx = 0.0
 
 dt = 0.1
 
-nbeta = 1
+nbeta = 2
 
 init_state = plus_state
 #init_state = zero_state

@@ -1,22 +1,26 @@
-
-""" Shorthand for simple apply(alg="naive", truncate=false) """
-function applyn(O::MPO, psi::AbstractMPS; kwargs...)
-    replaceprime(contractn(O, psi; kwargs...),  1 => 0)
-end
-
-
 """ Shorthand for apply + swap indices """
 function applys(O::MPO, psi::AbstractMPS; kwargs...)
     #apply(swapprime(O, 0, 1, "Site"), psi; cutoff, maxdim)
     psiO = contract(O, prime(siteinds,psi); kwargs...)
 end
 
+
+""" Shorthand for simple apply(alg="naive", truncate=false) """
+function applyn(O::MPO, psi::MPS; kwargs...)
+    replaceprime(contractn(O, psi; kwargs...),  1 => 0)
+end
+""" Shorthand for simple apply(alg="naive", truncate=false) """
+function applyn(A::MPO, B::MPO; kwargs...)
+    apply(A, B, alg="naive", truncate=false)
+end
+
+
+
 """ Shorthand for apply with no truncation + swap indices """
-function applyns(O::MPO, psi::AbstractMPS; kwargs...)
+function applyns(O::MPO, psi::MPS; kwargs...)
     #apply(swapprime(O, 0, 1, "Site"), psi, alg="naive", truncate=false)
     replaceprime(contractn(O, prime(siteinds,psi); kwargs...), 1 => 0)
 end
-
 
 
 """ If we have dangling tensors at the right edge of an MPS """
@@ -67,3 +71,4 @@ function contractn(A::MPO, ψ::MPS; truncate=false, kwargs...)
 
     return ψ_out
 end
+

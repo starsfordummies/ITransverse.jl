@@ -127,18 +127,16 @@ function build_expH_ising_murg_new(sites::Vector{<:Index},
     Ux = MPO([op(eX, s) for s in siteinds(Uxx, plev=0)])
     Uz2 = MPO([op(eZ2, s) for s in siteinds(Uxx, plev=0)])
 
-    # Ux = MPO(ComplexF64, sites, n -> eX)
-    # Uz2 = MPO(ComplexF64, sites, n -> eZ2)
 
     # Multiply in order:  exp(iZ/2)*exp(iX)*exp(iXX)*exp(iZ/2)
     
-    U_t = applyn(Ux, Uz2) #apply( alg="naive")
+    U_t = apply(Ux, Uz2, alg="naive", truncate=false) 
     @show U_t[1].tensor
 
-    U_t = applyn(Uxx, U_t)
+    U_t = apply(Uxx, U_t, alg="naive", truncate=false) 
     @show U_t[1].tensor
 
-    U_t = applyn(Uz2, U_t)
+    U_t = apply(Uz2, U_t, alg="naive", truncate=false) 
     @show U_t[1].tensor
 
     @show Uxx[1].tensor

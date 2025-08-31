@@ -536,5 +536,3 @@ function build_expH_potts_symmetric_svd(in_space_sites,
     return U_t
 
 end
-
-

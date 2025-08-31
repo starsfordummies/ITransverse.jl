@@ -1,6 +1,5 @@
 using ITensors
 using ITensorMPS 
-using JLD2
 
 using ITransverse
 using ITransverse: vX, vZ, vI
@@ -62,7 +61,7 @@ function main_folded_pm()
         push!(evs, ev)
         push!(ds2s, ds2_pm)
 
-        push!(r2s, ITransverse.rtm2_contracted_normalized(ll, rr))
+        push!(r2s, ITransverse.gen_renyi2(ll, rr))
     end
 
     return rvecs, evs, ds2s, r2s, ts, infos

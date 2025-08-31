@@ -1,4 +1,4 @@
-using ITensors, JLD2
+using ITensors
 using ITensorMPS
 using ITransverse
 using ITransverse: plus_state, up_state
@@ -74,10 +74,10 @@ function ising_loschmidt(tp::tMPOParams, Tstart::Int, Tend::Int, nbeta::Int; Tst
         curr_T = ts
 
 
-        if ts % 40 == 0
-            out_filename = "cp_ising_$(ts)_$(maxlinkdim(psi_trunc)).jld2"
-            jldsave(out_filename; ll_murgs, ds2s, tp, pm_params, curr_T, allts, leading_eigs, leading_eigsq, overlapsLR, entropies, maxents)
-        end
+        # if ts % 40 == 0
+        #     out_filename = "cp_ising_$(ts)_$(maxlinkdim(psi_trunc)).jld2"
+        #     jldsave(out_filename; ll_murgs, ds2s, tp, pm_params, curr_T, allts, leading_eigs, leading_eigsq, overlapsLR, entropies, maxents)
+        # end
 
     end
 

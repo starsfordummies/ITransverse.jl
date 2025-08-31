@@ -1,4 +1,4 @@
-using ITensors, ITensorMPS, JLD2
+using ITensors, ITensorMPS
 using ITransverse.ITenUtils
 #using Plots
 
@@ -27,7 +27,7 @@ function main_cone()
     
     truncp = TruncParams(cutoff, maxbondim, direction)
 
-    Nsteps = 80
+    Nsteps = 20
 
     n_ext = 4
 
