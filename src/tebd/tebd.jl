@@ -77,7 +77,7 @@ function tebd_z(Nt::Int, tp::tMPOParams; truncp=TruncParams())
 
     #eH = build_expH_ising_murg(ss, 1.0, 0.7, 0.8, dt)
 
-    ss = siteinds("S=1/2", 2*Nt)
+    ss = siteinds("S=1/2", 2*Nt+4)
     eH = tp.expH_func(ss, tp.mp, tp.dt)
 
     #initial state
