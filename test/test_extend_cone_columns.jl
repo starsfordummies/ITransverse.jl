@@ -62,6 +62,7 @@ using ITransverse: build_cols_cone, contract_cols, extend_cone!
 
     @test tebd_ext_ev ≈ cols_ext_ev rtol = 1e-6
     @test tebd_ext_ev ≈ envs_ext_ev rtol = 1e-6
+    @show tebd_ext_ev
     
     @test std_ext_ev < 1e-8
 end

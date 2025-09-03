@@ -142,14 +142,32 @@ function fw_tMPS(
 
     @assert nbeta <= Ntot
 
+    # Choose direction-dependent fields and indices
+    if LR == :left
+        W = b.Wl
+        W_im = b.Wl_im
+        (iL, iR, iP) = (b.rot_inds[:L], b.rot_inds[:R], b.rot_inds[:Ps])
+    elseif LR == :right
+        W = b.Wr
+        W_im = b.Wr_im
+        (iL, iR, iP) = (b.rot_inds[:L], b.rot_inds[:R], b.rot_inds[:P])
+    else
+        error("Unknown LR: $(LR)")
+    end
+
+
+    # Corner case length-1 tMPS 
     if Ntot == 1
-        W = LR == :right ? b.Wr : b.Wl
-        phys_ind =  LR == :right ? b.rot_inds[:Ps] : b.rot_inds[:P]
         @assert nbeta == 0 # or we need to think more 
-        A = replaceinds(W, (b.rot_inds[:L], b.rot_inds[:R], phys_ind), (inds(bl)[1], inds(tr)[1], time_sites[1]))
+        A = replaceinds(W, (iL, iR, iP), (inds(bl)[1], inds(tr)[1], time_sites[1]))
         A *= bl 
         return MPS([A*tr])
     end
+
+
+
+    # Make same indices for real and imag, it's easier afterwards 
+    replaceinds!(W_im, inds(W_im), inds(W))
 
     b1 = if init_beta_only 
         nbeta
@@ -163,28 +181,12 @@ function fw_tMPS(
     else
         Ntot - div(nbeta,2) 
     end
-    #@show Ntot, nbeta, b1, b2
 
-    # Choose direction-dependent fields and indices
-    if LR == :left
-        W = b.Wl
-        W_im = b.Wl_im
-        (iL, iR, iP) = (b.rot_inds[:L], b.rot_inds[:R], b.rot_inds[:P])
-    elseif LR == :right
-        W = b.Wr
-        W_im = b.Wr_im
-        # Wr has p' index only, rename it here to phys
-        (iL, iR, iP) = (b.rot_inds[:L], b.rot_inds[:R], b.rot_inds[:Ps])
-    else
-        error("Unknown LR: $(LR)")
-    end
-
-    # Make same indices for real and imag, it's easier afterwards 
-    replaceinds!(W_im, inds(W_im), inds(W))
+ 
 
     rot_links_mps = [Index(dim(iL), "Link,rotl=$ii") for ii in 1:(Ntot - 1)]
 
-    tMPS = MPS(fill(W, Ntot))
+    tMPS = MPS(Ntot)
 
     for ii = 1:b1
         #@info "$(ii) im" 
@@ -192,7 +194,7 @@ function fw_tMPS(
     end
     for ii = b1+1:b2
         #@info "$(ii) re" 
-        tMPS[ii] = tMPS[ii] * delta(iP, time_sites[ii])
+        tMPS[ii] = W * delta(iP, time_sites[ii])
     end
     for ii = b2+1:Ntot
         #@info "$(ii) im" 
@@ -209,18 +211,4 @@ function fw_tMPS(
     tMPS[end] = (tMPS[end] * delta(iL, rot_links_mps[Ntot-1])) * (dag(tr) * delta(ind(tr,1), iR))
 
     return tMPS
-end
-
-
-""" For quick debugging, build a forward tMPO for non-integrable Ising with random params """
-function rand_ising_fwtmpo(time_sites=siteinds("S=1/2",20))
-
-    plus_state = Vector{ComplexF64}([1 / sqrt(2), 1 / sqrt(2)])
-    mp = IsingParams(1.0, -rand(), rand())
-    tp = tMPOParams(0.1, build_expH_ising_murg, mp, 0, plus_state)
-    b = FwtMPOBlocks(tp)
-
-    ww, _ = fw_tMPO(b, time_sites; tr=plus_state)
-
-    return ww
 end

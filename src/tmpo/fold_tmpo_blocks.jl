@@ -1,8 +1,7 @@
 
 """ Basic building blocks for the folded tMPS/tMPO, folded tensors of time evolution 
- * already rotated 90deg clockwise* - so the physical indices are "temporal" ones.
+ *already rotated 90deg clockwise* - so the physical indices are "temporal" ones.
 """
-
 struct FoldtMPOBlocks
     WWl::ITensor
     WWc::ITensor
@@ -39,8 +38,8 @@ end
 from either tMPOParameters or directly from an MPO of U=exp(iHt) defined on spatial links """
 function FoldtMPOBlocks(x::Union{tMPOParams, MPO}; init_state=nothing, build_imag::Bool=true, check_sym::Bool=true)
 
-    WWl, WWc, WWr, (L, R, P, Ps) = build_WW(x)
-    time_P = Index(dim(L), "Site,time")
+    WWl, WWc, WWr, (link1, link2, P, Ps) = build_WW(x)
+    time_P = Index(dim(link1), "Site,time")
     time_L = Index(dim(P), "Link,time")
     time_R = Index(dim(Ps), "Link,time")
 
@@ -48,12 +47,14 @@ function FoldtMPOBlocks(x::Union{tMPOParams, MPO}; init_state=nothing, build_ima
         @info "Checking symmetry MPO tensor on physical(space) => bond(time) indices"
         check_symmetry_swap(WWc, P, Ps)
         @info "Checking symmetry MPO tensor on bond(space) => phys(time) indices"
-        check_symmetry_swap(WWc, L, R)
+        check_symmetry_swap(WWc, link1, link2)
     end
 
-    WWl = replaceinds(WWl, (L,R,P,Ps),(time_P',time_P,time_L, time_R))
-    WWc = replaceinds(WWc, (L,R,P,Ps),(time_P',time_P,time_L, time_R))
-    WWr = replaceinds(WWr, (L,R,P,Ps),(time_P',time_P,time_L, time_R))
+    unrotated_inds = (link1, link2, P, Ps)
+    rotated_inds = (time_P', time_P, time_L, time_R)
+    WWl = replaceinds(WWl, unrotated_inds, rotated_inds)
+    WWc = replaceinds(WWc, unrotated_inds, rotated_inds)
+    WWr = replaceinds(WWr, unrotated_inds, rotated_inds)
 
   
     tp = if x isa tMPOParams
@@ -83,11 +84,12 @@ function FoldtMPOBlocks(x::Union{tMPOParams, MPO}; init_state=nothing, build_ima
 
     if build_imag
         tpim = tMPOParams(x; dt = -im*x.dt)
-        WWl_im, WWc_im, WWr_im, (L, R, P, Ps) = build_WW(tpim)
+        WWl_im, WWc_im, WWr_im, unrotated_inds = build_WW(tpim)
 
-        WWl_im = replaceinds(WWl_im, (L,R,P,Ps),(time_P',time_P,time_L, time_R))
-        WWc_im = replaceinds(WWc_im, (L,R,P,Ps),(time_P',time_P,time_L, time_R))
-        WWr_im = replaceinds(WWr_im, (L,R,P,Ps),(time_P',time_P,time_L, time_R))
+        WWl_im = replaceinds(WWl_im, unrotated_inds, rotated_inds)
+        WWc_im = replaceinds(WWc_im, unrotated_inds, rotated_inds)
+        WWr_im = replaceinds(WWr_im, unrotated_inds, rotated_inds)
+
     end
 
     init_state = tp.bl
