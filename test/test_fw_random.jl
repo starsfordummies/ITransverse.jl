@@ -101,9 +101,7 @@ mpo_fold =         folded_tMPO(bf, time_sites_fold, fold_op = Pfinal)
 left_fold =   folded_left_tMPS(bf, time_sites_fold, fold_op = Pfinal)
 right_fold = folded_right_tMPS(bf, time_sites_fold, fold_op = Pfinal)
 
-abs2.(overlap_noconj(left_mps, right_mps))
-overlap_noconj(left_fold, right_fold) ####
+@test abs2.(overlap_noconj(left_mps, right_mps)) ≈ overlap_noconj(left_fold, right_fold) ####
 
-abs2.(expval_LR(left_mps, mpo_fw, right_mps))
-expval_LR(left_fold, mpo_fold, right_fold)
+@test abs2.(expval_LR(left_mps, mpo_fw, right_mps)) ≈ expval_LR(left_fold, mpo_fold, right_fold)
 
