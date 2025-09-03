@@ -12,7 +12,7 @@ L--o--R   =>    p--o--p'
 """
 
 """ Convention we stick to for all the following: indices for tMPO WWl before rotations are  L, R, P, P'
-Builds *Folded* but ***UN-ROTATED*** tensors, just W * Wdag and joined indices """
+Builds *Folded* but **UN-ROTATED** tensors, just W * Wdag and joined indices """
 function build_WW(eH::MPO)
 
     # Same indices for all tensors
