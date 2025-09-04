@@ -59,6 +59,15 @@ end
 
 Base.iterate(env::Environments, state=1) = state <= length(env.envs) ? (env.envs[state], state + 1) : nothing
 
+function Base.pop!(env::Environments) 
+     pop!(env.envs)
+     pop!(env.norms)
+end
+function Base.popfirst!(env::Environments)
+     popfirst!(env.envs)
+     popfirst!(env.norms)
+end
+
 function ITensorMPS.maxlinkdim(a::Environments)
     return maximum(maxlinkdim.(a.envs))::Int
 end

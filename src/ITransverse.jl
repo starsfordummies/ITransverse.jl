@@ -153,6 +153,7 @@ export init_cone, run_cone
 
 include("lightcone/cone_envs/cone_columns.jl")
 include("lightcone/cone_envs/extend_cone_envs.jl")
+include("lightcone/cone_envs/shrink_cone.jl")
 
 
 include("tebd/tebd.jl")
