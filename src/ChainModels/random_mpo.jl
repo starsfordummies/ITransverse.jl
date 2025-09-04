@@ -69,3 +69,28 @@ function build_expH_random_symm_svd_1o(dt::Number)
     # 9) Return the resulting 3-site MPO
     return MPO([Wl, Wc, Wr])
 end
+
+function build_expH_random()
+   
+    s = siteinds("S=1/2", 3)
+    
+    h = rand(ComplexF64,4,4) 
+    h = h + h'
+
+    u = exp(im*h)  # (ij)-(i'j')
+    u = reshape(u, 2,2,2,2)
+    u = permutedims(u, (1,3,2,4))
+    u = reshape(u, 4,4)
+    q,r = qr(u)
+    
+    q = reshape(Matrix(q), 2,2,4)
+    r = reshape(r, 4,2,2)
+
+    link1, link2 = Index.(4, ["link1","link2"])
+
+    Wl = ITensor(q, s[1],s[1]', link1)
+    Wc = replaceprime(ITensor(r, s[2],s[2]', link1) * ITensor(q, s[2]',s[2]'', link2), 2 =>1)
+    Wr = ITensor(r, link2, s[3], s[3]')
+    # 9) Return the resulting 3-site MPO
+    return MPO([Wl, Wc, Wr])
+end

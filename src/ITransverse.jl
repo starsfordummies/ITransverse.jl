@@ -84,11 +84,8 @@ include("tmpo/build_ww.jl")
 
 include("tmpo/fw_tmpo_blocks.jl")
 include("tmpo/fold_tmpo_blocks.jl")
-include("tmpo/generic_tmpo_blocks.jl")
 
 export FoldtMPOBlocks, FwtMPOBlocks
-
-export get_Wc, get_Wl, get_Wr
 
 include("tmpo/build_fw_tmpo.jl")
 

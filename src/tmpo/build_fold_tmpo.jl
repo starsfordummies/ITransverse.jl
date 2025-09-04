@@ -1,12 +1,14 @@
 """ Build a *rotated and folded* TMPO associated with exp. value starting from eH tensors of U=exp(iHt) 
-(defined as a regular spatial MPO on space indices). tMPO is defined on `time_sites`
+(inputted as a regular spatial MPO on space indices). 
+
+tMPO is defined on `time_sites`
 
 We rotate our space vectors to the *right* by 90°, ie 
 
 ```
-   |p'             |L
-L--o--R   =>    p--o--p'
-   |p              |R
+   |p'             |L => new p'
+L--o--R   =>    p--o--p' => new R
+   |p              |R => new p 
 ```
 
 and contract with  the initial state `init_state` on the *left* and the operator `fold_op` on the *right*
@@ -24,7 +26,7 @@ and contract with  the initial state `init_state` on the *left* and the operator
 
 
 """ Builds folded tMPO. Of the `ts` timesites, the first `b.tp.nbeta` ones are imaginary time ones.
- Accepted kwargs: fold_op, outputlevel::Int, init_beta_only::Bool=true """ 
+ Accepted kwargs: fold_op(default=Identity op.), outputlevel::Int=0, init_beta_only::Bool=true """ 
 function folded_tMPO(b::FoldtMPOBlocks, ts::Vector{<:Index}; kwargs...)
 
     outputlevel::Int = get(kwargs,:outputlevel, 0)
@@ -62,10 +64,10 @@ function folded_tMPO(b::FoldtMPOBlocks, ts::Vector{<:Index}; kwargs...)
         oo[ib] = WWc_im
     end
 
-    virtual_ind = rot_inds[:R]
+    virtual_ind_size = dim(rot_inds[:R])
 
-    tlinks = [Index(dim(virtual_ind),"Link,time_fold,l=$(ii-1)") for ii in 1:length(ts)+1]
-    #@info ll 
+    tlinks = [Index(virtual_ind_size,"Link,time_fold,l=$(ii-1)") for ii in 1:length(ts)+1]
+
     for ii in eachindex(oo)
         WWinds =  (rot_inds[:P], rot_inds[:Ps], rot_inds[:L], rot_inds[:R], )
         newinds = (ts[ii],        ts[ii]',       tlinks[ii],   tlinks[ii+1])
@@ -100,17 +102,17 @@ function folded_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index}; LR::Symbol=:right, 
     if LR == :left
         WW = b.WWl
         WW_im = b.WWl_im
-        WWinds = (b.rot_inds[:P], b.rot_inds[:L], b.rot_inds[:R])
+        WWinds = (b.rot_inds[:Ps], b.rot_inds[:L], b.rot_inds[:R])
         get_newinds = (ii, tlinks) -> (ts[ii], tlinks[ii], tlinks[ii+1])
         edge_contract = (psi, b, tlinks) -> psi[1] *= replaceind(b.rho0, ind(b.rho0,1), tlinks[1])
     elseif LR == :right
         WW = b.WWr
         WW_im = b.WWr_im
-        WWinds = (b.rot_inds[:Ps], b.rot_inds[:R], b.rot_inds[:L])
+        WWinds = (b.rot_inds[:P], b.rot_inds[:R], b.rot_inds[:L])
         get_newinds = (ii, tlinks) -> (ts[ii], tlinks[ii+1], tlinks[ii])
         edge_contract = (psi, b, tlinks) -> psi[1] = psi[1] * b.rho0 * delta(ind(b.rho0,1), tlinks[1])
     else
-        error("Unknown LR: $(LR)")
+        error("Unknown LR: $(LR) (must be :left or :right)")
     end
 
     psi = MPS(fill(WW, length(ts)))
@@ -137,44 +139,6 @@ function folded_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index}; LR::Symbol=:right, 
 end
 
 
-
-
-
-
-""" Puts imaginary time on *both* edges of the folded tMPO """
-function folded_tMPO_doublebeta(b::FoldtMPOBlocks, ts::Vector{<:Index}, fold_op::AbstractVector = [1,0,0,1])
-    # TODO NEED TO UPDATE TO NEWER CONVENTIONS 
-    @assert 2*b.tp.nbeta <= length(ts)
-    (; WWc, WWc_im) = b 
-  
-    #match indices for real-imag so it's easier to work with them 
-    replaceinds!(WWc_im, inds(WWc_im), inds(WWc))
-
-    oo = MPO(fill(WWc, length(ts)))
-
-    for ib = 1:b.tp.nbeta
-        oo[ib] = WWc_im
-        oo[end-ib+1] = WWc_im
-    end
-
-    virtual_ind = ind(b.WWc,3)
-    ll = [Index(dim(virtual_ind),"Link,time_fold,l=$(ii-1)") for ii in 1:length(ts)+1]
-    for ii in eachindex(oo)
-        # newinds = (ts[ii],ts[ii]',ll[ii+1],ll[ii])
-        # oo[ii] = replaceinds(oo[ii], inds(WWc), newinds)
-        WWinds =  (b.rot_inds[:P],b.rot_inds[:Ps],b.rot_inds[:R],b.rot_inds[:L] )
-        newinds = (ts[ii],           ts[ii]',          ll[ii+1],    ll[ii])
-        oo[ii] = replaceinds(oo[ii], WWinds, newinds)
-
-    end
-
-    dttype = NDTensors.unwrap_array_type(b.WWc)
-    oo[1] *= b.rho0 * delta(ind(b.rho0,1), ll[1])
-    oo[end] *= adapt(dttype, ITensor(fold_op, ll[end]))
-
-    return oo
-
-end
 
 
 
