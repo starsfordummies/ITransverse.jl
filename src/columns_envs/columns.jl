@@ -1,4 +1,4 @@
-""" New Columns struct for a uniform system of length N: stores
+""" Columns struct for a uniform system of length N: stores
  - a left MPS, 
  - a set of columns of length N (the first and last are unused/unintialized)
  - a right MPS

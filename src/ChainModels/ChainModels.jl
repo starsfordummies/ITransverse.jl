@@ -23,7 +23,8 @@ export vX, vZ, vI
 # from ising.jl
 export build_H_ising, 
     build_expH_ising_murg,
-    build_expH_ising_symm_svd
+    build_expH_ising_symm_svd,
+    build_expH_ising_murg_4o
 
     
 #from potts.jl

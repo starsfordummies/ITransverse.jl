@@ -8,8 +8,8 @@ using ITransverse: vX, vZ, vI, plus_state, up_state
 function main_cone()
 
     JXX = 1.0  
-    hz = 0.4 # 1.05
-    gx = 0.0 # 0.5
+    hz = -1.05
+    gx = 0.5 # 0.5
 
     dt = 0.1
 
@@ -22,13 +22,13 @@ function main_cone()
     #up_state = Vector{ComplexF64}([1,0])
     #plus_state = Vector{ComplexF64}([1/sqrt(2),1/sqrt(2)])
 
-    cutoff = 1e-10
-    maxbondim = 4
+    cutoff = 1e-8
+    maxbondim = 512
     direction = "right"
 
     truncp = TruncParams(cutoff, maxbondim, direction)
 
-    Nsteps = 60
+    Nsteps = 80
 
     #time_sites = siteinds("S=3/2", 1)
 
@@ -40,7 +40,7 @@ function main_cone()
 
     #@info length(c0)
 
-    cone_params = ConeParams(;truncp, opt_method="RDM", optimize_op, which_evs=["X","Z"], which_ents=["VN"], checkpoint=20)
+    cone_params = ConeParams(;truncp, opt_method="RTM_R", optimize_op, which_evs=["X","Z"], which_ents=["VN"], checkpoint=20)
 
     psi, psiR, chis, expvals, entropies, infos, last_cp = run_cone(c0, b, cone_params, Nsteps)
 
