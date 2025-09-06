@@ -66,6 +66,8 @@ export TruncParams
 
 export build_H_ising,
     build_expH_ising_murg, 
+    build_expH_ising_murg_4o, 
+
     build_expH_ising_symm_svd,
     build_expH_potts_murg, 
     build_expH_potts_symmetric_svd,
@@ -151,10 +153,9 @@ include("lightcone/run_cone.jl")
 
 export init_cone, run_cone
 
-include("lightcone/cone_envs/cone_columns.jl")
-include("lightcone/cone_envs/extend_cone_envs.jl")
-include("lightcone/cone_envs/shrink_cone.jl")
-
+# include("lightcone/cone_envs/cone_columns.jl")
+# include("lightcone/cone_envs/extend_cone_envs.jl")
+# include("lightcone/cone_envs/shrink_cone.jl")
 
 include("tebd/tebd.jl")
 
