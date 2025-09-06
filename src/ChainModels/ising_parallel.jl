@@ -25,7 +25,7 @@ function build_H_ising(sites::Vector{<:Index}, Jtwo::Real, gperp::Real, hpar::Re
 end
 
 
-""" Prescription a la Murg for exp(-i*H*dt) Ising transverse+parallel
+""" Symmetric prescription a la Murg for exp(-i*H*dt) Ising transverse+parallel
 Convention H = -( JXX + gzZ + λxX )
 """
 function build_expH_ising_murg(
@@ -34,13 +34,11 @@ function build_expH_ising_murg(
     gz::Real,
     λx::Real,
     dt::Number)
-    """ Symmetric version of Murg exp(-iHising t) """
 
     # For real dt this does REAL time evolution 
     # I should have already taken into account both the - sign in exp(-iHt) 
     # and the overall minus in Ising H= -(JXX+Z)
 
-    # TODO CHECK that this doesn't break anything: 
     JXX = JXX*dt
     gz = gz*dt
     λx = λx*dt
@@ -111,7 +109,6 @@ function build_expH_ising_murg_new(sites::Vector{<:Index},
     # I should have already taken into account both the - sign in exp(-iHt) 
     # and the overall minus in Ising H= -(JXX+Z)
 
-    # TODO CHECK that this doesn't break anything: 
     JXX = JXX*dt
     gz = gz*dt
     λx = λx*dt
@@ -130,21 +127,21 @@ function build_expH_ising_murg_new(sites::Vector{<:Index},
 
     # Multiply in order:  exp(iZ/2)*exp(iX)*exp(iXX)*exp(iZ/2)
     
-    U_t = apply(Ux, Uz2, alg="naive", truncate=false) 
-    @show U_t[1].tensor
+    U_t = applyn(Ux, Uz2,) 
+    # @show U_t[1].tensor
 
-    U_t = apply(Uxx, U_t, alg="naive", truncate=false) 
-    @show U_t[1].tensor
+    U_t = applyn(Uxx, U_t) 
+    # @show U_t[1].tensor
 
-    U_t = apply(Uz2, U_t, alg="naive", truncate=false) 
-    @show U_t[1].tensor
+    U_t = applyn(Uz2, U_t) 
+    # @show U_t[1].tensor
 
-    @show Uxx[1].tensor
-    @show U_t[1].tensor
+    # @show Uxx[1].tensor
+    # @show U_t[1].tensor
 
-    @show Uz2[1].tensor
+    # @show Uz2[1].tensor
 
-    @show JXX
+    # @show JXX
 
     return U_t
 
@@ -338,4 +335,38 @@ function epsilon_brick_ising(mp::IsingParams)
     ϵ_op[2] *= cs2 
 
     return ϵ_op
+end
+
+
+
+""" Fourth-order Trotter MPO for Murg exp(-i*H*dt) Ising 
+Convention H = -( JXX + gzZ + λxX )
+"""
+function build_expH_ising_murg_4o(p::IsingParams, dt::Number)
+    s = siteinds("S=1/2", 3)
+    build_expH_ising_murg_4o(s, p, dt)
+end
+
+function build_expH_ising_murg_4o(s::Vector{<:Index}, p::IsingParams, dt::Number)
+    build_expH_ising_murg_4o(s, p.Jtwo, p.gperp, p.hpar, dt)
+end
+
+function build_expH_ising_murg_4o(
+    sites::Vector{<:Index},
+    JXX::Real,
+    gz::Real,
+    λx::Real,
+    dt::Number)
+
+    tfac = 2^(1/3)
+    dt1 = dt/(2-tfac)
+    dt2 = -dt*tfac/(2-tfac)
+
+    U1 = build_expH_ising_murg_new(sites, JXX, gz, λx, dt1)
+    U2 = build_expH_ising_murg_new(sites, JXX, gz, λx, dt2)
+
+    U4 = applyn(U2, U1)
+    U4 = applyn(U1, U4)
+
+    return U4
 end
