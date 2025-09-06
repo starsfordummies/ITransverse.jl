@@ -30,28 +30,27 @@ end
 function FwtMPOBlocks(eH::MPO; tp=nothing, init_state = nothing, build_imag::Bool=true, check_sym::Bool=true)
 
     @assert length(eH) == 3
+    @assert !isnothing(tp) || !isnothing(init_state) # specify at least one  
 
     if isnothing(init_state)
-        @info "No init state specified, defaulting to tp.bl"
-        @info "tp.bl = $(tp.bl)"
+        @info "No init state specified, defaulting to tp.bl=$(tp.bl.tensor)"
         init_state = to_itensor(tp.bl, "bl")
+    else
+        init_state = to_itensor(init_state, "bl")
+         # Check whether the initial state makes sense 
+        @assert dim(init_state) == dim(siteind(eH,2))
+        @info "Updating init_state in tMPOParams to $(init_state)"
+        tp = tMPOParams(tp; bl=to_itensor(init_state, "bl"))
     end
 
-    init_state = to_itensor(init_state, "bl")
 
-    if isnothing(tp)
+    if isnothing(tp) 
         phys_site = siteind(eH,2)
         mp = NoParams(phys_site)
         tp = tMPOParams(NaN, nothing, mp, 0, init_state)
         build_imag = false
     end
 
-    # Check whether the initial state makes sense 
-    @assert dim(init_state) == dim(siteind(eH,2))
-
-    @info "Updating init_state in tMPOParams to $(init_state)"
-    tp = tMPOParams(tp; bl=to_itensor(init_state, "bl"))
- 
 
     (Wl, Wc, Wr) = eH
 
