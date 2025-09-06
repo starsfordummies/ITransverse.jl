@@ -1,5 +1,3 @@
-""" Applies MPOs in MPO_list to a random MPS. 
-TODO: all MPOs must share same physical sites... """
 function contract_finite(left_edge::MPS, MPO_list, right_edge::MPS)
 
     LL = length(MPO_list)
