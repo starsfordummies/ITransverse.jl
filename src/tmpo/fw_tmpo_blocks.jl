@@ -21,36 +21,41 @@ struct FwtMPOBlocks
 end
 
 
-function FwtMPOBlocks(tp::tMPOParams; kwargs...)
-    eH = build_expH(tp)
-    FwtMPOBlocks(eH; tp, kwargs...)
+function FwtMPOBlocks(tp::tMPOParams; build_imag::Bool=true, init_state=nothing, kwargs...)
+    Wl, Wc, Wr, rot_inds = make_fwtmpoblocks(build_expH(tp; kwargs...))
+
+    if !isnothing(init_state)
+        @info "Setting tp.init_state to $(init_state)"
+        tp = tMPOParams(tp; bl=init_state)
+    end
+
+    if build_imag
+        Wl_im, Wc_im, Wr_im, rot_inds_im = make_fwtmpoblocks(build_expHim(tp; kwargs...))
+        iminds = (rot_inds_im[:L], rot_inds_im[:R], rot_inds_im[:P], rot_inds_im[:Ps])
+        inds =   (   rot_inds[:L],    rot_inds[:R],    rot_inds[:P],    rot_inds[:Ps])
+
+        Wl_im = replaceinds(Wl_im, iminds, inds)
+        Wc_im = replaceinds(Wc_im, iminds, inds)
+        Wr_im = replaceinds(Wr_im, iminds, inds)
+        
+        return FwtMPOBlocks(Wl, Wc, Wr, Wl_im, Wc_im, Wr_im, tp, rot_inds)
+    else
+        return FwtMPOBlocks(Wl, Wc, Wr, Wl, Wc, Wr, tp, rot_inds)
+    end
+
+end
+
+function FwtMPOBlocks(eH::MPO; init_state=nothing)
+    tp = tMPOParams(nothing; bl=init_state)
+    Wl, Wc, Wr, rot_inds = make_fwtmpoblocks(eH)
+    return FwtMPOBlocks(Wl, Wc, Wr, Wl, Wc, Wr, tp, rot_inds)
+
 end
 
 
-function FwtMPOBlocks(eH::MPO; tp=nothing, init_state = nothing, build_imag::Bool=true, check_sym::Bool=true)
+function make_fwtmpoblocks(eH::MPO; check_sym::Bool=true)
 
     @assert length(eH) == 3
-    @assert !isnothing(tp) || !isnothing(init_state) # specify at least one  
-
-    if isnothing(init_state)
-        @info "No init state specified, defaulting to tp.bl=$(tp.bl.tensor)"
-        init_state = to_itensor(tp.bl, "bl")
-    else
-        init_state = to_itensor(init_state, "bl")
-         # Check whether the initial state makes sense 
-        @assert dim(init_state) == dim(siteind(eH,2))
-        @info "Updating init_state in tMPOParams to $(init_state)"
-        tp = tMPOParams(tp; bl=to_itensor(init_state, "bl"))
-    end
-
-
-    if isnothing(tp) 
-        phys_site = siteind(eH,2)
-        mp = NoParams(phys_site)
-        tp = tMPOParams(NaN, nothing, mp, 0, init_state)
-        build_imag = false
-    end
-
 
     (Wl, Wc, Wr) = eH
 
@@ -76,32 +81,9 @@ function FwtMPOBlocks(eH::MPO; tp=nothing, init_state = nothing, build_imag::Boo
     Wr = replaceinds(Wr, (iLink2,irP,irP'), (time_P,time_vL, time_vR))
 
 
-    #######################
-    #### Imaginary time 
-    #######################
-
-    Wl_im = Wl 
-    Wc_im = Wc 
-    Wr_im = Wr
-
-    if build_imag
-        eHim = build_expHim(tp)
-
-        Wl_im, Wc_im, Wr_im = eHim.data
-
-        (ilP, icP, irP) = firstsiteinds(eHim)
-
-        (iLink1, iLink2) = linkinds(eHim)
-
-        Wl_im = replaceinds(Wl_im, (iLink1,ilP,ilP'), (time_P', time_vL, time_vR))
-        Wc_im = replaceinds(Wc_im, (iLink1,iLink2,icP,icP'), (time_P', time_P,time_vL, time_vR))
-        Wr_im = replaceinds(Wr_im, (iLink2,irP,irP'), (time_P,time_vL, time_vR))
-    end
-
-
     rot_inds = Dict(:Ps => time_P',:P => time_P, :L => time_vL, :R=> time_vR) 
 
-    return FwtMPOBlocks(Wl, Wc, Wr, Wl_im, Wc_im, Wr_im, tp, rot_inds)
+    return Wl, Wc, Wr, rot_inds
 end
 
 

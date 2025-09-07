@@ -1,6 +1,3 @@
-using ITensors.Adapt: adapt
-
-
 """ 
 Symmetric case: Truncates a single MPS optimizing overlap (psi (no conj) |psi)
 By doing first a Right <<< sweep to standard (right-orthogonal) canonical form 

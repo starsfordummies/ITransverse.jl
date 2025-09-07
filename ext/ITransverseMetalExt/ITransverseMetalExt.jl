@@ -7,6 +7,8 @@ using NDTensors
 using ITensors.Adapt
 using ITransverse 
 
+import ITransverse.ITenUtils: tocpu, togpu
+
 function ITransverse.ITenUtils.togpu(x) 
     return mtl(x)
 end

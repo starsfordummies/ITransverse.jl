@@ -38,6 +38,13 @@ tMPOParams(x::tMPOParams;
     bl = x.bl) = tMPOParams(dt, expH_func, mp, nbeta, bl)
 
 
+function tMPOParams(x::Nothing; bl)
+    blt = to_itensor(bl, "bl")
+    phys_site = Index(dim(blt))
+    mp = NoParams(phys_site)
+    return tMPOParams(NaN, nothing, mp, 0, blt)
+end
+
 """ Quick defaults for parallel field Ising, for playing around: J=1 hz=0.4, gx=0, init_state= |+> """
 function ising_tp(;hz = 0.4, integrable::Bool=true) 
     tp = if integrable

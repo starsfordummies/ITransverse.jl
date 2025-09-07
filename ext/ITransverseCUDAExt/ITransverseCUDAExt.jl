@@ -4,9 +4,11 @@ using CUDA
 using ITensors
 using ITensorMPS
 using NDTensors
-using NDTensors: cu 
 using ITensors.Adapt
 using ITransverse 
+
+import NDTensors: cu 
+import ITransverse.ITenUtils: tocpu, togpu
 
 
 NDTensors.cu(x::tMPOParams) = tMPOParams(x; bl = NDTensors.cu(x.bl))

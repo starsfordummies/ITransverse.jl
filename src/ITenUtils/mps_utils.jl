@@ -1,3 +1,5 @@
+import ITensorMPS: replace_siteinds!
+
 function pMPS(ss::Vector{<:Index}, site_tensor::AbstractVector{<:Number})
     psi = MPS(ss)
     for j in eachindex(psi)

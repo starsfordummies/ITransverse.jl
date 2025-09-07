@@ -1,6 +1,4 @@
-using LinearAlgebra
-using ITensors
-using .ITenUtils: check_diag_matrix
+import LinearAlgebra: isdiag
 
 """ Builds a random symmetric ITensor of size `(n,n)`
 """
