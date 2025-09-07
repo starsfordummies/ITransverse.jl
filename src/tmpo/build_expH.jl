@@ -16,3 +16,7 @@ function quick_b(; folded::Bool=true)
 
     return b
 end
+
+
+timephysdim(b) = dim(b.rot_inds[:P])
+linkphysdim(b) = dim(b.rot_inds[:L])
