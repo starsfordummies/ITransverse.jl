@@ -1,3 +1,5 @@
+import ITensorMPS: maxlinkdim 
+
 """ 
  Environment structure for transverse contraction. 
     For a finite network of N columns, we build separately N-1 (left and right) environments
@@ -23,7 +25,7 @@ end
 
 """ The constructor fills the first (or last, depending on `LR`) element with the input MPS 
 and normalizes it (saving its norm in envs.norms) """
-function Environments(n::Int, boundary::MPS, LR::String) 
+function Environments(n::Int, boundary::MPS, LR::Symbol) 
 
     envs = Vector{MPS}(undef, n-1) 
     norms = fill(1.0, n-1) 
@@ -32,10 +34,10 @@ function Environments(n::Int, boundary::MPS, LR::String)
     norm_boundary = norm(boundary)
     boundary = normalize(boundary)
 
-    if LR == "L"
+    if LR == :L
         envs[1] = boundary
         norms[1] = norm_boundary
-    elseif LR == "R"
+    elseif LR == :R
         envs[end] = boundary 
         norms[end] = norm_boundary
     else

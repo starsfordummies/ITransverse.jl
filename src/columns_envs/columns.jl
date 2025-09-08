@@ -37,6 +37,9 @@ function Base.getindex(cc::Columns, i::Int)
         return cc.cols[i]
     end
 end
+function Base.getindex(cc::Columns, r::AbstractRange{Int})
+    return [cc[i] for i in r] 
+end
 
 function Base.iterate(cc::Columns, state=1)
     n = length(cc.cols)  # total number of elements: ledge + cols + redge
@@ -51,6 +54,14 @@ function Base.iterate(cc::Columns, state=1)
     end
 end
 
+
+function Base.show(io::IO, ::MIME"text/plain", cc::Columns)
+    npl1(x) = count(!isempty, siteinds(x, plev=1))
+    npl0(x) = count(!isempty, siteinds(x, plev=0))
+
+    LR = vcat("L", [  npl0(col) > npl1(col) ? "L" : npl1(col) == npl0(col) ? "C" : "R" for col in cc[2:end-1] ], "R")
+    print(io, "Columns $(length(cc))|$(length.(cc)) $(LR)")
+end
 
 """ Given a Columns struct, 
 performs the *exact* contraction from the edges towawrds the center, without using environments """
