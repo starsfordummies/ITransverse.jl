@@ -1,11 +1,9 @@
-""" Updates (RTM) the adjacent environments after a change at position `jj`, using T_mpo = T[jj]
- - If `sweep_dir = "L"`, updates L[jj] = L[jj-1] * T[jj]
- - If `sweep_dir = "R"`, updates R[jj-1] = T[jj] * R[jj]  
- """
+""" Sweep rebuilding adjacent L-R environments using RTM  """
 function sweep_rebuild_envs_rtm!(left_envs::Environments, right_envs::Environments, cc::Columns, 
     truncp::TruncParams; verbose::Bool=false)
 
     NN = length(cc)
+    @assert length(left_envs) == length(right_envs) == NN-1
 
     ll = cc[1]
 
@@ -14,10 +12,11 @@ function sweep_rebuild_envs_rtm!(left_envs::Environments, right_envs::Environmen
     left_envs[1] = ll
 
     # Update Left envs using current {right_envs} as input
-    for jj in 2:NN-2
+    #  L[jj] = L[jj-1] * E[jj]
 
-        mpo_L =  cc[jj]
-        ll = applyns(mpo_L, ll; truncate=false)
+    for jj in 2:NN-1
+
+        ll = applyns(cc[jj], left_envs[jj-1]; truncate=false)
         ll, _, _ = truncate_rsweep(ll, right_envs[jj], truncp; fast=true)
 
         ll = orthogonalize(ll, length(ll))
@@ -30,24 +29,23 @@ function sweep_rebuild_envs_rtm!(left_envs::Environments, right_envs::Environmen
         end
     end
 
-    rr =  cc[end] 
-    right_envs.norms[end] = norm(rr)
+
+    rr =  cc[NN] 
+    right_envs.norms[NN-1] = norm(rr)
     rr = normalize(rr)
-    right_envs[end] = rr
+    right_envs[NN-1] = rr
   
-    # Update Right envs using  current {left_envs} as input
-
+    # Update Right envs using {left_envs},  R[jj-1] = E[jj] * R[jj]  
     for jj in NN-1:-1:2
-        mpo_j = cc[jj]
 
-        rr = applyn(mpo_j, rr)
+        rr = applyn(cc[jj], right_envs[jj])
         _, rr, _ = truncate_rsweep(left_envs[jj-1], rr, truncp, fast=true)
 
         orthogonalize!(rr,length(rr))
         right_envs.norms[jj-1] = norm(rr)
         normalize!(rr)
         right_envs[jj-1] = rr 
-        #@info "updating R[$(jj)]"
+
         if verbose
             @info "updating E[$(jj)]R[$(jj)] = R[$(jj-1)] with L[$(jj-1)]"
         end

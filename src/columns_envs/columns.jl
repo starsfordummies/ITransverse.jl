@@ -60,7 +60,7 @@ function Base.show(io::IO, ::MIME"text/plain", cc::Columns)
     npl0(x) = count(!isempty, siteinds(x, plev=0))
 
     LR = vcat("L", [  npl0(col) > npl1(col) ? "L" : npl1(col) == npl0(col) ? "C" : "R" for col in cc[2:end-1] ], "R")
-    print(io, "Columns $(length(cc))|$(length.(cc)) $(LR)")
+    print(io, "Columns L=$(length(cc))|$(length.(cc)) $(LR)")
 end
 
 """ Given a Columns struct, 

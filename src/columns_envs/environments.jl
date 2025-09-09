@@ -70,6 +70,15 @@ function Base.popfirst!(env::Environments)
      popfirst!(env.norms)
 end
 
+
+function Base.show(io::IO, ::MIME"text/plain", ee::Environments)
+    npl1(x) = count(!isempty, siteinds(x, plev=1))
+    npl0(x) = count(!isempty, siteinds(x, plev=0))
+
+    #LR = npl0(ee.envs[1]) > npl1(ee.envs[1]) ? "L" : npl1(ee.envs[1]) == npl0(ee.envs[1]) ? "C" : "R"
+    print(io, "Environments L=$(length(ee.envs))|$(length.(ee.envs))")
+end
+
 function ITensorMPS.maxlinkdim(a::Environments)
     return maximum(maxlinkdim.(a.envs))::Int
 end
