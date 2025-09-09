@@ -112,6 +112,7 @@ export Columns
 include("columns_envs/environments.jl")
 include("columns_envs/initialize_envs.jl")
 include("columns_envs/update_envs.jl")
+include("columns_envs/update_envs_skewed.jl")
 
 export Environments, 
     initialize_envs_rdm, 

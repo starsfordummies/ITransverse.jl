@@ -83,6 +83,13 @@ function ITensorMPS.maxlinkdim(a::Environments)
     return maximum(maxlinkdim.(a.envs))::Int
 end
 
+function update_env!(ee::Environments, jj::Int, psi::MPS)
+        orthogonalize!(psi,length(psi))
+        ee.norms[jj] = norm(psi)
+        normalize!(psi)
+        ee.envs[jj] = psi 
+end
+
 
 function overlap_at(left_envs::Environments, right_envs::Environments, jj::Int)
     # for sanity checks..
