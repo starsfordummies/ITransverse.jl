@@ -7,11 +7,7 @@ function sweep_rebuild_envs_rtm_skewed!(left_envs::Environments, right_envs::Env
     NN = length(cc)
     @assert length(left_envs) == length(right_envs) == NN-1
 
-    ll = cc[1]
-
-    left_envs.norms[1] = norm(ll)
-    ll = normalize(ll)
-    left_envs[1] = ll
+    update_env!(left_envs, 1, cc[1])
 
     # Update Left envs using current {right_envs} as input
     #  L[jj] = L[jj-1] * E[jj]
@@ -40,8 +36,10 @@ function sweep_rebuild_envs_rtm_skewed!(left_envs::Environments, right_envs::Env
     update_env!(left_envs, NN-1, ll)
 
 
+    update_env!(right_envs, NN-1, cc[NN])
+
     # Update Right envs using {left_envs},  R[jj-1] = E[jj] * R[jj]  
-    for jj in NN-1:-1:3 # TODO update R[1] separately 
+    for jj in NN-1:-1:3 
 
         rr = applyn(cc[jj], right_envs[jj])
         ll = applyns(cc[jj-1], left_envs[jj-2])

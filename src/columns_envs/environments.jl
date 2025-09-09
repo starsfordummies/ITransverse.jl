@@ -86,8 +86,7 @@ end
 function update_env!(ee::Environments, jj::Int, psi::MPS)
         orthogonalize!(psi,length(psi))
         ee.norms[jj] = norm(psi)
-        normalize!(psi)
-        ee.envs[jj] = psi 
+        ee.envs[jj] = normalize(psi)
 end
 
 
