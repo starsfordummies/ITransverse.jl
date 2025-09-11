@@ -1,14 +1,25 @@
-""" Shorthand for apply + swap indices """
+""" Shorthand for standard apply + swap indices """
 function applys(O::MPO, psi::AbstractMPS; kwargs...)
     #apply(swapprime(O, 0, 1, "Site"), psi; cutoff, maxdim)
-    psiO = contract(O, prime(siteinds,psi); kwargs...)
+    contract(O, prime(siteinds,psi); kwargs...)
 end
 
 
 """ Shorthand for simple apply(alg="naive", truncate=false) """
-function applyn(O::MPO, psi::MPS; kwargs...)
-    replaceprime(contractn(O, psi; kwargs...),  1 => 0)
+function applyn(O::MPO, psi::MPS; truncate=false, kwargs...)
+
+    # If :truncp, :cutoff or :maxdim keywords are present, default to truncate=true
+    if haskey(kwargs, :truncp)
+        (;cutoff, maxbondim) = kwargs[:truncp]
+        kwargs = (;kwargs..., cutoff=cutoff, maxdim=maxbondim)
+        truncate=true
+    elseif haskey(kwargs, :cutoff) || haskey(kwargs, :maxdim)
+        truncate=true
+    end
+    #@show truncate
+    replaceprime(contractn(O, psi; truncate, kwargs...),  1 => 0)
 end
+
 """ Shorthand for simple apply(alg="naive", truncate=false) """
 function applyn(A::MPO, B::MPO; kwargs...)
     apply(A, B, alg="naive", truncate=false)
@@ -18,8 +29,9 @@ end
 
 """ Shorthand for apply with no truncation + swap indices """
 function applyns(O::MPO, psi::MPS; kwargs...)
+    applyn(O, prime(siteinds,psi); kwargs...)
     #apply(swapprime(O, 0, 1, "Site"), psi, alg="naive", truncate=false)
-    replaceprime(contractn(O, prime(siteinds,psi); kwargs...), 1 => 0)
+    #replaceprime(contractn(O, prime(siteinds,psi); kwargs...), 1 => 0)
 end
 
 
@@ -34,7 +46,7 @@ end
 
 
 """ Copied from ITensorMPS but adapted so that it can also extend """
-function contractn(A::MPO, ψ::MPS; truncate=false, kwargs...)
+function contractn(A::MPO, ψ::MPS; truncate, truncp=nothing, kwargs...)
 
     @assert length(A) >= length(ψ)
 

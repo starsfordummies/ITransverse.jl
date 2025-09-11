@@ -26,11 +26,8 @@ and contract with  the initial state `init_state` on the *left* and the operator
 
 
 """ Builds folded tMPO. Of the `ts` timesites, the first `b.tp.nbeta` ones are imaginary time ones.
- Accepted kwargs: fold_op(default=Identity op.), outputlevel::Int=0, init_beta_only::Bool=true """ 
-function folded_tMPO(b::FoldtMPOBlocks, ts::Vector{<:Index}; kwargs...)
-
-    outputlevel::Int = get(kwargs,:outputlevel, 0)
-    init_beta_only::Bool = get(kwargs,:init_beta_only, true)
+ Accepted kwargs: fold_op(default=Identity op.), verbose(=false), init_beta_only(=true) """ 
+function folded_tMPO(b::FoldtMPOBlocks, ts::Vector{<:Index}; fold_op=nothing, init_beta_only::Bool=true, verbose::Bool=false)
 
     (; tp, WWc, WWc_im, rot_inds, rho0) = b
 
@@ -40,50 +37,53 @@ function folded_tMPO(b::FoldtMPOBlocks, ts::Vector{<:Index}; kwargs...)
     Ntot = length(ts)
     nbeta = tp.nbeta 
 
-    b1 = if init_beta_only 
-        nbeta
-    else
-        @assert iseven(nbeta)
-        div(nbeta,2)
-    end
-
-    b2 = init_beta_only ? Ntot : Ntot - div(nbeta,2) 
-
-    if outputlevel > 1 
-        @info "Building folded tMPO for (im+real) $(nbeta)+$(Ntot-nbeta) sites "
-    end
-
     @assert nbeta <= length(ts)
 
-    oo = MPO(fill(WWc, Ntot))
+    (b1, b2) = if init_beta_only 
+        nbeta, Ntot
+    else # beta at the beginning and at the end
+        @assert iseven(nbeta)
+        beta_half = div(nbeta,2)
+        beta_half, Ntot - beta_half 
+    end
 
-    for ib = 1:b1
-        oo[ib] = WWc_im
+    if verbose
+        @info "Building folded tMPO for (im+real) $(b1)-$(b2)-$(Ntot)) sites "
     end
-    for ib = b2+1:Ntot
-        oo[ib] = WWc_im
-    end
+
+    oo = MPO(Ntot)
 
     virtual_ind_size = dim(rot_inds[:R])
 
+    # two tlinks will be contracted at the end
     tlinks = [Index(virtual_ind_size,"Link,time_fold,l=$(ii-1)") for ii in 1:length(ts)+1]
 
+    WWinds =  (rot_inds[:P], rot_inds[:Ps], rot_inds[:L], rot_inds[:R] )
+
     for ii in eachindex(oo)
-        WWinds =  (rot_inds[:P], rot_inds[:Ps], rot_inds[:L], rot_inds[:R], )
         newinds = (ts[ii],        ts[ii]',       tlinks[ii],   tlinks[ii+1])
-        oo[ii] = replaceinds(oo[ii], WWinds, newinds)
+        if ii > b1 && ii <= b2
+            oo[ii] = replaceinds(WWc, WWinds, newinds)
+        else
+            #@warn "Filling imag beta tensor O[$(ii)]"
+            oo[ii] = replaceinds(WWc_im, WWinds, newinds)
+        end
     end
 
-    dttype = NDTensors.unwrap_array_type(WWc)
+
     oo[1] = oo[1] * replaceind(rho0, ind(rho0,1), tlinks[1])
 
     # s = inds(b.WWc)[4]
   
-    fold_op = get(kwargs, :fold_op, vectorized_identity(tlinks[end]))
-    outputlevel > 1 && @info "fold_op = $(vector(fold_op))"
+    fold_op = something(fold_op, vectorized_identity(tlinks[end]))
+
+    if verbose
+        @info "fold_op = $(vector(fold_op))"
+    end
 
     fold_op = to_itensor(fold_op, tlinks[end])
   
+    dttype = NDTensors.unwrap_array_type(WWc)
     oo[end] = oo[end] * adapt(dttype, fold_op)
 
     return oo

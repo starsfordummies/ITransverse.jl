@@ -9,7 +9,7 @@ tp = ising_tp()
 b = FoldtMPOBlocks(tp)
 evs_X = ComplexF64[]
 for nn = 1:6
-    c0, b = init_cone(tp,nn)
+    c0 = init_cone(b,nn)
     push!(evs_X, expval_LR(c0,c0,[0,1,1,0], b))
 end
 
@@ -18,25 +18,13 @@ end
 
 
 
-function alt_init_cone(ts, b, n)
-
-    psi = folded_right_tMPS(b, ts)
-
-    for jj = 2:n
-        m = folded_tMPO(b,ts)
-        psi = applyn(m, psi)
-        orthogonalize!(psi, length(psi))
-        orthogonalize!(psi, 1)
-    end
-
-    return psi, b
-end
-
 
 tp = ising_tp()
 b = FoldtMPOBlocks(tp)
-nn = 9
-c0, b = init_cone(b, nn)
-c0_alt, b = alt_init_cone(siteinds(c0), b, nn)
+nn = 6
+c0_full = init_cone(b, nn; full=true)
+c0_tri = init_cone(b, nn; full=false)
 
-@test fidelity(c0,c0_alt) ≈ 1 
+#c0_alt = alt_init_cone(siteinds(c0), b, nn)
+
+@test fidelity(c0_full,c0_tri) ≈ 1 

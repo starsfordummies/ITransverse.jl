@@ -36,6 +36,7 @@ Nsteps = 30
 
 mp = IsingParams(JXX, hz, gx)
 tp = tMPOParams(dt, build_expH_ising_symm_svd, mp, nbeta, init_state)
+b = FoldtMPOBlocks(tp)
 
 ss = siteinds("S=1/2", 80)
 psi0 = productMPS(ss, "+")
@@ -46,7 +47,7 @@ state = tdvp(
     H, -3.0im, psi0; time_step=-0.1im, cutoff=1e-12, (step_observer!)=obs, outputlevel=1
   )
 
-c0,b = init_cone(tp)
+c0 = init_cone(b, 10; full=false)
 
 cone_params = ConeParams(;truncp, opt_method="RDM", optimize_op, which_evs=["X","Z"], checkpoint=0)
 psi, psiR, chis, expvals, entropies, infos, last_cp = run_cone(c0, b, cone_params, Nsteps)
@@ -54,6 +55,3 @@ psi, psiR, chis, expvals, entropies, infos, last_cp = run_cone(c0, b, cone_param
 
 @info norm(expvals["Z"] - obs.Z[11:end])
 @test norm(expvals["Z"] - obs.Z[11:end]) < 0.05
-
-expvals["Z"]
-obs.Z[11:end]

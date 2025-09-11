@@ -32,9 +32,9 @@ Nsteps = 20
 
 mp = IsingParams(JXX, hz, gx)
 tp = tMPOParams(dt, build_expH_ising_murg, mp, nbeta, init_state)
+b = FoldtMPOBlocks(tp)
 
-
-c0,b = init_cone(tp)
+c0 = init_cone(b)
 
 cone_params = ConeParams(;truncp, opt_method="RDM", optimize_op, which_evs=["X","Z"], checkpoint=0)
 psi, psiR, chis, expvals, entropies, infos, last_cp = run_cone(c0, b, cone_params, Nsteps)
