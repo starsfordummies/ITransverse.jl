@@ -21,10 +21,13 @@ function initialize_envs_rdm(cc::Columns, trunc_params; verbose::Bool=false)
         end
   
         ll = applyns(cc[jj+1], left_envs[jj]; truncate=true, cutoff, maxdim=maxbondim)
-        ll = orthogonalize(ll, length(ll))
-        left_envs.norms[jj+1] = norm(ll)
-        ll = normalize(ll)
-        left_envs[jj+1] = ll
+
+        update_env!(left_envs, jj+1, ll)
+
+        # ll = orthogonalize(ll, length(ll))
+        # left_envs.norms[jj+1] = norm(ll)
+        # ll = normalize(ll)
+        # left_envs[jj+1] = ll
 
         next!(p; showvalues = [(:Info,"[RDM Init envs][$(jj)][χ=$(maxlinkdim(ll))]")])
 
@@ -39,12 +42,14 @@ function initialize_envs_rdm(cc::Columns, trunc_params; verbose::Bool=false)
         rr = applyn(cc[jj], right_envs[jj]; truncate=true, cutoff, maxdim=maxbondim)
         #@show rr
 
-        rr = orthogonalize(rr, length(rr))
-        right_envs.norms[jj-1] = norm(rr)
-        rr = normalize(rr)
-        right_envs[jj-1] = rr 
+        update_env!(right_envs, jj-1, rr)
 
-        next!(p; showvalues = [(:Info,"[RDM Init envs][$(jj)][χ=$(maxlinkdim(ll))]")])
+        # rr = orthogonalize(rr, length(rr))
+        # right_envs.norms[jj-1] = norm(rr)
+        # rr = normalize(rr)
+        # right_envs[jj-1] = rr 
+
+        next!(p; showvalues = [(:Info,"[RDM Init envs][$(jj)][χ=$(maxlinkdim(rr))]")])
 
    end
 

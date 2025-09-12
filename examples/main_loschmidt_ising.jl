@@ -135,32 +135,3 @@ function main_ising_loschmidt()
 end
 
 results = main_ising_loschmidt();
-
-
-function zm(z, Nt, Nbeta)
-    if z <= Nbeta
-        return (z/(2*Nbeta), 0)
-    elseif z > Nbeta && z <= Nt+Nbeta
-        return (0.5, (z - Nbeta)/Nt)
-    elseif z > Nt + Nbeta && z <= Nt + 2*Nbeta
-        return (0.5 + (z - Nbeta - Nt)/(2*Nbeta), 1)
-    else
-        error("z does not match any specified condition")
-    end
-end
-      
-phi(Toverbeta0, x, y) = 1/12 * atan( Toverbeta0 ,  1 + pi*(x-y)*cot(-pi*x))
-
-function build_phi(Nt, Nbeta)
-
-    phis = zeros(Nt+2*Nbeta)
-
-    for iz = 1:Nt+2*Nbeta
-        (y, x) = zm(iz,Nt,Nbeta)
-        @info (y, x)
-
-        phis[iz] = phi(Nt/(2*Nbeta), x, y)
-    end
-
-    return phis
-end

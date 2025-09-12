@@ -64,7 +64,7 @@ function Base.show(io::IO, ::MIME"text/plain", cc::Columns)
 end
 
 """ Given a Columns struct, 
-performs the *exact* contraction from the edges towawrds the center, without using environments """
+performs the exact (up to maxdim) contraction from the edges towawrds the center, without using environments """
 function contract_cols(cc::Columns; maxdim=1024)
 
     NN = length(cc)
