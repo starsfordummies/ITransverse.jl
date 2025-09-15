@@ -174,7 +174,9 @@ function build_expXX_murg(
 
     link_dimension = 2
 
-    link_indices = [Index(link_dimension, "Link,l=$(n-1)") for n = 1:N+1]
+    link_indices = hasqns(sites) ?
+        [Index([QN("SzParity", 1, 2) => 1, QN("SzParity", 0, 2) => 1], "Link,l=$(n-1)") for n = 1:N+1] : 
+        [Index(link_dimension, "Link,l=$(n-1)") for n = 1:N+1]
 
     for n = 1:N
         # siteindex s
