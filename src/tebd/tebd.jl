@@ -96,3 +96,17 @@ function tebd_z(Nt::Int, tp::tMPOParams; N::Int = 2*Nt+4, truncp=TruncParams())
     return evs
 
 end
+
+function evolve(psi::MPS, U::MPO, Nt::Int)
+    psi_t = deepcopy(psi)
+    LL = length(psi)
+    evs = []
+    for nt = 1:Nt
+        # println("timestep N°=$(nt)\ttime=$(t)")
+        psi_t = apply(U, psi_t; maxdim = 512, cutoff = 1e-10, normalize = true)
+        zz = expect(psi_t, "Z")[div(LL,2)]
+        push!(evs,zz)
+
+        @show nt, maxlinkdim(psi_t), zz
+    end
+end

@@ -70,9 +70,13 @@ function make_fwtmpoblocks(eH::MPO; check_sym::Bool=true)
     end
 
 
-    time_P = Index(dim(iLink1),"Site,time")
-    time_vL = Index(dim(icP),"Link,time")
-    time_vR = Index(dim(icP'),"Link,time")
+
+    #time_P = Index(dim(iLink1),"Site,time")
+    time_P = sim(iLink1, tags="Site,time")
+    #time_vL = Index(dim(icP),"Link,time")
+    time_vL = sim(icP, tags="Link,time")
+    #time_vR = Index(dim(icP'),"Link,time")
+    time_vR = sim(icP', tags="Link,time")
 
 
     """  (L,R,P,P') => (P',P,L,R) """

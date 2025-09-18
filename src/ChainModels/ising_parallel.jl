@@ -48,7 +48,11 @@ function build_expH_ising_murg(
 
     link_dimension = 2
 
-    link_indices = [Index(link_dimension, "Link,l=$(n-1)") for n = 1:N+1]
+    #link_indices = [Index(link_dimension, "Link,l=$(n-1)") for n = 1:N+1]
+    link_indices = hasqns(sites) ?
+        [Index([QN("SzParity", 1, 2) => 1, QN("SzParity", 0, 2) => 1], "Link,l=$(n-1)") for n = 1:N+1] : 
+        [Index(link_dimension, "Link,l=$(n-1)") for n = 1:N+1]
+
 
     for n = 1:N
         # siteindex s
@@ -115,38 +119,20 @@ function build_expH_ising_murg_new(sites::Vector{<:Index},
 
     Uxx = build_expXX_murg(sites, JXX)
 
-    sigma_X = [0 1 ; 1 0]
-    sigma_Z = [1 0 ; 0 -1]
-
-    eX = exp(im*λx*sigma_X)
-    eZ2 = exp(0.5*im*gz*sigma_Z)
-    
-    Ux = MPO([op(eX, s) for s in siteinds(Uxx, plev=0)])
-    Uz2 = MPO([op(eZ2, s) for s in siteinds(Uxx, plev=0)])
+    Ux = MPO([op(s, "Rx", θ=-2*λx) for s in sites])
+    Uz2 = MPO([op(s, "Rz", θ=-gz) for s in sites])
 
 
     # Multiply in order:  exp(iZ/2)*exp(iX)*exp(iXX)*exp(iZ/2)
     
-    U_t = applyn(Ux, Uz2,) 
-    # @show U_t[1].tensor
-
+    U_t = iszero(λx) ? Uz2 : applyn(Ux, Uz2) 
     U_t = applyn(Uxx, U_t) 
-    # @show U_t[1].tensor
-
     U_t = applyn(Uz2, U_t) 
-    # @show U_t[1].tensor
-
-    # @show Uxx[1].tensor
-    # @show U_t[1].tensor
-
-    # @show Uz2[1].tensor
-
-    # @show JXX
 
     return U_t
 
-
 end
+
 
 function build_expH_ising_murg_new(s::Vector{<:Index}, p::IsingParams, dt::Number)
     build_expH_ising_murg_new(s, p.Jtwo, p.gperp, p.hpar, dt)
@@ -157,7 +143,6 @@ function build_expH_ising_murg_new(p::IsingParams, dt::Number)
     s = siteinds("S=1/2", 3)
     build_expH_ising_murg_new(s, p.Jtwo, p.gperp, p.hpar, dt)
 end
-
 
 
 function build_expXX_murg(
@@ -174,7 +159,11 @@ function build_expXX_murg(
 
     link_dimension = 2
 
-    link_indices = [Index(link_dimension, "Link,l=$(n-1)") for n = 1:N+1]
+    #link_indices = [Index(link_dimension, "Link,l=$(n-1)") for n = 1:N+1]
+
+     link_indices = hasqns(sites) ?
+        [Index([QN("SzParity", 1, 2) => 1, QN("SzParity", 0, 2) => 1], "Link,l=$(n-1)") for n = 1:N+1] : 
+        [Index(link_dimension, "Link,l=$(n-1)") for n = 1:N+1]
 
     for n = 1:N
         # siteindex s
@@ -209,8 +198,8 @@ function build_expXX_murg(
 
     return U_XX
 
-
 end
+
 
 
 function build_expH_ising_murg(s::Vector{<:Index}, p::IsingParams, dt::Number)
