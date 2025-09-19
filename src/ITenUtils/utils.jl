@@ -72,3 +72,27 @@ end
 function convert_keys_to_symbols_recursive(dict::Dict)
     return Dict(Symbol(k) => (v isa Dict ? convert_keys_to_symbols_recursive(v) : v) for (k, v) in dict)
 end
+
+
+function beta_lims(Ntot::Int, nbeta::Int, init_beta_only::Bool)
+
+    b1 = if init_beta_only 
+        nbeta
+    else
+        if iseven(nbeta)
+            div(nbeta,2)
+        elseif nbeta == 1 
+            nbeta
+        else
+            error("even nbeta")
+        end  
+    end
+
+    b2 = if init_beta_only 
+        Ntot 
+    else
+        Ntot - div(nbeta,2) 
+    end
+
+    return b1,b2
+end

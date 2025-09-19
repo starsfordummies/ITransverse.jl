@@ -178,14 +178,14 @@ function itensor_to_vector(t::ITensor)
 end
 
 function to_itensor(x::ITensor, name::String)
-    @assert ndims(x) == 1 
+    #@assert ndims(x) == 1 
     settags(x, name)
     # idx = sim(ind(x,1); tags=name)
     # return replaceind(x, ind(x,1), idx)
 end
 
 function to_itensor(x::ITensor, idx::Index)
-    @assert ndims(x) == 1
+    #@assert ndims(x) == 1
     return replaceind(x, ind(x,1), idx)
 end
 

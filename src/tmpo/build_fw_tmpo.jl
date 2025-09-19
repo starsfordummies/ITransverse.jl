@@ -29,18 +29,20 @@ function fw_tMPO_opentr(b::FwtMPOBlocks, time_sites::Vector{<:Index};  bl::ITens
 
     @assert nbeta <= Ntot
 
-    b1 = if init_beta_only 
-        nbeta
-    else
-        @assert iseven(nbeta)
-        div(nbeta,2)
-    end
+    b1,b2 = beta_lims(Ntot, nbeta, init_beta_only)
 
-    b2 = if init_beta_only 
-        Ntot 
-    else
-        Ntot - div(nbeta,2) 
-    end
+    # b1 = if init_beta_only 
+    #     nbeta
+    # else
+    #     @assert iseven(nbeta)
+    #     div(nbeta,2)
+    # end
+
+    # b2 = if init_beta_only 
+    #     Ntot 
+    # else
+    #     Ntot - div(nbeta,2) 
+    # end
 
     (icL, icR, icP, icPs) = (rot_inds[:L], rot_inds[:R], rot_inds[:P], rot_inds[:Ps]) 
 
@@ -169,18 +171,25 @@ function fw_tMPS(
     # Make same indices for real and imag, it's easier afterwards 
     replaceinds!(W_im, inds(W_im), inds(W))
 
-    b1 = if init_beta_only 
-        nbeta
-    else
-        @assert iseven(nbeta)
-        div(nbeta,2)
-    end
+    b1,b2 = beta_lims(Ntot, nbeta, init_beta_only)
 
-    b2 = if init_beta_only 
-        Ntot 
-    else
-        Ntot - div(nbeta,2) 
-    end
+    # b1 = if init_beta_only 
+    #     nbeta
+    # else
+    #     if iseven(nbeta)
+    #         div(nbeta,2)
+    #     elseif nbeta == 1 
+    #         nbeta
+    #     else
+    #         error("even nbeta")
+    #     end  
+    # end
+
+    # b2 = if init_beta_only 
+    #     Ntot 
+    # else
+    #     Ntot - div(nbeta,2) 
+    # end
 
  
 
@@ -215,6 +224,9 @@ end
 
 
 
+
+
+
 """ Forward tMPO with open top (=right, after rotation) leg, so we can plug anything afterwards """
 function fw_tMPO_opentr_p(b::FwtMPOBlocks, Ntot::Int;
      #time_sites::Vector{<:Index}; 
@@ -228,18 +240,21 @@ function fw_tMPO_opentr_p(b::FwtMPOBlocks, Ntot::Int;
 
     @assert nbeta <= Ntot
 
-    b1 = if init_beta_only 
-        nbeta
-    else
-        @assert iseven(nbeta)
-        div(nbeta,2)
-    end
+    # b1 = if init_beta_only 
+    #     nbeta
+    # else
+    #     @assert iseven(nbeta)
+    #     div(nbeta,2)
+    # end
 
-    b2 = if init_beta_only 
-        Ntot 
-    else
-        Ntot - div(nbeta,2) 
-    end
+    # b2 = if init_beta_only 
+    #     Ntot 
+    # else
+    #     Ntot - div(nbeta,2) 
+    # end
+
+    b1,b2 = beta_lims(Ntot, nbeta, init_beta_only)
+
 
     (icL, icR, icP, icPs) = (rot_inds[:L], rot_inds[:R], rot_inds[:P], rot_inds[:Ps]) 
 
