@@ -234,7 +234,7 @@ function Left_timeEvo_ITensor_2ndOrder(
 
   s = unique(noprime(inds(D)))[1]
   local_dim = dim(s)
-  local_Id = ITensors.diag_itensor(ones(local_dim), inds(D))
+  local_Id = ITensor(diagm(ones(local_dim)), inds(D))
 
   # first element
   firstelement =
@@ -305,7 +305,7 @@ function Right_timeEvo_ITensor_2ndOrder(
 
   s = unique(noprime(inds(D)))[1]
   local_dim = dim(s)
-  local_Id = ITensors.diag_itensor(ones(local_dim), inds(D))
+  local_Id = ITensor(diagm(ones(local_dim)), inds(D))
 
   # first element
   firstelement =
