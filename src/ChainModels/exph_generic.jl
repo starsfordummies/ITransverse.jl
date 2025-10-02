@@ -90,7 +90,7 @@ function bulk_timeEvo_ITensor_2ndOrder(
   # Init ITensor inside MPO
   # U_t[n] = ITensor(ComplexF64, ll, dag(s), s', rl)
   s = unique(noprime(inds(As[1])))[1]
-  local_Id = ITensors.diag_itensor(ones(local_dim), inds(As[1]))
+  local_Id = ITensor(diagm(ones(local_dim)), inds(As[1]))
 
   # first element
   firstelement =
