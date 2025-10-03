@@ -5,8 +5,6 @@ braket(A::ITensor, B::ITensor, C::ITensor) =
   replaceprime(A'' * B' * C + A'' * C' * B + B'' * A' * C + B'' * C' * A + C'' * A' * B + C'' * B' * A, 3 => 1)
 braket2(A::ITensor, B::ITensor) = replaceprime(A'' * B' * B + B'' * A' * B + B'' * B' * A, 3 => 1)
 
-
-
 timeEvo_MPO_2ndOrder(
   sites,
   AStrings::Vector{String},
@@ -18,7 +16,36 @@ timeEvo_MPO_2ndOrder(
   DString::String,
   JD::Number,
   t::Number;
+) = timeEvo_MPO_2ndOrder(sites, AStrings,  JAs,  BStrings,  JBs,  CStrings,  JCs, [DString], [JD], t;)
+
+
+timeEvo_MPO_2ndOrder(
+  sites,
+  AStrings::Vector{String},
+  JAs::Vector{<:Number},
+  BStrings::Vector{String},
+  JBs::Vector{<:Number},
+  CStrings::Vector{String},
+  JCs::Vector{<:Number},
+  DString::Vector{String},
+  JD::Vector{<:Number},
+  t::Number;
 ) = MPO(timeEvo_ITensors_2ndOrder(sites, AStrings, JAs, BStrings, JBs, CStrings, JCs, DString, JD, t;))
+
+
+bulk_timeEvo_ITensor_2ndOrder(n,
+  sites,
+  linkindices,
+  AStrings::Vector{String},
+  JAs::Vector{<:Number},
+  BStrings::Vector{String},
+  JBs::Vector{<:Number},
+  CStrings::Vector{String},
+  JCs::Vector{<:Number},
+  DString::String,
+  JD::Number,
+  τ::Number;
+) = bulk_timeEvo_ITensor_2ndOrder(n,sites,linkindices,AStrings,JAs,BStrings,JBs,CStrings,JCs,[DString],[JD],τ;)
 
 function bulk_timeEvo_ITensor_2ndOrder(
   n,
@@ -30,8 +57,8 @@ function bulk_timeEvo_ITensor_2ndOrder(
   JBs::Vector{<:Number},
   CStrings::Vector{String},
   JCs::Vector{<:Number},
-  DString::String,
-  JD::Number,
+  DString::Vector{String},
+  JD::Vector{<:Number},
   τ::Number;
 )
   s = sites[n]
@@ -47,7 +74,7 @@ function bulk_timeEvo_ITensor_2ndOrder(
   As = map(x -> x[1] * op(sites, x[2], n), zip(JAs, AStrings))
   Bs = map(x -> x[1] * op(sites, x[2], n), zip(JBs, BStrings)) # JB * op(sites, BString, n)
   Cs = map(x -> x[1] * op(sites, x[2], n), zip(JCs, CStrings)) # JC * op(sites, CString, n)
-  D = JD * op(sites, DString, n)
+  D = mapreduce(x -> x[1] * op(sites, x[2], n), + ,zip(JD, DString))
   # D = JD * Op(DString, n)
 
   return bulk_timeEvo_ITensor_2ndOrder(
@@ -206,13 +233,13 @@ function Left_timeEvo_ITensor_2ndOrder(
   linkindices,
   CStrings::Vector{String},
   JCs::Vector{<:Number},
-  DString::String,
-  JD::Number,
+  DString::Vector{String},
+  JD::Vector{<:Number},
   τ::Number;
 )
 
   Cs = map(x -> x[1] * op(sites, x[2], 1), zip(JCs, CStrings)) # JC * op(sites, CString, n)
-  D = JD * op(sites, DString, 1)
+  D = mapreduce(x -> x[1] * op(sites, x[2], 1), +,zip(JD, DString))
 
   return Left_timeEvo_ITensor_2ndOrder(
     linkindices[1],
@@ -268,8 +295,8 @@ function Right_timeEvo_ITensor_2ndOrder(
   linkindices,
   BStrings::Vector{String},
   JBs::Vector{<:Number},
-  DString::String,
-  JD::Number,
+  DString::Vector{String},
+  JD::Vector{<:Number},
   τ::Number;
 )
   L = length(sites)
@@ -283,7 +310,7 @@ function Right_timeEvo_ITensor_2ndOrder(
   # As = map(x -> x[1] * op(sites, x[2], n), zip(JAs, AStrings))
   Bs = map(x -> x[1] * op(sites, x[2], n), zip(JBs, BStrings)) # JB * op(sites, BString, n)
   # Cs = map(x -> x[1] * op(sites, x[2], n), zip(JCs, CStrings)) # JC * op(sites, CString, n)
-  D = JD * op(sites, DString, n)
+  D = mapreduce(x -> x[1] * op(sites, x[2], n), +, zip(JD, DString))
 
   return Right_timeEvo_ITensor_2ndOrder(
     left_link,
@@ -420,8 +447,8 @@ function timeEvo_ITensors_2ndOrder(
   JBs::Vector{<:Number},
   CStrings::Vector{String},
   JCs::Vector{<:Number},
-  DString::String,
-  JD::Number,
+  DString::Vector{String},
+  JD::Vector{<:Number},
   t::Number;
 )
   # Source: Van Damme, Haegeman, McCulloch, Vanderstraeten, arXiv:2302.14181 http://arxiv.org/abs/2302.14181
