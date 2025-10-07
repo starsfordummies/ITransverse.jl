@@ -212,7 +212,7 @@ function powermethod_both(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::
     rr = deepcopy(in_mps)
 
     p = Progress(itermax; showspeed=true)  #barlen=40
-    p = Progress(itermax; desc="L=$(length(ll)), cutoff=$(cutoff), maxbondim=$(pm_params.maxbondim))", showspeed=true) 
+    p = Progress(itermax; desc="L=$(length(ll)), cutoff=$(truncp.cutoff), maxbondim=$(truncp.maxbondim))", showspeed=true) 
 
     for jj = 1:itermax
 
