@@ -163,8 +163,8 @@ function powermethod_op(in_mps::MPS, in_mpo_1::MPO, in_mpo_O::MPO, pm_params::PM
         RRnew = inner(rr_work,rr)/norm(rr)/norm(rr_work)
 
         push!(info_iterations[:RRnew], RRnew)
-
-        maxnormS = maximum([norm(ss for ss in sjj)])
+        
+        maxnormS = maximum([norm(ss) for ss in sjj])
 
         if ds2 < eps_converged
             @info ("[$(length(ll))] converged after $jj steps - χ=$(maxlinkdim(ll))")
