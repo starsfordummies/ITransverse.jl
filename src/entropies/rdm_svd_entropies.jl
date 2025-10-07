@@ -68,7 +68,7 @@ end
 
 
 
-function renyi_entanglement_entropy!(in_psi::MPS, cut::Int, αr::Int)
+function renyi_entanglement_entropy(in_psi::MPS, cut::Int, αr::Int)
 
     S_ren = 0.0
 
@@ -91,7 +91,7 @@ function renyi_entanglement_entropy!(in_psi::MPS, cut::Int, αr::Int)
 
         sum_sN = sum(S2α)
     
-        S_ren = -log(sum_sN)
+        S_ren = log(sum_sN)/(1-αr)
 
     end
 
@@ -104,14 +104,14 @@ end
 S_α = -log(sum λ^α), where λ are the eigenvalues of the RDM (=SV^2 ).
 returns a vector of floats containing the entropies 
 """
-function renyi_entanglement_entropy!(psi::MPS, α::Int=2)
+function renyi_entanglement_entropy(psi::MPS, α::Int=2)
 
     workpsi = normalize(psi)
 
     ents_renyi = Vector{Float64}()
 
     for icut=1:length(workpsi)-1
-        Si = renyi_entanglement_entropy!(workpsi, icut, α)
+        Si = renyi_entanglement_entropy(workpsi, icut, α)
         push!(ents_renyi, Si)
     end
 
