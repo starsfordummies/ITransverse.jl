@@ -222,7 +222,6 @@ function powermethod_both(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::
         OpsiR = applyn(in_mpo_R, rr)
 
         llprev = deepcopy(ll)
-        rrprev = deepcopy(rr)
 
         # TODO implement different methods according to `opt_method`
         if opt_method == "RDM"
@@ -237,14 +236,18 @@ function powermethod_both(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::
         ll = normbyfactor(ll, sq_ov)
         rr = normbyfactor(rr, sq_ov)
 
+        #@show overlap_noconj(ll,rr)
+
 
         ds2 = norm(sprevs - sjj)
         push!(ds2s, ds2)
 
         sprevs = sjj
 
+        fidelity_step = fidelity(ll, llprev)
 
-        next!(p; showvalues = [(:Info,"[$(jj)] ds2=$(ds2), chi=$(maxlinkdim(ll))" )])
+
+        next!(p; showvalues = [(:Info,"[$(jj)] | ds2=$(ds2) | fidelity(old|new) = $(fidelity_step) | chi=$(maxlinkdim(ll))" )])
 
         if ds2 < eps_converged
             println("converged after $jj steps")
