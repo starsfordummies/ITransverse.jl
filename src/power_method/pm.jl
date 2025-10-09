@@ -239,6 +239,7 @@ function powermethod_both(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::
 
 
         ds2 = norm(sprevs - sjj)
+        push!(ds2s, ds2)
 
         sprevs = sjj
 
