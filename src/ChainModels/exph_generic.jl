@@ -310,15 +310,8 @@ function Right_timeEvo_ITensor_2ndOrder(
 )
   L = length(sites)
   n = L
-  # left link index ll with daggered QN conserving direction (if applicable)
-  # left_link = dag(linkindices[L-1])
 
-  # 
-
-  # A is possible exponential decay so test for "0"
-  # As = map(x -> x[1] * op(sites, x[2], n), zip(JAs, AStrings))
   Bs = map(x -> x[1] * op(sites, x[2], n), zip(JBs, BStrings)) # JB * op(sites, BString, n)
-  # Cs = map(x -> x[1] * op(sites, x[2], n), zip(JCs, CStrings)) # JC * op(sites, CString, n)
   D = mapreduce(x -> x[1] * op(sites, x[2], n), +, zip(JD, DString))
 
   return Right_timeEvo_ITensor_2ndOrder(
