@@ -78,14 +78,6 @@ function bulk_timeEvo_ITensor_2ndOrder(
   JD::Vector{<:Number},
   τ::Number;
 )
-  # s = sites[n]
-  # left link index ll with daggered QN conserving direction (if applicable)
-  # ll = dag(linkindices[n-1])
-  # right link index rl
-  # rl = linkindices[n]
-  # Id = op(sites, "Id", n)
-
-  NrOfTerms = length(AStrings)
 
   # A is possible exponential decay so test for "0"
   As = map(x -> x[1] * op(sites, x[2], n), zip(JAs, AStrings))
@@ -95,7 +87,7 @@ function bulk_timeEvo_ITensor_2ndOrder(
   # D = JD * Op(DString, n)
 
   return bulk_timeEvo_ITensor_2ndOrder(
-  linkindices[n-1,n],
+  linkindices[n-1:n],
   As,
   Bs,
   Cs,
