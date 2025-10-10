@@ -223,18 +223,25 @@ function powermethod_both(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::
 
         llprev = deepcopy(ll)
 
-        # TODO implement different methods according to `opt_method`
         if opt_method == "RDM"
             ll = truncate(OpsiL; cutoff, maxdim)
             rr = truncate(OpsiR; cutoff, maxdim)
             sjj = vn_entanglement_entropy(ll)
+
+            # ll = normalize(ll)
+            # rr = normalize(rr)
+
         else # RTM
             ll, rr, sjj = truncate_sweep(OpsiL, OpsiR, truncp)
+
+            # sq_ov = sqrt(overlap_noconj(ll,rr))
+            # ll = normbyfactor(ll, sq_ov)
+            # rr = normbyfactor(rr, sq_ov)
+
         end
 
-        sq_ov = sqrt(overlap_noconj(ll,rr))
-        ll = normbyfactor(ll, sq_ov)
-        rr = normbyfactor(rr, sq_ov)
+        ll = normalize(ll)
+        rr = normalize(rr)
 
         #@show overlap_noconj(ll,rr)
 
@@ -249,7 +256,7 @@ function powermethod_both(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::
 
         next!(p; showvalues = [(:Info,"[$(jj)] | ds2=$(ds2) | fidelity(old|new) = $(fidelity_step) | chi=$(maxlinkdim(ll))" )])
 
-        if ds2 < eps_converged
+        if ds2 < eps_converged || fidelity_step > 0.9999999
             println("converged after $jj steps")
             break
         end
