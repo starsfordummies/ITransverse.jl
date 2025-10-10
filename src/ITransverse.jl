@@ -46,7 +46,7 @@ include("entropies/diagonalize_sym_rtm.jl")
 include("entropies/compute_rho2.jl")
 
 export vn_entanglement_entropy, 
-    renyi_entanglement_entropy!,
+    renyi_entanglement_entropy,
     build_entropies,
     diagonalize_rdm,
     generalized_vn_entropy_symmetric,
