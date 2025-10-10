@@ -78,11 +78,11 @@ function bulk_timeEvo_ITensor_2ndOrder(
   JD::Vector{<:Number},
   τ::Number;
 )
-  s = sites[n]
+  # s = sites[n]
   # left link index ll with daggered QN conserving direction (if applicable)
-  ll = dag(linkindices[n-1])
+  # ll = dag(linkindices[n-1])
   # right link index rl
-  rl = linkindices[n]
+  # rl = linkindices[n]
   # Id = op(sites, "Id", n)
 
   NrOfTerms = length(AStrings)
@@ -95,7 +95,7 @@ function bulk_timeEvo_ITensor_2ndOrder(
   # D = JD * Op(DString, n)
 
   return bulk_timeEvo_ITensor_2ndOrder(
-  [ll,rl],
+  linkindices[n-1,n],
   As,
   Bs,
   Cs,
