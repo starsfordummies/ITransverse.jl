@@ -311,7 +311,7 @@ function Right_timeEvo_ITensor_2ndOrder(
   L = length(sites)
   n = L
   # left link index ll with daggered QN conserving direction (if applicable)
-  left_link = dag(linkindices[L-1])
+  # left_link = dag(linkindices[L-1])
 
   # 
 
@@ -322,7 +322,7 @@ function Right_timeEvo_ITensor_2ndOrder(
   D = mapreduce(x -> x[1] * op(sites, x[2], n), +, zip(JD, DString))
 
   return Right_timeEvo_ITensor_2ndOrder(
-    left_link,
+    linkindices[L-1],
     Bs,
     D,
     τ;
