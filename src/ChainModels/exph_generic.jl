@@ -95,7 +95,7 @@ function bulk_timeEvo_ITensor_2ndOrder(
   # D = JD * Op(DString, n)
 
   return bulk_timeEvo_ITensor_2ndOrder(
-  linkindices,
+  [ll,rl],
   As,
   Bs,
   Cs,
