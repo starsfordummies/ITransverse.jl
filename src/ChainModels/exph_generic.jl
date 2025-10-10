@@ -1,4 +1,21 @@
 using LinearAlgebra
+# Source: Van Damme, Haegeman, McCulloch, Vanderstraeten,  SciPost Phys. 17, 135 (2024)  https://scipost.org/SciPostPhys.17.5.135
+# Given an MPO W of a Hamiltonian H in form 
+#       | Id | C | D  |
+#  W =  |  0 | A | B  |
+#       |  0 | 0 | Id |
+
+# then we find that the time evolution opertator U(t) 
+# U(t) = exp(-ı t H)
+#   | Id + τD + τ^2/2 D^2 + τ^3/6 D^3 | C + τ^2/2 {CD} + τ^3/6 {CDD}                 | CC + τ/3 {CCD}
+# ≈ | τB + τ^2/2 {B D} + τ^3/6 {BDD}  | A + τ/2({BC} + {AD}) + τ^2/6( {CBD} + {ADD}) | {AC} + τ/3 ({ACD} + {CCB})
+#   | τ^2/2 BB + τ^3/6 {BBD}          | τ/2 {AB} + τ^2/6 ({ABD} + {BBC})             | AA + τ/3 ({ABC} +{AAD})
+
+# NB:
+# {AB}  = AB + BA
+# {ABB} = {BBA} = ABB + BAB + BBA
+# {ABC} = ABC + ACB + BAC + BCA + CAB + CBA
+# measure τ in imaginary units for actualy time evolution
 
 braket(A::ITensor, B::ITensor) = replaceprime(prime(A) * B + prime(B) * A, 2 => 1)
 braket(A::ITensor, B::ITensor, C::ITensor) =
@@ -61,14 +78,6 @@ function bulk_timeEvo_ITensor_2ndOrder(
   JD::Vector{<:Number},
   τ::Number;
 )
-  s = sites[n]
-  # left link index ll with daggered QN conserving direction (if applicable)
-  ll = dag(linkindices[n-1])
-  # right link index rl
-  rl = linkindices[n]
-  # Id = op(sites, "Id", n)
-
-  NrOfTerms = length(AStrings)
 
   # A is possible exponential decay so test for "0"
   As = map(x -> x[1] * op(sites, x[2], n), zip(JAs, AStrings))
@@ -78,7 +87,7 @@ function bulk_timeEvo_ITensor_2ndOrder(
   # D = JD * Op(DString, n)
 
   return bulk_timeEvo_ITensor_2ndOrder(
-  linkindices,
+  linkindices[n-1:n],
   As,
   Bs,
   Cs,
@@ -301,19 +310,12 @@ function Right_timeEvo_ITensor_2ndOrder(
 )
   L = length(sites)
   n = L
-  # left link index ll with daggered QN conserving direction (if applicable)
-  left_link = dag(linkindices[L-1])
 
-  # 
-
-  # A is possible exponential decay so test for "0"
-  # As = map(x -> x[1] * op(sites, x[2], n), zip(JAs, AStrings))
   Bs = map(x -> x[1] * op(sites, x[2], n), zip(JBs, BStrings)) # JB * op(sites, BString, n)
-  # Cs = map(x -> x[1] * op(sites, x[2], n), zip(JCs, CStrings)) # JC * op(sites, CString, n)
   D = mapreduce(x -> x[1] * op(sites, x[2], n), +, zip(JD, DString))
 
   return Right_timeEvo_ITensor_2ndOrder(
-    left_link,
+    linkindices[L-1],
     Bs,
     D,
     τ;
@@ -451,23 +453,7 @@ function timeEvo_ITensors_2ndOrder(
   JD::Vector{<:Number},
   t::Number;
 )
-  # Source: Van Damme, Haegeman, McCulloch, Vanderstraeten, arXiv:2302.14181 http://arxiv.org/abs/2302.14181
-  # Given an MPO W of a Hamiltonian H in form 
-  #       | Id | C | D  |
-  #  W =  |  0 | A | B  |
-  #       |  0 | 0 | Id |
-
-  # then we find that the time evolution opertator U(t) 
-  # U(t) = exp(-ı t H)
-  #   | Id + τD + τ^2/2 D^2 + τ^3/6 D^3 | C + τ^2/2 {CD} + τ^3/6 {CDD}                 | CC + τ/3 {CCD}
-  # ≈ | τB + τ^2/2 {B D} + τ^3/6 {BDD}  | A + τ/2({BC} + {AD}) + τ^2/6( {CBD} + {ADD}) | {AC} + τ/3 ({ACD} + {CCB})
-  #   | τ^2/2 BB + τ^3/6 {BBD}          | τ/2 {AB} + τ^2/6 ({ABD} + {BBC})             | AA + τ/3 ({ABC} +{AAD})
-
-  # NB:
-  # {AB}  = AB + BA
-  # {ABB} = {BBA} = ABB + BAB + BBA
-  # {ABC} = ABC + ACB + BAC + BCA + CAB + CBA
-  # measure τ in imaginary units for actualy time evolution
+  
   τ = -1.0im * t
   N = length(sites)
 
