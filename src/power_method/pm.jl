@@ -202,6 +202,9 @@ function powermethod_both(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::
 
     (; opt_method, itermax, eps_converged, truncp) = pm_params
 
+    cutoff = truncp.cutoff
+    maxdim = truncp.maxbondim
+
     mpslen = length(in_mps)
 
     ds2s = ComplexF64[]
@@ -211,32 +214,40 @@ function powermethod_both(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::
     ll = deepcopy(in_mps)
     rr = deepcopy(in_mps)
 
-    p = Progress(itermax; showspeed=true)  #barlen=40
-    p = Progress(itermax; desc="L=$(length(ll)), cutoff=$(cutoff), maxbondim=$(pm_params.maxbondim))", showspeed=true) 
+    p = Progress(itermax; desc="L=$(length(ll)), cutoff=$(truncp.cutoff), maxbondim=$(truncp.maxbondim))", showspeed=true) 
 
     for jj = 1:itermax
 
-        # Note that ITensors does the apply on the MPS/MPO legs with the SAME label, eg. p-p 
-        # and then unprimes the p' leg. 
-        
-        # Take the ll vector from the previous step as new L,R 
         OpsiL = applyns(in_mpo_L, ll)
         OpsiR = applyn(in_mpo_R, rr)
 
         llprev = deepcopy(ll)
-        rrprev = deepcopy(rr)
 
         # TODO implement different methods according to `opt_method`
-        ll, rr, sjj = truncate_normalize_sweep(OpsiL, OpsiR, truncp)
+        if opt_method == "RDM"
+            ll = truncate(OpsiL; cutoff, maxdim)
+            rr = truncate(OpsiR; cutoff, maxdim)
+            sjj = vn_entanglement_entropy(ll)
+        else # RTM
+            ll, rr, sjj = truncate_sweep(OpsiL, OpsiR, truncp)
+        end
+
+        sq_ov = sqrt(overlap_noconj(ll,rr))
+        ll = normbyfactor(ll, sq_ov)
+        rr = normbyfactor(rr, sq_ov)
+
+        #@show overlap_noconj(ll,rr)
+
 
         ds2 = norm(sprevs - sjj)
+        push!(ds2s, ds2)
 
-        #push!(ds2s, ds2)
-        push!(ds2s, inner(llprev,ll))
         sprevs = sjj
 
+        fidelity_step = fidelity(ll, llprev)
 
-        next!(p; showvalues = [(:Info,"[$(jj)] ds2=$(ds2), chi=$(maxlinkdim(ll))" )])
+
+        next!(p; showvalues = [(:Info,"[$(jj)] | ds2=$(ds2) | fidelity(old|new) = $(fidelity_step) | chi=$(maxlinkdim(ll))" )])
 
         if ds2 < eps_converged
             println("converged after $jj steps")
