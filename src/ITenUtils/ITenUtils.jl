@@ -64,7 +64,9 @@ export quick_mps, quick_mpo, pMPS,
     replace_linkinds!,
     phys_ind,
     gaugefix_left,
-    fidelity
+    fidelity,
+    logfidelity,
+    normalize_for_overlap!
 
 
 # moreutils.jl

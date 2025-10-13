@@ -47,7 +47,7 @@ function powermethod_op(in_mps::MPS, in_mpo_1::MPO, in_mpo_O::MPO, pm_params::PM
 
     p = Progress(itermax; desc="[PM|$(opt_method)] L=$(length(ll)), cutoff=$(cutoff), maxbondim=$(maxbondim))", showspeed=true) 
 
-    info_iterations = Dict(:ds2 => ComplexF64[], :RRnew => ComplexF64[], :LRdiff => ComplexF64[] )
+    info_iterations = Dict(:ds2 => ComplexF64[], :logfidelityRRnew => ComplexF64[], :LRdiff => ComplexF64[] )
 
     for jj = 1:itermax  
 
@@ -78,8 +78,6 @@ function powermethod_op(in_mps::MPS, in_mpo_1::MPO, in_mpo_O::MPO, pm_params::PM
 
         elseif opt_method == "RTM_R"
             rr_work = normbyfactor(rr, sqrt(overlap_noconj(rr,rr)))
-            #rr_work = normalize(rr)
-            #rr_work = rr
 
             OpsiR = applyn(in_mpo_1, rr_work)
             OpsiL = applyns(in_mpo_O, rr_work)  
@@ -92,39 +90,12 @@ function powermethod_op(in_mps::MPS, in_mpo_1::MPO, in_mpo_O::MPO, pm_params::PM
 
         elseif opt_method == "RTM_R_twolayers"
             rr_work = normbyfactor(rr, sqrt(overlap_noconj(rr,rr)))
-            #rr_work = normalize(rr)
-            #rr_work = rr
 
             OpsiR = applyn(in_mpo_1, rr_work)
-
             OpsiR = applyn(in_mpo_1, OpsiR)
 
             OpsiL = applyns(in_mpo_1, rr_work)  
-
             OpsiL = applyns(in_mpo_O, OpsiL)  
-
-
-
-            OpsiR = normalize(OpsiR)
-            OpsiL = normalize(OpsiL)
-    
-            rr, _, sjj = truncate_sweep(OpsiR, OpsiL, truncp)
-            ll = rr
-
-        elseif opt_method == "RTM_R_twolayers_alt"
-            rr_work = normbyfactor(rr, sqrt(overlap_noconj(rr,rr)))
-            #rr_work = normalize(rr)
-            #rr_work = rr
-
-            OpsiR = applyn(in_mpo_1, rr_work)
-
-            OpsiR = applyn(in_mpo_1, OpsiR)
-
-            OpsiL = applyns(in_mpo_O, rr_work)  
-
-            OpsiL = applyns(in_mpo_1, OpsiL)  
-
-
 
             OpsiR = normalize(OpsiR)
             OpsiL = normalize(OpsiL)
@@ -134,7 +105,19 @@ function powermethod_op(in_mps::MPS, in_mpo_1::MPO, in_mpo_O::MPO, pm_params::PM
 
 
         elseif opt_method == "RDM"
-            #rr_work = normbyfactor(rr, sqrt(overlap_noconj(rr,rr)))
+            #ll_work = normalize(ll)
+            #rr_work = normalize(rr)
+
+            
+
+            ll = applys(in_mpo_1, ll_work, cutoff=cutoff, maxdim=maxbondim)
+            rr = apply(in_mpo_1, rr_work, cutoff=cutoff, maxdim=maxbondim)
+
+            sjj = vn_entanglement_entropy(rr)
+
+            @show jj, norm(ll), norm(rr), overlap_noconj(ll,rr)
+
+        elseif opt_method == "RDM_SYMLR"
             rr_work = normalize(rr)
 
             rr = apply(in_mpo_1, rr_work, cutoff=cutoff, maxdim=maxbondim)
@@ -151,18 +134,20 @@ function powermethod_op(in_mps::MPS, in_mpo_1::MPO, in_mpo_O::MPO, pm_params::PM
         push!(info_iterations[:LRdiff], abs(LRnew-LRprev))
         LRprev = LRnew
    
-        if abs(LRnew) < 1e-6
-            @warn "Small overlap $LRnew, watch for trunc error"
-        end
+        # if abs(LRnew) < 1e-6
+        #     @warn "Small overlap $LRnew, watch for trunc error"
+        #     @show norm(ll)
+        #     @show norm(rr)
+        # end
 
         ds2 = norm(sprevs - sjj)
         push!(info_iterations[:ds2], ds2)
         # push!(ds2s, ds2)
         sprevs = sjj
 
-        RRnew = inner(rr_work,rr)/norm(rr)/norm(rr_work)
+        logfidelityRRnew = logfidelity(rr_work,rr)
 
-        push!(info_iterations[:RRnew], RRnew)
+        push!(info_iterations[:logfidelityRRnew], logfidelityRRnew)
         
         maxnormS = maximum([norm(ss) for ss in sjj])
 
@@ -175,7 +160,7 @@ function powermethod_op(in_mps::MPS, in_mpo_1::MPO, in_mpo_O::MPO, pm_params::PM
             @warn ("NOT converged after $jj steps - χ=$(maxlinkdim(ll))")
         end
 
-        next!(p; showvalues = [(:Info,"[$(jj)][χ=$(maxlinkdim(ll))] ds2=$(ds2), <R|Rnew>=1-$(round(1-RRnew,digits=8)) |S|=$(maxnormS)" )])
+        next!(p; showvalues = [(:Info,"[$(jj)][χ=$(maxlinkdim(ll))] ds2=$(ds2), logfidelity(<R|Rnew>)=$(round(logfidelityRRnew,digits=8)) |S|=$(maxnormS)" )])
 
     end
 
@@ -251,12 +236,11 @@ function powermethod_both(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::
 
         sprevs = sjj
 
-        fidelity_step = fidelity(ll, llprev)
+        fidelity_step = logfidelity(ll, llprev)
 
+        next!(p; showvalues = [(:Info,"[$(jj)] | ds2=$(ds2) | logfidelity(old|new)) = $(fidelity_step)) | chi=$(maxlinkdim(ll))" )])
 
-        next!(p; showvalues = [(:Info,"[$(jj)] | ds2=$(ds2) | fidelity(old|new) = $(fidelity_step) | chi=$(maxlinkdim(ll))" )])
-
-        if ds2 < eps_converged || fidelity_step > 0.9999999
+        if ds2 < eps_converged || fidelity_step > 1e-8
             println("converged after $jj steps")
             break
         end
@@ -266,4 +250,3 @@ function powermethod_both(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::
     return ll, rr, ds2s
 
 end
-

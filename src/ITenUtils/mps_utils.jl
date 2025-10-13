@@ -164,6 +164,34 @@ function normbyfactor(psi::AbstractMPS, factor::Number )
 
 end
 
+""" Given two MPS, normalizes one of them to make their overlap to 1 and their norms as close to 1 as possible """
+function normalize_for_overlap!(psi::AbstractMPS, phi::AbstractMPS)
+
+    orthogonalize!(psi,1)
+    orthogonalize!(phi,1)
+
+    overlap = overlap_noconj(psi,phi)
+    abs_overlap = abs(overlap)
+
+    if abs_overlap < 1 
+        # Overlap is small → normalize the one with smaller norm
+        if norm(psi) < norm(phi)
+            psi[1] = psi[1]/overlap
+        else
+            phi[1] = phi[1]/overlap
+        end
+    else
+        # Overlap is large → normalize the one with larger norm
+        if norm(psi) < norm(phi)
+            phi[1] = phi[1]/overlap
+        else
+            psi[1] = psi[1]/overlap
+        end
+    end
+
+end
+
+
 function ITensorMPS.replace_siteinds!(M::MPO, sites)
     for j in eachindex(M)
       sj = siteind(M, j)
@@ -267,7 +295,7 @@ end
 function logfidelity(psi::MPS, phi::MPS)
     phi = copy(phi)
     match_siteinds!(psi, phi)
-    return log10(abs(inner(psi,phi))) -log10(norm(psi)) - log10(norm(phi))/length(psi)
+    return (log10(abs(inner(psi,phi))) -log10(norm(psi)) - log10(norm(phi)))/length(psi)
 end
 
 """ Measures infidelity 1 - |<psi|phi>|^2/(<psi|psi><phi|phi>) """
