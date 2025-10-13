@@ -260,13 +260,19 @@ end
 function fidelity(psi::MPS, phi::MPS)
     phi = copy(phi)
     match_siteinds!(psi, phi)
-    return abs2(inner(psi,phi))/norm(psi)^2/norm(phi)^2
+    return sqrt(abs2(inner(psi,phi))/norm(psi)^2/norm(phi)^2) 
 end
-""" Measures infidelity 1 - |<psi|phi>|^2/(<psi|psi><phi|phi>) """
-function infidelity(psi::MPS, phi::MPS)
+
+""" Returns log10-fidelity *per site* of two MPS """
+function logfidelity(psi::MPS, phi::MPS)
     phi = copy(phi)
     match_siteinds!(psi, phi)
-    return 1. - abs2(inner(psi,phi))/norm(psi)^2/norm(phi)^2
+    return log10(abs(inner(psi,phi))) -log10(norm(psi)) - log10(norm(phi))/length(psi)
+end
+
+""" Measures infidelity 1 - |<psi|phi>|^2/(<psi|psi><phi|phi>) """
+function infidelity(psi::MPS, phi::MPS)
+    return 1. - fidelity(psi,phi)
 end
 
 
