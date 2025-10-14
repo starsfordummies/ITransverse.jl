@@ -1,11 +1,6 @@
-using ITensors
-
+using ITensors, ITensorMPS
 using ITransverse
-#using ITransverse.ITenUtils
 using ITensors.Adapt: adapt
-
-ITensors.enable_debug_checks()
-
 
 function main_folded_pm()
 
@@ -18,7 +13,7 @@ function main_folded_pm()
 
     truncp = TruncParams(cutoff, maxbondim)
 
-    pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM_LR")
+    pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM_LR", "norm")
 
     sigX = ComplexF64[0,1,1,0]
 
@@ -38,7 +33,7 @@ function main_folded_pm()
 
     gs1 = adapt(ComplexF64, gs[40])
 
-    tp = tMPOParams(tp; nbeta=0, bl = gs1)
+    tp = tMPOParams(tp; nbeta=0)
 
 
     b = FoldtMPOBlocks(tp)
@@ -54,14 +49,15 @@ function main_folded_pm()
         time_sites = siteinds(4, Nsteps)
         pushfirst!(time_sites, Index(dim(b.rho0,1),tags="rho0"))
 
-        mpo_X = folded_tMPO_in(b, time_sites; fold_op=sigX)
-        mpo_1 = folded_tMPO_in(b, time_sites)
+        mpo_X = folded_tMPO_in(b, time_sites; init_tensor=gs[4], init_physidx=siteind(gs,4), fold_op=sigX)
+        mpo_1 = folded_tMPO_in(b, time_sites; init_tensor=gs[4], init_physidx=siteind(gs,4))
 
         
         init_mps = ITransverse.folded_right_tMPS_in_murg(mpo_1)
 
 
         rr, ll, ds2_pm  = powermethod_op(init_mps, mpo_1, mpo_X, pm_params) 
+        #rr, ds2_pm  = powermethod_sym(init_mps, mpo_1, pm_params) 
 
         ev = 0. #compute_expvals(ll, rr, ["X"], b)
 
@@ -73,7 +69,6 @@ function main_folded_pm()
 
     return rvecs, evs, ds2s, ts, infos
 end
-
 
 
 rvecs, evs, ds2s, alltimes, infos = main_folded_pm()
