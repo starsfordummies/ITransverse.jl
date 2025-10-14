@@ -47,10 +47,11 @@ function powermethod_op(in_mps::MPS, in_mpo_1::MPO, in_mpo_O::MPO, pm_params::PM
 
     p = Progress(itermax; desc="[PM|$(opt_method)] L=$(length(ll)), cutoff=$(cutoff), maxbondim=$(maxbondim))", showspeed=true) 
 
-    info_iterations = Dict(:ds2 => ComplexF64[], :logfidelityRRnew => ComplexF64[], :LRdiff => ComplexF64[] )
+    info_iterations = Dict(:ds2 => ComplexF64[], :logfidelityRRnew => Float64[], :LRdiff => ComplexF64[] )
 
     for jj = 1:itermax  
 
+        rr_prev = copy(rr)
 
         # When do we normalize? Here I choose to do it at the beginning of each iteration 
 
@@ -66,40 +67,35 @@ function powermethod_op(in_mps::MPS, in_mpo_1::MPO, in_mpo_O::MPO, pm_params::PM
 
 
         if opt_method == "RTM_LR"
-            
-            rr_work = rr
-            ll_work = ll 
     
             # optimize <LO|1R> -> new |R> 
-            OpsiR = applyn(in_mpo_1, rr_work)
-            OpsiL = applyns(in_mpo_O, ll_work)  
+            OpsiR = applyn(in_mpo_1, rr)
+            OpsiL = applyns(in_mpo_O, ll)  
 
             rr, _, sjj = truncate_sweep(OpsiR, OpsiL, truncp)
 
             # optimize <L1|OR> -> new <L|  
-            #TODO: we could be using either the new rr here or rr_work
+            #TODO: we could be using either the new rr here or the previous rr (in that case should define rr_work = rr before)
             OpsiR = applyn(in_mpo_O, rr)
-            OpsiL = applyns(in_mpo_1, ll_work)  
+            OpsiL = applyns(in_mpo_1, ll)  
 
             _, ll, _ = truncate_sweep(OpsiR, OpsiL, truncp)
 
 
         elseif opt_method == "RTM_R"
-            rr_work = normbyfactor(rr, sqrt(overlap_noconj(rr,rr)))
 
-            OpsiR = applyn(in_mpo_1, rr_work)
-            OpsiL = applyns(in_mpo_O, rr_work)  
+            OpsiR = applyn(in_mpo_1, rr)
+            OpsiL = applyns(in_mpo_O, ll)  
 
             rr, _, sjj = truncate_sweep(OpsiR, OpsiL, truncp)
             ll = rr
 
         elseif opt_method == "RTM_R_twolayers"
-            rr_work = normbyfactor(rr, sqrt(overlap_noconj(rr,rr)))
 
-            OpsiR = applyn(in_mpo_1, rr_work)
+            OpsiR = applyn(in_mpo_1, rr)
             OpsiR = applyn(in_mpo_1, OpsiR)
 
-            OpsiL = applyns(in_mpo_1, rr_work)  
+            OpsiL = applyns(in_mpo_1, rr)  
             OpsiL = applyns(in_mpo_O, OpsiL)  
 
             rr, _, sjj = truncate_sweep(OpsiR, OpsiL, truncp)
@@ -108,19 +104,18 @@ function powermethod_op(in_mps::MPS, in_mpo_1::MPO, in_mpo_O::MPO, pm_params::PM
 
         elseif opt_method == "RDM"
         
-            ll = applys(in_mpo_1, ll_work, cutoff=cutoff, maxdim=maxbondim)
-            rr = apply(in_mpo_1, rr_work, cutoff=cutoff, maxdim=maxbondim)
+            ll = applys(in_mpo_1, ll, cutoff=cutoff, maxdim=maxbondim)
+            rr = apply(in_mpo_1, rr, cutoff=cutoff, maxdim=maxbondim)
 
             sjj = vn_entanglement_entropy(rr)
 
             #@show jj, norm(ll), norm(rr), overlap_noconj(ll,rr)
 
         elseif opt_method == "RDM_SYMLR"
-            rr_work = normalize(rr)
-
-            rr = apply(in_mpo_1, rr_work, cutoff=cutoff, maxdim=maxbondim)
-            ll = rr
+   
+            rr = apply(in_mpo_1, rr, cutoff=cutoff, maxdim=maxbondim)
             sjj = vn_entanglement_entropy(rr)
+            ll = rr
 
         else
             @error "Wrong optimization method: $opt_method"
@@ -136,7 +131,7 @@ function powermethod_op(in_mps::MPS, in_mpo_1::MPO, in_mpo_O::MPO, pm_params::PM
         push!(info_iterations[:ds2], ds2)
         sprevs = sjj
 
-        logfidelityRRnew = logfidelity(rr_work,rr)
+        logfidelityRRnew = logfidelity(rr_prev,rr)
 
         push!(info_iterations[:logfidelityRRnew], logfidelityRRnew)
         
@@ -151,7 +146,7 @@ function powermethod_op(in_mps::MPS, in_mpo_1::MPO, in_mpo_O::MPO, pm_params::PM
             @warn ("NOT converged after $jj steps - χ=$(maxlinkdim(ll))")
         end
 
-        next!(p; showvalues = [(:Info,"[$(jj)][χ=$(maxlinkdim(ll))] ds2=$(ds2), logfidelity(<R|Rnew>)=$(round(logfidelityRRnew,digits=8)) |S|=$(maxnormS)" )])
+        next!(p; showvalues = [(:Info,"[$(jj)][χ=$(maxlinkdim(ll))] ds2=$(ds2), logfidelity(<R|Rnew>)=$(logfidelityRRnew) |S|=$(maxnormS)" )])
 
     end
 

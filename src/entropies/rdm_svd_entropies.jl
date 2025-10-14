@@ -25,9 +25,9 @@ function diagonalize_rdm!(psi::MPS, cut::Int)
 end
 
 
-vn_from_sv(sv::ITensor; normalize::Bool=true) = vn_from_sv(tensor(NDTensors.cpu(sv)); normalize)
+vn_from_sv(sv::ITensor; normalize::Bool) = vn_from_sv(tensor(NDTensors.cpu(sv)); normalize)
 
-function vn_from_sv(sv::Tensor; normalize::Bool=true)
+function vn_from_sv(sv::Tensor; normalize::Bool)
 
     if normalize
         sv = sv/norm(sv)
@@ -41,6 +41,7 @@ function vn_from_sv(sv::Tensor; normalize::Bool=true)
     return SvN
 end
 
+""" MPS-modifying VN entropy (orthogonalizes), by default assumes that MPS is already normalized """ 
 function vn_entanglement_entropy!(psi::MPS, bond::Int; normalize::Bool=false)
     orthogonalize!(psi, bond)
     _,S,_ = svd(psi[bond], uniqueinds(psi[bond],psi[bond+1]))
@@ -48,7 +49,7 @@ function vn_entanglement_entropy!(psi::MPS, bond::Int; normalize::Bool=false)
 end
 
 
-""" Computes the Von Neumann entanglement entropy of an MPS `psi` at all links, 
+""" Computes the Von Neumann entanglement entropy of an MPS `psi` at all links (normalizing if necessary), 
 returns a vector of floats containing the VN entropies 
 """
 function vn_entanglement_entropy(psi::MPS)
@@ -117,5 +118,3 @@ function renyi_entanglement_entropy(psi::MPS, α::Int=2)
 
     return ents_renyi
 end
-
-
