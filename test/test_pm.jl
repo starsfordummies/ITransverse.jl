@@ -31,20 +31,20 @@ using Test
     mpo_X = folded_tMPO(b, time_sites; fold_op=sigX)
     mpo_1 = folded_tMPO(b, time_sites)
 
-    pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM_LR")
+    pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM_LR", "norm")
     ll, rr, ds2_pm  = powermethod_op(init_mps, mpo_1, mpo_X, pm_params) 
 
     ev = compute_expvals(ll, rr, ["X"], b)
     χ_LR = maxlinkdim(ll)
 
-    pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM_R")
+    pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM_R", "norm")
     ll, rr, ds2_pm  = powermethod_op(init_mps, mpo_1, mpo_X, pm_params) 
 
     evsym = compute_expvals(ll, rr, ["X"], b)
     χ_R = maxlinkdim(ll)
 
     truncp = TruncParams(sqrt(cutoff), maxbondim)
-    pm_params = PMParams(truncp, itermax, eps_converged, true, "RDM")
+    pm_params = PMParams(truncp, itermax, eps_converged, true, "RDM", "norm")
     ll, rr, ds2_pm  = powermethod_op(init_mps, mpo_1, mpo_X, pm_params) 
 
     ev_te = compute_expvals(ll, rr, ["X"], b)

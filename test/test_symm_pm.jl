@@ -51,18 +51,18 @@ function test_symmpm(Tstart::Int, Tend::Int, nbeta::Int; Tstep::Int=1)
         start_mps = fw_tMPS(b, time_sites; LR=:right, tr=init_state)
 
 
-        pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM_EIG")
+        pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM_EIG", "norm")
 
         psi_trunc, ds2 = powermethod_sym(start_mps, mpo, pm_params)
         push!(allpsis[:svd], psi_trunc)
 
-        pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM_EIG")
+        pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM_EIG", "norm")
 
         psi_trunc, ds2 = powermethod_sym(start_mps, mpo, pm_params)
 
         push!(allpsis[:eig], psi_trunc)
 
-        pm_params = PMParams(truncp, itermax, eps_converged, true, "RDM")
+        pm_params = PMParams(truncp, itermax, eps_converged, true, "RDM", "norm")
         psi_trunc, ds2 = powermethod_sym(start_mps, mpo, pm_params)
         push!(allpsis[:rdm], psi_trunc)
 
