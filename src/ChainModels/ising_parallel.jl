@@ -370,3 +370,68 @@ function build_expH_ising_murg_4o(
 
     return U4
 end
+
+
+function build_murg_bulk_tensor(JXX::Real, gz::Real, λx::Real, dt::Number; phys_ind::Index = siteind("S=1/2"), link_inds=Index.([2,2]))
+
+    # For real dt this does REAL time evolution 
+    # I should have already taken into account both the - sign in exp(-iHt) 
+    # and the overall minus in Ising H= -(JXX+Z)
+
+    JXX = JXX*dt
+    gz = gz*dt
+    λx = λx*dt
+  
+    (iL, iR) = link_inds
+    
+    X = op(phys_ind, "X")
+    Z = op(phys_ind, "Z")
+    I = op(phys_ind, "I")
+
+    U_XX = onehot(iL => 1, iR =>1) * cos(JXX)*I 
+    U_XX += onehot(iL => 1, iR =>2) * sqrt(im*sin(JXX))*sqrt(cos(JXX))*X
+    U_XX += onehot(iL => 2, iR =>1) * sqrt(im*sin(JXX))*sqrt(cos(JXX))*X
+    U_XX += onehot(iL => 2, iR =>2) * im*sin(JXX)*I
+
+    eX = exp(im*λx*X)
+    eZ2 = exp(0.5*im*gz*Z)
+    
+
+    # Multiply in order:  exp(iZ/2)*exp(iX)*exp(iXX)*exp(iZ/2)
+    
+    W = apply(U_XX, eZ2) 
+    W = apply(eX, W) 
+    W = apply(eZ2, W) 
+
+    return W
+end
+
+
+function build_murg_edge_tensor(JXX::Real, gz::Real, λx::Real, dt::Number; phys_ind::Index = siteind("S=1/2"), link_ind=Index(2))
+
+    # For real dt this does REAL time evolution 
+    # I should have already taken into account both the - sign in exp(-iHt) 
+    # and the overall minus in Ising H= -(JXX+Z)
+
+    JXX = JXX*dt
+    gz = gz*dt
+    λx = λx*dt
+
+    X = op(phys_ind, "X")
+    Z = op(phys_ind, "Z")
+    I = op(phys_ind, "I")
+
+    U_XX = onehot(link_ind => 1) * sqrt(cos(JXX))*I
+    U_XX += onehot(link_ind => 2) * sqrt(im*sin(JXX))*X
+
+    eX = exp(im*λx*X)
+    eZ2 = exp(0.5*im*gz*Z)
+    
+    # Multiply in order:  exp(iZ/2)*exp(iX)*exp(iXX)*exp(iZ/2)
+    
+    W = apply(U_XX, eZ2) 
+    W = apply(eX, W) 
+    W = apply(eZ2, W) 
+
+    return W
+end
