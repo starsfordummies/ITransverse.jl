@@ -116,8 +116,8 @@ function bulk_timeEvo_ITensor_2ndOrder_LRflipped(
   D = mapreduce(x -> x[1] * op(site, x[2]), + ,zip(JD, DString))
   # D = JD * Op(DString, n)
 
-  return bulk_timeEvo_ITensor_2ndOrder(
-  (dag(link1link2[2]), link1link2[1]),
+  return bulk_timeEvo_ITensor_2ndOrder_LRflipped(
+  (dag(link1link2[1]), link1link2[2]),
   As,
   Bs,
   Cs,
@@ -267,6 +267,147 @@ function bulk_timeEvo_ITensor_2ndOrder(
   )
 end
 
+function bulk_timeEvo_ITensor_2ndOrder_LRflipped(
+  link1link2::Tuple,
+  As::Vector{ITensor},
+  Bs::Vector{ITensor},
+  Cs::Vector{ITensor},
+  D::ITensor,
+  τ::Number;
+)
+  # s = sites[n]
+  # left link index ll with daggered QN conserving direction (if applicable)
+  ll = link1link2[1]
+  # right link index rl
+  rl = link1link2[2]
+  # Id = op(sites, "Id", n)
+
+  NrOfTerms = length(As)
+
+  local_dim = dim(inds(As[1])[1])
+
+  # check if all coupling terms have the same length
+  @assert length(unique([length(As), length(Bs), length(Cs)])) == 1
+
+  # # A is possible exponential decay so test for "0"
+  # As = map(x -> x[1] * op(sites, x[2], n), zip(JAs, AStrings))
+  # Bs = map(x -> x[1] * op(sites, x[2], n), zip(JBs, BStrings)) # JB * op(sites, BString, n)
+  # Cs = map(x -> x[1] * op(sites, x[2], n), zip(JCs, CStrings)) # JC * op(sites, CString, n)
+  # D = JD * op(sites, DString, n)
+  # # D = JD * Op(DString, n)
+
+  # Init ITensor inside MPO
+  # U_t[n] = ITensor(ComplexF64, ll, dag(s), s', rl)
+  s = only(unique(noprime(inds(As[1], "Site"))))
+  local_Id = ITensor(diagm(ones(local_dim)), inds(As[1]))
+
+  # first element
+  firstelement =
+    iszero(D) ? setelt(ll[1]) * (setelt(rl[1])) * local_Id :
+    setelt(ll[1]) *
+    setelt(rl[1]) *
+    (local_Id + τ * D + (τ^2 / 2) * replaceprime(D' * D, 2, 1) + (τ^3 / 6) * replaceprime(D'' * D' * D, 3, 1))
+
+  # first row
+  Cterm = mapreduce(
+    x -> setelt(ll[1+x[1]]) * setelt(rl[1]) * (x[2] + (τ / 2) * braket(x[2], D) + (τ^2 / 6) * braket2(x[2], D)),
+    +,
+    enumerate(Cs)
+  )
+
+  # CHECK FOR NILL-POTENT OPERATORS or operators proportional to zero
+  # avoid setting entries explicitly zero because that counters the purpose of sparse matrices and 
+  # heavily reduces the runtime efficiency
+  # (this applies only to Sparse Matrices in the case of QN conservation)
+  # Note that the empty ITensor is not equal to the ITensor with only zero entries!!
+  Cterm2 = iszero(Cterm) ? emptyITensor(ll, rl, s', dag(s)) : Cterm
+
+  Csquared_term = mapreduce(
+    x -> setelt(ll[1+x[1]+NrOfTerms]) * setelt(rl[1]) * (replaceprime(x[2]' * x[2], 2, 1) + (τ / 3) * braket2(D, x[2])),
+    +,
+    enumerate(Cs)
+  )
+  Csquared_term2 = iszero(Csquared_term) ? emptyITensor(ll, rl, s', dag(s)) : Csquared_term
+
+  # first column (exept first row)
+  Bterm = mapreduce(
+    x -> setelt(ll[1]) * setelt(rl[1+x[1]]) * (τ * x[2] + (τ^2 / 2) * braket(x[2], D) + (τ^3 / 6) * braket2(x[2], D)),
+    +,
+    enumerate(Bs)
+  )
+  Bterm2 = iszero(Bterm) ? emptyITensor(ll, rl, s', dag(s)) : Bterm
+
+  Bsquared_term = mapreduce(
+    x ->
+      setelt(ll[1]) *
+      setelt(rl[1+x[1]+NrOfTerms]) *
+      ((τ^2 / 2) * replaceprime(x[2]' * x[2], 2, 1) + (τ^3 / 6) * braket2(D, x[2])),
+    +,
+    enumerate(Bs)
+  )
+  Bsquared_term2 = iszero(Bsquared_term) ? emptyITensor(ll, rl, s', dag(s)) : Bsquared_term
+
+  # diagonal
+  diagterm = mapreduce(
+    x ->
+      setelt(ll[1+x[1]]) *
+      setelt(rl[1+x[1]]) *
+      (
+        x[2][1] +
+        (τ / 2) * (braket(x[2][2], x[2][3]) + braket(x[2][1], D)) +
+        (τ^2 / 6) * (braket(x[2][3], x[2][2], D) + braket2(x[2][1], D))
+      ),
+    +,
+    enumerate(zip(As, Bs, Cs))
+  )
+  diagterm2 = iszero(diagterm) ? emptyITensor(ll, rl, s', dag(s)) : diagterm
+
+  diagsquaredterm = mapreduce(
+    x ->
+      setelt(ll[1+x[1]+NrOfTerms]) *
+      setelt(rl[1+x[1]+NrOfTerms]) *
+      (replaceprime(x[2][1]' * x[2][1], 2, 1) + (τ / 3) * (braket(x[2][1], x[2][2], x[2][3]) + braket2(D, x[2][1]))),
+    +,
+    enumerate(zip(As, Bs, Cs))
+  )
+  diagsquaredterm2 = iszero(diagsquaredterm) ? emptyITensor(ll, rl, s', dag(s)) : diagsquaredterm
+
+  # the "rest" of mixed terms
+  mixedterm = mapreduce(
+    x ->
+      setelt(ll[1+x[1]+NrOfTerms]) *
+      setelt(rl[1+x[1]]) *
+      (braket(x[2][1], x[2][3]) + (τ / 3) * (braket(x[2][1], x[2][3], D) + braket2(x[2][2], x[2][3]))),
+    +,
+    enumerate(zip(As, Bs, Cs))
+  )
+  mixedterm2 = iszero(mixedterm) ? emptyITensor(ll, rl, s', dag(s)) : mixedterm
+
+  mixedsquareterm = mapreduce(
+    x ->
+      setelt(ll[1+x[1]]) *
+      setelt(rl[1+x[1]+NrOfTerms]) *
+      ((τ / 2) * braket(x[2][1], x[2][2]) + (τ^2 / 6) * (braket(x[2][1], x[2][2], D) + braket2(x[2][3], x[2][2]))),
+    +,
+    enumerate(zip(As, Bs, Cs))
+  )
+  mixedsquareterm2 = iszero(mixedsquareterm) ? emptyITensor(ll, rl, s', dag(s)) : mixedsquareterm
+
+  return permute(sum((
+    firstelement,
+    Cterm2,
+    Csquared_term2,
+    Bterm2,
+    Bsquared_term2,
+    diagterm2,
+    diagsquaredterm2,
+    mixedterm2,
+    mixedsquareterm2
+  )),
+    s', ll,  rl, s
+  )
+end
+
 function Left_timeEvo_ITensor_2ndOrder(
   site,
   link,
@@ -287,32 +428,6 @@ function Left_timeEvo_ITensor_2ndOrder(
     τ;
   )
 end
-
-
-function Left_timeEvo_ITensor_2ndOrder_LRflipped(
-  site,
-  link,
-  CStrings::Vector{String},
-  JCs::Vector{<:Number},
-  DString::Vector{String},
-  JD::Vector{<:Number},
-  τ::Number;
-)
-  
-  # L = length(sites)
-
-  Cs = map(x -> x[1] * op(site, x[2]), zip(JCs, CStrings)) # JC * op(sites, CString, n)
-  D = mapreduce(x -> x[1] * op(site, x[2]), +,zip(JD, DString))
-
-  return Right_timeEvo_ITensor_2ndOrder(
-    dag(link),
-    # dag(linkindices[L-1]),
-    Cs,
-    D,
-    τ;
-  )
-end
-
 
 function Left_timeEvo_ITensor_2ndOrder(
   right_link,
@@ -354,6 +469,170 @@ function Left_timeEvo_ITensor_2ndOrder(
   )
 end
 
+
+function Left_timeEvo_ITensor_2ndOrder_LRflipped(
+  site,
+  link,
+  CStrings::Vector{String},
+  JCs::Vector{<:Number},
+  DString::Vector{String},
+  JD::Vector{<:Number},
+  τ::Number;
+)
+  
+  # L = length(sites)
+
+  Cs = map(x -> x[1] * op(site, x[2]), zip(JCs, CStrings)) # JC * op(sites, CString, n)
+  D = mapreduce(x -> x[1] * op(site, x[2]), +,zip(JD, DString))
+
+  return Right_timeEvo_ITensor_2ndOrder(
+    link,
+    # dag(linkindices[L-1]),
+    Cs,
+    D,
+    τ;
+  )
+end
+
+function Left_timeEvo_ITensor_2ndOrder_LRflipped(
+  link1link2::Tuple,
+  Cs::Vector{ITensor},
+  D::ITensor,
+  τ::Number;
+)
+  # s = sites[n]
+  # left link index ll with daggered QN conserving direction (if applicable)
+  ll = link1link2[1]
+  # right link index rl
+  rl = link1link2[2]
+  # Id = op(sites, "Id", n)
+
+  NrOfTerms = length(As)
+
+  local_dim = dim(inds(As[1])[1])
+
+  # check if all coupling terms have the same length
+  @assert length(unique([length(As), length(Bs), length(Cs)])) == 1
+
+  # # A is possible exponential decay so test for "0"
+  # As = map(x -> x[1] * op(sites, x[2], n), zip(JAs, AStrings))
+  # Bs = map(x -> x[1] * op(sites, x[2], n), zip(JBs, BStrings)) # JB * op(sites, BString, n)
+  # Cs = map(x -> x[1] * op(sites, x[2], n), zip(JCs, CStrings)) # JC * op(sites, CString, n)
+  # D = JD * op(sites, DString, n)
+  # # D = JD * Op(DString, n)
+
+  # Init ITensor inside MPO
+  # U_t[n] = ITensor(ComplexF64, ll, dag(s), s', rl)
+  s = only(unique(noprime(inds(As[1], "Site"))))
+  local_Id = ITensor(diagm(ones(local_dim)), inds(As[1]))
+
+  # first element
+  firstelement =
+    iszero(D) ? setelt(ll[1]) * (setelt(rl[1])) * local_Id :
+    setelt(ll[1]) *
+    setelt(rl[1]) *
+    (local_Id + τ * D + (τ^2 / 2) * replaceprime(D' * D, 2, 1) + (τ^3 / 6) * replaceprime(D'' * D' * D, 3, 1))
+
+  # first row
+  Cterm = mapreduce(
+    x -> setelt(ll[1+x[1]]) * setelt(rl[1]) * (x[2] + (τ / 2) * braket(x[2], D) + (τ^2 / 6) * braket2(x[2], D)),
+    +,
+    enumerate(Cs)
+  )
+
+  # CHECK FOR NILL-POTENT OPERATORS or operators proportional to zero
+  # avoid setting entries explicitly zero because that counters the purpose of sparse matrices and 
+  # heavily reduces the runtime efficiency
+  # (this applies only to Sparse Matrices in the case of QN conservation)
+  # Note that the empty ITensor is not equal to the ITensor with only zero entries!!
+  Cterm2 = iszero(Cterm) ? emptyITensor(ll, rl, s', dag(s)) : Cterm
+
+  Csquared_term = mapreduce(
+    x -> setelt(ll[1+x[1]+NrOfTerms]) * setelt(rl[1]) * (replaceprime(x[2]' * x[2], 2, 1) + (τ / 3) * braket2(D, x[2])),
+    +,
+    enumerate(Cs)
+  )
+  Csquared_term2 = iszero(Csquared_term) ? emptyITensor(ll, rl, s', dag(s)) : Csquared_term
+
+  # first column (exept first row)
+  Bterm = mapreduce(
+    x -> setelt(ll[1]) * setelt(rl[1+x[1]]) * (τ * x[2] + (τ^2 / 2) * braket(x[2], D) + (τ^3 / 6) * braket2(x[2], D)),
+    +,
+    enumerate(Bs)
+  )
+  Bterm2 = iszero(Bterm) ? emptyITensor(ll, rl, s', dag(s)) : Bterm
+
+  Bsquared_term = mapreduce(
+    x ->
+      setelt(ll[1]) *
+      setelt(rl[1+x[1]+NrOfTerms]) *
+      ((τ^2 / 2) * replaceprime(x[2]' * x[2], 2, 1) + (τ^3 / 6) * braket2(D, x[2])),
+    +,
+    enumerate(Bs)
+  )
+  Bsquared_term2 = iszero(Bsquared_term) ? emptyITensor(ll, rl, s', dag(s)) : Bsquared_term
+
+  # diagonal
+  diagterm = mapreduce(
+    x ->
+      setelt(ll[1+x[1]]) *
+      setelt(rl[1+x[1]]) *
+      (
+        x[2][1] +
+        (τ / 2) * (braket(x[2][2], x[2][3]) + braket(x[2][1], D)) +
+        (τ^2 / 6) * (braket(x[2][3], x[2][2], D) + braket2(x[2][1], D))
+      ),
+    +,
+    enumerate(zip(As, Bs, Cs))
+  )
+  diagterm2 = iszero(diagterm) ? emptyITensor(ll, rl, s', dag(s)) : diagterm
+
+  diagsquaredterm = mapreduce(
+    x ->
+      setelt(ll[1+x[1]+NrOfTerms]) *
+      setelt(rl[1+x[1]+NrOfTerms]) *
+      (replaceprime(x[2][1]' * x[2][1], 2, 1) + (τ / 3) * (braket(x[2][1], x[2][2], x[2][3]) + braket2(D, x[2][1]))),
+    +,
+    enumerate(zip(As, Bs, Cs))
+  )
+  diagsquaredterm2 = iszero(diagsquaredterm) ? emptyITensor(ll, rl, s', dag(s)) : diagsquaredterm
+
+  # the "rest" of mixed terms
+  mixedterm = mapreduce(
+    x ->
+      setelt(ll[1+x[1]+NrOfTerms]) *
+      setelt(rl[1+x[1]]) *
+      (braket(x[2][1], x[2][3]) + (τ / 3) * (braket(x[2][1], x[2][3], D) + braket2(x[2][2], x[2][3]))),
+    +,
+    enumerate(zip(As, Bs, Cs))
+  )
+  mixedterm2 = iszero(mixedterm) ? emptyITensor(ll, rl, s', dag(s)) : mixedterm
+
+  mixedsquareterm = mapreduce(
+    x ->
+      setelt(ll[1+x[1]]) *
+      setelt(rl[1+x[1]+NrOfTerms]) *
+      ((τ / 2) * braket(x[2][1], x[2][2]) + (τ^2 / 6) * (braket(x[2][1], x[2][2], D) + braket2(x[2][3], x[2][2]))),
+    +,
+    enumerate(zip(As, Bs, Cs))
+  )
+  mixedsquareterm2 = iszero(mixedsquareterm) ? emptyITensor(ll, rl, s', dag(s)) : mixedsquareterm
+
+  return permute(sum((
+    firstelement,
+    Cterm2,
+    Csquared_term2,
+    Bterm2,
+    Bsquared_term2,
+    diagterm2,
+    diagsquaredterm2,
+    mixedterm2,
+    mixedsquareterm2
+  )),
+    s', ll,  rl, s
+  )
+end
+
 function Right_timeEvo_ITensor_2ndOrder(
   site,
   link,
@@ -390,7 +669,7 @@ function Right_timeEvo_ITensor_2ndOrder_LRflipped(
   D = mapreduce(x -> x[1] * op(site, x[2]), +, zip(JD, DString))
 
   return Left_timeEvo_ITensor_2ndOrder(
-    link,
+    dag(link),
     Bs,
     D,
     τ;
@@ -593,7 +872,7 @@ function timeEvo_ITensors_2ndOrder_LRflipped(
   linkindices = get_linkindices_timeEvo_MPO(sites, BStrings, CStrings)
 
   ## LEFT boundary
-  Ut_1 = Left_timeEvo_ITensor_2ndOrder_LRflipped(sites[1], linkindices[1], CStrings, JCs, DString, JD, τ;)
+  Ut_1 = Left_timeEvo_ITensor_2ndOrder_LRflipped(sites[1], linkindices[1], BStrings, JBs, DString, JD, τ;)
 
   ## BULK
   # loop over BULK real space
@@ -604,7 +883,7 @@ function timeEvo_ITensors_2ndOrder_LRflipped(
   )
 
   ## RIGHT boundary  
-  Ut_N = Right_timeEvo_ITensor_2ndOrder_LRflipped(sites[N], linkindices[N-1], BStrings, JBs, DString, JD, τ;)
+  Ut_N = Right_timeEvo_ITensor_2ndOrder_LRflipped(sites[N], linkindices[N-1], CStrings, JCs, DString, JD, τ;)
 
   return [Ut_1, bulk..., Ut_N]
 end
