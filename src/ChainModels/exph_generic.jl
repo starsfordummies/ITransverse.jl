@@ -87,7 +87,7 @@ function bulk_timeEvo_ITensor_2ndOrder(
   # D = JD * Op(DString, n)
 
   return bulk_timeEvo_ITensor_2ndOrder(
-  linkindices[n-1:n],
+  (dag(linkindices[n-1]), linkindices[n]),
   As,
   Bs,
   Cs,
@@ -97,7 +97,7 @@ function bulk_timeEvo_ITensor_2ndOrder(
 end
 
 function bulk_timeEvo_ITensor_2ndOrder(
-  linkindices,
+  link1link2::Tuple,
   As::Vector{ITensor},
   Bs::Vector{ITensor},
   Cs::Vector{ITensor},
@@ -106,9 +106,9 @@ function bulk_timeEvo_ITensor_2ndOrder(
 )
   # s = sites[n]
   # left link index ll with daggered QN conserving direction (if applicable)
-  ll = dag(linkindices[1])
+  ll = link1link2[1]
   # right link index rl
-  rl = linkindices[2]
+  rl = link1link2[2]
   # Id = op(sites, "Id", n)
 
   NrOfTerms = length(As)
@@ -315,7 +315,7 @@ function Right_timeEvo_ITensor_2ndOrder(
   D = mapreduce(x -> x[1] * op(sites, x[2], n), +, zip(JD, DString))
 
   return Right_timeEvo_ITensor_2ndOrder(
-    linkindices[L-1],
+    dag(linkindices[L-1]),
     Bs,
     D,
     τ;
@@ -330,7 +330,7 @@ function Right_timeEvo_ITensor_2ndOrder(
 )
 
   # left link index ll with daggered QN conserving direction (if applicable)
-  ll = dag(left_link)
+  ll = left_link
 
   NrOfTerms = length(Bs)
 
