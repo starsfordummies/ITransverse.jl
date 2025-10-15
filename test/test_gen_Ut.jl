@@ -221,6 +221,16 @@ end
 
 
 
+  psi_t2_alternating = deepcopy(psi0)
+  for tt = 1:n_iter
+      psi_t2_alternating[:] = iseven(tt) ? apply(Ut2, psi_t2_alternating; cutoff, maxdim, normalize=true) : apply(Ut2_LRflipped, psi_t2_alternating; cutoff, maxdim, normalize=true)
+  end
+
+
+  abs(inner(psi_t2_alternating,psi_t2_alternating))
+
+  abs(inner(psi_t2_LRflipped,psi_t2_alternating))
+
 
   ############
   # TDVP
@@ -262,4 +272,7 @@ end
   @test isapprox(abs(inner(psi_t1, psi_tdvp)), 1.0; rtol = 5e-5)
   @test isapprox(abs(inner(psi_t2, psi_tdvp)), 1.0; rtol = 5e-5)
   @test isapprox(abs(inner(psi_t2_LRflipped, psi_tdvp)), 1.0; rtol = 5e-5)
+
+  @test isapprox(abs(inner(psi_t2_LRflipped, psi_t2_alternating)), 1.0; rtol = 5e-5)
+  @test isapprox(abs(inner(psi_t2_alternating, psi_tdvp)), 1.0; rtol = 5e-5)
 end
