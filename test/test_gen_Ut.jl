@@ -227,9 +227,7 @@ end
   end
 
 
-  abs(inner(psi_t2_alternating,psi_t2_alternating))
 
-  abs(inner(psi_t2_LRflipped,psi_t2_alternating))
 
 
   ############
@@ -261,7 +259,7 @@ end
       outputlevel=1,
   )
 
-  abs(inner(psi_tdvp_LRflipped,psi_tdvp))
+  @test isapprox(abs(inner(psi_tdvp_LRflipped,psi_tdvp)), 1.0)
 
   # @show JXX
   # @show hz
