@@ -23,7 +23,8 @@ export quick_mps, myrMPO, pMPS,
     applyn, applyns, applys,
     isid,
     mergedicts!,
-    fidelity
+    fidelity, logfidelity,
+    normalize_for_overlap!
 
 include("truncation_sweeps/trunc_params.jl")
 include("truncation_sweeps/sweeps.jl")

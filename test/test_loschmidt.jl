@@ -32,13 +32,13 @@ eps_converged = 1e-6
     truncp = TruncParams(mycutoff, maxbondim)
 
 
-    pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM")
+    pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM", "norm")
     psi_svd, ds2 = powermethod_sym(start_mps, mpo, pm_params)
 
-    pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM_EIG")
+    pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM_EIG", "norm")
     psi_eig, ds2 = powermethod_sym(start_mps, mpo, pm_params)
 
-    pm_params = PMParams(truncp, itermax, eps_converged, true, "RDM")
+    pm_params = PMParams(truncp, itermax, eps_converged, true, "RDM", "norm")
     psi_rdm, ds2 = powermethod_sym(start_mps, mpo, pm_params)
 
     vn_svd = vn_entanglement_entropy(psi_svd)
