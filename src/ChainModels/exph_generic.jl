@@ -6,7 +6,7 @@ using LinearAlgebra
 #       |  0 | 0 | Id |
 
 # then we find that the time evolution opertator U(t) 
-# U(t) = exp(-ı t H)
+# U(t) = exp(-𝑖⋅t⋅H)  with τ = -𝑖⋅t
 #   | Id + τD + τ^2/2 D^2 + τ^3/6 D^3 | C + τ^2/2 {CD} + τ^3/6 {CDD}                 | CC + τ/3 {CCD}
 # ≈ | τB + τ^2/2 {B D} + τ^3/6 {BDD}  | A + τ/2({BC} + {AD}) + τ^2/6( {CBD} + {ADD}) | {AC} + τ/3 ({ACD} + {CCB})
 #   | τ^2/2 BB + τ^3/6 {BBD}          | τ/2 {AB} + τ^2/6 ({ABD} + {BBC})             | AA + τ/3 ({ABC} +{AAD})
@@ -65,9 +65,8 @@ bulk_timeEvo_ITensor_2ndOrder(n,
 ) = bulk_timeEvo_ITensor_2ndOrder(n,sites,linkindices,AStrings,JAs,BStrings,JBs,CStrings,JCs,[DString],[JD],τ;)
 
 function bulk_timeEvo_ITensor_2ndOrder(
-  n,
-  sites,
-  linkindices,
+  site,
+  link1link2,
   AStrings::Vector{String},
   JAs::Vector{<:Number},
   BStrings::Vector{String},
@@ -80,14 +79,45 @@ function bulk_timeEvo_ITensor_2ndOrder(
 )
 
   # A is possible exponential decay so test for "0"
-  As = map(x -> x[1] * op(sites, x[2], n), zip(JAs, AStrings))
-  Bs = map(x -> x[1] * op(sites, x[2], n), zip(JBs, BStrings)) # JB * op(sites, BString, n)
-  Cs = map(x -> x[1] * op(sites, x[2], n), zip(JCs, CStrings)) # JC * op(sites, CString, n)
-  D = mapreduce(x -> x[1] * op(sites, x[2], n), + ,zip(JD, DString))
+  As = map(x -> x[1] * op(site, x[2]), zip(JAs, AStrings))
+  Bs = map(x -> x[1] * op(site, x[2]), zip(JBs, BStrings)) # JB * op(sites, BString, n)
+  Cs = map(x -> x[1] * op(site, x[2]), zip(JCs, CStrings)) # JC * op(sites, CString, n)
+  D = mapreduce(x -> x[1] * op(site, x[2]), + ,zip(JD, DString))
   # D = JD * Op(DString, n)
 
   return bulk_timeEvo_ITensor_2ndOrder(
-  (dag(linkindices[n-1]), linkindices[n]),
+  (dag(link1link2[1]), link1link2[2]),
+  As,
+  Bs,
+  Cs,
+  D,
+  τ::Number;
+  )
+end
+
+function bulk_timeEvo_ITensor_2ndOrder_LRflipped(
+  site,
+  link1link2,
+  AStrings::Vector{String},
+  JAs::Vector{<:Number},
+  BStrings::Vector{String},
+  JBs::Vector{<:Number},
+  CStrings::Vector{String},
+  JCs::Vector{<:Number},
+  DString::Vector{String},
+  JD::Vector{<:Number},
+  τ::Number;
+)
+
+  # A is possible exponential decay so test for "0"
+  As = map(x -> x[1] * op(site, x[2]), zip(JAs, AStrings))
+  Bs = map(x -> x[1] * op(site, x[2]), zip(JBs, BStrings)) # JB * op(sites, BString, n)
+  Cs = map(x -> x[1] * op(site, x[2]), zip(JCs, CStrings)) # JC * op(sites, CString, n)
+  D = mapreduce(x -> x[1] * op(site, x[2]), + ,zip(JD, DString))
+  # D = JD * Op(DString, n)
+
+  return bulk_timeEvo_ITensor_2ndOrder(
+  (dag(link1link2[2]), link1link2[1]),
   As,
   Bs,
   Cs,
@@ -238,8 +268,8 @@ function bulk_timeEvo_ITensor_2ndOrder(
 end
 
 function Left_timeEvo_ITensor_2ndOrder(
-  sites,
-  linkindices,
+  site,
+  link,
   CStrings::Vector{String},
   JCs::Vector{<:Number},
   DString::Vector{String},
@@ -247,11 +277,36 @@ function Left_timeEvo_ITensor_2ndOrder(
   τ::Number;
 )
 
-  Cs = map(x -> x[1] * op(sites, x[2], 1), zip(JCs, CStrings)) # JC * op(sites, CString, n)
-  D = mapreduce(x -> x[1] * op(sites, x[2], 1), +,zip(JD, DString))
+  Cs = map(x -> x[1] * op(site, x[2]), zip(JCs, CStrings)) # JC * op(sites, CString, n)
+  D = mapreduce(x -> x[1] * op(site, x[2]), +, zip(JD, DString))
 
   return Left_timeEvo_ITensor_2ndOrder(
-    linkindices[1],
+    link,
+    Cs,
+    D,
+    τ;
+  )
+end
+
+
+function Left_timeEvo_ITensor_2ndOrder_LRflipped(
+  site,
+  link,
+  CStrings::Vector{String},
+  JCs::Vector{<:Number},
+  DString::Vector{String},
+  JD::Vector{<:Number},
+  τ::Number;
+)
+  
+  # L = length(sites)
+
+  Cs = map(x -> x[1] * op(site, x[2]), zip(JCs, CStrings)) # JC * op(sites, CString, n)
+  D = mapreduce(x -> x[1] * op(site, x[2]), +,zip(JD, DString))
+
+  return Right_timeEvo_ITensor_2ndOrder(
+    dag(link),
+    # dag(linkindices[L-1]),
     Cs,
     D,
     τ;
@@ -300,27 +355,48 @@ function Left_timeEvo_ITensor_2ndOrder(
 end
 
 function Right_timeEvo_ITensor_2ndOrder(
-  sites,
-  linkindices,
+  site,
+  link,
   BStrings::Vector{String},
   JBs::Vector{<:Number},
   DString::Vector{String},
   JD::Vector{<:Number},
   τ::Number;
 )
-  L = length(sites)
-  n = L
 
-  Bs = map(x -> x[1] * op(sites, x[2], n), zip(JBs, BStrings)) # JB * op(sites, BString, n)
-  D = mapreduce(x -> x[1] * op(sites, x[2], n), +, zip(JD, DString))
+  Bs = map(x -> x[1] * op(site, x[2]), zip(JBs, BStrings)) # JB * op(sites, BString, n)
+  D = mapreduce(x -> x[1] * op(site, x[2]), +, zip(JD, DString))
 
   return Right_timeEvo_ITensor_2ndOrder(
-    dag(linkindices[L-1]),
+    dag(link),
     Bs,
     D,
     τ;
   )
 end
+
+
+function Right_timeEvo_ITensor_2ndOrder_LRflipped(
+  site,
+  link,
+  BStrings::Vector{String},
+  JBs::Vector{<:Number},
+  DString::Vector{String},
+  JD::Vector{<:Number},
+  τ::Number;
+)
+
+  Bs = map(x -> x[1] * op(site, x[2]), zip(JBs, BStrings)) # JB * op(sites, BString, n)
+  D = mapreduce(x -> x[1] * op(site, x[2]), +, zip(JD, DString))
+
+  return Left_timeEvo_ITensor_2ndOrder(
+    link,
+    Bs,
+    D,
+    τ;
+  )
+end
+
 
 function Right_timeEvo_ITensor_2ndOrder(
   left_link,
@@ -470,18 +546,79 @@ function timeEvo_ITensors_2ndOrder(
   linkindices = get_linkindices_timeEvo_MPO(sites, BStrings, CStrings)
 
   ## LEFT boundary
-  Ut_1 = Left_timeEvo_ITensor_2ndOrder(sites, linkindices, CStrings, JCs, DString, JD, τ;)
+  Ut_1 = Left_timeEvo_ITensor_2ndOrder(sites[1], linkindices[1], CStrings, JCs, DString, JD, τ;)
 
   ## BULK
   # loop over BULK real space
   bulk = map(
     n ->
-      bulk_timeEvo_ITensor_2ndOrder(n, sites, linkindices, AStrings, JAs, BStrings, JBs, CStrings, JCs, DString, JD, τ;),
+      bulk_timeEvo_ITensor_2ndOrder(sites[n], (linkindices[n-1], linkindices[n]), AStrings, JAs, BStrings, JBs, CStrings, JCs, DString, JD, τ;),
     2:N-1
   )
 
   ## RIGHT boundary  
-  Ut_N = Right_timeEvo_ITensor_2ndOrder(sites, linkindices, BStrings, JBs, DString, JD, τ;)
+  Ut_N = Right_timeEvo_ITensor_2ndOrder(sites[end], linkindices[end], BStrings, JBs, DString, JD, τ;)
 
   return [Ut_1, bulk..., Ut_N]
 end
+
+
+
+function timeEvo_ITensors_2ndOrder_LRflipped(
+  sites,
+  AStrings::Vector{String},
+  JAs::Vector{<:Number},
+  BStrings::Vector{String},
+  JBs::Vector{<:Number},
+  CStrings::Vector{String},
+  JCs::Vector{<:Number},
+  DString::Vector{String},
+  JD::Vector{<:Number},
+  t::Number;
+)
+  
+  τ = -1.0im * t
+  N = length(sites)
+
+  if length(AStrings) != length(BStrings) || length(BStrings) != length(CStrings)
+    error(
+      "Input length of operator vectors is not the same!\n
+      Found length(AStrings)=$(length(AStrings)), length(BStrings)=$(length(BStrings)), length(CStrings)=$(length(CStrings))"
+    )
+  end
+  if length(AStrings) != length(JAs) || length(BStrings) != length(JBs) || length(CStrings) != length(JCs)
+    error("Input length of couppling vectors is not the same as the operator vector!")
+  end
+
+  linkindices = get_linkindices_timeEvo_MPO(sites, BStrings, CStrings)
+
+  ## LEFT boundary
+  Ut_1 = Left_timeEvo_ITensor_2ndOrder_LRflipped(sites[1], linkindices[1], CStrings, JCs, DString, JD, τ;)
+
+  ## BULK
+  # loop over BULK real space
+  bulk = map(
+    n ->
+      bulk_timeEvo_ITensor_2ndOrder_LRflipped(sites[n], (linkindices[n-1], linkindices[n]), AStrings, JAs, BStrings, JBs, CStrings, JCs, DString, JD, τ;),
+    2:N-1
+  )
+
+  ## RIGHT boundary  
+  Ut_N = Right_timeEvo_ITensor_2ndOrder_LRflipped(sites[N], linkindices[N-1], BStrings, JBs, DString, JD, τ;)
+
+  return [Ut_1, bulk..., Ut_N]
+end
+
+
+timeEvo_MPO_2ndOrder_LRflipped(
+  sites,
+  AStrings::Vector{String},
+  JAs::Vector{<:Number},
+  BStrings::Vector{String},
+  JBs::Vector{<:Number},
+  CStrings::Vector{String},
+  JCs::Vector{<:Number},
+  DString::Vector{String},
+  JD::Vector{<:Number},
+  t::Number;
+) = MPO(timeEvo_ITensors_2ndOrder_LRflipped(sites, AStrings, JAs, BStrings, JBs, CStrings, JCs, DString, JD, t;))

@@ -86,7 +86,7 @@ end
 
   JXX = 1.0
   hz = 1.0
-  gx = 1.0
+  gx = 0.0
 
   N = 10
   ss = siteinds("S=1/2", N, conserve_szparity=false)
@@ -123,6 +123,8 @@ end
       dt;
   )
 
+  
+
 
   psi_t2 = deepcopy(psi0)
   for tt = 1:n_iter
@@ -130,6 +132,27 @@ end
   end
 
 
+  Ut2_LRflipped = timeEvo_MPO_2ndOrder_LRflipped(
+      ss,
+      ["Id"],
+      [0.0],
+      ["X"],
+      [1.0],
+      ["X"],
+      [-JXX],
+      ["Z", "X"],
+      [-hz, -gx],
+      dt;
+  )
+
+  psi_t2_LRflipped = deepcopy(psi0)
+  for tt = 1:n_iter
+      psi_t2_LRflipped[:] = apply(Ut2_LRflipped, psi_t2_LRflipped; cutoff, maxdim, normalize=true)
+  end
+
+  abs(inner(psi_t2_LRflipped,psi_t2_LRflipped))
+
+  abs(inner(psi_t2_LRflipped,psi_t2))
 
 
 
