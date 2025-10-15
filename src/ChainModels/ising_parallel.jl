@@ -372,16 +372,12 @@ function build_expH_ising_murg_4o(
 end
 
 
-function build_murg_bulk_tensor(JXX::Real, gz::Real, λx::Real, dt::Number; phys_ind::Index = siteind("S=1/2"), link_inds=Index.([2,2]))
+function build_murg_bulk_tensor(JXX::Real, gz::Real, λx::Real; phys_ind::Index = siteind("S=1/2"), link_inds=Index.([2,2]))
 
     # For real dt this does REAL time evolution 
     # I should have already taken into account both the - sign in exp(-iHt) 
     # and the overall minus in Ising H= -(JXX+Z)
 
-    JXX = JXX*dt
-    gz = gz*dt
-    λx = λx*dt
-  
     (iL, iR) = link_inds
     
     X = op(phys_ind, "X")
@@ -407,15 +403,11 @@ function build_murg_bulk_tensor(JXX::Real, gz::Real, λx::Real, dt::Number; phys
 end
 
 
-function build_murg_edge_tensor(JXX::Real, gz::Real, λx::Real, dt::Number; phys_ind::Index = siteind("S=1/2"), link_ind=Index(2))
+function build_murg_edge_tensor(JXX::Real, gz::Real, λx::Real; phys_ind::Index = siteind("S=1/2"), link_ind=Index(2))
 
     # For real dt this does REAL time evolution 
     # I should have already taken into account both the - sign in exp(-iHt) 
     # and the overall minus in Ising H= -(JXX+Z)
-
-    JXX = JXX*dt
-    gz = gz*dt
-    λx = λx*dt
 
     X = op(phys_ind, "X")
     Z = op(phys_ind, "Z")
@@ -434,4 +426,37 @@ function build_murg_edge_tensor(JXX::Real, gz::Real, λx::Real, dt::Number; phys
     W = apply(eZ2, W) 
 
     return W
+end
+
+function build_expH_ising_murg_new_from_blocks(
+    sites::Vector{<:Index},
+    JXX::Real,
+    gz::Real,
+    λx::Real,
+    dt::Number)
+
+    # For real dt this does REAL time evolution 
+    # I should have already taken into account both the - sign in exp(-iHt) 
+    # and the overall minus in Ising H= -(JXX+Z)
+
+    JXX = JXX*dt
+    gz = gz*dt
+    λx = λx*dt
+
+    N = length(sites)
+    
+    link_dimension = 2
+    link_indices = [Index(link_dimension, "Link,l=$(n-1)") for n = 1:N-1]
+
+    mpo_tensors = Array{ITensor}(undef, N)
+
+    mpo_tensors[1] = build_murg_edge_tensor(JXX, gz, λx; phys_ind = sites[1], link_ind = dag(link_indices[1]))
+    for ii = 2:N-1
+        mpo_tensors[ii] = build_murg_bulk_tensor(JXX, gz, λx; phys_ind = sites[ii], link_inds=(link_indices[ii-1], dag(link_indices[ii])))
+    end
+    mpo_tensors[end] = build_murg_edge_tensor(JXX, gz, λx; phys_ind = sites[end], link_ind = link_indices[end])
+    
+    U_t = MPO(mpo_tensors)
+
+    return U_t
 end
