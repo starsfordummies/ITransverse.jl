@@ -74,7 +74,7 @@ export build_H_ising,
     build_expH_potts_symmetric_svd,
     build_expH_random_symm_svd_1o
 
-export timeEvo_MPO_2ndOrder
+export timeEvo_MPO_2ndOrder, timeEvo_MPO_2ndOrder_LRflipped
 
 
 include("tmpo/tmpo_params.jl")
