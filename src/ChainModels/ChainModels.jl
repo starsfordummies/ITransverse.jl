@@ -47,6 +47,6 @@ export build_expH_XXZ_2o
 #     build_expH_XXZ_murg,
 #     build_expH_XXZZ_murg_from_ising
 
-export timeEvo_MPO_2ndOrder
+export timeEvo_MPO_2ndOrder, timeEvo_MPO_2ndOrder_LRflipped
 
 end
