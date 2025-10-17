@@ -98,9 +98,9 @@ function construct_tMPS_tMPO(input::Matrix{ITensor})
   # MPS boundary defines the old physical site and the new link Index
   # conceptually we rotate from old Site to new Link by +90°
   has_MPS_boundary_at_end = if order(input[1,end]) == 2 
-    return true
+    true
   elseif order(input[1,end]) == 3
-    return false
+    false
   else
     error("Order of boundary ITensor is $(order(input[1,end])), don't know what to do with it")
   end
@@ -114,8 +114,70 @@ function construct_tMPS_tMPO(input::Matrix{ITensor})
 
   # the new sites are a bit special, the first (and perhaps last) site is (are) given by the boundary MPS
   # while the bulk of the new sites are given by the old link of the time evolution operator
-  sites = [sim(only(inds(input[1,1],"Link")), tags="Site,time,nₜ=$(n)") for n in 0:number_of_new_links]
+  sites = [sim(only(inds(input[1,n],"Link")), tags="Site,time,nₜ=$(n-1)") for n in 1:ncolumns]
+  # we have now created all the new indices for the new tMPSs and tMPOs and effectively
+  # rotated the network by relabelling sites with links and links with sites.
 
+  L_vec = has_MPS_boundary_at_end ? [
+    replaceinds(
+      input[1,1],
+      only(inds(input[1,1],"Site")) => links_tMPS_L[1],
+      only(inds(input[1,1],"Link")) => sites[1],
+    ),
+    [replaceinds(
+        input[1,n],
+        only(inds(input[1,n],"Link")) => sites[n],
+        only(inds(input[1,n];tags="Site", plev=0)) => dag(links_tMPS_L[n-1]),
+        only(inds(input[1,n];tags="Site", plev=1)) => links_tMPS_L[n]
+      ) for n in 2:ncolumns-1 # difference to no MPS boundary at end!
+    ]...,
+    # difference to no MPS boundary at end!
+    replaceinds(
+      input[1,end],
+      only(inds(input[1,end],"Site")) => dag(links_tMPS_L[end]),
+      only(inds(input[1,1],"Link")) => sites[end],
+    )
+  ] : [
+    replaceinds(input[1,1], only(inds(input[1,1],"Site")) => links_tMPS_L[1], only(inds(input[1,1],"Link")) => sites[1] ),
+    [replaceinds(
+        input[1,n],
+        only(inds(input[1,n],"Link")) => sites[n],
+        only(inds(input[1,n];tags="Site", plev=0)) => dag(links_tMPS_L[n-1]),
+        only(inds(input[1,n];tags="Site", plev=1)) => links_tMPS_L[n]
+      ) for n in 2:ncolumns
+    ]...
+  ]
+
+  MPO_L_vec = has_MPS_boundary_at_end ? [
+    replaceinds(
+      input[2,1],
+      only(inds(input[2,1],tags="Link,l=1", plev=0)) => dag(sites[1]),
+      only(inds(input[2,1],tags="Link,l=2", plev=0)) => prime(sites[1]),
+      only(inds(input[2,1];tags="Site", plev=0)) => links_tMPS_L[1]
+    ),
+    [replaceinds(
+        input[2,n],
+        only(inds(input[2,n],"Link")) => sites[n],
+        only(inds(input[2,n];tags="Site", plev=0)) => dag(links_tMPP_L[n-1]),
+        only(inds(input[2,n];tags="Site", plev=1)) => links_tMPS_L[n]
+      ) for n in 2:ncolumns-1 # difference to no MPS boundary at end!
+    ]...,
+    # difference to no MPS boundary at end!
+    replaceinds(
+      input[1,end],
+      only(inds(input[1,end],"Site")) => dag(links_tMPS_L[end]),
+      only(inds(input[1,1],"Link")) => sites[end],
+    )
+  ] : [
+    replaceinds(input[1,1], only(inds(input[1,1],"Site")) => links_tMPS_L[1], only(inds(input[1,1],"Link")) => sites[1] ),
+    [replaceinds(
+        input[1,n],
+        only(inds(input[1,n],"Link")) => sites[n],
+        only(inds(input[1,n];tags="Site", plev=0)) => dag(links_tMPS_L[n-1]),
+        only(inds(input[1,n];tags="Site", plev=1)) => links_tMPS_L[n]
+      ) for n in 2:ncolumns
+    ]...
+  ]
 
 end
 
