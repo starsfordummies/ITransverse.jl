@@ -76,7 +76,7 @@ export build_H_ising,
 
 export timeEvo_MPO_2ndOrder, timeEvo_MPO_2ndOrder_LRflipped
 
-include("tmpo/construct_tMPS_tMPO.jl")
+include("tmpo/construct-tMPO-tMPS.jl")
 export construct_unfolded_tMPS_tMPO
 
 include("tmpo/tmpo_params.jl")
