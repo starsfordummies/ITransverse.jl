@@ -40,6 +40,8 @@ input = hcat(
 # construct the temporal MPS for L and R, and the corresponding transfer matrices TL and TR
 L, TL, TR, R = construct_unfolded_tMPS_tMPO(input)
 
+norm(L)
+norm(R)
 
 inner(L, R)
 
@@ -52,3 +54,6 @@ inner(L2, R2)
 norm(L2)
 
 norm(R2)
+
+# we find the norm to be very similar, so the new tMPS states may be more evenly 
+# normed when it comes to the repeated application of TL and TR
