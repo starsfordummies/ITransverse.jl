@@ -51,7 +51,7 @@ L2 = apply(TL, L)
 
 R2 = apply(TR, R)
 
-tn_contraction_transverse = inner(L2, R2)
+tn_contraction_transverse = overlap_noconj(L2, R2)
 
 norm(L2)
 
