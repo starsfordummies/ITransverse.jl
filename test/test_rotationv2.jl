@@ -7,12 +7,13 @@ s = siteinds("S=1/2", 4)
 ψ0 = MPS(s, "Up")
 
 Jxx = 1.0
-λ = 0.2
+λ = 0.4
 hz = 1.0
 gx = 0.0
 
 dt = 0.1
-N_t = 20
+N_t = 10
+
 
 function fill_bulk_evolution(nt, sites, dt, Jxx, λ, hz, gx)
   if iseven(nt)
@@ -40,6 +41,7 @@ input = hcat(
 # construct the temporal MPS for L and R, and the corresponding transfer matrices TL and TR
 L, TL, TR, R = construct_unfolded_tMPS_tMPO(input)
 
+length(L)
 norm(L)
 norm(R)
 
@@ -49,7 +51,7 @@ L2 = apply(TL, L)
 
 R2 = apply(TR, R)
 
-inner(L2, R2)
+tn_contraction_transverse = inner(L2, R2)
 
 norm(L2)
 
@@ -57,3 +59,89 @@ norm(R2)
 
 # we find the norm to be very similar, so the new tMPS states may be more evenly 
 # normed when it comes to the repeated application of TL and TR
+
+
+
+
+### Compare with tdvp should give the same ?
+
+
+function buildExpHTFI( 
+  sites::Vector{<:Index};
+  J::Real = 1.0,
+  λ::Real = 0.5,
+  hz::Real = 1.0,
+  gx::Real = 0.0,
+  kwargs...
+)
+  if abs(λ) > 1.0
+    throw(ArgumentError("cannot implement exponential decay with base larger than 1, λ = $(λ)!"))
+  end
+  # link_dimension
+  # d0 = dim(op(sites, "Id", 1), 1)
+  link_dimension = 3
+  startState = 3
+  endState = 1
+
+  N = length(sites)
+
+  EType = eltype(union(λ, J))
+
+  # generate "regular" link indeces (i.e. without conserved QNs)
+  linkindices = hasqns(sites) ? [Index([QN() => 1, QN("SzParity",1,2) => 1, QN("SzParity",0,2) => 1], "Link,l=$(n-1)") for n in 1:N+1] : [Index(link_dimension, "Link,l=$(n-1)") for n in 1:N+1]
+
+  H = MPO(sites)
+  for n in 1:N
+    # siteindex s
+    s = sites[n]
+    # left link index ll with daggered QN conserving direction (if applicable)
+    ll = dag(linkindices[n])
+    # right link index rl
+    rl = linkindices[n+1]
+
+    # init empty ITensor with
+    H[n] = ITensor(EType, ll, dag(s), s', rl)
+    # add both Identities as netral elements in the MPS at corresponding location (setelement function)
+    H[n] += setelt(ll[startState]) * setelt(rl[startState]) * op(sites, "Id", n)
+    H[n] += setelt(ll[endState]) * setelt(rl[endState]) * op(sites, "Id", n)
+    # local nearest neighbour and exp. decaying interaction terms
+    H[n] += setelt(ll[startState]) * setelt(rl[2]) * op(sites, "X", n)
+    if !iszero(λ)
+      H[n] += setelt(ll[2]) * setelt(rl[2]) * op(sites, "Id", n) * λ  # λ Id,  on the diagonal
+    end
+    H[n] += setelt(ll[2]) * setelt(rl[endState]) * op(sites, "X", n) * -J # Jxx σˣ
+    if !iszero(hz) || !iszero(gx) 
+      H[n] += setelt(ll[startState]) * setelt(rl[endState]) * (op(sites, "Z", n) * -hz + op(sites, "X", n) * -gx) # hz σᶻ
+    end
+  end
+  # project out the left and right boundary MPO with unit row/column vector
+  L = ITensor(linkindices[1])
+  L[startState] = 1.0
+
+  R = ITensor(dag(linkindices[N+1]))
+  R[endState] = 1.0
+
+  H[1] *= L
+  H[N] *= R
+
+  return H
+end
+
+
+  H_ising = buildExpHTFI(s;J=Jxx,λ=0.0,hz,gx)
+
+  psi_tdvp = tdvp(
+      H_ising,
+      -1.0im,
+      ψ0;
+      time_step=-im*dt,
+      maxdim=200,
+      cutoff=1e-12,
+      normalize=true,
+      outputlevel=1,
+  )
+
+
+tn_contraction_tdvp = inner(ψ0, psi_tdvp)
+
+@show abs(tn_contraction_tdvp - tn_contraction_transverse)
