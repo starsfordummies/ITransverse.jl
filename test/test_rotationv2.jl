@@ -1,13 +1,13 @@
 using ITensors, ITensorMPS, ITransverse
+# using ITransverse: plus_state, up_state
 
-
-s = siteinds("S=1/2", 4)
+s = siteinds("S=1/2", 4, conserve_szparity=false)
 
 
 ψ0 = MPS(s, "Up")
 
 Jxx = 1.0
-λ = 0.4
+λ = 0.0
 hz = 1.0
 gx = 0.0
 
@@ -23,10 +23,21 @@ function fill_bulk_evolution(nt, sites, dt, Jxx, λ, hz, gx)
   end
 end
 
+function fill_bulk_symmetric(sites, dt, Jxx, hz, gx)
+  tp1 = tMPOParams(dt,  ITransverse.ChainModels.build_expH_ising_murg_new, IsingParams(Jxx, hz, gx), 0, ITransverse.up_state)
+ return tp1.expH_func(sites, tp1.mp, dt).data
+end
 # hcat takes the vector of vectors (which is the ouput of map(...)) and stacks them in a matrix column by column
 bulk_evo = hcat(
   map(
     nt -> fill_bulk_evolution(nt, s, dt, Jxx, λ, hz, gx),
+    range(1, N_t)
+  )...
+)
+
+bulk_evo_symm = hcat(
+  map(
+    nt -> fill_bulk_symmetric(s, dt, Jxx, hz, gx),
     range(1, N_t)
   )...
 )
@@ -38,8 +49,18 @@ input = hcat(
   ψ0[:]
 )
 
+input_symm = hcat(
+  ψ0.data,
+  bulk_evo_symm,
+  ψ0.data
+)
+
+
 # construct the temporal MPS for L and R, and the corresponding transfer matrices TL and TR
 L, TL, TR, R = construct_unfolded_tMPS_tMPO(input)
+
+L_symm, TL_symm, TR_symm, R_symm = construct_unfolded_tMPS_tMPO(input_symm)
+
 
 length(L)
 norm(L)
@@ -47,11 +68,11 @@ norm(R)
 
 inner(L, R)
 
-L2 = apply(TL, L)
+L2 = apply(ITensors.Algorithm("naive"), TL, L)
 
-R2 = apply(TR, R)
+R2 = apply(ITensors.Algorithm("naive"), TR, R)
 
-tn_contraction_transverse = overlap_noconj(L2, R2)
+
 
 norm(L2)
 
@@ -128,20 +149,22 @@ function buildExpHTFI(
 end
 
 
-  H_ising = buildExpHTFI(s;J=Jxx,λ=0.0,hz,gx)
+H_ising = buildExpHTFI(s;J=Jxx,λ,hz,gx)
 
-  psi_tdvp = tdvp(
-      H_ising,
-      -1.0im,
-      ψ0;
-      time_step=-im*dt,
-      maxdim=200,
-      cutoff=1e-12,
-      normalize=true,
-      outputlevel=1,
-  )
+psi_tdvp = tdvp(
+    H_ising,
+    -im*(N_t*dt),
+    ψ0;
+    time_step=-im*dt,
+    maxdim=200,
+    cutoff=1e-12,
+    normalize=true,
+    outputlevel=1,
+)
 
 
-tn_contraction_tdvp = inner(ψ0, psi_tdvp)
+
+tn_contraction_transverse = abs(inner(L2, R2))
+tn_contraction_tdvp = abs(inner(ψ0, psi_tdvp))
 
 @show abs(tn_contraction_tdvp - tn_contraction_transverse)

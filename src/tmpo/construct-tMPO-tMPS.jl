@@ -1,6 +1,6 @@
 using ITensorMPS, ITensors
 # using NDTensors: @Algorithm_str
-# using ITensors.SiteTypes: SiteTypes, siteind, siteinds, state
+using ITensors.SiteTypes: SiteTypes, siteind, siteinds, state
 # using ITensors: Algorithm, contract, hassameinds, inner, mapprime
 
 
@@ -39,6 +39,17 @@ function construct_unfolded_tMPS_tMPO(input::Matrix{ITensor})
   end
 
   number_of_new_links = has_MPS_boundary_at_end ? ncolumns-1 : ncolumns
+
+  links_col1 = linkinds(input[:,1])
+  links_col2 = linkinds(input[:,2])
+  links_col3 = linkinds(input[:,3])
+  links_col4 = linkinds(input[:,4])
+
+  sites_col1 = siteinds(input[:,1])
+  sites_col2 = siteinds(input[:,2])
+  sites_col3 = siteinds(input[:,3])
+  sites_col4 = siteinds(input[:,4])
+
 
   links_tMPS_L = [sim(only(inds(input[1,1],"Site")), tags="Link,time,nₜ=$(n)") for n in 0:number_of_new_links]
   links_tMPO_L = [sim(only(inds(input[2,1],"Site")), tags="Link,time,nₜ=$(n)") for n in 0:number_of_new_links]
@@ -161,6 +172,72 @@ function construct_unfolded_tMPS_tMPO(input::Matrix{ITensor})
   return (MPS(L_vec), MPO(MPO_L_vec), MPO(MPO_R_vec), MPS(R_vec))
 end
 
+
+function ITensorMPS.linkind(M::AbstractVector{ITensor}, j::Integer)
+    N = length(M)
+    (j ≥ length(M) || j < 1) && return nothing
+    return commonind(M[j], M[j + 1])
+end
+
+function ITensorMPS.linkinds(M::AbstractVector{ITensor}, j::Integer)
+    N = length(M)
+    (j ≥ length(M) || j < 1) && return IndexSet()
+    return commoninds(M[j], M[j + 1])
+end
+
+ITensorMPS.linkinds(ψ::AbstractVector{ITensor}) = [ITensorMPS.linkind(ψ, b) for b in 1:(length(ψ) - 1)]
+
+function ITensorMPS.linkinds(::typeof(all), ψ::AbstractVector{ITensor})
+    return IndexSet[ITensorMPS.linkinds(ψ, b) for b in 1:(length(ψ) - 1)]
+end
+
+
+function SiteTypes.siteind(::typeof(first), M::AbstractVector{ITensor}, j::Integer; kwargs...)
+    N = length(M)
+    (N == 1) && return firstind(M[1]; kwargs...)
+    if j == 1
+        si = uniqueind(M[j], M[j + 1]; kwargs...)
+    elseif j == N
+        si = uniqueind(M[j], M[j - 1]; kwargs...)
+    else
+        si = uniqueind(M[j], M[j - 1], M[j + 1]; kwargs...)
+    end
+    return si
+end
+
+
+function SiteTypes.siteinds(M::AbstractVector{ITensor}, j::Integer; kwargs...)
+    N = length(M)
+    (N == 1) && return inds(M[1]; kwargs...)
+    if j == 1
+        si = uniqueinds(M[j], M[j + 1]; kwargs...)
+    elseif j == N
+        si = uniqueinds(M[j], M[j - 1]; kwargs...)
+    else
+        si = uniqueinds(M[j], M[j - 1], M[j + 1]; kwargs...)
+    end
+    return si
+end
+
+function SiteTypes.siteinds(::typeof(all), ψ::AbstractVector{ITensor}, n::Integer; kwargs...)
+    return siteinds(ψ, n; kwargs...)
+end
+
+function SiteTypes.siteinds(::typeof(first), ψ::AbstractVector{ITensor}; kwargs...)
+    return [siteind(first, ψ, j; kwargs...) for j in 1:length(ψ)]
+end
+
+function SiteTypes.siteinds(::typeof(only), ψ::AbstractVector{ITensor}; kwargs...)
+    return [siteind(only, ψ, j; kwargs...) for j in 1:length(ψ)]
+end
+
+function SiteTypes.siteinds(::typeof(all), ψ::AbstractVector{ITensor}; kwargs...)
+    return [siteinds(ψ, j; kwargs...) for j in 1:length(ψ)]
+end
+
+function SiteTypes.siteinds(ψ::AbstractVector{ITensor}; kwargs...)
+    return [siteinds(all, ψ, j; kwargs...) for j in 1:length(ψ)]
+end
 
 
 # """
