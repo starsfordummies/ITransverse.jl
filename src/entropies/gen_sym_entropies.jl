@@ -233,6 +233,8 @@ function generalized_entropies_symmetric(psiL::MPS; bring_left_gen::Bool=true, n
     gen_ents_r3 = Vector{ComplexF64}(undef, mpslen-1) 
     gen_ents_r4 = Vector{ComplexF64}(undef, mpslen-1) 
 
+    eigs_rtm = Vector{Vector{ComplexF64}}(undef, mpslen-1)
+
     right_env = ITensor(1.)
 
     psiR = prime(linkinds, psiL)
@@ -261,6 +263,7 @@ function generalized_entropies_symmetric(psiL::MPS; bring_left_gen::Bool=true, n
             end
         end
 
+        eigs_rtm[ii-1] = array(diag(eigss))
         gen_ents_vn[ii-1] = renyi_eigs(eigss, 1)
         gen_ents_r2[ii-1] = renyi_eigs(eigss, 2)
         gen_ents_r3[ii-1] = renyi_eigs(eigss, 3)
@@ -269,6 +272,7 @@ function generalized_entropies_symmetric(psiL::MPS; bring_left_gen::Bool=true, n
     end
 
     gen_ents = Dict(
+        "EIG" => eigs_rtm,
         "VN" => gen_ents_vn,
         "R2" => gen_ents_r2,
         "R3" => gen_ents_r3,
