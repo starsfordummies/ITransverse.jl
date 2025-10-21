@@ -27,9 +27,9 @@ and contract with  the initial state `init_state` on the *left* and the operator
 
 """ Builds folded tMPO. Of the `ts` timesites, the first `b.tp.nbeta` ones are imaginary time ones.
  Accepted kwargs: fold_op(default=Identity op.), verbose(=false), init_beta_only(=true) """ 
-function folded_tMPO(b::FoldtMPOBlocks, ts::Vector{<:Index}; fold_op=nothing, init_beta_only::Bool=true, verbose::Bool=false)
+function folded_tMPO(b::FoldtMPOBlocks, ts::Vector{<:Index}; fold_op=nothing, init_beta_only::Bool=true, verbose::Bool=false, rho0=b.rho0)
 
-    (; tp, WWc, WWc_im, rot_inds, rho0) = b
+    (; tp, WWc, WWc_im, rot_inds) = b
 
     #match indices for real-imag so it's easier to work with them 
     replaceinds!(WWc_im, inds(WWc_im), inds(WWc))
