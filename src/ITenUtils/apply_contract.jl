@@ -30,13 +30,29 @@ function applyn(O::MPO, psi::MPS; kwargs...)
     # Override with kwargs truncate if specified explicitly
     truncate = get(kwargs, :truncate, truncate)
 
-    @show truncate
+    #@show truncate
     replaceprime(contractn(O, psi; truncate, kwargs...),  1 => 0)
 end
 
-""" Shorthand for simple apply(alg="naive", truncate=false) """
+""" Shorthand for simple apply(alg="naive") - accepts apply kwargs, defaults to truncate=false """
 function applyn(A::MPO, B::MPO; kwargs...)
-    apply(A, B, alg="naive", truncate=false)
+
+    truncate = false
+    
+    # If :truncp, :cutoff or :maxdim keywords are present, set truncate=true
+    if haskey(kwargs, :truncp)
+        (;cutoff, maxbondim) = kwargs[:truncp]
+        kwargs = (;kwargs..., cutoff=cutoff, maxdim=maxbondim)
+        truncate = true
+    elseif haskey(kwargs, :cutoff) || haskey(kwargs, :maxdim)
+        truncate = true
+    end
+
+    # Override with kwargs truncate if specified explicitly
+    truncate = get(kwargs, :truncate, truncate)
+
+    #@show truncate
+    apply(A, B, alg="naive"; truncate, kwargs...)
 end
 
 
