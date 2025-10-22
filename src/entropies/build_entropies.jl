@@ -1,6 +1,7 @@
 
 
-""" Given a number λ, builds the corresponding entropy contribution, be it -λlog(λ) if α=1 or λ^α otherwise."""
+""" Given an eigenvalue λ, builds the corresponding contribution to the entropy, 
+either -λlog(λ) if α=1 or λ^α otherwise."""
 function salpha(λ::Number, α)
     Sλ = 0.0
     if α ≈ 1
@@ -11,39 +12,76 @@ function salpha(λ::Number, α)
     return Sλ
 end
 
-""" Given an input spectrum, builds the corresponding entropy according to the index α"""
-function build_entropies(spectra::Vector, which_ents::Vector)
+""" Given an input spectrum, normalizes it (unless normalize_eigs=false) 
+and builds the corresponding entropy according to the index α"""
+function renyi_entropies(spectrum::Vector{<:Number}; which_ents::Vector=[0.5,1,2], normalize_eigs::Bool=true)
 
     allents = Dict()
 
-    for α in which_ents
-        Sα = []
-        Sα_n = []
-        for eigs in spectra
+    if normalize_eigs
+        spectrum = spectrum / sum(spectrum)
+    end
+
+    for alpha in which_ents
+        Sa = []
+        for eigs in spectrum
             ss = 0.0
-            ssn = 0.0
-            sum_λ = sum(eigs)
             for λ in eigs[abs.(eigs) .> 1e-15]
-               ss += salpha(λ, α)
-               ssn += salpha(λ/sum_λ, α)
+               ss += salpha(λ, alpha)
             end
-            push!(Sα, ss)
-            push!(Sα_n, ssn)
+            push!(Sa, ss)
 
         end
 
-        sums_l = [sum(eigs) for eigs in spectra]
-
-        allents["S$(α)"] = Sα
-        allents["S$(α)n"] = Sα_n 
-        allents["sums"] = sums_l
+        allents["S$(alpha)"] = Sa
+        allents["sum_eigs"] = sum(spectrum)  # cross-check: should always be 1 
 
     end
 
     return allents
 end
 
+function renyi_entropies(spectra::Vector{<:AbstractVector};
+                         which_ents::Vector = [0.5, 1, 2],
+                         normalize_eigs::Bool = true)
 
+
+    el_type = promote_type(Float64, map(eltype, spectra)...) 
+    allents = Dict{String, Vector{el_type}}()
+
+    # Initialize result arrays
+    for alpha in which_ents
+        allents["S$(alpha)"] = el_type[]  # empty array for each entropy type
+    end
+    
+    #allents["sum_eigs"] = Float64[]
+
+    for eigs in spectra
+        # Normalize if requested
+        if normalize_eigs
+            eigs = eigs / sum(eigs)
+        end
+
+        # Optional: store sum of eigenvalues (for debugging or checking normalization)
+        #push!(allents["sum_eigs"], sum(eigs))
+
+        # Compute entropies for this spectrum
+        for alpha in which_ents
+            s = 0.0
+            for λ in eigs
+                if abs(λ) > 1e-15
+                    s += salpha(λ, alpha)
+                end
+            end
+            push!(allents["S$(alpha)"], s)
+        end
+    end
+
+    return allents
+end
+
+
+#= 
 """ Given input a sum(eigenvalues^alpha), returns renyi log(sum())/1-alpha """
 function renyi(traces_alpha, alpha=2)
     return log.(traces_alpha)./(1-alpha)
@@ -55,4 +93,4 @@ end
 function tsallis(traces_alpha, alpha=2)
     return (traces_alpha .-1)./(1-alpha)
 end
-    
+=#
