@@ -1,22 +1,36 @@
-""" Shorthand for standard apply + swap indices """
+""" Applies MPO to MPS from the other side: 
+instead of 
+
+``` psi--(p)-(p)--[O]--(p')-- =  Opsi--(p)-- ```
+
+it contracts  
+
+``` --(p)--[O]--(p')-(p)--psi =  -(p)--Opsi ```
+"""
 function applys(O::MPO, psi::AbstractMPS; kwargs...)
     #apply(swapprime(O, 0, 1, "Site"), psi; cutoff, maxdim)
     contract(O, prime(siteinds,psi); kwargs...)
 end
 
 
-""" Shorthand for simple apply(alg="naive", truncate=false) """
-function applyn(O::MPO, psi::MPS; truncate=false, kwargs...)
+""" Shorthand for simple apply(alg="naive"),  """
+function applyn(O::MPO, psi::MPS; kwargs...)
 
-    # If :truncp, :cutoff or :maxdim keywords are present, default to truncate=true
+    truncate = false
+    
+    # If :truncp, :cutoff or :maxdim keywords are present, set truncate=true
     if haskey(kwargs, :truncp)
         (;cutoff, maxbondim) = kwargs[:truncp]
         kwargs = (;kwargs..., cutoff=cutoff, maxdim=maxbondim)
-        truncate=true
+        truncate = true
     elseif haskey(kwargs, :cutoff) || haskey(kwargs, :maxdim)
-        truncate=true
+        truncate = true
     end
-    #@show truncate
+
+    # Override with kwargs truncate if specified explicitly
+    truncate = get(kwargs, :truncate, truncate)
+
+    @show truncate
     replaceprime(contractn(O, psi; truncate, kwargs...),  1 => 0)
 end
 
@@ -35,6 +49,7 @@ function applyns(O::MPO, psi::MPS; kwargs...)
 end
 
 
+
 """ If we have dangling tensors at the right edge of an MPS """
 function contract_dangling!(psi::AbstractMPS)
     while length(psi) > 1 && ndims(psi[end]) == 1 && hascommoninds(psi[end], psi[end-1]) 
@@ -45,7 +60,7 @@ function contract_dangling!(psi::AbstractMPS)
 end
 
 
-""" Copied from ITensorMPS but adapted so that it can also extend """
+""" Copied from ITensorMPS's `contract` but adapted so that it can also extend """
 function contractn(A::MPO, ψ::MPS; truncate, truncp=nothing, kwargs...)
 
     @assert length(A) >= length(ψ)
@@ -83,4 +98,3 @@ function contractn(A::MPO, ψ::MPS; truncate, truncp=nothing, kwargs...)
 
     return ψ_out
 end
-
