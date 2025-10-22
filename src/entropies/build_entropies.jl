@@ -12,34 +12,13 @@ function salpha(λ::Number, α)
     return Sλ
 end
 
+#
 """ Given an input spectrum, normalizes it (unless normalize_eigs=false) 
 and builds the corresponding entropy according to the index α"""
-function renyi_entropies(spectrum::Vector{<:Number}; which_ents::Vector=[0.5,1,2], normalize_eigs::Bool=true)
-
-    allents = Dict()
-
-    if normalize_eigs
-        spectrum = spectrum / sum(spectrum)
-    end
-
-    for alpha in which_ents
-        Sa = []
-        for eigs in spectrum
-            ss = 0.0
-            for λ in eigs[abs.(eigs) .> 1e-15]
-               ss += salpha(λ, alpha)
-            end
-            push!(Sa, ss)
-
-        end
-
-        allents["S$(alpha)"] = Sa
-        allents["sum_eigs"] = sum(spectrum)  # cross-check: should always be 1 
-
-    end
-
-    return allents
+function renyi_entropies(spectrum::Vector{<:Number}; which_ents, normalize_eigs::Bool=true)
+    renyi_entropies([spectrum]; which_ents, normalize_eigs)
 end
+
 
 function renyi_entropies(spectra::Vector{<:AbstractVector};
                          which_ents::Vector = [0.5, 1, 2],
@@ -54,18 +33,13 @@ function renyi_entropies(spectra::Vector{<:AbstractVector};
         allents["S$(alpha)"] = el_type[]  # empty array for each entropy type
     end
     
-    #allents["sum_eigs"] = Float64[]
-
     for eigs in spectra
         # Normalize if requested
         if normalize_eigs
             eigs = eigs / sum(eigs)
         end
 
-        # Optional: store sum of eigenvalues (for debugging or checking normalization)
-        #push!(allents["sum_eigs"], sum(eigs))
-
-        # Compute entropies for this spectrum
+        # Compute Renyi entropies for this spectrum
         for alpha in which_ents
             s = 0.0
             for λ in eigs
@@ -73,7 +47,7 @@ function renyi_entropies(spectra::Vector{<:AbstractVector};
                     s += salpha(λ, alpha)
                 end
             end
-            push!(allents["S$(alpha)"], s)
+            push!(allents["S$(alpha)"], log.(s)/(1-alpha))
         end
     end
 

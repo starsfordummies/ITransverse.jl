@@ -106,7 +106,7 @@ end
     all_ents = renyi_entropies(eigs_r, which_ents=[2.0])
     
     psin = psi/sqrt(overlap_noconj(psi,psi))
-    r2_cut = rtm2_contracted(psin, psin)
+    r2_cut = log.(rtm2_contracted(psin, psin))/(1-2.)
     
     @test psi[7] == psic[7]
 
