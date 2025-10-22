@@ -103,9 +103,10 @@ end
     eigs_r = diagonalize_rtm_right_gen_sym(psi; bring_right_gen=true)
     eigs_l = diagonalize_rtm_symmetric(psi; bring_left_gen=true)
 
-    all_ents = build_entropies(eigs_r, [2.0])
+    all_ents = renyi_entropies(eigs_r, which_ents=[2.0])
     
-    r2_cut = rtm2_contracted(psi, psi)
+    psin = psi/sqrt(overlap_noconj(psi,psi))
+    r2_cut = rtm2_contracted(psin, psin)
     
     @test psi[7] == psic[7]
 
