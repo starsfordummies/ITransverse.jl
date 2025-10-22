@@ -66,17 +66,32 @@ length(L)
 norm(L)
 norm(R)
 
-inner(L, R)
+norm(L_symm)
+norm(R_symm)
+
+inner(L,R)
 
 L2 = apply(ITensors.Algorithm("naive"), TL, L)
 
 R2 = apply(ITensors.Algorithm("naive"), TR, R)
 
+L2_symm = apply(ITensors.Algorithm("naive"), TL_symm, L_symm)
 
+R2_symm = apply(ITensors.Algorithm("naive"), TR_symm, R_symm)
 
 norm(L2)
 
 norm(R2)
+
+
+norm(L2_symm)
+
+norm(R2_symm)
+
+inner(L2,R2)
+
+
+inner(L2_symm,R2_symm)
 
 # we find the norm to be very similar, so the new tMPS states may be more evenly 
 # normed when it comes to the repeated application of TL and TR
@@ -165,6 +180,7 @@ psi_tdvp = tdvp(
 
 
 tn_contraction_transverse = abs(inner(L2, R2))
+tn_contraction_transverse_symm = abs(inner(L2_symm, R2_symm))
 tn_contraction_tdvp = abs(inner(ψ0, psi_tdvp))
 
 @show abs(tn_contraction_tdvp - tn_contraction_transverse)
