@@ -7,7 +7,7 @@ px_per_unit = 2
 
 read_for_print_theme = Theme(
 	# fonts=(; regular = "STIX Two Math", bold = "STIX Two Bold"),
-	fonts=(; regular = "TeX Gyre Termes Math", bold = "TeX Gyre Termes Bold"),
+	# fonts=(; regular = "TeX Gyre Termes Math", bold = "TeX Gyre Termes Bold"),
 	size = (800,700),
 	figure_padding = 0,#(0,0,0,0)
 )
