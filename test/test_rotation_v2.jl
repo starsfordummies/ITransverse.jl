@@ -55,22 +55,27 @@ end
 
 #ITensorVisualizationBase.visualize(ψ::AbstractMPS, args...; kwargs...) = ITensorVisualizationBase.visualize(ITensorMPS.data(ψ), args...; kwargs...)
 
+
+ψ0qn = MPS(sqn, "Up")
+
 L, TL, TR, R = construct_tMPS_tMPO(
-  MPS(sqn, "Up"),
+  ψ0qn,
   map(
     nt -> fill_bulk_evolution_MPO(nt, sqn, dt, Jxx, λ, hz, gx),
     range(1, N_t)
   ),
-  prime(dag(MPS(sqn, "Up"))),
+  ψ0qn,
 )
 
+ψ0 = MPS(s, "Up")
+
 L_symm, TL_symm, TR_symm, R_symm = construct_tMPS_tMPO(
-  MPS(s, "Up"),
+  ψ0,
   map(
     nt -> fill_bulk_symmetric(s, dt, Jxx, hz, gx),
     range(1, N_t)
   ),
-  prime(MPS(s, "Up")),
+  ψ0,
 )
 
 
@@ -188,11 +193,11 @@ end
 
 
 H_ising = buildExpHTFI(sqn;J=Jxx,λ,hz,gx)
-ψ0 = MPS(sqn,"Up")
+# ψ0 = MPS(sqn,"Up")
 psi_tdvp = tdvp(
     H_ising,
     -im*(N_t*dt),
-    ψ0;
+    ψ0qn;
     time_step=-im*dt,
     maxdim=200,
     cutoff=1e-12,

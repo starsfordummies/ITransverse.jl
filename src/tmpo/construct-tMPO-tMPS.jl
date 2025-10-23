@@ -55,7 +55,7 @@ function construct_tMPS_tMPO(ψ_i::MPS, Ut::Vector{MPO}, ϕ_f::MPS)
     ϕf = delete_link_from_prodMPS(ϕ_f)
 
     Ut_1 = noprime.(ψi.data .* Ut[1].data)
-    Ut_end = noprime.(Ut[end].data .* ϕf.data)
+    Ut_end = noprime.(Ut[end].data .* prime.(dag.(ϕf.data)))
 
     input = hcat(
       Ut_1,
