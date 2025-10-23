@@ -19,9 +19,11 @@ TR  o—U—U—U—U—U—U—U—o
 |R⟩ o—U—U—U—U—U—U—U—o
 ```
 
-Construct two boundary tMPS and two tMPOs such for further use in the power method.
-Note that we assume the Matrix to have 4 rows and Nₜ+1 columns where Nₜ counts the time steps,
-and the first column describes the boundary (initial t=0) MPS in space. 
+Construct two boundary tMPS and two tMPOs for further use in the power method.
+Note that we assume the matrix `input` to have 4 rows and Nₜ+1 columns where Nₜ counts the time steps,
+and the first column describes the boundary (initial t=0) MPS in space.
+Each column is assumed to be a valid (space-like) MPS (at the boundaries) and MPO (in the bulk), where
+the links match but the (space-like) sites are not necessarily correctly primed to link up in the time direction.
 
 """
 function construct_unfolded_tMPS_tMPO(input::Matrix{ITensor})
@@ -33,14 +35,14 @@ function construct_unfolded_tMPS_tMPO(input::Matrix{ITensor})
   sites_cols = hcat([siteinds(input[:,n]) for n in 1:ncolumns]...)
 
 
-  links_tMPS_L = [sim(only(inds(input[1,1],"Site")), tags="Link,time,nₜ=$(n-1)") for n in 1:ncolumns-1]
-  links_tMPO_L = [sim(only(inds(input[2,1],"Site")), tags="Link,time,nₜ=$(n-1)") for n in 1:ncolumns-1]
-  links_tMPO_R = [sim(only(inds(input[3,1],"Site")), tags="Link,time,nₜ=$(n-1)") for n in 1:ncolumns-1]
-  links_tMPS_R = [sim(only(inds(input[4,1],"Site")), tags="Link,time,nₜ=$(n-1)") for n in 1:ncolumns-1]
+  links_tMPS_L = [sim(only(sites_cols[1,1]), tags="Link,time,nₜ=$(n-1)") for n in 1:ncolumns-1]
+  links_tMPO_L = [sim(only(sites_cols[2,1]), tags="Link,time,nₜ=$(n-1)") for n in 1:ncolumns-1]
+  links_tMPO_R = [sim(only(sites_cols[3,1]), tags="Link,time,nₜ=$(n-1)") for n in 1:ncolumns-1]
+  links_tMPS_R = [sim(only(sites_cols[4,1]), tags="Link,time,nₜ=$(n-1)") for n in 1:ncolumns-1]
 
   # the new sites are a bit special, the first (and perhaps last) site is (are) given by the boundary MPS
   # while the bulk of the new sites are given by the old link of the time evolution operator
-  sites = [sim(only(inds(input[1,n],"Link")), tags="Site,time,nₜ=$(n-1)") for n in 1:ncolumns]
+  sites = [sim(links_cols[1,n], tags="Site,time,nₜ=$(n-1)") for n in 1:ncolumns]
   # we have now created all the new indices for the new tMPSs and tMPOs and effectively
   # rotated the network by relabelling sites with links and links with sites.
   first_L = replaceinds(
@@ -98,7 +100,7 @@ function construct_unfolded_tMPS_tMPO(input::Matrix{ITensor})
             links_cols[3,n]  => sites[n],
             sites_cols[3,n][1] => links_tMPO_R[n],
             sites_cols[3,n][2] => dag(links_tMPO_R[n-1]),
-      ) for n in 2:ncolumns-1 # difference to no MPS boundary at end!
+      ) for n in 2:ncolumns-1 #
     ]
   last_MPO_R = replaceinds(
         input[3,end],

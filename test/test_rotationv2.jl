@@ -1,5 +1,31 @@
 using ITensors, ITensorMPS, ITransverse
 # using ITransverse: plus_state, up_state
+using ITensorVisualizationBase, ITensorMakie, Makie, CairoMakie
+ITensorVisualizationBase.set_backend!("Makie");
+CairoMakie.activate!(type = "svg")
+px_per_unit = 2
+
+read_for_print_theme = Theme(
+	# fonts=(; regular = "STIX Two Math", bold = "STIX Two Bold"),
+	fonts=(; regular = "TeX Gyre Termes Math", bold = "TeX Gyre Termes Bold"),
+	size = (800,700),
+	figure_padding = 0,#(0,0,0,0)
+)
+set_theme!(read_for_print_theme);
+
+@show ITensorVisualizationBase.get_backend()
+
+i = Index(2, "i")
+j = Index(10, "j")
+k = Index(40, "k")
+l = Index(40, "l")
+m = Index(40, "m")
+A = random_itensor(i, j, k)
+B = random_itensor(i, j, l, m)
+C = random_itensor(k, l)
+ABC = @visualize A * B * C edge_labels=(tags=true,)
+
+
 
 s = siteinds("S=1/2", 4, conserve_szparity=false)
 
@@ -55,12 +81,29 @@ input_symm = hcat(
   ψ0.data
 )
 
+ITensorVisualizationBase.visualize(ψ::AbstractMPS, args...; kwargs...) = ITensorVisualizationBase.visualize(ITensorMPS.data(ψ), args...; kwargs...)
 
 # construct the temporal MPS for L and R, and the corresponding transfer matrices TL and TR
 L, TL, TR, R = construct_unfolded_tMPS_tMPO(input)
 
 L_symm, TL_symm, TR_symm, R_symm = construct_unfolded_tMPS_tMPO(input_symm)
 
+@visualize figL L edge_labels=(tags=true,);
+figL
+
+@visualize figTL TL edge_labels=(tags=true,);
+figTL
+
+@visualize figTR TR edge_labels=(tags=true,);
+figTR
+
+@visualize figR R edge_labels=(tags=true,);
+figR
+
+save("visual_L.pdf",  figL)
+save("visual_TL.pdf", figTL)
+save("visual_TR.pdf", figTR)
+save("visual_R.pdf",  figR)
 
 length(L)
 norm(L)
@@ -74,6 +117,15 @@ inner(L,R)
 L2 = apply(ITensors.Algorithm("naive"), TL, L)
 
 R2 = apply(ITensors.Algorithm("naive"), TR, R)
+
+@visualize figL2 L2 edge_labels=(tags=true,);
+figL2
+
+@visualize figR2 R2 edge_labels=(tags=true,);
+figR2
+
+save("visual_L2.pdf",  figL2)
+save("visual_R2.pdf",  figR2)
 
 L2_symm = apply(ITensors.Algorithm("naive"), TL_symm, L_symm)
 
