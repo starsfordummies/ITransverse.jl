@@ -1,36 +1,26 @@
 using ITensors, ITensorMPS, ITransverse
 # using ITransverse: plus_state, up_state
-using ITensorVisualizationBase, ITensorMakie, Makie, CairoMakie
-ITensorVisualizationBase.set_backend!("Makie");
-CairoMakie.activate!(type = "svg")
-px_per_unit = 2
+# using ITensorVisualizationBase, ITensorMakie, Makie, CairoMakie
+# ITensorVisualizationBase.set_backend!("Makie");
+# CairoMakie.activate!(type = "svg")
 
-read_for_print_theme = Theme(
-	# fonts=(; regular = "STIX Two Math", bold = "STIX Two Bold"),
-	# fonts=(; regular = "TeX Gyre Termes Math", bold = "TeX Gyre Termes Bold"),
-	size = (800,700),
-	figure_padding = 0,#(0,0,0,0)
-)
-set_theme!(read_for_print_theme);
 
-@show ITensorVisualizationBase.get_backend()
+# read_for_print_theme = Theme(
+#   size = (800,700),
+#   figure_padding = 0,#(0,0,0,0)
+# )
+# set_theme!(read_for_print_theme);
 
-i = Index(2, "i")
-j = Index(10, "j")
-k = Index(40, "k")
-l = Index(40, "l")
-m = Index(40, "m")
-A = random_itensor(i, j, k)
-B = random_itensor(i, j, l, m)
-C = random_itensor(k, l)
-ABC = @visualize A * B * C edge_labels=(tags=true,)
-
+# @show ITensorVisualizationBase.get_backend()
 
 
 s = siteinds("S=1/2", 4, conserve_szparity=false)
+sqn = siteinds("S=1/2", 4, conserve_szparity=true)
 
 
-ψ0 = MPS(s, "Up")
+# ψ0 = MPS(s, "Up")
+
+# ψ_rand = randomMPS(s, "Up", 5)
 
 Jxx = 1.0
 λ = 0.0
@@ -38,7 +28,7 @@ hz = 1.0
 gx = 0.0
 
 dt = 0.1
-N_t = 10
+N_t = 12
 
 
 function fill_bulk_evolution(nt, sites, dt, Jxx, λ, hz, gx)
@@ -49,87 +39,70 @@ function fill_bulk_evolution(nt, sites, dt, Jxx, λ, hz, gx)
   end
 end
 
+function fill_bulk_evolution_MPO(nt, sites, dt, Jxx, λ, hz, gx)
+  if iseven(nt)
+    return timeEvo_MPO_2ndOrder(sites, ["Id"], [λ], ["X"], [1.0], ["X"], [-Jxx], ["Z", "X"], [-hz, -gx], dt;) # return vector of ITensors rather than MPO
+  else
+    return timeEvo_MPO_2ndOrder_LRflipped(sites, ["Id"], [λ], ["X"], [1.0], ["X"], [-Jxx], ["Z", "X"], [-hz, -gx], dt;) # return vector of ITensors rather than MPO
+  end
+end
+
 function fill_bulk_symmetric(sites, dt, Jxx, hz, gx)
   tp1 = tMPOParams(dt,  ITransverse.ChainModels.build_expH_ising_murg_new, IsingParams(Jxx, hz, gx), 0, ITransverse.up_state)
- return tp1.expH_func(sites, tp1.mp, dt).data
+ return tp1.expH_func(sites, tp1.mp, dt)
 end
-# hcat takes the vector of vectors (which is the ouput of map(...)) and stacks them in a matrix column by column
-bulk_evo = hcat(
-  map(
-    nt -> fill_bulk_evolution(nt, s, dt, Jxx, λ, hz, gx),
-    range(1, N_t)
-  )...
-)
-
-bulk_evo_symm = hcat(
-  map(
-    nt -> fill_bulk_symmetric(s, dt, Jxx, hz, gx),
-    range(1, N_t)
-  )...
-)
-
-# hcat the initial and final state (for the Loschmidt scenario)
-input = hcat(
-  ψ0[:],
-  bulk_evo,
-  ψ0[:]
-)
-
-input_symm = hcat(
-  ψ0.data,
-  bulk_evo_symm,
-  ψ0.data
-)
 
 ITensorVisualizationBase.visualize(ψ::AbstractMPS, args...; kwargs...) = ITensorVisualizationBase.visualize(ITensorMPS.data(ψ), args...; kwargs...)
 
-# construct the temporal MPS for L and R, and the corresponding transfer matrices TL and TR
-L, TL, TR, R = construct_unfolded_tMPS_tMPO(input)
+L, TL, TR, R = construct_tMPS_tMPO(
+  MPS(sqn, "Up"),
+  map(
+    nt -> fill_bulk_evolution_MPO(nt, sqn, dt, Jxx, λ, hz, gx),
+    range(1, N_t)
+  ),
+  prime(dag(MPS(sqn, "Up"))),
+)
 
-L_symm, TL_symm, TR_symm, R_symm = construct_unfolded_tMPS_tMPO(input_symm)
+L_symm, TL_symm, TR_symm, R_symm = construct_tMPS_tMPO(
+  MPS(s, "Up"),
+  map(
+    nt -> fill_bulk_symmetric(s, dt, Jxx, hz, gx),
+    range(1, N_t)
+  ),
+  prime(MPS(s, "Up")),
+)
 
-@visualize figL L edge_labels=(tags=true,);
-figL
 
-@visualize figTL TL edge_labels=(tags=true,);
-figTL
-
-@visualize figTR TR edge_labels=(tags=true,);
-figTR
-
-@visualize figR R edge_labels=(tags=true,);
-figR
-
-save("visual_L.pdf",  figL)
-save("visual_TL.pdf", figTL)
-save("visual_TR.pdf", figTR)
-save("visual_R.pdf",  figR)
+# @visualize L edge_labels=(tags=true,);
+# @visualize R edge_labels=(tags=true,);
 
 length(L)
+
 norm(L)
+
 norm(R)
 
 norm(L_symm)
 norm(R_symm)
 
-inner(L,R)
+abs(overlap_noconj(L , R))
 
-L2 = apply(ITensors.Algorithm("naive"), TL, L)
+L2 = apply(ITensors.Algorithm("naive"), TL, L; truncate=false)
 
-R2 = apply(ITensors.Algorithm("naive"), TR, R)
+R2 = apply(ITensors.Algorithm("naive"), TR, R; truncate=false)
 
-@visualize figL2 L2 edge_labels=(tags=true,);
-figL2
+# @visualize figL2 L2 edge_labels=(tags=true,);
+# figL2
 
-@visualize figR2 R2 edge_labels=(tags=true,);
-figR2
+# @visualize figR2 R2 edge_labels=(tags=true,);
+# figR2
 
-save("visual_L2.pdf",  figL2)
-save("visual_R2.pdf",  figR2)
+# save("visual_L2.pdf",  figL2)
+# save("visual_R2.pdf",  figR2)
 
-L2_symm = apply(ITensors.Algorithm("naive"), TL_symm, L_symm)
+L2_symm = apply(ITensors.Algorithm("naive"), TL_symm, L_symm; truncate=false)
 
-R2_symm = apply(ITensors.Algorithm("naive"), TR_symm, R_symm)
+R2_symm = apply(ITensors.Algorithm("naive"), TR_symm, R_symm; truncate=false)
 
 norm(L2)
 
@@ -140,10 +113,7 @@ norm(L2_symm)
 
 norm(R2_symm)
 
-inner(L2,R2)
 
-
-inner(L2_symm,R2_symm)
 
 # we find the norm to be very similar, so the new tMPS states may be more evenly 
 # normed when it comes to the repeated application of TL and TR
@@ -216,8 +186,8 @@ function buildExpHTFI(
 end
 
 
-H_ising = buildExpHTFI(s;J=Jxx,λ,hz,gx)
-
+H_ising = buildExpHTFI(sqn;J=Jxx,λ,hz,gx)
+ψ0 = MPS(sqn,"Up")
 psi_tdvp = tdvp(
     H_ising,
     -im*(N_t*dt),
@@ -231,8 +201,9 @@ psi_tdvp = tdvp(
 
 
 
-tn_contraction_transverse = abs(inner(L2, R2))
-tn_contraction_transverse_symm = abs(inner(L2_symm, R2_symm))
+tn_contraction_transverse = abs(overlap_noconj(L2, R2))
+tn_contraction_transverse_symm = abs(overlap_noconj(L2_symm, R2_symm))
 tn_contraction_tdvp = abs(inner(ψ0, psi_tdvp))
-
+# abs(overlap_noconj(L2_symm , R2_symm))
 @show abs(tn_contraction_tdvp - tn_contraction_transverse)
+@test isapprox(tn_contraction_tdvp, tn_contraction_transverse; atol=1e-3 )
