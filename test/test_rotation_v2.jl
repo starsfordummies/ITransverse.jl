@@ -1,4 +1,5 @@
 using ITensors, ITensorMPS, ITransverse
+using Test
 # using ITransverse: plus_state, up_state
 # using ITensorVisualizationBase, ITensorMakie, Makie, CairoMakie
 # ITensorVisualizationBase.set_backend!("Makie");
@@ -52,7 +53,7 @@ function fill_bulk_symmetric(sites, dt, Jxx, hz, gx)
  return tp1.expH_func(sites, tp1.mp, dt)
 end
 
-ITensorVisualizationBase.visualize(ψ::AbstractMPS, args...; kwargs...) = ITensorVisualizationBase.visualize(ITensorMPS.data(ψ), args...; kwargs...)
+#ITensorVisualizationBase.visualize(ψ::AbstractMPS, args...; kwargs...) = ITensorVisualizationBase.visualize(ITensorMPS.data(ψ), args...; kwargs...)
 
 L, TL, TR, R = construct_tMPS_tMPO(
   MPS(sqn, "Up"),

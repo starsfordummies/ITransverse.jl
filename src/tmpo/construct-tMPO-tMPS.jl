@@ -1,7 +1,23 @@
-using ITensorMPS, ITensors
+# using ITensorMPS, ITensors
 # using NDTensors: @Algorithm_str
 using ITensors.SiteTypes: SiteTypes, siteind, siteinds, state
 # using ITensors: Algorithm, contract, hassameinds, inner, mapprime
+#import ITensorMPS: maxlinkdim
+
+
+function delete_link_from_prodMPS(ψ)
+  @assert maxlinkdim(ψ) == 1
+  N = length(ψ)
+  links = linkinds(ψ)
+  new_ψ = similar(ψ)
+  new_ψ[1] = ψ[1] * dag(onehot(links[1] => 1))
+  for ii in 2:N-1
+    new_ψ[ii] = onehot(links[ii-1] => 1) * ψ[ii] * dag(onehot(links[ii] => 1))
+  end
+   new_ψ[N] = onehot(links[N-1] => 1) * ψ[N]
+  return new_ψ
+end
+
 
 """
     construct_tMPS_tMPO(ψ_i::MPS, Ut::Vector{MPO}, ϕ_f::MPS)
@@ -30,7 +46,7 @@ but the (physical) sites are not necessarily(!) correctly primed to link up corr
 """
 function construct_tMPS_tMPO(ψ_i::MPS, Ut::Vector{MPO}, ϕ_f::MPS)
   if hasqns(ψ_i)
-    if maxlinkdim(ψ_i) > 1 && maxlinkdim(ϕ_f) > 1
+    if maxlinkdim(ψ_i) > 1 || maxlinkdim(ϕ_f) > 1
       throw(ArgumentError("For now, we cannot process a QN-preserving initial/final state that is NOT a product state!"))
     end
   end
@@ -57,19 +73,6 @@ function construct_tMPS_tMPO(ψ_i::MPS, Ut::Vector{MPO}, ϕ_f::MPS)
   end
 end
 
-
-function delete_link_from_prodMPS(ψ)
-  @assert maxlinkdim(ψ) == 1
-  N = length(ψ)
-  links = linkinds(ψ)
-  new_ψ = similar(ψ)
-  new_ψ[1] = ψ[1] * dag(onehot(links[1] => 1))
-  for ii in 2:N-1
-    new_ψ[ii] = onehot(links[ii-1] => 1) * ψ[ii] * dag(onehot(links[ii] => 1))
-  end
-   new_ψ[N] = onehot(links[N-1] => 1) * ψ[N]
-  return new_ψ
-end
 
 function construct_tMPS_tMPO(input::Matrix{ITensor})
   nrows, ncolumns = size(input)
@@ -252,12 +255,13 @@ function SiteTypes.siteinds(ψ::AbstractVector{ITensor}; kwargs...)
 end
 
 
-function maxlinkdim(M::AbstractVector{ITensor})
-    md = 1
-    for b in eachindex(M)[1:(end - 1)]
-        l = linkind(M, b)
-        linkdim = isnothing(l) ? 1 : dim(l)
-        md = max(md, linkdim)
-    end
-    return md
-end
+# function ITensorMPS.maxlinkdim(M::AbstractVector{ITensor})
+#     md = 1
+#     for b in eachindex(M)[1:(end - 1)]
+#         l = linkind(M, b)
+#         linkdim = isnothing(l) ? 1 : dim(l)
+#         md = max(md, linkdim)
+#     end
+#     return md
+# end
+
