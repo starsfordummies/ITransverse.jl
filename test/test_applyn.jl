@@ -27,6 +27,15 @@ psiR_ext = applyn(oooR,psiR)
 @test check_mps_sanity(psiR_ext)
 
 
+psiR_ext = applyn(oooR,psiR, truncate=true)
+@test siteinds(psiR_ext) == ss
+@test check_mps_sanity(psiR_ext)
+
+
+psiR_ext = applyn(oooR,psiR, cutoff=1e-12)
+@test siteinds(psiR_ext) == ss
+@test check_mps_sanity(psiR_ext)
+
 # Apply Left tMPO to (shorter) Left tMPS: Extend
 psiL = random_mps(ss[1:end-n_ext], linkdims=20)
 psiL_ext = applyns(oooL,psiL)

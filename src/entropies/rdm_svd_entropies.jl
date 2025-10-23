@@ -68,8 +68,7 @@ function vn_entanglement_entropy(psi::MPS)
 end
 
 
-
-function renyi_entanglement_entropy(in_psi::MPS, cut::Int, αr::Int)
+function renyi_entropy(in_psi::MPS, cut::Int, αr::Number)
 
     S_ren = 0.0
 
@@ -100,21 +99,27 @@ function renyi_entanglement_entropy(in_psi::MPS, cut::Int, αr::Int)
 end
 
 
-
 """ Computes the `α`-th Renyi entanglement entropy of an MPS `psi` at all links, 
 S_α = -log(sum λ^α), where λ are the eigenvalues of the RDM (=SV^2 ).
 returns a vector of floats containing the entropies 
 """
-function renyi_entanglement_entropy(psi::MPS, α::Int=2)
+function renyi_entropy(psi::MPS, α::Number=2)
 
     workpsi = normalize(psi)
 
     ents_renyi = Vector{Float64}()
 
     for icut=1:length(workpsi)-1
-        Si = renyi_entanglement_entropy(workpsi, icut, α)
+        Si = renyi_entropy(workpsi, icut, α)
         push!(ents_renyi, Si)
     end
 
     return ents_renyi
+end
+
+
+function renyi_entropies(in_psi::MPS; which_ents = [0.5, 1, 2])
+
+    renyi_entropies(diagonalize_rdm(in_psi); which_ents)
+    
 end
