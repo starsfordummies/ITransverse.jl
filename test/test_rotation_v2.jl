@@ -1,27 +1,9 @@
 using ITensors, ITensorMPS, ITransverse
 using Test
-# using ITransverse: plus_state, up_state
-# using ITensorVisualizationBase, ITensorMakie, Makie, CairoMakie
-# ITensorVisualizationBase.set_backend!("Makie");
-# CairoMakie.activate!(type = "svg")
-
-
-# read_for_print_theme = Theme(
-#   size = (800,700),
-#   figure_padding = 0,#(0,0,0,0)
-# )
-# set_theme!(read_for_print_theme);
-
-# @show ITensorVisualizationBase.get_backend()
-
 
 s = siteinds("S=1/2", 4, conserve_szparity=false)
 sqn = siteinds("S=1/2", 4, conserve_szparity=true)
 
-
-# ψ0 = MPS(s, "Up")
-
-# ψ_rand = randomMPS(s, "Up", 5)
 
 Jxx = 1.0
 λ = 0.0
@@ -53,8 +35,6 @@ function fill_bulk_symmetric(sites, dt, Jxx, hz, gx)
  return tp1.expH_func(sites, tp1.mp, dt)
 end
 
-#ITensorVisualizationBase.visualize(ψ::AbstractMPS, args...; kwargs...) = ITensorVisualizationBase.visualize(ITensorMPS.data(ψ), args...; kwargs...)
-
 L, TL, TR, R = construct_tMPS_tMPO(
   MPS(sqn, "Up"),
   map(
@@ -74,9 +54,6 @@ L_symm, TL_symm, TR_symm, R_symm = construct_tMPS_tMPO(
 )
 
 
-# @visualize L edge_labels=(tags=true,);
-# @visualize R edge_labels=(tags=true,);
-
 length(L)
 
 norm(L)
@@ -89,20 +66,9 @@ norm(R_symm)
 abs(overlap_noconj(L , R))
 
 L2 = apply(ITensors.Algorithm("naive"), TL, L; truncate=false)
-
 R2 = apply(ITensors.Algorithm("naive"), TR, R; truncate=false)
 
-# @visualize figL2 L2 edge_labels=(tags=true,);
-# figL2
-
-# @visualize figR2 R2 edge_labels=(tags=true,);
-# figR2
-
-# save("visual_L2.pdf",  figL2)
-# save("visual_R2.pdf",  figR2)
-
 L2_symm = apply(ITensors.Algorithm("naive"), TL_symm, L_symm; truncate=false)
-
 R2_symm = apply(ITensors.Algorithm("naive"), TR_symm, R_symm; truncate=false)
 
 norm(L2)
