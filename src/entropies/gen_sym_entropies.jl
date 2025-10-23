@@ -263,3 +263,111 @@ function gensym_renyi_entropies(psiL::MPS; which_ents=[0.5,1,2], bring_left_gen:
     return gen_ents
     
 end
+
+
+""" Computes the generalized SVD entropies: Given input MPS |phi> and <psi|, < diagonalizes the RTM |phi><psi| 
+and builds alpha-order Renyi entropies as specified by `which_ents` (alpha=1 ie. VN is always computed). Returns a dict """
+function gensvd_renyi_entropies(psi::MPS, phi::MPS; which_ents=[0.5,1,2], normalize_eigs::Bool=true)
+ 
+    mpslen = length(psi)
+
+    # first bring to left canonical form  
+    psi_ortho = orthogonalize(psi, mpslen)
+    phi_ortho = orthogonalize(phi, mpslen)
+
+    XUinv, XVinv, right_env = (ITensor(1), ITensor(1), ITensor(1))
+    
+    # For the non-symmetric case we can only truncate with SVD, so ents will be real 
+    svds_rdm = Vector{Vector{Float64}}(undef, mpslen-1)
+
+
+    # Start from the *right* side and sweep towards the left 
+    for ii in mpslen:-1:2
+        Ai = XUinv * psi_ortho[ii]
+        Bi = XVinv * phi_ortho[ii] 
+
+        right_env *= Ai 
+        right_env *= Bi 
+
+        @assert order(right_env) == 2
+
+        U,S,Vdag = svd(right_env, ind(right_env,1); cutoff=1e-14)
+
+        norm_factor = sum(S)
+        Snorm = normalize_eigs ? S/norm_factor : S
+
+        XU = dag(U)
+        XUinv = U
+
+        XV = dag(Vdag) 
+        XVinv = Vdag
+
+        right_env /= norm_factor
+   
+        right_env *= XU
+        right_env *= XV
+
+        svds_rdm[ii-1] = array(diag(Snorm))
+
+
+    end
+
+    gen_svd_ents = renyi_entropies(svds_rdm; which_ents, normalize_eigs=false)
+
+    return gen_svd_ents
+    
+end
+
+
+""" Computes the generalized SVD entropies: Given input MPS |phi> and <psi|, < diagonalizes the RTM |phi><psi| 
+and builds alpha-order Renyi entropies as specified by `which_ents` (alpha=1 ie. VN is always computed). Returns a dict """
+function gensvd_renyi_entropies(psi::MPS; which_ents=[0.5,1,2], normalize_eigs::Bool=true)
+ 
+    mpslen = length(psi)
+    elt = eltype(psi[1])
+    sits = siteinds(psi)
+
+    # first bring to left canonical form  
+    psi_ortho = orthogonalize(psi, mpslen)
+
+    XUinv, right_env = (ITensor(1), ITensor(1), ITensor(1))
+    
+    # For the non-symmetric case we can only truncate with SVD, so ents will be real 
+    svds_rdm = Vector{Vector{Float64}}(undef, mpslen-1)
+
+
+    # Start from the *right* side and sweep towards the left 
+    for ii in mpslen:-1:2
+        Ai = XUinv * psi_ortho[ii]
+
+
+        right_env *= Ai 
+        right_env *= Ai'
+        right_env *= delta(elt, sits[ii], sits[ii]')
+        
+        F = symm_svd(right_env, ind(right_env,1), cutoff=1e-14)
+        U = F.U
+        S = F.S
+
+        @assert order(right_env) == 2
+
+        norm_factor = sum(S)
+        Snorm = normalize_eigs ? S/norm_factor : S
+
+        XU = dag(U)
+        XUinv = U
+
+        right_env /= norm_factor
+   
+        right_env *= XU
+        right_env *= XU' 
+
+        svds_rdm[ii-1] = array(diag(Snorm))
+
+    end
+
+    gen_svd_ents = renyi_entropies(svds_rdm; which_ents, normalize_eigs=false)
+
+    return gen_svd_ents
+    
+end
