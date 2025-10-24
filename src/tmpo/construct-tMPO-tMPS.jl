@@ -64,19 +64,19 @@ function construct_tMPS_tMPO(ψ_i::MPS, Ut::Vector{MPO}, ϕ_f::MPS; dagger_final
       hcat(Ut_1, Ut_end)
     end
 
-    return construct_tMPS_tMPO(input; final_MPS_conj=false)
+    return construct_tMPS_tMPO(input; dagger_final=false)
   else
     input = hcat(
       ψ_i.data,
       hcat([Ut_ele.data for Ut_ele in Ut]...),
       ϕ_f.data
     )
-    return construct_tMPS_tMPO(input; final_MPS_conj=true)
+    return construct_tMPS_tMPO(input; dagger_final=dagger_final)
   end
 end
 
 
-function construct_tMPS_tMPO(input::Matrix{ITensor}; final_MPS_conj::Bool=true)
+function construct_tMPS_tMPO(input::Matrix{ITensor}; dagger_final::Bool=true)
   nrows, ncolumns = size(input)
   @assert nrows == 4 "Assume input Matrix to have 4 rows!"
 
@@ -110,7 +110,7 @@ function construct_tMPS_tMPO(input::Matrix{ITensor}; final_MPS_conj::Bool=true)
       sites_cols[1, n][2] => dag(links_tMPS_L[n-1]),
     ) for n in 2:ncolumns-1 # difference to no MPS boundary at end!
   ]
-  last_L_tensor = final_MPS_conj ? conj(input[1, end]) : input[1, end]
+  last_L_tensor = dagger_final ? conj(input[1, end]) : input[1, end]
   last_L = replaceinds(
     last_L_tensor,
     links_cols[1, end] => sites[end],
@@ -133,7 +133,7 @@ function construct_tMPS_tMPO(input::Matrix{ITensor}; final_MPS_conj::Bool=true)
     sites_cols[2, n][2] => dag(links_tMPO_L[n-1]),
   ) for n in 2:ncolumns-1 # difference to no MPS boundary at end!
   ]
-  last_TL_tensor = final_MPS_conj ? conj(input[2, end]) : input[2, end]
+  last_TL_tensor = dagger_final ? conj(input[2, end]) : input[2, end]
   last_MPO_L = replaceinds(
     last_TL_tensor,
     dag(links_cols[1, end]) => dag(sites[end]),
@@ -157,7 +157,7 @@ function construct_tMPS_tMPO(input::Matrix{ITensor}; final_MPS_conj::Bool=true)
     sites_cols[3, n][2] => dag(links_tMPO_R[n-1]),
   ) for n in 2:ncolumns-1 #
   ]
-  last_TR_tensor = final_MPS_conj ? conj(input[3, end]) : input[3, end]
+  last_TR_tensor = dagger_final ? conj(input[3, end]) : input[3, end]
   last_MPO_R = replaceinds(
     last_TR_tensor,
     dag(links_cols[2, end]) => prime(dag(sites[end])),
@@ -178,7 +178,7 @@ function construct_tMPS_tMPO(input::Matrix{ITensor}; final_MPS_conj::Bool=true)
     sites_cols[4, n][2] => dag(links_tMPS_R[n-1]),
   ) for n in 2:ncolumns-1
   ]
-  last_R_tensor = final_MPS_conj ? conj(input[4, end]) : input[4, end]
+  last_R_tensor = dagger_final ? conj(input[4, end]) : input[4, end]
   last_R = replaceinds(
     last_R_tensor,
     dag(links_cols[3, end]) => dag(sites[end]),
