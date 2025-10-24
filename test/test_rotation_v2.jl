@@ -1,17 +1,19 @@
 using ITensors, ITensorMPS, ITransverse
 using Test
 
-s = siteinds("S=1/2", 4, conserve_szparity=false)
-sqn = siteinds("S=1/2", 4, conserve_szparity=true)
-
 
 Jxx = 1.0
 λ = 0.0
 hz = 1.0
 gx = 0.0
 
-dt = 0.1
-N_t = 12
+dt = 0.05
+N_t = 20
+
+
+s = siteinds("S=1/2", 3, conserve_szparity=false)
+sqn = iszero(gx) ? siteinds("S=1/2", 3, conserve_szparity=true) : s
+
 
 
 function fill_bulk_evolution(nt, sites, dt, Jxx, λ, hz, gx)
@@ -156,13 +158,14 @@ function buildExpHTFI(
   return H
 end
 
+s_tdvp = iszero(gx) ? siteinds("S=1/2", 4, conserve_szparity=true) : siteinds("S=1/2", 4, conserve_szparity=false)
 
-H_ising = buildExpHTFI(sqn;J=Jxx,λ,hz,gx)
-# ψ0 = MPS(sqn,"Up")
+H_ising = buildExpHTFI(s_tdvp;J=Jxx,λ,hz,gx)
+ψ0_tdvp = MPS(s_tdvp,"Up")
 psi_tdvp = tdvp(
     H_ising,
     -im*(N_t*dt),
-    ψ0qn;
+    ψ0_tdvp;
     time_step=-im*dt,
     maxdim=200,
     cutoff=1e-12,
@@ -174,7 +177,7 @@ psi_tdvp = tdvp(
 
 tn_contraction_transverse = abs(overlap_noconj(L2, R2))
 tn_contraction_transverse_symm = abs(overlap_noconj(L2_symm, R2_symm))
-tn_contraction_tdvp = abs(inner(ψ0qn, psi_tdvp))
+tn_contraction_tdvp = abs(inner(ψ0_tdvp, psi_tdvp))
 # abs(overlap_noconj(L2_symm , R2_symm))
 @show abs(tn_contraction_tdvp - tn_contraction_transverse_symm)
 @show abs(tn_contraction_tdvp - tn_contraction_transverse)

@@ -46,7 +46,10 @@ Construct two boundary tMPS (⟨L| and |R⟩) and two tMPOs (TL and TR) for furt
 - The final MPS will be automatically daggered! If you do not want it to be daggered,
   use the flag `dagger_final=false`.
 """
-function construct_tMPS_tMPO(ψ_i::MPS, Ut::Vector{MPO}, ϕ_f::MPS; dagger_final::Bool=true)
+function construct_tMPS_tMPO(ψ_i::MPS, Ut::Vector{MPO}, ϕ_f::MPS;
+  dagger_final::Bool=true,
+  return_swapped_T::Bool=true,
+  )
   if hasqns(ψ_i)
     if maxlinkdim(ψ_i) > 1 || maxlinkdim(ϕ_f) > 1
       throw(ArgumentError("For now, we cannot process a QN-preserving initial/final state that is NOT a product state!"))
@@ -65,19 +68,22 @@ function construct_tMPS_tMPO(ψ_i::MPS, Ut::Vector{MPO}, ϕ_f::MPS; dagger_final
       hcat(Ut_1, Ut_end)
     end
 
-    return construct_tMPS_tMPO(input; dagger_final=false)
+    return construct_tMPS_tMPO(input; dagger_final=false, return_swapped_T )
   else
     input = hcat(
       ψ_i.data,
       hcat([Ut_ele.data for Ut_ele in Ut]...),
       ϕ_f.data
     )
-    return construct_tMPS_tMPO(input; dagger_final=dagger_final)
+    return construct_tMPS_tMPO(input; dagger_final=dagger_final, return_swapped_T )
   end
 end
 
 
-function construct_tMPS_tMPO(input::Matrix{ITensor}; dagger_final::Bool=true)
+function construct_tMPS_tMPO(input::Matrix{ITensor};
+  dagger_final::Bool=true,
+  return_swapped_T::Bool=true,
+  )
   nrows, ncolumns = size(input)
   @assert nrows == 3 "Assume input Matrix to have 3 rows!"
 
@@ -86,8 +92,7 @@ function construct_tMPS_tMPO(input::Matrix{ITensor}; dagger_final::Bool=true)
   sites_cols = hcat([siteinds(input[:, n]) for n in 1:ncolumns]...)
 
   links_tMPS_L = [sim(only(sites_cols[1, 1]), tags="Link,time,nₜ=$(n-1)") for n in 1:ncolumns-1]
-  links_tMPO_L = [sim(only(sites_cols[2, 1]), tags="Link,time,nₜ=$(n-1)") for n in 1:ncolumns-1]
-  links_tMPO_R = [sim(only(sites_cols[2, 1]), tags="Link,time,nₜ=$(n-1)") for n in 1:ncolumns-1]
+  links_tMPO = [sim(only(sites_cols[2, 1]), tags="Link,time,nₜ=$(n-1)") for n in 1:ncolumns-1]
   links_tMPS_R = [sim(only(sites_cols[3, 1]), tags="Link,time,nₜ=$(n-1)") for n in 1:ncolumns-1]
 
   # the new sites are a bit special, the first (and perhaps last) site is (are) given by the boundary MPS
@@ -124,14 +129,14 @@ function construct_tMPS_tMPO(input::Matrix{ITensor}; dagger_final::Bool=true)
     input[2, 1],
     dag(links_cols[1, 1]) => dag(sites[1]),
     links_cols[2, 1] => prime(sites[1]),
-    only(sites_cols[2, 1]) => links_tMPO_L[1]
+    only(sites_cols[2, 1]) => links_tMPO[1]
   )
   bulk_MPO = [replaceinds(
     input[2, n],
     dag(links_cols[1, n]) => dag(sites[n]),
     links_cols[2, n] => prime(sites[n]),
-    sites_cols[2, n][1] => links_tMPO_L[n],
-    sites_cols[2, n][2] => dag(links_tMPO_L[n-1]),
+    sites_cols[2, n][1] => links_tMPO[n],
+    sites_cols[2, n][2] => dag(links_tMPO[n-1]),
   ) for n in 2:ncolumns-1 # difference to no MPS boundary at end!
   ]
   last_TL_tensor = dagger_final ? conj(input[2, end]) : input[2, end]
@@ -139,34 +144,10 @@ function construct_tMPS_tMPO(input::Matrix{ITensor}; dagger_final::Bool=true)
     last_TL_tensor,
     dag(links_cols[1, end]) => dag(sites[end]),
     links_cols[2, end] => prime(sites[end]),
-    only(sites_cols[2, end]) => dag(links_tMPO_L[end]),
+    only(sites_cols[2, end]) => dag(links_tMPO[end]),
   )
 
-  ### third row, MPO transfer matrix column TR,
-  ### corresponding to the right state |R⟩
-  # first_MPO_R = replaceinds(
-  #   input[3, 1],
-  #   dag(links_cols[2, 1]) => prime(dag(sites[1])),
-  #   links_cols[3, 1] => sites[1],
-  #   only(sites_cols[3, 1]) => links_tMPO_R[1]
-  # )
-  # bulk_MPO_R = [replaceinds(
-  #   input[3, n],
-  #   dag(links_cols[2, n]) => prime(dag(sites[n])),
-  #   links_cols[3, n] => sites[n],
-  #   sites_cols[3, n][1] => links_tMPO_R[n],
-  #   sites_cols[3, n][2] => dag(links_tMPO_R[n-1]),
-  # ) for n in 2:ncolumns-1 #
-  # ]
-  # last_TR_tensor = dagger_final ? conj(input[3, end]) : input[3, end]
-  # last_MPO_R = replaceinds(
-  #   last_TR_tensor,
-  #   dag(links_cols[2, end]) => prime(dag(sites[end])),
-  #   links_cols[3, end] => sites[end],
-  #   only(sites_cols[3, end]) => dag(links_tMPO_R[end]),
-  # )
-
-  ### fourth row, MPS right state |R⟩
+  ### third row, MPS right state |R⟩
   first_R = replaceinds(
     input[3, 1],
     dag(links_cols[2, 1]) => dag(sites[1]),
@@ -187,12 +168,20 @@ function construct_tMPS_tMPO(input::Matrix{ITensor}; dagger_final::Bool=true)
   )
 
   T = MPO([first_MPO, bulk_MPO..., last_MPO])
-  return (
-    MPS([first_L, bulk_L..., last_L]),
-    T,
-    swapprime(T,0,1),
-    MPS([first_R, bulk_R..., last_R])
-  )
+  if return_swapped_T
+    return (
+      MPS([first_L, bulk_L..., last_L]),
+      T,
+      swapprime(T,0,1),
+      MPS([first_R, bulk_R..., last_R])
+    )
+  else
+    return (
+      MPS([first_L, bulk_L..., last_L]),
+      T,
+      MPS([first_R, bulk_R..., last_R])
+    )
+  end
 end
 
 
