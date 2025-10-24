@@ -197,17 +197,40 @@ function rtm2_bruteforce(psi::MPS, phi::MPS)
 end
 
 
-""" Returns generalized Tsallis 2 entropy from the RTM |PHI><PSI|/<PSI|PHI> """
-function gen_tsallis2(psi::MPS, phi::MPS)
-    # normalize 
-    phi = phi / overlap_noconj(psi,phi)
-    @assert overlap_noconj(psi, phi) ≈ 1.0 
-   
+""" Returns generalized Tsallis 2 entropy from the RTM tau~tr|PHI><PSI| """
+function gen_tsallis2(psi::MPS, phi::MPS, normalization::String)
+  
+    if normalization == "overlap"
+        psi = psi / sqrt(overlap_noconj(psi,phi))
+        phi = phi / sqrt(overlap_noconj(psi,phi))
+    elseif normalization == "norm"
+        psi = psi / norm(psi)
+        phi = phi / norm(phi)
+    end
     trace_tau2 = rtm2_contracted(psi, phi)
     
     t2 = [ -trt2 .+ 1 for trt2 in trace_tau2]
 end
 
+""" Returns generalized Renyi 2 entropy from the RTM tau~tr|PHI><PSI|/ """
+function gen_renyi2(psi::MPS, phi::MPS, normalization::String)
+    
+    if normalization == "overlap"
+        psi = psi / sqrt(overlap_noconj(psi,phi))
+        phi = phi / sqrt(overlap_noconj(psi,phi))
+    elseif normalization == "norm"
+        psi = psi / norm(psi)
+        phi = phi / norm(phi)
+    end
+   
+    trace_tau2 = rtm2_contracted(psi, phi)
+    
+    r2 = [ -log.(trt2) for trt2 in trace_tau2]
+end
+
+
+
+#= 
 """ Returns generalized Renyi 2 entropy from the RTM |PHI><PSI|/<PSI|PHI> """
 function gen_renyi2(psi::MPS, phi::MPS)
     # normalize 
@@ -218,3 +241,4 @@ function gen_renyi2(psi::MPS, phi::MPS)
     
     r2 = [ -log.(trt2) for trt2 in trace_tau2]
 end
+=#

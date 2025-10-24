@@ -2,7 +2,8 @@
 can be used to calculate the usual entanglement entropies""" 
 function diagonalize_rdm(psi::MPS)
 
-    workpsi = normalize(psi)
+    workpsi = orthogonalize(psi,1) 
+    workpsi = normalize(workpsi)
 
     evs_rho = Vector{Float64}[]
 
