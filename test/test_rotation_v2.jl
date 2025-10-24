@@ -65,8 +65,8 @@ norm(R_symm)
 
 abs(overlap_noconj(L , R))
 
-L2 = apply(ITensors.Algorithm("naive"), TL, L; truncate=false)
-R2 = apply(ITensors.Algorithm("naive"), TR, R; truncate=false)
+L2 = applyn(TL, L)
+R2 = applyn(TR, R)
 
 L2_symm = apply(ITensors.Algorithm("naive"), TL_symm, L_symm; truncate=false)
 R2_symm = apply(ITensors.Algorithm("naive"), TR_symm, R_symm; truncate=false)
@@ -172,5 +172,6 @@ tn_contraction_transverse = abs(overlap_noconj(L2, R2))
 tn_contraction_transverse_symm = abs(overlap_noconj(L2_symm, R2_symm))
 tn_contraction_tdvp = abs(inner(ψ0, psi_tdvp))
 # abs(overlap_noconj(L2_symm , R2_symm))
+@show abs(tn_contraction_tdvp - tn_contraction_transverse_symm)
 @show abs(tn_contraction_tdvp - tn_contraction_transverse)
 @test isapprox(tn_contraction_tdvp, tn_contraction_transverse; atol=1e-3 )
