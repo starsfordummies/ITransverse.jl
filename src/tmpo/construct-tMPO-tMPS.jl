@@ -45,6 +45,7 @@ Construct two boundary tMPS (⟨L| and |R⟩) and two tMPOs (TL and TR) for furt
 - The (physical) sites are not necessarily(!) correctly primed to link up in the time direction.
 - The final MPS will be automatically daggered! If you do not want it to be daggered,
   use the flag `dagger_final=false`.
+- If you not wish to return TL and TR and only TL, use `return_swapped_T=false`.
 """
 function construct_tMPS_tMPO(ψ_i::MPS, Ut::Vector{MPO}, ϕ_f::MPS;
   dagger_final::Bool=true,
