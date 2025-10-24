@@ -174,7 +174,7 @@ psi_tdvp = tdvp(
 
 tn_contraction_transverse = abs(overlap_noconj(L2, R2))
 tn_contraction_transverse_symm = abs(overlap_noconj(L2_symm, R2_symm))
-tn_contraction_tdvp = abs(inner(ψ0, psi_tdvp))
+tn_contraction_tdvp = abs(inner(ψ0qn, psi_tdvp))
 # abs(overlap_noconj(L2_symm , R2_symm))
 @show abs(tn_contraction_tdvp - tn_contraction_transverse_symm)
 @show abs(tn_contraction_tdvp - tn_contraction_transverse)
