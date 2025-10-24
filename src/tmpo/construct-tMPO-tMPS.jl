@@ -43,6 +43,7 @@ Note that we assume the input states to have 4 spatial sites!
 `ψ_i` and `ϕ_f` are assumed to be a valid (space-like) MPS and each element of the vector 
 Ut is assumed to be a valid MPO whereas the links match, respectively,
 but the (physical) sites are not necessarily(!) correctly primed to link up correctly in the time direction.
+Note also that the final MPS will be automatically daggered.
 """
 function construct_tMPS_tMPO(ψ_i::MPS, Ut::Vector{MPO}, ϕ_f::MPS)
   if hasqns(ψ_i)
@@ -62,19 +63,19 @@ function construct_tMPS_tMPO(ψ_i::MPS, Ut::Vector{MPO}, ϕ_f::MPS)
       hcat([(Ut[ii]).data for ii in 2:length(Ut)-1]...),
       Ut_end
     )
-    return construct_tMPS_tMPO(input)
+    return construct_tMPS_tMPO(input; final_MPS_conj=false)
   else
     input = hcat(
       ψ_i.data,
       hcat([Ut_ele.data for Ut_ele in Ut]...),
       ϕ_f.data
     )
-    return construct_tMPS_tMPO(input)
+    return construct_tMPS_tMPO(input; final_MPS_conj=true)
   end
 end
 
 
-function construct_tMPS_tMPO(input::Matrix{ITensor})
+function construct_tMPS_tMPO(input::Matrix{ITensor}; final_MPS_conj::Bool=true)
   nrows, ncolumns = size(input)
   @assert nrows == 4 "Assume input Matrix to have 4 rows!"
 
@@ -108,8 +109,9 @@ function construct_tMPS_tMPO(input::Matrix{ITensor})
       sites_cols[1, n][2] => dag(links_tMPS_L[n-1]),
     ) for n in 2:ncolumns-1 # difference to no MPS boundary at end!
   ]
+  last_L_tensor = final_MPS_conj ? conj(input[1, end]) : input[1, end]
   last_L = replaceinds(
-    input[1, end],
+    last_L_tensor,
     links_cols[1, end] => sites[end],
     only(sites_cols[1, end]) => dag(links_tMPS_L[end]),
   )
@@ -130,8 +132,9 @@ function construct_tMPS_tMPO(input::Matrix{ITensor})
     sites_cols[2, n][2] => dag(links_tMPO_L[n-1]),
   ) for n in 2:ncolumns-1 # difference to no MPS boundary at end!
   ]
+  last_TL_tensor = final_MPS_conj ? conj(input[2, end]) : input[2, end]
   last_MPO_L = replaceinds(
-    input[2, end],
+    last_TL_tensor,
     dag(links_cols[1, end]) => dag(sites[end]),
     links_cols[2, end] => prime(sites[end]),
     only(sites_cols[2, end]) => dag(links_tMPO_L[end]),
@@ -153,8 +156,9 @@ function construct_tMPS_tMPO(input::Matrix{ITensor})
     sites_cols[3, n][2] => dag(links_tMPO_R[n-1]),
   ) for n in 2:ncolumns-1 #
   ]
+  last_TR_tensor = final_MPS_conj ? conj(input[3, end]) : input[3, end]
   last_MPO_R = replaceinds(
-    input[3, end],
+    last_TR_tensor,
     dag(links_cols[2, end]) => prime(dag(sites[end])),
     links_cols[3, end] => sites[end],
     only(sites_cols[3, end]) => dag(links_tMPO_R[end]),
@@ -173,8 +177,9 @@ function construct_tMPS_tMPO(input::Matrix{ITensor})
     sites_cols[4, n][2] => dag(links_tMPS_R[n-1]),
   ) for n in 2:ncolumns-1
   ]
+  last_R_tensor = final_MPS_conj ? conj(input[4, end]) : input[4, end]
   last_R = replaceinds(
-    input[4, end],
+    last_R_tensor,
     dag(links_cols[3, end]) => dag(sites[end]),
     only(sites_cols[4, end]) => dag(links_tMPS_R[end]),
   )
