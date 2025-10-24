@@ -58,11 +58,12 @@ function construct_tMPS_tMPO(ψ_i::MPS, Ut::Vector{MPO}, ϕ_f::MPS)
     Ut_1 = noprime.(ψi.data .* Ut[1].data)
     Ut_end = noprime.(Ut[end].data .* prime.(dag.(ϕf.data)))
 
-    input = hcat(
-      Ut_1,
-      hcat([(Ut[ii]).data for ii in 2:length(Ut)-1]...),
-      Ut_end
-    )
+    input = if length(Ut)-1 >= 2 
+      hcat(Ut_1, hcat([(Ut[ii]).data for ii in 2:length(Ut)-1]...), Ut_end)
+    else
+      hcat(Ut_1, Ut_end)
+    end
+
     return construct_tMPS_tMPO(input; final_MPS_conj=false)
   else
     input = hcat(
