@@ -45,7 +45,7 @@ Ut is assumed to be a valid MPO whereas the links match, respectively,
 but the (physical) sites are not necessarily(!) correctly primed to link up correctly in the time direction.
 Note also that the final MPS will be automatically daggered.
 """
-function construct_tMPS_tMPO(ψ_i::MPS, Ut::Vector{MPO}, ϕ_f::MPS)
+function construct_tMPS_tMPO(ψ_i::MPS, Ut::Vector{MPO}, ϕ_f::MPS; dagger_ϕ_f::Bool=true)
   if hasqns(ψ_i)
     if maxlinkdim(ψ_i) > 1 || maxlinkdim(ϕ_f) > 1
       throw(ArgumentError("For now, we cannot process a QN-preserving initial/final state that is NOT a product state!"))
@@ -56,7 +56,7 @@ function construct_tMPS_tMPO(ψ_i::MPS, Ut::Vector{MPO}, ϕ_f::MPS)
     ϕf = delete_link_from_prodMPS(ϕ_f)
 
     Ut_1 = noprime.(ψi.data .* Ut[1].data)
-    Ut_end = noprime.(Ut[end].data .* prime.(dag.(ϕf.data)))
+    Ut_end = dagger_ϕ_f ? noprime.(Ut[end].data .* prime.(dag.(ϕf.data))) : noprime.(Ut[end].data .* prime.(ϕf.data))
 
     input = if length(Ut)-1 >= 2 
       hcat(Ut_1, hcat([(Ut[ii]).data for ii in 2:length(Ut)-1]...), Ut_end)
