@@ -219,8 +219,8 @@ function gen_renyi2(psi::MPS, phi::MPS, normalization::String)
         psi = psi / sqrt(overlap_noconj(psi,phi))
         phi = phi / sqrt(overlap_noconj(psi,phi))
     elseif normalization == "norm"
-        psi = psi / norm(psi)
-        phi = phi / norm(phi)
+        psi = normalize(psi)
+        phi = normalize(phi)
     end
    
     trace_tau2 = rtm2_contracted(psi, phi)
