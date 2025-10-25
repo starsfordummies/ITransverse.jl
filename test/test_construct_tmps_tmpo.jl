@@ -182,3 +182,4 @@ tn_contraction_tdvp = abs(inner(ψ0_tdvp, psi_tdvp))
 @show abs(tn_contraction_tdvp - tn_contraction_transverse_symm)
 @show abs(tn_contraction_tdvp - tn_contraction_transverse)
 @test isapprox(tn_contraction_tdvp, tn_contraction_transverse; atol=1e-3 )
+
