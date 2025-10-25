@@ -11,7 +11,7 @@ function ising_loschmidt(tp::tMPOParams, Tstart::Int, Tend::Int, nbeta::Int; Tst
     eps_converged = 1e-6
 
     truncp = TruncParams(cutoff, maxbondim)
-    pm_params = PMParams(truncp, itermax, eps_converged, true, "RDM")
+    pm_params = PMParams(truncp, itermax, eps_converged, true, "RDM", "norm")
 
     ll_murgs = Vector{MPS}()
     ds2s = [] # Vector{Float64}[]
@@ -21,8 +21,8 @@ function ising_loschmidt(tp::tMPOParams, Tstart::Int, Tend::Int, nbeta::Int; Tst
     entropies = [] 
     maxents = []
 
-    Ntime_steps = Tstart
-    Nsteps = Ntime_steps + 2 * nbeta
+    # Ntime_steps = Tstart
+    # Nsteps = Ntime_steps + nbeta
 
     allts = Tstart:Tstep:Tend
 
@@ -35,20 +35,23 @@ function ising_loschmidt(tp::tMPOParams, Tstart::Int, Tend::Int, nbeta::Int; Tst
     for ts in allts
 
         Ntime_steps = ts
-        Nsteps = nbeta + Ntime_steps + nbeta
+        Nsteps = nbeta + Ntime_steps 
 
         time_sites = addtags(siteinds("S=1/2", Nsteps; conserve_qns=false), "time")
 
         mpo = fw_tMPO(b, time_sites, tr=tp.bl)
         start_mps = fw_tMPS(b, time_sites; tr=tp.bl, LR=:right)
 
-        psi_trunc, ds2 = powermethod_sym(start_mps, mpo, pm_params)
+        #psi_trunc, ds2 = powermethod_sym(start_mps, mpo, pm_params)
+
+        psi_trunc, ds2 = ITransverse.powermethod_both(start_mps, mpo, mpo, pm_params)
 
 
         # Entropies 
         sgen = generalized_vn_entropy_symmetric(psi_trunc)
         sgen_sv = generalized_svd_vn_entropy_symmetric(psi_trunc)
 
+        # tsallis_gen = ITransverse.generalized_r2_entropy_symmetric(psi_trunc)
 
         svn = vn_entanglement_entropy(psi_trunc)
 
@@ -86,18 +89,20 @@ function ising_loschmidt(tp::tMPOParams, Tstart::Int, Tend::Int, nbeta::Int; Tst
 
 end
 
+
+
 function main_ising_loschmidt()
 
     
     JXX = 1.0
-    hz = 1.0
+    hz = 0.7
     gx = 0.0
     #H= JXX - 2.0 * 0.525 Z + 2 * 0.25 X
 
 
-    dt = 0.05
+    dt = 0.1
 
-    nbeta = 8
+    nbeta = 4
 
     # init_state = plus_state
     init_state = up_state
@@ -107,9 +112,9 @@ function main_ising_loschmidt()
 
     @info ("Initial state $(init_state)  => quench @ $(mp) ")
     
-    Tmin = 0
-    Tmax = 1
-    Tstep = 6
+    Tmin = 80
+    Tmax = 80
+    Tstep = 1
 
 
     tp = tMPOParams(dt,  ITransverse.ChainModels.build_expH_ising_murg_new, mp, nbeta, init_state)
@@ -118,16 +123,16 @@ function main_ising_loschmidt()
     rr2s = []
     ir2s = []
     r2s= []
-    for psi in psis1
-        vn = ITransverse.generalized_vn_entropy_symmetric(psi, normalize_eigs=true)
-        r2 = ITransverse.generalized_r2_entropy_symmetric(psi, normalize_eigs=true)
+    # for psi in psis1
+    #     vn = ITransverse.generalized_vn_entropy_symmetric(psi, normalize_eigs=true)
+    #     r2 = ITransverse.generalized_r2_entropy_symmetric(psi, normalize_eigs=true)
 
-        r2 = -log.(r2)
+    #     r2 = -log.(r2)
 
-        push!(r2s, r2)
-        push!(rr2s, maximum(real(r2)))
-        push!(ir2s, maximum(imag(r2)))
-    end
+    #     push!(r2s, r2)
+    #     push!(rr2s, maximum(real(r2)))
+    #     push!(ir2s, maximum(imag(r2)))
+    # end
 
     return collect(Tmin:Tstep:Tmax), rr2s, ir2s, entropies, r2s 
 

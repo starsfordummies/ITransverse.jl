@@ -2,7 +2,8 @@
 can be used to calculate the usual entanglement entropies""" 
 function diagonalize_rdm(psi::MPS)
 
-    workpsi = normalize(psi)
+    workpsi = orthogonalize(psi,1) 
+    workpsi = normalize(workpsi)
 
     evs_rho = Vector{Float64}[]
 
@@ -25,9 +26,9 @@ function diagonalize_rdm!(psi::MPS, cut::Int)
 end
 
 
-vn_from_sv(sv::ITensor; normalize::Bool=true) = vn_from_sv(tensor(NDTensors.cpu(sv)); normalize)
+vn_from_sv(sv::ITensor; normalize::Bool) = vn_from_sv(tensor(NDTensors.cpu(sv)); normalize)
 
-function vn_from_sv(sv::Tensor; normalize::Bool=true)
+function vn_from_sv(sv::Tensor; normalize::Bool)
 
     if normalize
         sv = sv/norm(sv)
@@ -41,6 +42,7 @@ function vn_from_sv(sv::Tensor; normalize::Bool=true)
     return SvN
 end
 
+""" MPS-modifying VN entropy (orthogonalizes), by default assumes that MPS is already normalized """ 
 function vn_entanglement_entropy!(psi::MPS, bond::Int; normalize::Bool=false)
     orthogonalize!(psi, bond)
     _,S,_ = svd(psi[bond], uniqueinds(psi[bond],psi[bond+1]))
@@ -48,7 +50,7 @@ function vn_entanglement_entropy!(psi::MPS, bond::Int; normalize::Bool=false)
 end
 
 
-""" Computes the Von Neumann entanglement entropy of an MPS `psi` at all links, 
+""" Computes the Von Neumann entanglement entropy of an MPS `psi` at all links (normalizing if necessary), 
 returns a vector of floats containing the VN entropies 
 """
 function vn_entanglement_entropy(psi::MPS)
@@ -67,8 +69,7 @@ function vn_entanglement_entropy(psi::MPS)
 end
 
 
-
-function renyi_entanglement_entropy(in_psi::MPS, cut::Int, αr::Int)
+function renyi_entropy(in_psi::MPS, cut::Int, αr::Number)
 
     S_ren = 0.0
 
@@ -99,19 +100,18 @@ function renyi_entanglement_entropy(in_psi::MPS, cut::Int, αr::Int)
 end
 
 
-
 """ Computes the `α`-th Renyi entanglement entropy of an MPS `psi` at all links, 
 S_α = -log(sum λ^α), where λ are the eigenvalues of the RDM (=SV^2 ).
 returns a vector of floats containing the entropies 
 """
-function renyi_entanglement_entropy(psi::MPS, α::Int=2)
+function renyi_entropy(psi::MPS, α::Number=2)
 
     workpsi = normalize(psi)
 
     ents_renyi = Vector{Float64}()
 
     for icut=1:length(workpsi)-1
-        Si = renyi_entanglement_entropy(workpsi, icut, α)
+        Si = renyi_entropy(workpsi, icut, α)
         push!(ents_renyi, Si)
     end
 
@@ -119,3 +119,8 @@ function renyi_entanglement_entropy(psi::MPS, α::Int=2)
 end
 
 
+function renyi_entropies(in_psi::MPS; which_ents = [0.5, 1, 2])
+
+    renyi_entropies(diagonalize_rdm(in_psi); which_ents)
+    
+end

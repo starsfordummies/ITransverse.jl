@@ -12,14 +12,13 @@ Power method for *symmetric* case: takes as input a single MPS |L>,
 """
 function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams)
 
-    (; itermax, eps_converged, opt_method, truncp, increase_chi) = pm_params
+    (; itermax, eps_converged, opt_method, truncp, increase_chi, normalization) = pm_params
     (; cutoff, maxbondim) = truncp
   
-    # normalize the vector to get a good starting point
-
+    # normalize initial boundary for stability
     psi_ortho = normalize(in_mps)
 
-    ds2s = [] #Float64[]
+    ds2s = [] 
     ds2 = 0. 
     sprevs = fill(1., length(in_mps)-1)
 
@@ -37,11 +36,8 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams)
             maxbondim = max_chi
         end
 
-        # Note that ITensors does the apply on the MPS/MPO legs with the SAME label, eg. p-p 
-        # and then unprimes the p' leg. 
-        
         if opt_method == "RDM"
-            psi_ortho = apply(in_mpo, psi_ortho,  alg="naive" , truncate=true, cutoff=cutoff, maxdim=maxbondim)
+            psi_ortho = apply(in_mpo, psi_ortho; cutoff=cutoff, maxdim=maxbondim)
             overlap = overlap_noconj(psi_ortho, psi_ortho)
             sjj = vn_entanglement_entropy(psi_ortho)
         elseif opt_method == "RTM"
@@ -68,17 +64,18 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams)
         end
             
 
-        # Here it's actually important to normalize after each iteration 
-        psi_ortho[1] /= sqrt(overlap)
-        #@show overlap
+        if normalization == "norm"
+            orthogonalize!(psi_ortho,1)
+            normalize!(psi_ortho)
+        else
+            # normalize so that <L|R> = 1 
+            psi_ortho[1] /= sqrt(overlap)
+        end
+        
 
         ds2 = norm(sprevs - sjj)
-        #push!(ds2s, psi_ortho)
         push!(ds2s, ds2)
 
-        #@info jj, ds2
-        #@info sprevs
-        #@info sjj 
         sprevs = sjj
 
         next!(p; showvalues = [(:Info,"[$(jj)] ds2=$(ds2), chi=$(maxlinkdim(psi_ortho))" )])

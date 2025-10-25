@@ -51,18 +51,18 @@ function test_symmpm(Tstart::Int, Tend::Int, nbeta::Int; Tstep::Int=1)
         start_mps = fw_tMPS(b, time_sites; LR=:right, tr=init_state)
 
 
-        pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM_EIG")
+        pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM_EIG", "norm")
 
         psi_trunc, ds2 = powermethod_sym(start_mps, mpo, pm_params)
         push!(allpsis[:svd], psi_trunc)
 
-        pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM_EIG")
+        pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM_EIG", "norm")
 
         psi_trunc, ds2 = powermethod_sym(start_mps, mpo, pm_params)
 
         push!(allpsis[:eig], psi_trunc)
 
-        pm_params = PMParams(truncp, itermax, eps_converged, true, "RDM")
+        pm_params = PMParams(truncp, itermax, eps_converged, true, "RDM", "norm")
         psi_trunc, ds2 = powermethod_sym(start_mps, mpo, pm_params)
         push!(allpsis[:rdm], psi_trunc)
 
@@ -79,16 +79,15 @@ allpsis = test_symmpm(40, 40, 2)
 allents = Dict()
 
 for (k,v) in allpsis
-    eigs = diagonalize_rtm_symmetric(v[1]; bring_left_gen=true)
-    allents[k] = build_entropies(eigs, [0.5,1,2])
+    allents[k] = renyi_entropies(v[1]; which_ents=[0.5,1,2])
 end
 
-@info norm(allents[:eig]["S1.0"])
+@show norm(allents[:eig]["S1.0"])
 
 @test norm(allents[:eig]["S1.0"] - allents[:svd]["S1.0"] )/norm(allents[:eig]["S1.0"]) < 0.001
 @test norm(allents[:eig]["S1.0"] - allents[:rdm]["S1.0"] )/norm(allents[:eig]["S1.0"]) < 0.001
 
-@info norm(allents[:eig]["S2.0"])
+@show norm(allents[:eig]["S2.0"])
 
 @test norm(allents[:eig]["S2.0"] - allents[:svd]["S2.0"] )/norm(allents[:eig]["S2.0"]) < 0.001
 @test norm(allents[:eig]["S2.0"] - allents[:rdm]["S2.0"] )/norm(allents[:eig]["S2.0"]) < 0.001

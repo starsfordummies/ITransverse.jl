@@ -25,7 +25,7 @@ function main_folded_pm()
 
     truncp = TruncParams(cutoff, maxbondim)
 
-    pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM_R")
+    pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM_R", "norm")
 
     #sigX = ComplexF64[0,1,1,0]
     #sigZ = ComplexF64[1,0,0,-1]

@@ -18,8 +18,8 @@ Depending on pm_params.opt_method, the update can work as follows
 
 
 At each step of the PM we want to normalize back the tMPS, or in the long run we lose precision. 
-The most consistent way to do it is probably to enforce that the overlap <L|R> = 1, but in practice normalizing individually
-<L|L> = <R|R> = 1 seems to work as well. Another possibility is to normalize the overlap <LO|1R> before truncating for |Rnew>.
+The most consistent way to do it is probably to enforce that the overlap <L|R> = 1 (pm_params.normalize="overlap"), but in practice normalizing individually
+<L|L> = <R|R> = 1 (pm_params.normalize="norm") seems to work as well. 
 
 Truncation params are in `pm_params.truncp`
 
@@ -35,8 +35,8 @@ by applying the relevant MPO to the resulting leading eigenvectors.
 """
 function powermethod_op(in_mps::MPS, in_mpo_1::MPO, in_mpo_O::MPO, pm_params::PMParams)
 
-    (; opt_method, itermax, eps_converged, truncp) = pm_params
-    (; cutoff, maxbondim, direction) = truncp
+    (; opt_method, itermax, eps_converged, truncp, normalization) = pm_params
+    (; cutoff, maxbondim) = truncp
 
     ll = deepcopy(in_mps)
     rr = deepcopy(in_mps)
@@ -47,122 +47,93 @@ function powermethod_op(in_mps::MPS, in_mpo_1::MPO, in_mpo_O::MPO, pm_params::PM
 
     p = Progress(itermax; desc="[PM|$(opt_method)] L=$(length(ll)), cutoff=$(cutoff), maxbondim=$(maxbondim))", showspeed=true) 
 
-    info_iterations = Dict(:ds2 => ComplexF64[], :RRnew => ComplexF64[], :LRdiff => ComplexF64[] )
+    info_iterations = Dict(:ds2 => ComplexF64[], :logfidelityRRnew => Float64[], :LRdiff => ComplexF64[] )
 
     for jj = 1:itermax  
 
+        rr_prev = copy(rr)
+
+        # When do we normalize? Here I choose to do it at the beginning of each iteration 
+
+        if normalization == "norm"
+            ll = orthogonalize!(ll,1)
+            rr = orthogonalize!(rr,1)
+
+            ll = normalize(ll)
+            rr = normalize(rr)
+        else
+            normalize_for_overlap!(ll,rr)
+        end
+
+
         if opt_method == "RTM_LR"
-            
-            rr_work = rr
-            ll_work = ll 
     
             # optimize <LO|1R> -> new |R> 
-            OpsiR = applyn(in_mpo_1, rr_work)
-            OpsiL = applyns(in_mpo_O, ll_work)  
-
-            OpsiR = normalize(OpsiR)
-            OpsiL = normalize(OpsiL)
+            OpsiR = applyn(in_mpo_1, rr)
+            OpsiL = applyns(in_mpo_O, ll)  
 
             rr, _, sjj = truncate_sweep(OpsiR, OpsiL, truncp)
 
             # optimize <L1|OR> -> new <L|  
-            #TODO: we could be using the new rr here instead of rr_work
-            OpsiR = applyn(in_mpo_O, rr_work)
-            OpsiL = applyns(in_mpo_1, ll_work)  
-
-            OpsiR = normalize(OpsiR)
-            OpsiL = normalize(OpsiL)
+            #TODO: we could be using either the new rr here or the previous rr (in that case should define rr_work = rr before)
+            OpsiR = applyn(in_mpo_O, rr)
+            OpsiL = applyns(in_mpo_1, ll)  
 
             _, ll, _ = truncate_sweep(OpsiR, OpsiL, truncp)
 
 
         elseif opt_method == "RTM_R"
-            rr_work = normbyfactor(rr, sqrt(overlap_noconj(rr,rr)))
-            #rr_work = normalize(rr)
-            #rr_work = rr
 
-            OpsiR = applyn(in_mpo_1, rr_work)
-            OpsiL = applyns(in_mpo_O, rr_work)  
+            OpsiR = applyn(in_mpo_1, rr)
+            OpsiL = applyns(in_mpo_O, ll)  
 
-            OpsiR = normalize(OpsiR)
-            OpsiL = normalize(OpsiL)
-    
             rr, _, sjj = truncate_sweep(OpsiR, OpsiL, truncp)
             ll = rr
 
         elseif opt_method == "RTM_R_twolayers"
-            rr_work = normbyfactor(rr, sqrt(overlap_noconj(rr,rr)))
-            #rr_work = normalize(rr)
-            #rr_work = rr
 
-            OpsiR = applyn(in_mpo_1, rr_work)
-
+            OpsiR = applyn(in_mpo_1, rr)
             OpsiR = applyn(in_mpo_1, OpsiR)
 
-            OpsiL = applyns(in_mpo_1, rr_work)  
-
+            OpsiL = applyns(in_mpo_1, rr)  
             OpsiL = applyns(in_mpo_O, OpsiL)  
 
-
-
-            OpsiR = normalize(OpsiR)
-            OpsiL = normalize(OpsiL)
-    
-            rr, _, sjj = truncate_sweep(OpsiR, OpsiL, truncp)
-            ll = rr
-
-        elseif opt_method == "RTM_R_twolayers_alt"
-            rr_work = normbyfactor(rr, sqrt(overlap_noconj(rr,rr)))
-            #rr_work = normalize(rr)
-            #rr_work = rr
-
-            OpsiR = applyn(in_mpo_1, rr_work)
-
-            OpsiR = applyn(in_mpo_1, OpsiR)
-
-            OpsiL = applyns(in_mpo_O, rr_work)  
-
-            OpsiL = applyns(in_mpo_1, OpsiL)  
-
-
-
-            OpsiR = normalize(OpsiR)
-            OpsiL = normalize(OpsiL)
-    
             rr, _, sjj = truncate_sweep(OpsiR, OpsiL, truncp)
             ll = rr
 
 
         elseif opt_method == "RDM"
-            #rr_work = normbyfactor(rr, sqrt(overlap_noconj(rr,rr)))
-            rr_work = normalize(rr)
+        
+            ll = applys(in_mpo_1, ll, cutoff=cutoff, maxdim=maxbondim)
+            rr = apply(in_mpo_1, rr, cutoff=cutoff, maxdim=maxbondim)
 
-            rr = apply(in_mpo_1, rr_work, cutoff=cutoff, maxdim=maxbondim)
-            ll = rr
             sjj = vn_entanglement_entropy(rr)
+
+            #@show jj, norm(ll), norm(rr), overlap_noconj(ll,rr)
+
+        elseif opt_method == "RDM_SYMLR"
+   
+            rr = apply(in_mpo_1, rr, cutoff=cutoff, maxdim=maxbondim)
+            sjj = vn_entanglement_entropy(rr)
+            ll = rr
 
         else
             @error "Wrong optimization method: $opt_method"
         end
 
 
-        # If I cook them separately, likely the overlap will be messed up 
+
         LRnew = overlap_noconj(ll,rr)
         push!(info_iterations[:LRdiff], abs(LRnew-LRprev))
         LRprev = LRnew
    
-        if abs(LRnew) < 1e-6
-            @warn "Small overlap $LRnew, watch for trunc error"
-        end
-
         ds2 = norm(sprevs - sjj)
         push!(info_iterations[:ds2], ds2)
-        # push!(ds2s, ds2)
         sprevs = sjj
 
-        RRnew = inner(rr_work,rr)/norm(rr)/norm(rr_work)
+        logfidelityRRnew = logfidelity(rr_prev,rr)
 
-        push!(info_iterations[:RRnew], RRnew)
+        push!(info_iterations[:logfidelityRRnew], logfidelityRRnew)
         
         maxnormS = maximum([norm(ss) for ss in sjj])
 
@@ -175,7 +146,7 @@ function powermethod_op(in_mps::MPS, in_mpo_1::MPO, in_mpo_O::MPO, pm_params::PM
             @warn ("NOT converged after $jj steps - χ=$(maxlinkdim(ll))")
         end
 
-        next!(p; showvalues = [(:Info,"[$(jj)][χ=$(maxlinkdim(ll))] ds2=$(ds2), <R|Rnew>=1-$(round(1-RRnew,digits=8)) |S|=$(maxnormS)" )])
+        next!(p; showvalues = [(:Info,"[$(jj)][χ=$(maxlinkdim(ll))] ds2=$(ds2), logfidelity(<R|Rnew>)=$(logfidelityRRnew) |S|=$(maxnormS)" )])
 
     end
 
@@ -200,7 +171,7 @@ Truncation params are in pm_params
 """
 function powermethod_both(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::PMParams)
 
-    (; opt_method, itermax, eps_converged, truncp) = pm_params
+    (; opt_method, itermax, eps_converged, truncp, normalization) = pm_params
 
     cutoff = truncp.cutoff
     maxdim = truncp.maxbondim
@@ -223,18 +194,22 @@ function powermethod_both(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::
 
         llprev = deepcopy(ll)
 
-        # TODO implement different methods according to `opt_method`
         if opt_method == "RDM"
             ll = truncate(OpsiL; cutoff, maxdim)
             rr = truncate(OpsiR; cutoff, maxdim)
             sjj = vn_entanglement_entropy(ll)
+
         else # RTM
             ll, rr, sjj = truncate_sweep(OpsiL, OpsiR, truncp)
+
         end
 
-        sq_ov = sqrt(overlap_noconj(ll,rr))
-        ll = normbyfactor(ll, sq_ov)
-        rr = normbyfactor(rr, sq_ov)
+        if normalization == "norm"
+            ll = normalize(ll)
+            rr = normalize(rr)
+        else
+            normalize_for_overlap!(ll,rr)
+        end
 
         #@show overlap_noconj(ll,rr)
 
@@ -244,12 +219,11 @@ function powermethod_both(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::
 
         sprevs = sjj
 
-        fidelity_step = fidelity(ll, llprev)
+        fidelity_step = logfidelity(ll, llprev)
 
+        next!(p; showvalues = [(:Info,"[$(jj)] | ds2=$(ds2) | logfidelity(old|new)) = $(fidelity_step)) | chi=$(maxlinkdim(ll))" )])
 
-        next!(p; showvalues = [(:Info,"[$(jj)] | ds2=$(ds2) | fidelity(old|new) = $(fidelity_step) | chi=$(maxlinkdim(ll))" )])
-
-        if ds2 < eps_converged
+        if ds2 < eps_converged || fidelity_step > 1e-8
             println("converged after $jj steps")
             break
         end
@@ -259,4 +233,3 @@ function powermethod_both(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::
     return ll, rr, ds2s
 
 end
-

@@ -23,7 +23,8 @@ export quick_mps, myrMPO, pMPS,
     applyn, applyns, applys,
     isid,
     mergedicts!,
-    fidelity
+    fidelity, logfidelity,
+    normalize_for_overlap!
 
 include("truncation_sweeps/trunc_params.jl")
 include("truncation_sweeps/sweeps.jl")
@@ -46,8 +47,8 @@ include("entropies/diagonalize_sym_rtm.jl")
 include("entropies/compute_rho2.jl")
 
 export vn_entanglement_entropy, 
-    renyi_entanglement_entropy,
-    build_entropies,
+    renyi_entropies,
+    gensym_renyi_entropies,
     diagonalize_rdm,
     generalized_vn_entropy_symmetric,
     generalized_svd_vn_entropy_symmetric,
@@ -73,7 +74,7 @@ export build_H_ising,
     build_expH_potts_symmetric_svd,
     build_expH_random_symm_svd_1o
 
-export timeEvo_MPO_2ndOrder
+export timeEvo_MPO_2ndOrder, timeEvo_MPO_2ndOrder_LRflipped
 
 
 include("tmpo/tmpo_params.jl")
