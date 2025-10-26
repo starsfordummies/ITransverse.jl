@@ -178,7 +178,7 @@ function folded_right_tMPS_in_murg(T::MPO)
 end
 
 
-#TODO 
+#TODO non-symm LR 
 function folded_left_tMPS_in_murg(T::MPO)
     return folded_right_tMPS_in_murg(T)
 end

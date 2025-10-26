@@ -98,13 +98,15 @@ export
     fw_tMPS
 
 include("tmpo/build_fold_tmpo.jl")
+include("tmpo/build_fold_tmpo_in.jl")
 
 #from build_fold_tmpo.jl
 export 
     folded_tMPO,
     folded_tMPS,
     folded_left_tMPS,
-    folded_right_tMPS
+    folded_right_tMPS,
+    folded_tMPO_in
 
 include("columns_envs/columns.jl")
 
@@ -139,7 +141,7 @@ include("generic/expvals_lr.jl")
 export expval_LR, compute_expvals
 
 include("lightcone/cone_tmpo.jl")
-export folded_tMPO_ext, folded_tMPO_in
+export folded_tMPO_ext
 
 include("lightcone/cone_params.jl")
 export ConeParams
