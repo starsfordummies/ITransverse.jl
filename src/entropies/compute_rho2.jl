@@ -198,7 +198,7 @@ end
 
 
 """ Returns generalized Tsallis 2 entropy from the RTM tau~tr|PHI><PSI| """
-function gen_tsallis2(psi::MPS, phi::MPS, normalization::String)
+function gen_tsallis2(psi::MPS, phi::MPS; normalization::String="overlap")
   
     if normalization == "overlap"
         psi = psi / sqrt(overlap_noconj(psi,phi))
@@ -213,7 +213,7 @@ function gen_tsallis2(psi::MPS, phi::MPS, normalization::String)
 end
 
 """ Returns generalized Renyi 2 entropy from the RTM tau~tr|PHI><PSI|/ """
-function gen_renyi2(psi::MPS, phi::MPS, normalization::String)
+function gen_renyi2(psi::MPS, phi::MPS; normalization::String="overlap")
     
     if normalization == "overlap"
         psi = psi / sqrt(overlap_noconj(psi,phi))
