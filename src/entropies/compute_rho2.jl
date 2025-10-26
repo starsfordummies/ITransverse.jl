@@ -204,8 +204,10 @@ function gen_tsallis2(psi::MPS, phi::MPS; normalization::String="overlap")
         psi = psi / sqrt(overlap_noconj(psi,phi))
         phi = phi / sqrt(overlap_noconj(psi,phi))
     elseif normalization == "norm"
-        psi = psi / norm(psi)
-        phi = phi / norm(phi)
+        psi = normalize(psi)
+        phi = normalize(phi)
+    else
+        @info "Unknown normalization $(normalization), not normalizing"
     end
     trace_tau2 = rtm2_contracted(psi, phi)
     
@@ -221,6 +223,8 @@ function gen_renyi2(psi::MPS, phi::MPS; normalization::String="overlap")
     elseif normalization == "norm"
         psi = normalize(psi)
         phi = normalize(phi)
+    else
+        @info "Unknown normalization $(normalization), not normalizing"
     end
    
     trace_tau2 = rtm2_contracted(psi, phi)
