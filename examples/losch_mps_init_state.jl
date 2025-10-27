@@ -6,7 +6,6 @@ using ITransverse: plus_state
 JXX = 1.0
 hz = 1.0
 gx = 0.0
-#H= JXX - 2.0 * 0.525 Z + 2 * 0.25 X
 
 dt = 0.1
 
