@@ -11,7 +11,7 @@ using ITransverse: vX, vZ, vI
 function main_folded_pm()
 
     #tp = ising_tp()
-    tp =  tMPOParams(0.1, build_expH_ising_murg, IsingParams(1.0, 0.5, 0.0), 0, [1,0])
+    tp =  tMPOParams(0.1, build_expH_ising_murg, IsingParams(1.0, 0.7, 0.0), 0, [1,0])
 
     tp = tMPOParams(tp; nbeta=0)
 
@@ -19,7 +19,7 @@ function main_folded_pm()
 
 
     cutoff = 1e-12
-    maxbondim = 80
+    maxbondim = 128
     itermax = 500
     eps_converged=1e-8
 
