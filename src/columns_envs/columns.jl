@@ -70,11 +70,12 @@ function contract_cols(cc::Columns; maxdim=1024)
     NN = length(cc)
 
     ll = cc[1]
-    rr = cc[end]
-
+ 
     for jj = 2:div(NN,2)
         ll = applyns(cc[jj], ll; truncate=true, maxdim)
     end
+
+    rr = cc[end]
 
     for jj = NN-1:-1:div(NN,2)+1
         rr = applyn(cc[jj], rr; truncate=true, maxdim)

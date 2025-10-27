@@ -52,6 +52,11 @@ function FwtMPOBlocks(eH::MPO; init_state=nothing)
 
 end
 
+""" Allow changing elements of FwtMPOBlocks """
+function FwtMPOBlocks(b::FwtMPOBlocks; 
+    Wl=b.Wl, Wc=b.Wc, Wr=b.Wr, Wl_im=b.Wl_im, Wc_im=b.Wc_im, Wr_im=b.Wr_im, tp=b.tp, rot_inds=b.rot_inds)
+    return FwtMPOBlocks(Wl, Wc, Wr, Wl_im, Wc_im, Wr_im, tp, rot_inds)
+end
 
 function make_fwtmpoblocks(eH::MPO; check_sym::Bool=true)
 
@@ -70,9 +75,13 @@ function make_fwtmpoblocks(eH::MPO; check_sym::Bool=true)
     end
 
 
-    time_P = Index(dim(iLink1),"Site,time")
-    time_vL = Index(dim(icP),"Link,time")
-    time_vR = Index(dim(icP'),"Link,time")
+
+    #time_P = Index(dim(iLink1),"Site,time")
+    time_P = sim(iLink1, tags="Site,time")
+    #time_vL = Index(dim(icP),"Link,time")
+    time_vL = sim(icP, tags="Link,time")
+    #time_vR = Index(dim(icP'),"Link,time")
+    time_vR = sim(icP', tags="Link,time")
 
 
     """  (L,R,P,P') => (P',P,L,R) """

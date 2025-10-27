@@ -94,6 +94,8 @@ export
     mytrunc_svd,
     mytrunc_eig
 
+export beta_lims
+
 export togpu
 export tocpu
 
