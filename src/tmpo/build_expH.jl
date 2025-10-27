@@ -27,45 +27,22 @@ function folded_UUt(Ut::MPO)
     sites_u = firstsiteinds(Ut)
     links_u = linkinds(Ut)
 
-    sites_uu = [Index(dim(sites_u[ii])^2,tags="Site,n=$(ii)") for ii = 1:N]
-    links_uu = [Index(linkdim(Ut,ii)^2,tags="Link,l=$(ii)") for ii = 1:length(links_u)]
-
-    WWl = Ut[1] * dag(prime(Ut[1],2))
-
-    # Combine indices  
-    CvR = combiner(links_u[1],links_u[1]''; tags="cwR")
-    Cp = combiner(sites_u[1],sites_u[1]''; tags="cp")
-    Cps = combiner(sites_u[1]',sites_u[1]'''; tags="cps")
-
-    WWl = WWl * CvR * Cp * Cps
-
-    UUt[1] = replaceinds(WWl, combinedind(CvR) => links_uu[1], combinedind(Cp) => sites_uu[1], combinedind(Cps) => sites_uu[1]') 
-
-    for jj = 2:N-1
-
-        WWc = Ut[jj] * dag(prime(Ut[jj],2))
-
-        # Combine indices  
-        CvL = combiner(links_u[jj-1],links_u[jj-1]''; tags="cwR")
-        CvR = combiner(links_u[jj],links_u[jj]''; tags="cwR")
-        Cp = combiner(sites_u[jj],sites_u[jj]''; tags="cp")
-        Cps = combiner(sites_u[jj]',sites_u[jj]'''; tags="cps")
-
-        WWc = (((WWc * CvR) * Cp) * Cps) * CvL
-
-        UUt[jj] = replaceinds(WWc, combinedind(CvR) => links_uu[jj], combinedind(CvL) => links_uu[jj-1], combinedind(Cp) => sites_uu[jj], combinedind(Cps) => sites_uu[jj]') 
+    for jj = 1:N
+        UUt[jj] = Ut[jj] * dag(prime(Ut[jj],2))
+        s = sites_u[jj]
+        cs = combiner(s, dag(s)'', tags = "Site,n=$(jj)")
+        UUt[jj] = UUt[jj] * cs  #TODO CHECK THIS 
+        UUt[jj] = UUt[jj] * dag(cs)'  #TODO CHECK THIS 
     end
 
-    WWr = Ut[end] * dag(prime(Ut[end],2))
-
-    # Combine indices  
-    CvL = combiner(links_u[end],links_u[end]''; tags="cwL")
-    Cp = combiner(sites_u[end],sites_u[end]''; tags="cp")
-    Cps = combiner(sites_u[end]',sites_u[end]'''; tags="cps")
-
-    WWr = WWr * CvL * Cp * Cps
-
-    UUt[end] = replaceinds(WWr, combinedind(CvL) => links_uu[end], combinedind(Cp) => sites_uu[end], combinedind(Cps) => sites_uu[end]') 
+    for jj=1:N-1
+        l = links_u[jj]
+        cl = combiner.(l, dag(l)'', tags = "Link,l=$(jj)")
+    
+        UUt[jj] *= cl
+        UUt[jj + 1] *= dag(cl)
+       
+    end
 
     return UUt
 end
