@@ -74,8 +74,8 @@ abs(overlap_noconj(L , R))
 L2 = applyn(TL, L)
 R2 = applyn(TR, R)
 
-L2_symm = apply(ITensors.Algorithm("naive"), TL_symm, L_symm; truncate=false)
-R2_symm = apply(ITensors.Algorithm("naive"), TR_symm, R_symm; truncate=false)
+L2_symm = applyn(TL_symm, L_symm; truncate=false)
+R2_symm = applyn(TR_symm, R_symm; truncate=false)
 
 norm(L2)
 
