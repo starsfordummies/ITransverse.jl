@@ -37,7 +37,7 @@ function folded_UUt(Ut::MPO)
 
     for jj=1:N-1
         l = links_u[jj]
-        cl = combiner.(l, dag(l)'', tags = "Link,l=$(jj)")
+        cl = combiner(l, dag(l)'', tags = "Link,l=$(jj)")
     
         UUt[jj] *= cl
         UUt[jj + 1] *= dag(cl)
