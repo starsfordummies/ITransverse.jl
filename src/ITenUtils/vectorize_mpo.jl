@@ -14,9 +14,8 @@ function vectorize_mpo(w::MPO)
     return MPS(tensors), combiners
 end
 
-""" Vectorizes an MPO by "folding" (joining) its physical indices, 
-inplace version which likely destroys the starting MPO to save resources.
- Returns the corresponding MPS *and* the list of combiners used to join the indices, for later use"""
+""" Vectorizes an MPO by "folding" (joining) its physical indices, inplace version.
+ Returns the list of combiners used to join the indices, for later use"""
 function vectorize_mpo!(w::MPO)
 
     ss = siteinds(w)
@@ -27,7 +26,7 @@ function vectorize_mpo!(w::MPO)
         w.data[jj] *= combiners[jj]
     end
 
-    return MPS(w.data), combiners
+    return combiners
 end
 
 
