@@ -199,16 +199,16 @@ end
 
 """ Returns generalized Tsallis 2 entropy from the RTM tau~tr|PHI><PSI| """
 function gen_tsallis2(psi::MPS, phi::MPS; normalization::String="overlap")
-  
-    if normalization == "overlap"
-        psi = psi / sqrt(overlap_noconj(psi,phi))
-        phi = phi / sqrt(overlap_noconj(psi,phi))
+
+      psi, phi = if normalization == "overlap"
+        psi / sqrt(overlap_noconj(psi,phi)), phi / sqrt(overlap_noconj(psi,phi))
     elseif normalization == "norm"
-        psi = normalize(psi)
-        phi = normalize(phi)
+        normalize(psi), normalize(phi)
     else
         @info "Unknown normalization $(normalization), not normalizing"
+        psi, phi
     end
+    
     trace_tau2 = rtm2_contracted(psi, phi)
     
     t2 = [ -trt2 .+ 1 for trt2 in trace_tau2]
