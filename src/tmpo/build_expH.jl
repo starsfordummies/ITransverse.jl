@@ -30,7 +30,7 @@ function folded_UUt(Ut::MPO; new_siteinds=nothing)
     for jj = 1:N
         UUt[jj] = Ut[jj] * dag(prime(Ut[jj],2))
         s = sites_u[jj]
-        cs = combiner(s, dag(s)'', tags = tags(s); dir=ITensors.In)
+        cs = ITransverse.ITenUtils.pcombiner(s, dag(s)'', tags = tags(s); dir=ITensors.In)
         UUt[jj] = UUt[jj] * cs  #TODO CHECK THIS 
         UUt[jj] = UUt[jj] * dag(cs)'  #TODO CHECK THIS 
     end
