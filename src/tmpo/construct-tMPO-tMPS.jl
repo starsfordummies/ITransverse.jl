@@ -343,7 +343,7 @@ function construct_tMPS_tMPO_2(psi_i::MPS, in_Uts::Vector{MPO}, psi_f::MPS;
   end
 
   if return_swapped_T
-    return psiL, Tc, swapprime(Tc, 0, 1), psiR
+    return psiL, swapprime(Tc, 0, 1), Tc, psiR
   else
     return psiL, Tc, psiR
   end
