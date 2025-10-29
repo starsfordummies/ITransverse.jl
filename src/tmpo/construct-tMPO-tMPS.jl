@@ -334,17 +334,17 @@ function construct_tMPS_tMPO_2(psi_i::MPS, in_Uts::Vector{MPO}, psi_f::MPS;
   end
 
   for col = [psiL, Tc, psiR]
-  ll = linkinds(col)
-  for ii in eachindex(ll)
-    lln = noprime(sim(ll[ii], tags="Link,lt=$(ii)"))
-    col[ii] = replaceind(col[ii], ll[ii] => lln)
-    col[ii+1] = replaceind(col[ii+1], ll[ii] => dag(lln))
+    ll = linkinds(col)
+    for ii in eachindex(ll)
+      lln = noprime(sim(ll[ii], tags="Link,lt=$(ii)"))
+      col[ii] = replaceind(col[ii], ll[ii] => lln)
+      col[ii+1] = replaceind(col[ii+1], ll[ii] => dag(lln))
+    end
   end
-end
 
-if return_swapped_T
-  return psiL, Tc, swapprime(Tc, 0, 1), psiR
-else
-  return psiL, Tc, psiR
-end
+  if return_swapped_T
+    return psiL, Tc, swapprime(Tc, 0, 1), psiR
+  else
+    return psiL, Tc, psiR
+  end
 end
