@@ -283,8 +283,10 @@ function productMPO(phys_sites, list_of_operators=fill("I",length(phys_sites)))
     MPO(Ws)
 end
 
-
-function folded_productMPS(phys_sites, list_of_operators=fill("I",length(phys_sites)), folded_sites=siteinds(dim(phys_sites[1])^2, length(phys_sites)))
+""" Returns a product MPS made of (folded) operators. Defaults to all identities """
+function folded_productMPS(phys_sites, 
+    list_of_operators=fill("I",length(phys_sites)), 
+    folded_sites=siteinds(dim(phys_sites[1])^2, length(phys_sites)))
     
     NN = length(phys_sites)
     links = [Index(1, "Link, n=$n") for n in 1:NN-1]
@@ -297,6 +299,23 @@ function folded_productMPS(phys_sites, list_of_operators=fill("I",length(phys_si
     
     return MPS(WsFold)
 
+end
+
+
+""" Removes trivial links from a product state """
+function delete_link_from_prodMPS(psi)
+    delete_link_from_prodMPS!(copy(psi))
+end
+
+""" Removes trivial links from a product state, inplace version """
+function delete_link_from_prodMPS!(psi::AbstractMPS)
+  if maxlinkdim(psi) == 1
+    ss = siteinds(psi)
+    for ii in eachindex(psi)
+      psi[ii] = ITensor(array(psi[ii]), ss[ii])
+    end
+  end
+  return psi
 end
 
 

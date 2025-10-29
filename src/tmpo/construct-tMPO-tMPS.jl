@@ -1,32 +1,3 @@
-# using ITensorMPS, ITensors
-# using NDTensors: @Algorithm_str
-using ITensors.SiteTypes: SiteTypes, siteind, siteinds, state
-# using ITensors: Algorithm, contract, hassameinds, inner, mapprime
-#import ITensorMPS: maxlinkdim
-#import ITensorMPS: replace_siteinds, replace_siteinds!
-
-function delete_link_from_prodMPS(ψ)
-  @assert maxlinkdim(ψ) == 1
-  N = length(ψ)
-  links = linkinds(ψ)
-  new_ψ = similar(ψ)
-  new_ψ[1] = ψ[1] * dag(onehot(links[1] => 1))
-  for ii in 2:N-1
-    new_ψ[ii] = onehot(links[ii-1] => 1) * ψ[ii] * dag(onehot(links[ii] => 1))
-  end
-  new_ψ[N] = onehot(links[N-1] => 1) * ψ[N]
-  return new_ψ
-end
-
-
-function delete_link_from_prodMPS!(psi::AbstractMPS)
-  if maxlinkdim(psi) == 1
-    ss = siteinds(psi)
-    for ii in eachindex(psi)
-      psi[ii] = ITensor(array(psi[ii]), ss[ii])
-    end
-  end
-end
 
 
 """
