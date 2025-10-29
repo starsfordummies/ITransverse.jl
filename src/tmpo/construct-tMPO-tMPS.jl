@@ -3,7 +3,7 @@
 using ITensors.SiteTypes: SiteTypes, siteind, siteinds, state
 # using ITensors: Algorithm, contract, hassameinds, inner, mapprime
 #import ITensorMPS: maxlinkdim
-import ITensorMPS: replace_siteinds, replace_siteinds!
+#import ITensorMPS: replace_siteinds, replace_siteinds!
 
 function delete_link_from_prodMPS(ψ)
   @assert maxlinkdim(ψ) == 1
@@ -273,21 +273,7 @@ end
 #     return md
 # end
 
-function ITensorMPS.replace_siteinds(W::MPO, new_in_sites, new_out_sites=dag(new_in_sites)')
-  replace_siteinds!(copy(W), new_in_sites, new_out_sites)
-end
 
-
-function ITensorMPS.replace_siteinds!(W::MPO, new_in_sites, new_out_sites=dag(new_in_sites)')
-  @assert length(new_in_sites) == length(W)
-  # Here I assume that the MPO has the "standard" physical index notation  p - p' 
-  si = firstsiteinds(W)
-  for ii in eachindex(W)
-    replaceinds!(W[ii], si[ii] => new_in_sites[ii])
-    replaceinds!(W[ii], si[ii]' => new_out_sites[ii])
-  end
-  return W 
-end
 
 
 """ Alternative version. Does some basic siteinds matching if the MPS/MPO do not have the same sets.

@@ -192,14 +192,29 @@ function normalize_for_overlap!(psi::AbstractMPS, phi::AbstractMPS)
 end
 
 
-function ITensorMPS.replace_siteinds!(M::MPO, sites)
-    for j in eachindex(M)
-      sj = siteind(M, j)
-      M[j] = replaceinds(M[j], (sj,sj') => (sites[j],sites[j]'))
-    end
-    return M
-  end
+# function ITensorMPS.replace_siteinds!(M::MPO, sites)
+#     for j in eachindex(M)
+#       sj = siteind(M, j)
+#       M[j] = replaceinds(M[j], (sj,sj') => (sites[j],sites[j]'))
+#     end
+#     return M
+#   end
 
+function ITensorMPS.replace_siteinds(W::MPO, new_in_sites, new_out_sites=dag(new_in_sites)')
+  replace_siteinds!(copy(W), new_in_sites, new_out_sites)
+end
+
+
+function ITensorMPS.replace_siteinds!(W::MPO, new_in_sites, new_out_sites=dag(new_in_sites)')
+  @assert length(new_in_sites) == length(W)
+  # Here I assume that the MPO has the "standard" physical index notation  p - p' 
+  si = firstsiteinds(W)
+  for ii in eachindex(W)
+    replaceinds!(W[ii], si[ii] => new_in_sites[ii])
+    replaceinds!(W[ii], si[ii]' => new_out_sites[ii])
+  end
+  return W 
+end
 
 """ Returns an MPS with a gauge fixed to a *left* form such that 
 1) all tensors M[2:end] are in left canonical form 
