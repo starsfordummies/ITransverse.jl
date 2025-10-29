@@ -14,7 +14,7 @@ function delete_link_from_prodMPS(ψ)
   for ii in 2:N-1
     new_ψ[ii] = onehot(links[ii-1] => 1) * ψ[ii] * dag(onehot(links[ii] => 1))
   end
-   new_ψ[N] = onehot(links[N-1] => 1) * ψ[N]
+  new_ψ[N] = onehot(links[N-1] => 1) * ψ[N]
   return new_ψ
 end
 
@@ -27,7 +27,7 @@ function delete_link_from_prodMPS!(psi::AbstractMPS)
     end
   end
 end
- 
+
 
 """
     construct_tMPS_tMPO(ψ_i::MPS, Ut::Vector{MPO}, ϕ_f::MPS)
@@ -59,7 +59,7 @@ Construct two boundary tMPS (⟨L| and |R⟩) and two tMPOs (TL and TR) for furt
 """
 function construct_tMPS_tMPO(psi_i::MPS, in_Uts::Vector{MPO}, psi_f::MPS;
   return_swapped_T::Bool=false,
-  )
+)
 
   psi_i = replace_siteinds(psi_i, firstsiteinds(in_Uts[1]))
   psi_f = replace_siteinds(psi_f, firstsiteinds(in_Uts[end]))
@@ -68,27 +68,29 @@ function construct_tMPS_tMPO(psi_i::MPS, in_Uts::Vector{MPO}, psi_f::MPS;
 
   siteinds_Ut = [firstsiteinds(Ut) for Ut in in_Uts]
   if length(unique(siteinds_Ut)) > 1
-    for (ii,Ut) in enumerate(in_Uts)
+    for (ii, Ut) in enumerate(in_Uts)
       in_Uts[ii] = replace_siteinds(Ut, siteinds_Ut[1])
     end
   end
 
   @assert siteinds(psi_f) == firstsiteinds(in_Uts[1])
-  @assert length(psi_i) == 3 
+  @assert length(psi_i) == 3
 
   Nrows = length(in_Uts)
 
   Uts = sim.(linkinds, in_Uts)
 
+
   #Incorporate initial and final state in MPOs. First remove trivial links for QN mental sanity
-  ITransverse.delete_link_from_prodMPS!(psi_i)
-  ITransverse.delete_link_from_prodMPS!(psi_f)
+  maxlinkdim(psi_i) == 1 && ITransverse.delete_link_from_prodMPS!(psi_i)
+  maxlinkdim(psi_i) == 1 && ITransverse.delete_link_from_prodMPS!(psi_f)
+
 
   Uts[1] = applyn(Uts[1], psi_i)
   Uts[end] = applyns(Uts[end], dag(psi_f))
 
   for ii = 3:Nrows
-    Uts[ii] = prime(siteinds, Uts[ii] ,ii-2)
+    Uts[ii] = prime(siteinds, Uts[ii], ii - 2)
   end
 
   Lcol_data = [Uts[ii][1] for ii = (1:Nrows)]
@@ -107,7 +109,7 @@ function construct_tMPS_tMPO(psi_i::MPS, in_Uts::Vector{MPO}, psi_f::MPS;
   ssR = siteinds(psiR)
 
   for ii in eachindex(ssL)
-    psiL[ii] = replaceind(psiL[ii], ssL[ii] => ssLn[ii])  
+    psiL[ii] = replaceind(psiL[ii], ssL[ii] => ssLn[ii])
     Tc[ii] = replaceinds(Tc[ii], ssL[ii] => ssLn[ii]', ssR[ii] => ssRn[ii])
     psiR[ii] = replaceind(psiR[ii], ssR[ii] => ssRn[ii])
   end
