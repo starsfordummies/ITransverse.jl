@@ -1,3 +1,4 @@
+using Test
 using ITensors, ITensorMPS, ITransverse
 using ITransverse: plus_state, up_state
 
@@ -141,7 +142,7 @@ end
 
 
 
-@testset "Testing Generic time evolution operator in the non-transverse case" begin 
+@testset "Testing Generic time evolution operator in the non-transverse case w/ and w/o QN-conservation" begin 
   cutoff = 1e-14
   maxdim = 128
 
@@ -150,127 +151,110 @@ end
   n_iter =  Int(1.0/dt)
 
   JXX = 1.0
-  hz = 1.0
-  gx = 0.0
+  hz = 0.5
+  # gx = 0.0
+  for gx in [0.0, 1.0] # test QN conservation and no QN-conservation
 
-  N = 10
-  ss = siteinds("S=1/2", N, conserve_szparity=false)
-  state = fill("↑",N)
-  psi0 = randomMPS(ComplexF64,ss,state,4)
+    N = 10
+    ss = iszero(gx) ? siteinds("S=1/2", N, conserve_szparity=true) : siteinds("S=1/2", N, conserve_szparity=false)
+    state = fill("↑",N)
+    psi0 = randomMPS(ComplexF64,ss,state,4)
 
 
+    ##### Stefano's Ut
+    Ut1 = ITransverse.ChainModels.build_expH_ising_murg_new(ss, JXX, hz, gx, dt)
 
-  ##### Stefano's Ut
-  mp1 = IsingParams(JXX, hz, gx)
-  tp1 = tMPOParams(dt,  ITransverse.ChainModels.build_expH_ising_murg_new, mp1, 0, up_state)
-
-  Ut1 = tp1.expH_func(ss, tp1.mp, dt)
-  # Ut1 = build_expH_ising_murg_new2(ss, JXX, hz, gx, dt)
-
-  psi_t1 = deepcopy(psi0)
-  for tt = 1:n_iter
-      psi_t1[:] = apply(Ut1, psi_t1; cutoff, maxdim, normalize=true)
-  end
-
- 
-
-  ## Generic Ut MPO , note the different convention of signs
-  Ut2 = timeEvo_MPO_2ndOrder(
-      ss,
-      ["Id"],
-      [0.0],
-      ["X"],
-      [1.0],
-      ["X"],
-      [-JXX],
-      ["Z", "X"],
-      [-hz, -gx],
-      dt;
-  )
+    psi_t1 = deepcopy(psi0)
+    for tt = 1:n_iter
+        psi_t1[:] = apply(Ut1, psi_t1; cutoff, maxdim, normalize=true)
+    end
 
   
+    ## Generic Ut MPO , note the different convention of signs
+    Ut2 = timeEvo_MPO_2ndOrder(
+        ss,
+        ["Id"],
+        [0.0],
+        ["X"],
+        [1.0],
+        ["X"],
+        [-JXX],
+        ["Z", "X"],
+        [-hz, -gx],
+        dt;
+    )
+
+    psi_t2 = deepcopy(psi0)
+    for tt = 1:n_iter
+        psi_t2[:] = apply(Ut2, psi_t2; cutoff, maxdim, normalize=true)
+    end
+
+    Ut2_LRflipped = timeEvo_MPO_2ndOrder_LRflipped(
+        ss,
+        ["Id"],
+        [0.0],
+        ["X"],
+        [1.0],
+        ["X"],
+        [-JXX],
+        ["Z", "X"],
+        [-hz, -gx],
+        dt;
+    )
+
+    psi_t2_LRflipped = deepcopy(psi0)
+    for tt = 1:n_iter
+        psi_t2_LRflipped[:] = apply(Ut2_LRflipped, psi_t2_LRflipped; cutoff, maxdim, normalize=true)
+    end
 
 
-  psi_t2 = deepcopy(psi0)
-  for tt = 1:n_iter
-      psi_t2[:] = apply(Ut2, psi_t2; cutoff, maxdim, normalize=true)
+    psi_t2_alternating = deepcopy(psi0)
+    for tt = 1:n_iter
+        psi_t2_alternating[:] = iseven(tt) ? apply(Ut2, psi_t2_alternating; cutoff, maxdim, normalize=true) : apply(Ut2_LRflipped, psi_t2_alternating; cutoff, maxdim, normalize=true)
+    end
+
+    ############
+    # TDVP
+
+    H_ising = buildExpHTFI(ss;J=JXX,λ=0.0,hz,gx)
+
+    psi_tdvp = tdvp(
+        H_ising,
+        -1.0im,
+        psi0;
+        time_step=-im*dt,
+        maxdim,
+        cutoff,
+        normalize=true,
+        outputlevel=1,
+    )
+
+    H_ising_LRflipped = buildExpHTFI_LRflipped(ss;J=JXX,λ=0.0,hz,gx)
+
+    psi_tdvp_LRflipped = tdvp(
+        H_ising_LRflipped,
+        -1.0im,
+        psi0;
+        time_step=-im*dt,
+        maxdim,
+        cutoff,
+        normalize=true,
+        outputlevel=1,
+    )
+
+    @test isapprox(abs(inner(psi_tdvp_LRflipped,psi_tdvp)), 1.0)
+
+    # @show JXX
+    # @show hz
+    # @show gx
+    # @show dt
+
+    @test isapprox(abs(inner(psi_t1, psi_t2)),   1.0; rtol=5e-5)
+    @test isapprox(abs(inner(psi_t1, psi_tdvp)), 1.0; rtol = 5e-5)
+    @test isapprox(abs(inner(psi_t2, psi_tdvp)), 1.0; rtol = 5e-5)
+    @test isapprox(abs(inner(psi_t2_LRflipped, psi_tdvp)), 1.0; rtol = 5e-5)
+
+    @test isapprox(abs(inner(psi_t2_LRflipped, psi_t2_alternating)), 1.0; rtol = 5e-5)
+    @test isapprox(abs(inner(psi_t2_alternating, psi_tdvp)), 1.0; rtol = 5e-5)
   end
-
-
-  Ut2_LRflipped = timeEvo_MPO_2ndOrder_LRflipped(
-      ss,
-      ["Id"],
-      [0.0],
-      ["X"],
-      [1.0],
-      ["X"],
-      [-JXX],
-      ["Z", "X"],
-      [-hz, -gx],
-      dt;
-  )
-
-  psi_t2_LRflipped = deepcopy(psi0)
-  for tt = 1:n_iter
-      psi_t2_LRflipped[:] = apply(Ut2_LRflipped, psi_t2_LRflipped; cutoff, maxdim, normalize=true)
-  end
-
-  abs(inner(psi_t2_LRflipped,psi_t2_LRflipped))
-
-  abs(inner(psi_t2_LRflipped,psi_t2))
-
-
-
-  psi_t2_alternating = deepcopy(psi0)
-  for tt = 1:n_iter
-      psi_t2_alternating[:] = iseven(tt) ? apply(Ut2, psi_t2_alternating; cutoff, maxdim, normalize=true) : apply(Ut2_LRflipped, psi_t2_alternating; cutoff, maxdim, normalize=true)
-  end
-
-
-
-
-
-  ############
-  # TDVP
-
-  H_ising = buildExpHTFI(ss;J=JXX,λ=0.0,hz,gx)
-
-  psi_tdvp = tdvp(
-      H_ising,
-      -1.0im,
-      psi0;
-      time_step=-im*dt,
-      maxdim,
-      cutoff,
-      normalize=true,
-      outputlevel=1,
-  )
-
-  H_ising_LRflipped = buildExpHTFI_LRflipped(ss;J=JXX,λ=0.0,hz,gx)
-
-  psi_tdvp_LRflipped = tdvp(
-      H_ising_LRflipped,
-      -1.0im,
-      psi0;
-      time_step=-im*dt,
-      maxdim,
-      cutoff,
-      normalize=true,
-      outputlevel=1,
-  )
-
-  @test isapprox(abs(inner(psi_tdvp_LRflipped,psi_tdvp)), 1.0)
-
-  # @show JXX
-  # @show hz
-  # @show gx
-  # @show dt
-
-  @test isapprox(abs(inner(psi_t1, psi_t2)),   1.0; rtol=5e-5)
-  @test isapprox(abs(inner(psi_t1, psi_tdvp)), 1.0; rtol = 5e-5)
-  @test isapprox(abs(inner(psi_t2, psi_tdvp)), 1.0; rtol = 5e-5)
-  @test isapprox(abs(inner(psi_t2_LRflipped, psi_tdvp)), 1.0; rtol = 5e-5)
-
-  @test isapprox(abs(inner(psi_t2_LRflipped, psi_t2_alternating)), 1.0; rtol = 5e-5)
-  @test isapprox(abs(inner(psi_t2_alternating, psi_tdvp)), 1.0; rtol = 5e-5)
 end

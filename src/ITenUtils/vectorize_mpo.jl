@@ -14,9 +14,9 @@ function vectorize_mpo(w::MPO)
     return MPS(tensors), combiners
 end
 
-""" Vectorizes an MPO by "folding" (joining) its physical indices, 
-inplace version which likely destroys the starting MPO to save resources.
- Returns the corresponding MPS *and* the list of combiners used to join the indices, for later use"""
+#=  Don't like this too much, as it makes more sense to return an MPS and this doesn't allow to 
+""" Vectorizes an MPO by "folding" (joining) its physical indices, inplace version.
+ Returns the list of combiners used to join the indices, for later use"""
 function vectorize_mpo!(w::MPO)
 
     ss = siteinds(w)
@@ -27,9 +27,9 @@ function vectorize_mpo!(w::MPO)
         w.data[jj] *= combiners[jj]
     end
 
-    return MPS(w.data), combiners
+    return w, combiners
 end
-
+=# 
 
 """ Given a vectorized MPO (ie. an MPS) and the list of combiners used, unfolds the MPS converting it back to MPO """
 function unvectorize_mpo(w::MPS, combiners)
@@ -40,9 +40,10 @@ function unvectorize_mpo(w::MPS, combiners)
         tensors[jj] *= dag(combiners[jj])
     end
 
-    return MPS(tensors), combiners
+    return MPO(tensors)
 end
 
+#= again inplace doesn't make too much sense... 
 """ Same as unvectorize_mpo but inplace destroying the input MPS """
 function unvectorize_mpo!(w::MPS, combiners)
 
@@ -52,3 +53,4 @@ function unvectorize_mpo!(w::MPS, combiners)
 
     return MPS(w.data), combiners
 end
+=#

@@ -192,14 +192,29 @@ function normalize_for_overlap!(psi::AbstractMPS, phi::AbstractMPS)
 end
 
 
-function ITensorMPS.replace_siteinds!(M::MPO, sites)
-    for j in eachindex(M)
-      sj = siteind(M, j)
-      M[j] = replaceinds(M[j], (sj,sj') => (sites[j],sites[j]'))
-    end
-    return M
-  end
+# function ITensorMPS.replace_siteinds!(M::MPO, sites)
+#     for j in eachindex(M)
+#       sj = siteind(M, j)
+#       M[j] = replaceinds(M[j], (sj,sj') => (sites[j],sites[j]'))
+#     end
+#     return M
+#   end
 
+function ITensorMPS.replace_siteinds(W::MPO, new_in_sites, new_out_sites=dag(new_in_sites)')
+  replace_siteinds!(copy(W), new_in_sites, new_out_sites)
+end
+
+
+function ITensorMPS.replace_siteinds!(W::MPO, new_in_sites, new_out_sites=dag(new_in_sites)')
+  @assert length(new_in_sites) == length(W)
+  # Here I assume that the MPO has the "standard" physical index notation  p - p' 
+  si = firstsiteinds(W)
+  for ii in eachindex(W)
+    replaceinds!(W[ii], si[ii] => new_in_sites[ii])
+    replaceinds!(W[ii], si[ii]' => new_out_sites[ii])
+  end
+  return W 
+end
 
 """ Returns an MPS with a gauge fixed to a *left* form such that 
 1) all tensors M[2:end] are in left canonical form 
@@ -268,8 +283,10 @@ function productMPO(phys_sites, list_of_operators=fill("I",length(phys_sites)))
     MPO(Ws)
 end
 
-
-function folded_productMPS(phys_sites, list_of_operators=fill("I",length(phys_sites)), folded_sites=siteinds(dim(phys_sites[1])^2, length(phys_sites)))
+""" Returns a product MPS made of (folded) operators. Defaults to all identities """
+function folded_productMPS(phys_sites, 
+    list_of_operators=fill("I",length(phys_sites)), 
+    folded_sites=siteinds(dim(phys_sites[1])^2, length(phys_sites)))
     
     NN = length(phys_sites)
     links = [Index(1, "Link, n=$n") for n in 1:NN-1]
@@ -282,6 +299,23 @@ function folded_productMPS(phys_sites, list_of_operators=fill("I",length(phys_si
     
     return MPS(WsFold)
 
+end
+
+
+""" Removes trivial links from a product state """
+function delete_link_from_prodMPS(psi)
+    delete_link_from_prodMPS!(copy(psi))
+end
+
+""" Removes trivial links from a product state, inplace version """
+function delete_link_from_prodMPS!(psi::AbstractMPS)
+  if maxlinkdim(psi) == 1
+    ss = siteinds(psi)
+    for ii in eachindex(psi)
+      psi[ii] = ITensor(array(psi[ii]), ss[ii])
+    end
+  end
+  return psi
 end
 
 
@@ -319,3 +353,18 @@ function check_mps_sanity(psi::MPS)
     end
     return good
 end
+
+# i1 = Index(3,"a")
+# i2 = Index(4,"b")
+""" Experimental predictable combiner - returns a combiner whose combinedind id is the sum of the ids of the
+two indices I'm joining, hoping that nothing bad goes on - Should ensure that each time we pcombine two equal indices,
+we get the same combinedind  """
+function pcombiner(i1::Index, i2::Index; kwargs...)
+    cc = combiner(i1, i2; kwargs...)
+    ci = combinedind(cc)
+    ci_alt  = Index(i1.id + i2.id, ci.space, ci.dir, ci.tags, ci.plev)
+    replaceind!(cc, ci => ci_alt)
+    return cc
+end
+
+# ck = combiner(i1,i2)
