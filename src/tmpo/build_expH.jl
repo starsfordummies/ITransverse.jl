@@ -18,7 +18,7 @@ function quick_b(; folded::Bool=true)
 end
 
 
-function folded_UUt(Ut::MPO)
+function folded_UUt(Ut::MPO; new_siteinds=nothing)
 
     N = length(Ut)
 
@@ -42,6 +42,10 @@ function folded_UUt(Ut::MPO)
         UUt[jj] *= cl
         UUt[jj + 1] *= dag(cl)
        
+    end
+
+    if !isnothing(new_siteinds)
+        replace_siteinds!(UUt, new_siteinds)
     end
 
     return UUt
