@@ -292,7 +292,9 @@ end
 
 """ Alternative version. Does some basic siteinds matching if the MPS/MPO do not have the same sets.
 Ideally in the future we may want to feed a common indexset for them to share """
-function construct_tMPS_tMPO_2(psi_i::MPS, in_Uts::Vector{MPO}, psi_f::MPS)
+function construct_tMPS_tMPO_2(psi_i::MPS, in_Uts::Vector{MPO}, psi_f::MPS;
+  return_swapped_T::Bool=false,
+  )
 
   psi_i = replace_siteinds(psi_i, firstsiteinds(in_Uts[1]))
   psi_f = replace_siteinds(psi_f, firstsiteinds(in_Uts[end]))
@@ -333,11 +335,10 @@ function construct_tMPS_tMPO_2(psi_i::MPS, in_Uts::Vector{MPO}, psi_f::MPS)
 
   for ii in eachindex(ssL)
     psiL[ii] = replaceind(psiL[ii], ssL[ii] => ssLn[ii])  # like this we'd need to dag() them before contracting 
-    Tc[ii] = replaceind(Tc[ii], ssL[ii] => ssLn[ii]')
-    Tc[ii] = replaceind(Tc[ii], ssR[ii] => ssRn[ii])
+    Tc[ii] = replaceind(Tc[ii], ssL[ii] => ssLn[ii]', ssR[ii] => ssRn[ii])
+    # Tc[ii] = replaceind(Tc[ii], ssR[ii] => ssRn[ii])
     #Tc[ii] = replaceind(Tc[ii], uniqueind(siteinds(Tc,ii), ssn[ii]) => dag(ssn[ii])')
     psiR[ii] = replaceind(psiR[ii], ssR[ii] => ssRn[ii])
-
   end
 
   for col = [psiL, Tc, psiR]
@@ -349,6 +350,9 @@ function construct_tMPS_tMPO_2(psi_i::MPS, in_Uts::Vector{MPO}, psi_f::MPS)
   end
 end
 
-return psiL, Tc, psiR
-
+if return_swapped_T
+  return psiL, Tc, swapprime(Tc, 0, 1), psiR
+else
+  return psiL, Tc, psiR
+end
 end
