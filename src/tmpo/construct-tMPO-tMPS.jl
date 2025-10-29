@@ -14,7 +14,7 @@ function delete_link_from_prodMPS(ψ)
   for ii in 2:N-1
     new_ψ[ii] = onehot(links[ii-1] => 1) * ψ[ii] * dag(onehot(links[ii] => 1))
   end
-   new_ψ[N] = onehot(links[N-1] => 1) * ψ[N]
+  new_ψ[N] = onehot(links[N-1] => 1) * ψ[N]
   return new_ψ
 end
 
@@ -27,7 +27,7 @@ function delete_link_from_prodMPS!(psi::AbstractMPS)
     end
   end
 end
- 
+
 
 """
     construct_tMPS_tMPO(ψ_i::MPS, Ut::Vector{MPO}, ϕ_f::MPS)
@@ -60,7 +60,7 @@ Construct two boundary tMPS (⟨L| and |R⟩) and two tMPOs (TL and TR) for furt
 function construct_tMPS_tMPO(ψ_i::MPS, Ut::Vector{MPO}, ϕ_f::MPS;
   dagger_final::Bool=true,
   return_swapped_T::Bool=true,
-  )
+)
   if hasqns(ψ_i)
     if maxlinkdim(ψ_i) > 1 || maxlinkdim(ϕ_f) > 1
       throw(ArgumentError("For now, we cannot process a QN-preserving initial/final state that is NOT a product state!"))
@@ -73,20 +73,20 @@ function construct_tMPS_tMPO(ψ_i::MPS, Ut::Vector{MPO}, ϕ_f::MPS;
     Ut_1 = noprime.(ψi.data .* Ut[1].data)
     Ut_end = dagger_final ? noprime.(Ut[end].data .* prime.(dag.(ϕf.data))) : noprime.(Ut[end].data .* prime.(ϕf.data))
 
-    input = if length(Ut)-1 >= 2 
+    input = if length(Ut) - 1 >= 2
       hcat(Ut_1, hcat([(Ut[ii]).data for ii in 2:length(Ut)-1]...), Ut_end)
     else
       hcat(Ut_1, Ut_end)
     end
 
-    return construct_tMPS_tMPO(input; dagger_final=false, return_swapped_T )
+    return construct_tMPS_tMPO(input; dagger_final=false, return_swapped_T)
   else
     input = hcat(
       ψ_i.data,
       hcat([Ut_ele.data for Ut_ele in Ut]...),
       ϕ_f.data
     )
-    return construct_tMPS_tMPO(input; dagger_final=dagger_final, return_swapped_T )
+    return construct_tMPS_tMPO(input; dagger_final=dagger_final, return_swapped_T)
   end
 end
 
@@ -94,7 +94,7 @@ end
 function construct_tMPS_tMPO(input::Matrix{ITensor};
   dagger_final::Bool=true,
   return_swapped_T::Bool=true,
-  )
+)
   nrows, ncolumns = size(input)
   @assert nrows == 3 "Assume input Matrix to have 3 rows!"
 
@@ -103,7 +103,7 @@ function construct_tMPS_tMPO(input::Matrix{ITensor};
   sites_cols = hcat([siteinds(input[:, n]) for n in 1:ncolumns]...)
 
   links_tMPS_L = [sim(only(sites_cols[1, 1]), tags="Link,time,nₜ=$(n-1)") for n in 1:ncolumns-1]
-  links_tMPO =   [sim(only(sites_cols[2, 1]), tags="Link,time,nₜ=$(n-1)") for n in 1:ncolumns-1]
+  links_tMPO = [sim(only(sites_cols[2, 1]), tags="Link,time,nₜ=$(n-1)") for n in 1:ncolumns-1]
   links_tMPS_R = [sim(only(sites_cols[3, 1]), tags="Link,time,nₜ=$(n-1)") for n in 1:ncolumns-1]
 
   # the new sites are a bit special, the first (and perhaps last) site is (are) given by the boundary MPS
@@ -183,7 +183,7 @@ function construct_tMPS_tMPO(input::Matrix{ITensor};
     return (
       MPS([first_L, bulk_L..., last_L]),
       T,
-      swapprime(T,0,1),
+      swapprime(T, 0, 1),
       MPS([first_R, bulk_R..., last_R])
     )
   else
@@ -280,7 +280,7 @@ end
 Ideally in the future we may want to feed a common indexset for them to share """
 function construct_tMPS_tMPO_2(psi_i::MPS, in_Uts::Vector{MPO}, psi_f::MPS;
   return_swapped_T::Bool=false,
-  )
+)
 
   psi_i = replace_siteinds(psi_i, firstsiteinds(in_Uts[1]))
   psi_f = replace_siteinds(psi_f, firstsiteinds(in_Uts[end]))
@@ -288,14 +288,14 @@ function construct_tMPS_tMPO_2(psi_i::MPS, in_Uts::Vector{MPO}, psi_f::MPS;
   @assert siteinds(psi_i) == firstsiteinds(in_Uts[1])
 
   siteinds_Ut = [firstsiteinds(Ut) for Ut in in_Uts]
-  if length( unique(siteinds_Ut)) > 1
-    for (ii,Ut) in enumerate(in_Uts)
+  if length(unique(siteinds_Ut)) > 1
+    for (ii, Ut) in enumerate(in_Uts)
       in_Uts[ii] = replace_siteinds(Ut, siteinds_Ut[1])
     end
   end
 
   @assert siteinds(psi_f) == firstsiteinds(in_Uts[1])
-  @assert length(psi_i) == 3 
+  @assert length(psi_i) == 3
 
   Nrows = length(in_Uts)
 
@@ -309,7 +309,7 @@ function construct_tMPS_tMPO_2(psi_i::MPS, in_Uts::Vector{MPO}, psi_f::MPS;
   Uts[end] = applyns(Uts[end], dag(psi_f))
 
   for ii = 3:Nrows
-    Uts[ii] = prime(siteinds, Uts[ii] ,ii-2)
+    Uts[ii] = prime(siteinds, Uts[ii], ii - 2)
   end
 
   Lcol_data = [Uts[ii][1] for ii = (1:Nrows)]
@@ -328,23 +328,23 @@ function construct_tMPS_tMPO_2(psi_i::MPS, in_Uts::Vector{MPO}, psi_f::MPS;
   ssR = siteinds(psiR)
 
   for ii in eachindex(ssL)
-    psiL[ii] = replaceind(psiL[ii], ssL[ii] => ssLn[ii])  
+    psiL[ii] = replaceind(psiL[ii], ssL[ii] => ssLn[ii])
     Tc[ii] = replaceinds(Tc[ii], ssL[ii] => ssLn[ii]', ssR[ii] => ssRn[ii])
     psiR[ii] = replaceind(psiR[ii], ssR[ii] => ssRn[ii])
   end
 
   for col = [psiL, Tc, psiR]
-  ll = linkinds(col)
-  for ii in eachindex(ll)
-    lln = noprime(sim(ll[ii], tags="Link,lt=$(ii)"))
-    col[ii] = replaceind(col[ii], ll[ii] => lln)
-    col[ii+1] = replaceind(col[ii+1], ll[ii] => dag(lln))
+    ll = linkinds(col)
+    for ii in eachindex(ll)
+      lln = noprime(sim(ll[ii], tags="Link,lt=$(ii)"))
+      col[ii] = replaceind(col[ii], ll[ii] => lln)
+      col[ii+1] = replaceind(col[ii+1], ll[ii] => dag(lln))
+    end
   end
-end
 
-if return_swapped_T
-  return psiL, Tc, swapprime(Tc, 0, 1), psiR
-else
-  return psiL, Tc, psiR
-end
+  if return_swapped_T
+    return psiL, Tc, swapprime(Tc, 0, 1), psiR
+  else
+    return psiL, Tc, psiR
+  end
 end
