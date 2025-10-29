@@ -19,6 +19,16 @@ function delete_link_from_prodMPS(ψ)
 end
 
 
+function delete_link_from_prodMPS!(psi::AbstractMPS)
+  if maxlinkdim(psi) == 1
+    ss = siteinds(psi)
+    for ii in eachindex(psi)
+      psi[ii] = ITensor(array(psi[ii]), ss[ii])
+    end
+  end
+end
+ 
+
 """
     construct_tMPS_tMPO(ψ_i::MPS, Ut::Vector{MPO}, ϕ_f::MPS)
 ```
@@ -93,7 +103,7 @@ function construct_tMPS_tMPO(input::Matrix{ITensor};
   sites_cols = hcat([siteinds(input[:, n]) for n in 1:ncolumns]...)
 
   links_tMPS_L = [sim(only(sites_cols[1, 1]), tags="Link,time,nₜ=$(n-1)") for n in 1:ncolumns-1]
-  links_tMPO = [sim(only(sites_cols[2, 1]), tags="Link,time,nₜ=$(n-1)") for n in 1:ncolumns-1]
+  links_tMPO =   [sim(only(sites_cols[2, 1]), tags="Link,time,nₜ=$(n-1)") for n in 1:ncolumns-1]
   links_tMPS_R = [sim(only(sites_cols[3, 1]), tags="Link,time,nₜ=$(n-1)") for n in 1:ncolumns-1]
 
   # the new sites are a bit special, the first (and perhaps last) site is (are) given by the boundary MPS
@@ -263,3 +273,63 @@ end
 #     return md
 # end
 
+
+""" Alternative version. For now works only iff the (spatial) siteinds for the MPS/MPO/MPS match """
+
+function construct_tMPS_tMPO_2(psi_i::MPS, in_Uts::Vector{MPO}, psi_f::MPS)
+
+  @assert siteinds(psi_i) == firstsiteinds(in_Uts[1])
+  @assert siteinds(psi_f) == firstsiteinds(in_Uts[1])
+  @assert length(psi_i) == 3 
+
+  Nrows = length(in_Uts)
+
+  Uts = sim.(linkinds, in_Uts)
+
+  #Incorporate initial and final state in MPOs. First remove trivial links for QN mental sanity
+  ITransverse.delete_link_from_prodMPS!(psi_i)
+  ITransverse.delete_link_from_prodMPS!(psi_f)
+
+  Uts[1] = applyn(Uts[1], psi_i)
+  Uts[end] = applyns(Uts[end], dag(psi_f))
+
+  for ii = 3:Nrows
+    Uts[ii] = prime(siteinds, Uts[ii] ,ii-2)
+  end
+
+  Lcol_data = [Uts[ii][1] for ii = (1:Nrows)]
+  Ccol_data = [Uts[ii][2] for ii = (1:Nrows)]
+  Rcol_data = [Uts[ii][end] for ii = (1:Nrows)]
+
+  psiL = MPS(Lcol_data)
+  Tc = MPO(Ccol_data)
+  psiR = MPS(Rcol_data)
+
+  # Now the mess: relabel the indices 
+
+  ssL = siteinds(psiL)
+  ssLn = [noprime(sim(ssL[ii], tags="Site,nt=$(ii)")) for ii = 1:length(ssL)]
+  ssRn = dag(ssLn)
+  ssR = siteinds(psiR)
+
+  for ii in eachindex(ssL)
+    psiL[ii] = replaceind(psiL[ii], ssL[ii] => ssLn[ii])  # like this we'd need to dag() them before contracting 
+    Tc[ii] = replaceind(Tc[ii], ssL[ii] => ssLn[ii]')
+    Tc[ii] = replaceind(Tc[ii], ssR[ii] => ssRn[ii])
+    #Tc[ii] = replaceind(Tc[ii], uniqueind(siteinds(Tc,ii), ssn[ii]) => dag(ssn[ii])')
+    psiR[ii] = replaceind(psiR[ii], ssR[ii] => ssRn[ii])
+
+  end
+
+  for col = [psiL, Tc, psiR]
+  ll = linkinds(col)
+  for ii in eachindex(ll)
+    lln = noprime(sim(ll[ii], tags="Link,lt=$(ii)"))
+    col[ii] = replaceind(col[ii], ll[ii] => lln)
+    col[ii+1] = replaceind(col[ii+1], ll[ii] => dag(lln))
+  end
+end
+
+return psiL, Tc, psiR
+
+end
