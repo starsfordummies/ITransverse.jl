@@ -177,3 +177,49 @@ fill_bulk_symmetric(sites, dt, Jxx, hz, gx) = ITransverse.ChainModels.build_expH
     @test isapprox(tn_contraction_tdvp, tn_contraction_transverse; atol=1e-3 )
   end
 end
+
+
+
+
+########## Playaround
+
+function contract_tetris(bottom_mps::MPS, rows_mpo::Vector{MPO}, top_mps::MPS)
+  overlap = bottom_mps
+  for mm in rows_mpo 
+    overlap = apply(mm, overlap)
+  end
+  overlap = inner(top_mps, overlap)
+end
+
+
+""" Convention here: we start from psi_i, the bottom mps, then apply the Uts in succession, then close with psi_f. So the TN is
+
+psif
+...
+oo3 = Uts[3]
+oo2 = Uts[2]   => Rotated 90 clockwise should become  [psi1]-[oo1]-[oo2]..[psif]
+oo1 = Uts[1]
+psi_i
+
+"""
+
+
+ss = siteinds("S=1/2", 3, conserve_qns = false)
+ss = siteinds("S=1/2",3,conserve_szparity=true)
+psi_i = MPS(ss, "Up")
+psi_f = MPS(ss, "Up")
+
+oo1 = random_mpo(ss) + random_mpo(ss)
+oo2 = random_mpo(ss) + random_mpo(ss)
+oo3 = random_mpo(ss) + random_mpo(ss)
+
+Uts = sim.(linkinds,[oo1, oo2, oo3, oo2, oo3])
+
+contraction1 = contract_tetris(psi_i, Uts, psi_f)
+
+psiL, Tc, psiR = ITransverse.construct_tMPS_tMPO_2(psi_i, Uts, psi_f)
+
+TR = applyn(Tc, psiR)
+
+  siteinds(TR) == siteinds(psiL)
+  overlap_noconj(psiL, TR) ≈ contraction1 
