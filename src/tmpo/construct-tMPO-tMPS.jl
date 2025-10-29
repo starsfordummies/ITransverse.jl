@@ -1,5 +1,3 @@
-
-
 """
     construct_tMPS_tMPO(ψ_i::MPS, Ut::Vector{MPO}, ϕ_f::MPS)
 ```
@@ -17,25 +15,22 @@ Ut[1]    U———U———U    ↑
                       |
         ⟨L|  T  |R⟩
 ```
-
-Construct two boundary tMPS (⟨L| and |R⟩) and two tMPOs (TL and TR) for further use in the power method.
-- `TR = swapprime(TL, 0, 1)`.
-- We assume the input states to have 3 spatial sites!
+-Given a set of MPS-[MPO(1),MPO(2)...MPO(Nt)]-MPS defining a TN with **3** spatial sites,
+constructs two boundary tMPS (⟨L| and |R⟩) the tMPO TR with Nt temporal sites
+for further use in the power method.
+- Optionally if `return_swapped_T` also returns TL = swapprime(TR, 0, 1)`.
 - `ψ_i` and `ϕ_f` are assumed to be a valid (space-like) MPS
 - each element of the vector `Ut` is assumed to be a valid MPO whereas the links match, respectively,
 - The (physical) sites are not necessarily(!) correctly primed to link up in the time direction.
 - The final MPS will be automatically daggered! If you do not want it to be daggered,
   use the flag `dagger_final=false`.
-- If you not wish to return TL and TR and only TL, use `return_swapped_T=false`.
 """
 function construct_tMPS_tMPO(psi_i::MPS, in_Uts::Vector{MPO}, psi_f::MPS;
-  return_swapped_T::Bool=false,
+  return_swapped_T::Bool=false, dagger_final::Bool=true
 )
 
   psi_i = replace_siteinds(psi_i, firstsiteinds(in_Uts[1]))
   psi_f = replace_siteinds(psi_f, firstsiteinds(in_Uts[end]))
-
-  @assert siteinds(psi_i) == firstsiteinds(in_Uts[1])
 
   siteinds_Ut = [firstsiteinds(Ut) for Ut in in_Uts]
   if length(unique(siteinds_Ut)) > 1
@@ -44,7 +39,9 @@ function construct_tMPS_tMPO(psi_i::MPS, in_Uts::Vector{MPO}, psi_f::MPS;
     end
   end
 
-  @assert siteinds(psi_f) == firstsiteinds(in_Uts[1])
+
+  # @assert siteinds(psi_i) == firstsiteinds(in_Uts[1])
+  # @assert siteinds(psi_f) == firstsiteinds(in_Uts[1])
   @assert length(psi_i) == 3
 
   Nrows = length(in_Uts)
@@ -52,14 +49,19 @@ function construct_tMPS_tMPO(psi_i::MPS, in_Uts::Vector{MPO}, psi_f::MPS;
   Uts = sim.(linkinds, in_Uts)
 
 
-  #Incorporate initial and final state in MPOs. First remove trivial links for QN mental sanity
-  maxlinkdim(psi_i) == 1 && ITransverse.delete_link_from_prodMPS!(psi_i)
-  maxlinkdim(psi_i) == 1 && ITransverse.delete_link_from_prodMPS!(psi_f)
+  #Incorporate initial and final state in MPOs. 
+  #First remove trivial links from produc states for QN mental sanity
+  ITransverse.ITenUtils.delete_link_from_prodMPS!(psi_i)
+  ITransverse.ITenUtils.delete_link_from_prodMPS!(psi_f)
 
+  if dagger_final
+    psi_f = dag(psi_f)
+  end
 
   Uts[1] = applyn(Uts[1], psi_i)
-  Uts[end] = applyns(Uts[end], dag(psi_f))
+  Uts[end] = applyns(Uts[end], psi_f)
 
+  #TODO check: do we still need this ? 
   for ii = 3:Nrows
     Uts[ii] = prime(siteinds, Uts[ii], ii - 2)
   end
@@ -100,4 +102,3 @@ function construct_tMPS_tMPO(psi_i::MPS, in_Uts::Vector{MPO}, psi_f::MPS;
     return psiL, Tc, psiR
   end
 end
-
