@@ -132,6 +132,16 @@ function FoldtMPOBlocks(x::Union{tMPOParams, MPO}; init_state=nothing, build_ima
     return FoldtMPOBlocks(WWl, WWc, WWr, WWl_im, WWc_im, WWr_im, rho0, tp, inds_ww)
 end
 
+
+function get_Ws(b::FoldtMPOBlocks; imag::Bool=false)
+    if !imag
+        b.WWl, b.WWc, b.WWr 
+    else
+        b.WWl_im, b.WWc_im, b.WWr_im
+    end
+end
+
+
 Adapt.adapt_structure(to, b::FoldtMPOBlocks) = FoldtMPOBlocks(
     adapt(to, b.WWl), 
     adapt(to, b.WWc), 

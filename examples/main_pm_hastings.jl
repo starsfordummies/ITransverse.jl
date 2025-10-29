@@ -25,7 +25,7 @@ function main_folded_pm()
 
     truncp = TruncParams(cutoff, maxbondim, "left")  # "left" = start from initial state (Hastings)
 
-    pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM_R", "norm")
+    pm_params = PMParams(truncp, itermax, eps_converged, true, "RDM", "norm")
 
     #sigX = ComplexF64[0,1,1,0]
     #sigZ = ComplexF64[1,0,0,-1]
@@ -37,7 +37,7 @@ function main_folded_pm()
     r2s = [] 
 
 
-    ts = 40:10:40
+    ts = 50:10:50
     alltimes = ts.* tp.dt
 
     infos = Dict(:tp => tp, :pm_params => pm_params, :b => b, :times => alltimes)

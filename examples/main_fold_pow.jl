@@ -11,21 +11,21 @@ using ITransverse: vX, vZ, vI
 function main_folded_pm()
 
     tp = ising_tp()
-    tp =  tMPOParams(0.1, build_expH_ising_murg, IsingParams(1.0, 0.7, 0.0), 0, [1,0])
+    tp =  tMPOParams(0.1, ITransverse.ChainModels.build_expH_ising_murg_new, IsingParams(1.0, 0.7, 0.0), 0, [1,0])
 
     tp = tMPOParams(tp; nbeta=0)
 
 
     b = FoldtMPOBlocks(tp)
 
-    cutoff = 1e-8
-    maxbondim = 80
+    cutoff = 1e-12
+    maxbondim = 128
     itermax = 500
     eps_converged=1e-8
 
     truncp = TruncParams(cutoff, maxbondim)
 
-    pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM_R", "norm")
+    pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM_R", "overlap")
 
     #sigX = ComplexF64[0,1,1,0]
     #sigZ = ComplexF64[1,0,0,-1]
@@ -37,7 +37,7 @@ function main_folded_pm()
     r2s = [] 
 
 
-    ts = 40:40
+    ts = 50:50
     alltimes = ts.* tp.dt
 
     infos = Dict(:tp => tp, :pm_params => pm_params, :b => b, :times => alltimes)

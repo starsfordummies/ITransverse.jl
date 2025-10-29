@@ -96,6 +96,13 @@ function make_fwtmpoblocks(eH::MPO; check_sym::Bool=true)
 end
 
 
+function get_Ws(b::FwtMPOBlocks; imag::Bool=false)
+    if !imag
+        b.Wl, b.Wc, b.Wr 
+    else
+        b.Wl_im, b.Wc_im, b.Wr_im
+    end
+end
 
 
 
