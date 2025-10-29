@@ -334,3 +334,18 @@ function check_mps_sanity(psi::MPS)
     end
     return good
 end
+
+# i1 = Index(3,"a")
+# i2 = Index(4,"b")
+""" Experimental predictable combiner - returns a combiner whose combinedind id is the sum of the ids of the
+two indices I'm joining, hoping that nothing bad goes on - Should ensure that each time we pcombine two equal indices,
+we get the same combinedind  """
+function pcombiner(i1::Index, i2::Index; kwargs...)
+    cc = combiner(i1, i2; kwargs...)
+    ci = combinedind(cc)
+    ci_alt  = Index(i1.id + i2.id, ci.space, ci.dir, ci.tags, ci.plev)
+    replaceind!(cc, ci => ci_alt)
+    return cc
+end
+
+# ck = combiner(i1,i2)
