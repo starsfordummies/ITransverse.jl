@@ -114,10 +114,6 @@ vo_local_ops = replace_siteinds(vo_local_ops, siteinds(rho0v))
 inner(vo_local_ops, apply(UUt_sym, replace_siteinds(rho0v, firstsiteinds(UUt_sym))))  # works
 
 
-rho0v = replace_siteinds(rho0v, firstsiteinds(UUt_sym))
-vo_local_ops = replace_siteinds(vo_local_ops, siteinds(rho0v))
-
-
 psiL, Tc, psiR = ITransverse.construct_tMPS_tMPO_2(rho0v, fill(UUt_sym, Nt), vo_local_ops)
 
 @test overlap_noconj(psiL, applyn(Tc, psiR)) ≈ 1
@@ -130,8 +126,6 @@ o_local_ops_Z = MPO(local_ops_Z)
 
 vo_local_ops_Z, _ = ITransverse.ITenUtils.vectorize_mpo(o_local_ops_Z)
 
-
-vo_local_ops_Z = replace_siteinds(vo_local_ops_Z, siteinds(rho0v))
 
 
 _, Tc_Z, _ = ITransverse.construct_tMPS_tMPO_2(rho0v, fill(UUt_sym, Nt), vo_local_ops_Z)
