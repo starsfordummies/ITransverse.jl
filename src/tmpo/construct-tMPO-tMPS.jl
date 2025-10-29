@@ -286,6 +286,14 @@ function construct_tMPS_tMPO_2(psi_i::MPS, in_Uts::Vector{MPO}, psi_f::MPS;
   psi_f = replace_siteinds(psi_f, firstsiteinds(in_Uts[end]))
 
   @assert siteinds(psi_i) == firstsiteinds(in_Uts[1])
+
+  siteinds_Ut = [firstsiteinds(Ut) for Ut in in_Uts]
+  if length( unique(siteinds_Ut)) > 1
+    for (ii,Ut) in enumerate(in_Uts)
+      in_Uts[ii] = replace_siteinds(Ut, siteinds_Ut[1])
+    end
+  end
+
   @assert siteinds(psi_f) == firstsiteinds(in_Uts[1])
   @assert length(psi_i) == 3 
 
