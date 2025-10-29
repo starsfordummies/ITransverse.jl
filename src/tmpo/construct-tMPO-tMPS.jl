@@ -320,10 +320,8 @@ function construct_tMPS_tMPO_2(psi_i::MPS, in_Uts::Vector{MPO}, psi_f::MPS;
   ssR = siteinds(psiR)
 
   for ii in eachindex(ssL)
-    psiL[ii] = replaceind(psiL[ii], ssL[ii] => ssLn[ii])  # like this we'd need to dag() them before contracting 
-    Tc[ii] = replaceind(Tc[ii], ssL[ii] => ssLn[ii]', ssR[ii] => ssRn[ii])
-    # Tc[ii] = replaceind(Tc[ii], ssR[ii] => ssRn[ii])
-    #Tc[ii] = replaceind(Tc[ii], uniqueind(siteinds(Tc,ii), ssn[ii]) => dag(ssn[ii])')
+    psiL[ii] = replaceind(psiL[ii], ssL[ii] => ssLn[ii])  
+    Tc[ii] = replaceinds(Tc[ii], ssL[ii] => ssLn[ii]', ssR[ii] => ssRn[ii])
     psiR[ii] = replaceind(psiR[ii], ssR[ii] => ssRn[ii])
   end
 

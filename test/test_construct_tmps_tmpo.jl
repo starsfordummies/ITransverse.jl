@@ -204,7 +204,8 @@ psi_i
 """
 
 
-ss = siteinds("S=1/2", 3, conserve_qns = false)
+#ss = siteinds("S=1/2", 3, conserve_qns = false)
+
 ss = siteinds("S=1/2",3,conserve_szparity=true)
 psi_i = MPS(ss, "Up")
 psi_f = MPS(ss, "Up")
