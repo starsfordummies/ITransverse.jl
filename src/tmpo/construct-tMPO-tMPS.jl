@@ -102,3 +102,95 @@ function construct_tMPS_tMPO(psi_i::MPS, in_Uts::Vector{MPO}, psi_f::MPS;
     return psiL, Tc, psiR
   end
 end
+
+
+
+allsiteinds(A::AbstractMPS) = vcat(siteinds(A)...)
+
+""" Similar to `construct_tMPS_tMPO`, but takes input MPS/MPO larger than 3 and builts the appropriate sets of columns.
+returns left_mps, [list of columns], right mps """
+function construct_tMPS_tMPO_finite(psi_i::MPS, in_Uts::Vector{MPO}, psi_f::MPS; dagger_psif::Bool=true)
+
+  # ensure siteinds match before rotation 
+  psi_i = replace_siteinds(psi_i, firstsiteinds(in_Uts[1]))
+  psi_f = replace_siteinds(psi_f, firstsiteinds(in_Uts[end]))
+
+  siteinds_Ut = [firstsiteinds(Ut) for Ut in in_Uts]
+  if length(unique(siteinds_Ut)) > 1
+    for (ii, Ut) in enumerate(in_Uts)
+      in_Uts[ii] = replace_siteinds(Ut, siteinds_Ut[1])
+    end
+  end
+
+  Nrows = length(in_Uts)
+  Ncols = length(psi_i)
+
+  @info "Nt=$(Nrows) X L=$(Ncols)" 
+
+  # To avoid repeated inds in case we're feeding copies of the same MPO as rows
+  Uts = sim.(linkinds, in_Uts)
+
+  #Incorporate initial and final state in MPOs. 
+  #First remove trivial links from produc states for QN mental sanity
+  ITransverse.ITenUtils.delete_link_from_prodMPS!(psi_i)
+  ITransverse.ITenUtils.delete_link_from_prodMPS!(psi_f)
+
+  if dagger_psif
+    psi_f = dag(psi_f)
+  end
+
+  Uts[1] = applyn(Uts[1], psi_i)
+  Uts[end] = applyns(Uts[end], psi_f)
+
+  #TODO check: do we still need this ? 
+  for ii = 3:Nrows
+    Uts[ii] = prime(siteinds, Uts[ii], ii - 2)
+  end
+
+  Lcol_data = [Uts[ii][1] for ii = (1:Nrows)]
+
+  Ccol_data = []
+  for jj = 2:Ncols-1
+    push!(Ccol_data, [Uts[ii][jj] for ii = (1:Nrows)])
+  end
+  Rcol_data = [Uts[ii][end] for ii = (1:Nrows)]
+
+  psiL = MPS(Lcol_data)
+  Tcs = [MPO(cc) for cc in Ccol_data]
+  psiR = MPS(Rcol_data)
+
+  @info "Building $(length(Tcs)) MPO columns of length $(length(psiR))"
+
+  ssR = siteinds(psiR)
+  ssNew = [noprime(sim(ssR[ii], tags="Site,nt=$(ii)")) for ii = 1:length(ssR)]
+  ssNewP = dag(ssNew')
+
+
+  replace_siteinds!(psiR, ssNew)
+ 
+
+    for Tc in reverse(Tcs)
+        stc = allsiteinds(Tc)
+        ssL = uniqueinds(stc, ssR)
+        @assert length(uniqueinds(stc,ssR)) == length(ssR) "Something likely wrong in index labelling"
+        for ii in eachindex(ssR)
+            Tc[ii] = replaceinds(Tc[ii], ssR[ii] => ssNew[ii], ssL[ii] => ssNewP[ii])
+        end
+        ssR = ssL
+
+    end
+
+    replace_siteinds!(psiL, ssNew)
+
+
+  for col = [psiL, Tcs..., psiR]
+    ll = linkinds(col)
+    for ii in eachindex(ll)
+      lln = noprime(sim(ll[ii], tags="Link,lt=$(ii)"))
+      col[ii] = replaceind(col[ii], ll[ii] => lln)
+      col[ii+1] = replaceind(col[ii+1], ll[ii] => dag(lln))
+    end
+  end
+
+    return psiL, Tcs, psiR
+end
