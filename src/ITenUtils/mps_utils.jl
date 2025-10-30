@@ -1,4 +1,4 @@
-import ITensorMPS: replace_siteinds!
+import ITensorMPS: replace_siteinds!, replace_siteinds
 
 function pMPS(ss::Vector{<:Index}, site_tensor::AbstractVector{<:Number})
     psi = MPS(ss)
@@ -203,7 +203,6 @@ end
 function ITensorMPS.replace_siteinds(W::MPO, new_in_sites, new_out_sites=dag(new_in_sites)')
   replace_siteinds!(copy(W), new_in_sites, new_out_sites)
 end
-
 
 function ITensorMPS.replace_siteinds!(W::MPO, new_in_sites, new_out_sites=dag(new_in_sites)')
   @assert length(new_in_sites) == length(W)
