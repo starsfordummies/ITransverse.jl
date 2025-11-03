@@ -16,22 +16,8 @@ end
 """ Shorthand for simple apply(alg="naive"),  """
 function applyn(O::MPO, psi::MPS; kwargs...)
 
-    truncate = false
-    
-    # If :truncp, :cutoff or :maxdim keywords are present, set truncate=true
-    if haskey(kwargs, :truncp)
-        (;cutoff, maxbondim) = kwargs[:truncp]
-        kwargs = (;kwargs..., cutoff=cutoff, maxdim=maxbondim)
-        truncate = true
-    elseif haskey(kwargs, :cutoff) || haskey(kwargs, :maxdim)
-        truncate = true
-    end
-
-    # Override with kwargs truncate if specified explicitly
-    truncate = get(kwargs, :truncate, truncate)
-
     #@show truncate
-    replaceprime(contractn(O, psi; truncate, kwargs...),  1 => 0)
+    replaceprime(contractn(O, psi; kwargs...),  1 => 0)
 end
 
 """ Shorthand for simple apply(alg="naive") - accepts apply kwargs, defaults to truncate=false """
@@ -108,8 +94,26 @@ function contractn(A::MPO, ψ::MPS; truncate, kwargs...)
 
     contract_dangling!(ψ_out)
 
+
+    # truncation logic 
+
+    truncate = get(kwargs, :truncate, truncate)
+    cutoff = nothing
+    maxdim = nothing 
+    
+    # If :truncp, :cutoff or :maxdim keywords are present, set truncate=true
+    if haskey(kwargs, :truncp)
+        (;cutoff, maxbondim) = kwargs[:truncp]
+        kwargs = (;kwargs..., cutoff=cutoff, maxdim=maxbondim)
+        truncate = true
+    end
+
+    if haskey(kwargs, :cutoff) || haskey(kwargs, :maxdim)
+        truncate = true
+    end
+
     if truncate
-        truncate!(ψ_out; kwargs...)
+        truncate!(ψ_out; cutoff, maxdim)
     end
 
     return ψ_out
