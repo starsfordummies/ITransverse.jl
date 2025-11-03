@@ -63,7 +63,7 @@ end
 
 
 """ Copied from ITensorMPS's `contract` but adapted so that it can also extend """
-function contractn(A::MPO, ψ::MPS; truncate, kwargs...)
+function contractn(A::MPO, ψ::MPS; kwargs...)
 
     @assert length(A) >= length(ψ)
 
@@ -97,7 +97,7 @@ function contractn(A::MPO, ψ::MPS; truncate, kwargs...)
 
     # truncation logic 
 
-    truncate = get(kwargs, :truncate, truncate)
+    truncate = get(kwargs, :truncate, false)
     cutoff = nothing
     maxdim = nothing 
     
