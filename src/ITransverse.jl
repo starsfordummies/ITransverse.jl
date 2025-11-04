@@ -82,8 +82,8 @@ export construct_tMPS_tMPO
 include("tmpo/tmpo_params.jl")
 export tMPOParams, ising_tp
 
-include("tmpo/build_expH.jl")
 
+include("tmpo/build_expH.jl")
 
 include("tmpo/build_ww.jl")
 
@@ -93,6 +93,8 @@ include("tmpo/fw_tmpo_blocks.jl")
 include("tmpo/fold_tmpo_blocks.jl")
 
 export FoldtMPOBlocks, FwtMPOBlocks
+
+
 
 include("tmpo/build_fw_tmpo.jl")
 
@@ -111,6 +113,8 @@ export
     folded_left_tMPS,
     folded_right_tMPS,
     folded_tMPO_in
+
+include("tmpo/build_Ut.jl")
 
 include("columns_envs/columns.jl")
 
@@ -139,7 +143,6 @@ export powermethod_sym
 
 include("generic/contract_finite.jl")
 
-export contract_finite
 
 include("generic/expvals_lr.jl")
 export expval_LR, compute_expvals
