@@ -50,7 +50,7 @@ function contract_strings(N::Int, length_string::Int, ts::Int, nbeta::Int)
 
     trunc_method = "RDM"
 
-    overlap = contract_finite(left_tmps, mpo_list, right_tmps)
+    overlap = contract_tn_transverse(left_tmps, mpo_list, right_tmps)
     # @info normalization
     # @info temp1
     # @info temp2

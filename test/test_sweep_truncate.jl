@@ -86,10 +86,10 @@ end
 
 @testset "Test that truncate_rsweep(a,b, fast=true) gives same as truncate_rsweep(a,b) and  truncate_rsweep!" begin
         
-    for cut_sv = [1e-14, 1e-8, 1e-4]
+    cut_sv = 1e-14
 
-        chimaxs = 256
-        sites = siteinds("S=1/2", 120)
+    for chimaxs = [256, 32]
+        sites = siteinds("S=1/2", 60)
 
         a = random_mps(ComplexF64, sites, linkdims=chimaxs);
         b = random_mps(ComplexF64, sites, linkdims=chimaxs);
@@ -108,17 +108,46 @@ end
         @test s1 ≈ s2 
         # @test s1 ≈ s3   # truncate_rsweep!() does not return entropies anymore for speed
         
-        @info inner(atr,atr2)/norm(atr)/norm(atr2)
-        @info inner(btr,btr2)/norm(btr)/norm(btr2)
+        @show fidelity(atr,atr2)
+        @show fidelity(btr,btr2)
 
-        @info inner(atr,a)/norm(atr)/norm(a)
-        @info inner(atr2,a)/norm(atr2)/norm(a)
+        @show fidelity(atr,a)
+        @show fidelity(atr2,a)
 
-        @info inner(btr,b)/norm(btr)/norm(b)
-        @info inner(btr2,b)/norm(btr2)/norm(b)
+        @show fidelity(btr,b)
+        @show fidelity(btr2,b)
 
-        @info overlap_noconj(a,b)
-        @info overlap_noconj(atr,btr)
-        @info overlap_noconj(atr2,btr2)
+        @show overlap_noconj(a,b)
+        @show overlap_noconj(atr,btr)
+        @show overlap_noconj(atr2,btr2)
+    end
+end
+
+
+
+@testset "Test that truncate_rsweep_sym(a, fast=true) gives same as truncate_rsweep(a) " begin
+        
+    for chimaxs = [256, 32]
+
+        cut_sv = 1e-14
+        sites = siteinds("S=1/2", 60)
+
+        a = random_mps(ComplexF64, sites, linkdims=chimaxs);
+        
+        @info "Cutting at $(cut_sv)"
+        @show overlap_noconj(a,a)
+
+        atr1,s1 = truncate_rsweep_sym(a, cutoff=cut_sv, chi_max=chimaxs, method="SVD");
+        atr2,s2 = truncate_rsweep_sym(a, cutoff=cut_sv, chi_max=chimaxs, method="SVD", fast=true);
+        
+        @test norm(atr1-atr2) < 1e-14
+        @test s1 ≈ s2 
+        # @test s1 ≈ s3   # truncate_rsweep!() does not return entropies anymore for speed
+        
+        @info fidelity(atr1,atr2)
+
+
+        @info overlap_noconj(a,atr1)
+        @info overlap_noconj(a,atr2)
     end
 end

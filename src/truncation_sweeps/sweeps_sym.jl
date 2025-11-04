@@ -83,7 +83,7 @@ end
 
 
 """ Bring the MPS to symmetric right generalized canonical form """
-function truncate_rsweep_sym(in_psi::MPS; cutoff::Float64, chi_max::Int, method::String)
+function truncate_rsweep_sym(in_psi::MPS; cutoff::Float64, chi_max::Int, method::String, fast::Bool=false)
 
     mpslen = length(in_psi)
     elt = eltype(in_psi[1])
@@ -116,11 +116,18 @@ function truncate_rsweep_sym(in_psi::MPS; cutoff::Float64, chi_max::Int, method:
             U = F.U
             S = F.S
 
-            sqS = S.^(0.5)
-            isqS = sqS.^(-1)
+            XU = dag(U)
+            XUinv = U
+
+            if fast 
+                right_env /= sum(S)
+            else
+                sqS = S.^(0.5)
+                isqS = sqS.^(-1)
             
-            XU = dag(U) * isqS
-            XUinv = sqS * U
+                XU = XU * isqS
+                XUinv = sqS * XUinv
+            end
 
         elseif method == "EIG"
             F = symm_oeig(right_env, ind(right_env,1); cutoff)
@@ -146,9 +153,8 @@ function truncate_rsweep_sym(in_psi::MPS; cutoff::Float64, chi_max::Int, method:
         #  right_env = delta(inds(right_env))
 
 
-        # convert to CPU to avoid headaches
-        # If we build "SVD" generalized entropy, normalize them to one 
-        S = NDTensors.cpu(S./sum(S))
+        # If we build "SVD" generalized entropy, normalize SV to one 
+        S = S/sum(S)
         ents_sites[ii-1] =  scalar(-S*log.(S))
     end
 
