@@ -172,7 +172,6 @@ end
 
 """
 Generalized entropy for a *symmetric* environment (psiL,psiL)
-    Assuming we're in LEFT GENERALIZED canonical form 
 """
 function generalized_svd_vn_entropy_symmetric(psi::MPS)
 
