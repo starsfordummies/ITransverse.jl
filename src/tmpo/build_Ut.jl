@@ -9,25 +9,10 @@ end
 
 
 """ WIP: from b to U(t) MPO """ 
-function UtMPO(ss::Vector{<:Index}, b::T, imag::Bool=false) where T 
-    Wl, Wc, Wr = get_Ws(b; imag)
-    ri = b.rot_inds
-
-    Nx = length(ss)
-
-    links = [sim(ri[:R], tags="Link,l=$(ii)") for ii = 1:Nx-1]
+function UtMPO(ss::Vector{<:Index}, b::FwtMPOBlocks, imag::Bool=false) 
+    tp = b.tp
+    w = tp.expH_func(ss, tp.mp, tp.dt)
     
-    @show links 
-
-    out_w = MPO(repeat(Wc,Nx))
-
-    out_w[1] = replaceinds(Wl, ri[:R] => links[1], ri[:P] => ss[1], ri[:Ps] => ss[1]' )
-    for ii in 2:length(ss)-1 
-        replaceinds!(out_w[ii], ri[:L] => dag(links[ii-1]), ri[:R] => links[ii], ri[:P] => ss[ii],  ri[:Ps] => ss[ii]')
-    end
-    out_w[end] = replaceinds(Wr,  ri[:R] => dag(links[end]), ri[:P] => ss[end], ri[:Ps] => ss[end]' )
-
-    return out_w
 end
 
 
