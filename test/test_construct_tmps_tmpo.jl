@@ -185,13 +185,6 @@ end
 
 ########## Playaround
 
-function contract_tetris(bottom_mps::MPS, rows_mpo::Vector{MPO}, top_mps::MPS)
-  overlap = bottom_mps
-  for mm in rows_mpo 
-    overlap = apply(mm, overlap)
-  end
-  overlap = inner(top_mps, overlap)
-end
 
 
 @testset "Another test for the tMPS-tMPO constructor, with QNs" begin
@@ -206,7 +199,7 @@ oo3 = random_mpo(ss) + random_mpo(ss)
 
 Uts = [oo1, oo2, oo3, oo2, oo3]
 
-contraction1 = contract_tetris(psi_i, Uts, psi_f)
+contraction1 = ITransverse.contract_tn_tetris(psi_i, Uts, psi_f)
 
 psiL, Tc, psiR = ITransverse.construct_tMPS_tMPO(psi_i, Uts, psi_f)
 
@@ -231,7 +224,7 @@ oo3 = random_mpo(ss) + random_mpo(ss)
 
 Uts = [oo1, oo2, oo3, oo2, oo3]
 
-contraction1 = contract_tetris(psi_i, Uts, psi_f)
+contraction1 = ITransverse.contract_tn_tetris(psi_i, Uts, psi_f)
 
 psiL, Tc, psiR = ITransverse.construct_tMPS_tMPO_finite(psi_i, Uts, psi_f)
 

@@ -77,24 +77,27 @@ end
 """ Computes the overlap (ll,rr) between two MPS *without* conjugating either one.
 The "generalized norm" of an MPS should be sqrt(overlap_noconj(psi,psi)).
 """
-function overlap_noconj(ll::MPS, rr::MPS)
-    #siteinds(ll) != siteinds(rr) ? rr = replace_siteinds(rr, siteinds(ll)) : nothing
+function overlap_noconj(ll::MPS, rr::MPS; fast::Bool=false)
 
-    #elt = eltype(ll[1])
-    if !ITensorMPS.hassameinds(siteinds, ll, rr)
-        @warn "L and R don't have the same physical indices, correcting "
-        rr = replace_siteinds(rr, siteinds(ll))
+    if !fast 
+        return inner(conj(ll),rr) 
+    else
+
+
+        if !ITensorMPS.hassameinds(siteinds, ll, rr)
+            @warn "L and R don't have the same physical indices, correcting "
+            rr = replace_siteinds(rr, siteinds(ll))
+        end
+
+        ll = sim(linkinds, ll)
+
+        overlap = ll[1] * rr[1]
+        for ii in eachindex(ll)[2:end]
+            overlap = (overlap * rr[ii]) * ll[ii]
+        end
+        
+        return scalar(overlap) #:: ComplexF64
     end
-
-    ll = sim(linkinds, ll)
-
-    overlap = ll[1] * rr[1]
-    for ii in eachindex(ll)[2:end]
-        overlap = (overlap * rr[ii]) * ll[ii]
-    end
-    
-    return scalar(overlap) #:: ComplexF64
-    
 end
 
 
@@ -308,13 +311,13 @@ end
 
 """ Removes trivial links from a product state, inplace version """
 function delete_link_from_prodMPS!(psi::AbstractMPS)
-  if maxlinkdim(psi) == 1
-    ss = siteinds(psi)
-    for ii in eachindex(psi)
-      psi[ii] = ITensor(array(psi[ii]), ss[ii])
+    if maxlinkdim(psi) == 1
+        ss = siteinds(psi)
+        for ii in eachindex(psi)
+            psi[ii] = ITensor(array(psi[ii]), ss[ii])
+        end
     end
-  end
-  return psi
+    return psi
 end
 
 
@@ -367,3 +370,16 @@ function pcombiner(i1::Index, i2::Index; kwargs...)
 end
 
 # ck = combiner(i1,i2)
+
+
+""" This just daggers all the inds of an MPS/MPO, no conjugation is made """
+function daginds!(psi::AbstractMPS)
+    for T in psi 
+        ITensors.setinds!(T, dag(inds(T)))
+    end
+    return psi 
+end
+
+function daginds(psi::AbstractMPS)
+    daginds!(copy(psi))
+end

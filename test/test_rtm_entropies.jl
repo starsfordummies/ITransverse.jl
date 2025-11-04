@@ -114,3 +114,14 @@ end
     
 end
     
+
+@testset "Symmetric renyi2 " begin
+
+    s = siteinds(4, 20)
+    psi = random_mps(ComplexF64, s, linkdims=40)
+
+    r2_contract = gen_renyi2(psi, psi)
+    r2sym = gensym_renyi_entropies(psi)["S2.0"]
+
+    @test isapprox(r2_contract, r2sym)
+end
