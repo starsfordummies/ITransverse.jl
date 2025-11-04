@@ -10,7 +10,7 @@ Power method for *symmetric* case: takes as input a single MPS |L>,
     or compute the symmetric eigenvalue problem of the RTM   (`opt_method=RTM_EIG`)
     and truncate over the (complex, so be mindful..) eigenvalues of the RTM. 
 """
-function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams)
+function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams; fast::Bool=false)
 
     (; itermax, eps_converged, opt_method, truncp, increase_chi, normalization) = pm_params
     (; cutoff, maxbondim) = truncp
@@ -42,7 +42,7 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams)
             sjj = vn_entanglement_entropy(psi_ortho)
         elseif opt_method == "RTM"
             psi = applyn(in_mpo, psi_ortho)
-            psi_ortho, sjj, overlap = truncate_rsweep_sym(psi, cutoff=cutoff, chi_max=maxbondim, method="SVD")
+            psi_ortho, sjj, overlap = truncate_rsweep_sym(psi; cutoff=cutoff, chi_max=maxbondim, method="SVD", fast)
         elseif opt_method == "RTMRDM"
             if jj == div(itermax,2)
                 #increase_chi = false
@@ -55,7 +55,7 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams)
                 psi = applyn(in_mpo, psi_ortho)
                 psi_ortho, sjj, overlap = truncate_rsweep_sym(psi, cutoff=cutoff, chi_max=maxbondim, method="SVD")
             end
-        # TODO this is likely not accurate, remove it ?
+        # TODO this is likely not accurate 
         elseif opt_method == "RTM_EIG"
             psi = applyn(in_mpo, psi_ortho)
             psi_ortho, sjj, overlap = truncate_rsweep_sym(psi, cutoff=cutoff, chi_max=maxbondim, method="EIG")
