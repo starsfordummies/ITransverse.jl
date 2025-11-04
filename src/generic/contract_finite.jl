@@ -1,33 +1,47 @@
-function contract_finite(left_edge::MPS, MPO_list, right_edge::MPS)
+""" Simple transverse contraction: builds Left and Right vectors
+ by applying the first Nhalf MPO to left_edge and the last Nhalf to right_edge """
+function build_LR(left_mps::MPS, mpos_bulk::Vector, right_mps::MPS; cutoff=1e-12, maxdim=512, Nhalf::Int=div(length(mpos_bulk),2))
 
-    LL = length(MPO_list)
-    @assert LL % 2 == 0
+    @info "Total length L=$(1+length(mpos_bulk)+1) Nt(+2) = $(length(left_mps)) half mpo bulk = $(Nhalf+1)"
+    L = left_mps
+    @showprogress for mpo in mpos_bulk[1:Nhalf]
+        L = applyns(mpo, L; cutoff, maxdim)
+    end
 
-    cutoff = 1e-8
-    maxbondim = 128
-
-    truncp = TruncParams(cutoff, maxbondim)
-
-    ts = [siteind(MPO_list[1], i) for i in eachindex(MPO_list[1])]
-    #left = random_mps(siteinds(MPO_list[1], linkdims=1)) 
-    ll = left_edge
-    rr = right_edge
-
-    p = Progress(div(LL,2) ; showspeed=true)  #barlen=40
-
-    for jj = 1:div(LL,2)
-        ll = applys(MPO_list[jj], rr; cutoff, maxdim=maxbondim)
-        rr = apply(MPO_list[LL-jj+1], rr; cutoff, maxdim=maxbondim)
-
-        next!(p; showvalues = [(:Info,"chi=$(maxlinkdim(rr))" )])
+    R = right_mps
+    @showprogress for mpo in reverse(mpos_bulk[Nhalf+1:end])
+        R = apply(mpo, R; cutoff, maxdim)
 
     end
 
-    overlap_noconj(ll,rr)
-
+    return L, R
 end
 
 
+""" Simple transverse contraction: applies the first Nhalf MPO to left_edge and the last Nhalf to right_edge, using build_LR(),
+then computes their overlap """
+function contract_tn_transverse(left_edge::MPS, MPO_list::Vector{MPO}, right_edge::MPS; kwargs...)
+
+    ll, rr = build_LR(left_edge, MPO_list, right_edge; kwargs...)
+    overlap_noconj(ll,rr)
+end
+
+""" Traditional contraction scheme: applies all N rows of rows_mpo to bottom_mps and computes <top_mps|evolved bottom mps>, 
+so the order of rows is from bottom to top """
+function contract_tn_tetris(bottom_mps::MPS, rows_mpo::Vector{MPO}, top_mps::MPS)
+
+    cutoff = 1e-10
+    maxdim = 512
+
+    overlap = bottom_mps
+    for mm in rows_mpo 
+        overlap = apply(mm, overlap; cutoff, maxdim)
+    end
+    overlap = inner(top_mps, overlap)
+end
+
+
+""" One simple step of power method, just applies in_mpo to rr using RDM and computes its VN entropy"""
 function pm_step(in_mpo::MPO, rr::MPS, truncp::TruncParams)
     cutoff = truncp.cutoff
     maxdim = truncp.maxbondim
@@ -38,3 +52,5 @@ function pm_step(in_mpo::MPO, rr::MPS, truncp::TruncParams)
     return rr, sjj
 
 end
+
+
