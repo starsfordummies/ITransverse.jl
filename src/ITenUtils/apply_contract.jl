@@ -16,7 +16,6 @@ end
 """ Shorthand for simple apply(alg="naive"),  """
 function applyn(O::MPO, psi::MPS; kwargs...)
 
-    #@show truncate
     replaceprime(contractn(O, psi; kwargs...),  1 => 0)
 end
 
@@ -108,11 +107,16 @@ function contractn(A::MPO, ψ::MPS; kwargs...)
         truncate = true
     end
 
-    if haskey(kwargs, :cutoff) || haskey(kwargs, :maxdim)
+    if haskey(kwargs, :cutoff) 
+        cutoff = kwargs[:cutoff]
+    end
+    if haskey(kwargs, :maxdim)
+        maxdim = kwargs[:maxdim]
         truncate = true
     end
 
     if truncate
+        #@info "truncating, $(cutoff) - $(maxdim)"
         truncate!(ψ_out; cutoff, maxdim)
     end
 
