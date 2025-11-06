@@ -205,7 +205,7 @@ function gen_tsallis2(psi::MPS, phi::MPS; normalization="overlap")
     elseif normalization == "norm"
         normalize(psi), normalize(phi)
     else
-        @info "Unknown normalization $(normalization), not normalizing"
+        @info "Normalization = $(normalization) => not normalizing"
         psi, phi
     end
     

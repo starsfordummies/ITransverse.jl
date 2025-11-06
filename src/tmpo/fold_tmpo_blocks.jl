@@ -142,14 +142,22 @@ function get_Ws(b::FoldtMPOBlocks; imag::Bool=false)
 end
 
 
-Adapt.adapt_structure(to, b::FoldtMPOBlocks) = FoldtMPOBlocks(
-    adapt(to, b.WWl), 
-    adapt(to, b.WWc), 
-    adapt(to, b.WWr),
-    adapt(to, b.WWl_im), 
-    adapt(to, b.WWc_im), 
-    adapt(to, b.WWr_im),
-    adapt(to, b.rho0),
-    adapt(to, b.tp), 
-    b.rot_inds
-)
+Adapt.@adapt_structure FoldtMPOBlocks
+
+# Adapt.adapt_structure(to, b::FoldtMPOBlocks) = FoldtMPOBlocks(
+#     adapt(to, b.WWl), 
+#     adapt(to, b.WWc), 
+#     adapt(to, b.WWr),
+#     adapt(to, b.WWl_im), 
+#     adapt(to, b.WWc_im), 
+#     adapt(to, b.WWr_im),
+#     adapt(to, b.rho0),
+#     adapt(to, b.tp), 
+#     b.rot_inds
+# )
+
+
+function Base.show(io::IO, b::FoldtMPOBlocks)
+    println(io, "*Folded* tMPO Blocks, type $(NDTensors.unwrap_array_type(b.WWc))")
+    println(io, b.tp)
+end

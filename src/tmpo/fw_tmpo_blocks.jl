@@ -106,6 +106,7 @@ end
 
 
 
+
 Adapt.adapt_structure(to, b::FwtMPOBlocks) = FwtMPOBlocks(
     adapt(to, b.Wl), 
     adapt(to, b.Wc), 
@@ -116,3 +117,9 @@ Adapt.adapt_structure(to, b::FwtMPOBlocks) = FwtMPOBlocks(
     adapt(to, b.tp), 
     b.rot_inds
 )
+
+
+function Base.show(io::IO, b::FwtMPOBlocks)
+    println(io, "fw tMPO Blocks, type $(NDTensors.unwrap_array_type(b.Wc))")
+    println(io, b.tp)
+end
