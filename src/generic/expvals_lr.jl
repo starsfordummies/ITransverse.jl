@@ -3,9 +3,7 @@ in a supposedly efficient way. No normalization and no compression is done here.
 function expval_LR(ll::MPS, op_mpo::MPO, rr::MPS; match_inds::Bool=false)
 
     if match_inds
-        if siteinds(ll) != siteinds(rr)
-             rr = replace_siteinds(rr, siteinds(ll)) 
-        end
+        op_mpo = replace_siteinds(op_mpo, siteinds(rr), siteinds(ll)')
     end
 
     nL = length(ll)
