@@ -10,7 +10,7 @@ Power method for *symmetric* case: takes as input a single MPS |L>,
     or compute the symmetric eigenvalue problem of the RTM   (`opt_method=RTM_EIG`)
     and truncate over the (complex, so be mindful..) eigenvalues of the RTM. 
 """
-function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams; fast::Bool=false)
+function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams; fast::Bool=false, compute_fidelity::Bool=true)
 
     (; itermax, eps_converged, opt_method, truncp, increase_chi, normalization) = pm_params
     (; cutoff, maxbondim) = truncp
@@ -28,6 +28,12 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams; fast::Bo
     maxbondim = 20 
 
     for jj = 1:itermax
+
+        if compute_fidelity
+            psi_prev = copy(psi_ortho)
+            prev_norm = norm(psi_prev)
+        end
+
 
         if increase_chi
             maxbondim += 2
@@ -55,7 +61,7 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams; fast::Bo
                 psi = applyn(in_mpo, psi_ortho)
                 psi_ortho, sjj, overlap = truncate_rsweep_sym(psi, cutoff=cutoff, chi_max=maxbondim, method="SVD")
             end
-        # TODO this is likely not accurate 
+        #  TODO this can be less accurate
         elseif opt_method == "RTM_EIG"
             psi = applyn(in_mpo, psi_ortho)
             psi_ortho, sjj, overlap = truncate_rsweep_sym(psi, cutoff=cutoff, chi_max=maxbondim, method="EIG")
@@ -65,25 +71,29 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams; fast::Bo
             
 
         if normalization == "norm"
-            orthogonalize!(psi_ortho,1)
+            #orthogonalize!(psi_ortho,1)
             normalize!(psi_ortho)
-        else
+        elseif normalization == "overlap"
             # normalize so that <L|R> = 1 
-            psi_ortho[1] /= sqrt(overlap)
+            psi_ortho = psi_ortho / sqrt(overlap)
+        end # otherwise we do nothing
+
+        fidelity = if compute_fidelity 
+           abs( log(abs(inner(psi_ortho, psi_prev))) - log(norm(psi_ortho)) - log(norm(psi_prev)) ) / length(psi_ortho)
+        else 
+            NaN
         end
-        
 
         ds2 = norm(sprevs - sjj)
-        push!(ds2s, ds2)
+        push!(ds2s, [ds2, fidelity])
 
         sprevs = sjj
 
-        next!(p; showvalues = [(:Info,"[$(jj)] ds2=$(ds2), chi=$(maxlinkdim(psi_ortho))" )])
+        next!(p; showvalues = [(:Info,"[$(jj)] ds2=$(ds2), <R|Rprev> = $(fidelity), chi=$(maxlinkdim(psi_ortho))" )])
 
         if ds2 < eps_converged
             break
         end
-
 
     end
 

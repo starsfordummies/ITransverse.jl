@@ -321,17 +321,19 @@ function delete_link_from_prodMPS!(psi::AbstractMPS)
 end
 
 
-function fidelity(psi::MPS, phi::MPS)
-    phi = copy(phi)
-    match_siteinds!(psi, phi)
+function fidelity(psi::MPS, phi::MPS; match_inds::Bool=true)
+    if match_inds 
+        phi = replace_siteinds(phi, siteinds(psi))
+    end
     return sqrt(abs2(inner(psi,phi))/norm(psi)^2/norm(phi)^2) 
 end
 
 """ Returns log10-fidelity *per site* of two MPS """
-function logfidelity(psi::MPS, phi::MPS)
-    phi = copy(phi)
-    match_siteinds!(psi, phi)
-    return (log10(abs(inner(psi,phi))) -log10(norm(psi)) - log10(norm(phi)))/length(psi)
+function logfidelity(psi::MPS, phi::MPS; match_inds::Bool=true)
+    if match_inds 
+        phi = replace_siteinds(phi, siteinds(psi))
+    end
+    return (log10(abs(inner(psi,phi))) -log10(norm(psi)) - log10(norm(phi))) / length(psi)
 end
 
 """ Measures infidelity 1 - |<psi|phi>|^2/(<psi|psi><phi|phi>) """
