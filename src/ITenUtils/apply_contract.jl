@@ -62,7 +62,7 @@ end
 
 
 """ Copied from ITensorMPS's `contract` but adapted so that it can also extend """
-function contractn(A::MPO, ψ::MPS; kwargs...)
+function contractn(A::MPO, ψ::MPS; preserve_tags_mps::Bool=false, kwargs...)
 
     @assert length(A) >= length(ψ)
 
@@ -85,7 +85,8 @@ function contractn(A::MPO, ψ::MPS; kwargs...)
         ψl = linkinds(ψ, b) #   commoninds(ψ[b], ψ[b + 1])
         l = [Al..., ψl...]
         if !isempty(l)
-            C = combiner(l)
+            ttag = preserve_tags_mps ? tags(linkind(ψ, b)) : "CMB,Link,l=$(b)"
+            C = combiner(l, tags=ttag)
             ψ_out[b] *= C
             ψ_out[b + 1] *= dag(C)
         end
