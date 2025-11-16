@@ -35,23 +35,29 @@ by applying the relevant MPO to the resulting leading eigenvectors.
 """
 function powermethod_op(in_mps::MPS, in_mpo_1::MPO, in_mpo_O::MPO, pm_params::PMParams)
 
-    (; opt_method, itermax, eps_converged, truncp, normalization) = pm_params
+    (; opt_method, itermax, eps_converged, truncp, normalization, compute_fidelity) = pm_params
     (; cutoff, maxbondim) = truncp
+
+    # Normalize eps_converged by system size or larger chains will never converge as good...
+    eps_converged = eps_converged * length(in_mps)
+  
 
     ll = deepcopy(in_mps)
     rr = deepcopy(in_mps)
 
 
     sprevs = fill(1., length(in_mps)-1)
-    LRprev = overlap_noconj(in_mps,in_mps)
+    #LRprev = overlap_noconj(in_mps,in_mps)
 
-    p = Progress(itermax; desc="[PM|$(opt_method)] L=$(length(ll)), cutoff=$(cutoff), maxbondim=$(maxbondim))", showspeed=true) 
+    p = Progress(itermax; desc="[PM|$(opt_method)] L=$(length(ll)), cutoff=$(cutoff), maxbondim=$(maxbondim), normalize=$(normalization)", showspeed=true) 
 
     info_iterations = Dict(:ds2 => ComplexF64[], :logfidelityRRnew => Float64[], :LRdiff => ComplexF64[] )
 
     for jj = 1:itermax  
 
-        rr_prev = copy(rr)
+        if compute_fidelity
+            rr_prev = copy(rr)
+        end
 
         # When do we normalize? Here I choose to do it at the beginning of each iteration 
 
@@ -123,15 +129,15 @@ function powermethod_op(in_mps::MPS, in_mpo_1::MPO, in_mpo_O::MPO, pm_params::PM
 
 
 
-        LRnew = overlap_noconj(ll,rr)
-        push!(info_iterations[:LRdiff], abs(LRnew-LRprev))
-        LRprev = LRnew
+        # LRnew = overlap_noconj(ll,rr)
+        # push!(info_iterations[:LRdiff], abs(LRnew-LRprev))
+        # LRprev = LRnew
    
         ds2 = norm(sprevs - sjj)
         push!(info_iterations[:ds2], ds2)
         sprevs = sjj
 
-        logfidelityRRnew = logfidelity(rr_prev,rr)
+        logfidelityRRnew = compute_fidelity ? logfidelity(rr_prev,rr) : NaN
 
         push!(info_iterations[:logfidelityRRnew], logfidelityRRnew)
         
@@ -171,8 +177,11 @@ Truncation params are in pm_params
 """
 function powermethod_both(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::PMParams)
 
-    (; opt_method, itermax, eps_converged, truncp, normalization) = pm_params
+    (; opt_method, itermax, eps_converged, truncp, normalization, compute_fidelity) = pm_params
 
+    # Normalize eps_converged by system size or larger chains will never converge as good...
+    eps_converged = eps_converged * length(in_mps)
+  
     cutoff = truncp.cutoff
     maxdim = truncp.maxbondim
 
@@ -185,7 +194,7 @@ function powermethod_both(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::
     ll = deepcopy(in_mps)
     rr = deepcopy(in_mps)
 
-    p = Progress(itermax; desc="L=$(length(ll)), cutoff=$(truncp.cutoff), maxbondim=$(truncp.maxbondim))", showspeed=true) 
+    p = Progress(itermax; desc="L=$(length(ll)), cutoff=$(truncp.cutoff), χmax=$(truncp.maxbondim), normalize=$(normalization)", showspeed=true) 
 
     for jj = 1:itermax
 
@@ -207,9 +216,9 @@ function powermethod_both(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::
         if normalization == "norm"
             ll = normalize(ll)
             rr = normalize(rr)
-        else
+        elseif normalization == "overlap"
             normalize_for_overlap!(ll,rr)
-        end
+        end  # otherwise do nothing, norms can blow up 
 
         #@show overlap_noconj(ll,rr)
 
@@ -219,11 +228,11 @@ function powermethod_both(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::
 
         sprevs = sjj
 
-        fidelity_step = logfidelity(ll, llprev)
+        fidelity_step = compute_fidelity ? logfidelity(ll, llprev) : NaN
 
-        next!(p; showvalues = [(:Info,"[$(jj)] | ds2=$(ds2) | logfidelity(old|new)) = $(fidelity_step)) | chi=$(maxlinkdim(ll))" )])
+        next!(p; showvalues = [(:Info,"[$(jj)] | ds2=$(ds2) | logfidelity(L|Lnew) = $(fidelity_step) | chi=$(maxlinkdim(ll))" )])
 
-        if ds2 < eps_converged || fidelity_step > 1e-8
+        if ds2 < eps_converged 
             println("converged after $jj steps")
             break
         end

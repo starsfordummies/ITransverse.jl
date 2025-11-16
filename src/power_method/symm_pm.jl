@@ -10,10 +10,13 @@ Power method for *symmetric* case: takes as input a single MPS |L>,
     or compute the symmetric eigenvalue problem of the RTM   (`opt_method=RTM_EIG`)
     and truncate over the (complex, so be mindful..) eigenvalues of the RTM. 
 """
-function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams; fast::Bool=false, compute_fidelity::Bool=true)
+function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams; fast::Bool=false)
 
-    (; itermax, eps_converged, opt_method, truncp, increase_chi, normalization) = pm_params
+    (; itermax, eps_converged, opt_method, truncp, increase_chi, normalization, compute_fidelity) = pm_params
     (; cutoff, maxbondim) = truncp
+
+    # Normalize eps_converged by system size or larger chains will never converge as good...
+    eps_converged = eps_converged * length(in_mps)
   
     # normalize initial boundary for stability
     psi_ortho = normalize(in_mps)
@@ -22,7 +25,7 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams; fast::Bo
     ds2 = 0. 
     sprevs = fill(1., length(in_mps)-1)
 
-    p = Progress(itermax; desc="[Symmetric PM|$(opt_method)] L=$(length(in_mps)), cutoff=$(cutoff), maxbondim=$(maxbondim))", showspeed=true) 
+    p = Progress(itermax; desc="[Symmetric PM|$(opt_method)] L=$(length(in_mps)), cutoff=$(cutoff), χmax=$(maxbondim), normalize=$(normalization))", showspeed=true) 
 
     max_chi = maxbondim
     maxbondim = 20 
@@ -47,6 +50,12 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams; fast::Bo
             overlap = overlap_noconj(psi_ortho, psi_ortho)
             sjj = vn_entanglement_entropy(psi_ortho)
         elseif opt_method == "RTM"
+            # if jj % 200 == 0 
+            #     psi_ortho = apply(in_mpo, psi_ortho; maxdim=maxbondim)
+            #     psi_ortho = apply(in_mpo, psi_ortho; maxdim=maxbondim)
+            #     psi_ortho = apply(in_mpo, psi_ortho; maxdim=maxbondim)
+            #     psi_ortho = apply(in_mpo, psi_ortho; maxdim=maxbondim)
+            # end
             psi = applyn(in_mpo, psi_ortho)
             psi_ortho, sjj, overlap = truncate_rsweep_sym(psi; cutoff=cutoff, chi_max=maxbondim, method="SVD", fast)
         elseif opt_method == "RTMRDM"
@@ -76,7 +85,7 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams; fast::Bo
         elseif normalization == "overlap"
             # normalize so that <L|R> = 1 
             psi_ortho = psi_ortho / sqrt(overlap)
-        end # otherwise we do nothing
+        end # otherwise we do nothing - norm can blow up! 
 
         fidelity = if compute_fidelity 
            abs( log(abs(inner(psi_ortho, psi_prev))) - log(norm(psi_ortho)) - log(norm(psi_prev)) ) / length(psi_ortho)
@@ -91,6 +100,7 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams; fast::Bo
 
         next!(p; showvalues = [(:Info,"[$(jj)] ds2=$(ds2), <R|Rprev> = $(fidelity), chi=$(maxlinkdim(psi_ortho))" )])
 
+        # Check convergence 
         if ds2 < eps_converged
             break
         end
