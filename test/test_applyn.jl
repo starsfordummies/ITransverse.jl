@@ -8,6 +8,87 @@ b = FoldtMPOBlocks(ising_tp())
 ss = siteinds(4, 10)
 
 
+@testset "applyn/contractn" begin
+    psi = random_mps(ss, linkdims=7)
+    oo = random_mpo(ss) + random_mpo(ss)
+    oo2 = random_mpo(ss) + random_mpo(ss)
+
+    opsi1 = applyn(oo, psi)
+    opsi2 = apply(oo, psi, alg="naive")
+
+    @test opsi1 ≈ opsi2
+
+    oo3 = applyn(oo, oo2)
+    oo4 = apply(oo,oo2; alg="naive", truncate=false)
+
+    @test oo3 ≈ oo4
+end
+
+
+@testset "Truncations" begin
+    oo = random_mpo(ss) + random_mpo(ss)
+    oo2 = random_mpo(ss) + random_mpo(ss)
+
+    psi = random_mps(ss, linkdims=7)
+
+    for jj = 1:10
+        psi = applyn(oo, psi; maxdim = 12)
+    end
+
+    @test maxlinkdim(psi) <= 12
+
+    psi = random_mps(ss, linkdims=2)
+
+    for jj = 1:6
+        psi = applyn(oo, psi; cutoff=1e-6)
+    end
+
+    @test maxlinkdim(psi) < 2^7
+
+
+    tp = TruncParams(1e-20, 24)
+
+    psi = random_mps(ss, linkdims=2)
+
+    for jj = 1:7
+        psi = applyn(oo, psi; truncp=tp)
+    end
+
+    @test maxlinkdim(psi) <= 24
+
+    # Now applyns()
+
+    psi = random_mps(ss, linkdims=7)
+
+    for jj = 1:10
+        psi = applyns(oo, psi; maxdim = 12)
+    end
+
+    @test maxlinkdim(psi) <= 12
+
+    psi = random_mps(ss, linkdims=2)
+
+    for jj = 1:6
+        psi = applyns(oo, psi; cutoff=1e-6)
+    end
+
+    @test maxlinkdim(psi) < 2^7
+
+
+    tp = TruncParams(1e-20, 24)
+
+    psi = random_mps(ss, linkdims=2)
+
+    for jj = 1:7
+        psi = applyns(oo, psi; truncp=tp)
+    end
+
+    @test maxlinkdim(psi) <= 24
+
+
+end
+
+
 n_ext = 3 
 
 oooR = ITransverse.folded_tMPO_ext(b, ss; LR=:right, n_ext, fold_op=[1,0,0,-1])
