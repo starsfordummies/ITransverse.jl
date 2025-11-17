@@ -4,7 +4,10 @@ using Test
 
 using ITransverse: up_state
 
+
 @testset "Test computing exp. values using symmetries, folded and unfolded" begin 
+
+
 
 Lx = 20
 Nt = 12
@@ -35,9 +38,6 @@ end
 
 expect(psiT, "Z")[div(length(psiT)+1,2)]
 
-
-
-## Now with QN conservation 
 
 ss = siteinds("S=1/2", Lx; conserve_szparity=true)
 
@@ -73,21 +73,22 @@ siteinds(vo_local_ops)[1]
 @test isapprox(expect(psiT, "Z")[div(length(psiT)+1,2)] , inner(rhoT, vo_local_ops); rtol=1e-4)
 
 
+Nt = 12
 
-# Now transverse builder 
-
-ss = siteinds("S=1/2", 3; conserve_szparity=true)
-
-psi0 = MPS(ss, "Up")
-
-Ut_sym = ITransverse.ChainModels.build_expH_ising_murg_new(ss, mp, 0.1)
-UUt_sym = ITransverse.folded_UUt(Ut_sym)
-UUt_sym2 = ITransverse.folded_UUt(Ut_sym)
+mp = IsingParams(1, 0.7, 0)
 
 
+ss3 = siteinds("S=1/2", 3; conserve_szparity=true)
 
+
+psi0 = MPS(ss3, "Up")
 rho0 = outer(psi0,dag(psi0)')
 rho0v, combis = ITransverse.ITenUtils.vectorize_mpo(rho0)
+
+
+Ut_sym = ITransverse.ChainModels.build_expH_ising_murg_new(ss3, mp, 0.1)
+UUt_sym = ITransverse.folded_UUt(Ut_sym)
+UUt_sym2 = ITransverse.folded_UUt(Ut_sym)
 
 local_ops = [op("I", s) for s in siteinds(psi0)]
 #local_ops[div(length(rhoT)+1,2)] = op("Z", siteind(psi0, div(length(psi0)+1,2)))
@@ -102,6 +103,7 @@ vo_local_ops = replace_siteinds(vo_local_ops, siteinds(rho0v))
 
 
 @test inner(vo_local_ops, apply(UUt_sym, replace_siteinds(rho0v, firstsiteinds(UUt_sym)))) ≈ 1 
+
 
 
 psiL, Tc, psiR = ITransverse.construct_tMPS_tMPO(rho0v, fill(UUt_sym, Nt), vo_local_ops)
@@ -120,8 +122,8 @@ lleft = psiL
 rright = psiR
 
 for jj = 1:div(Lx,2)
-    lleft = applyns(Tc, lleft, cutoff=1e-12)
-    rright = applyn(Tc, rright, cutoff=1e-12)
+    lleft = applyns(Tc, lleft; cutoff=1e-12)
+    rright = applyn(Tc, rright; cutoff=1e-12)
 end
 
 rright = replace_siteinds(rright, firstsiteinds(Tc_Z))
