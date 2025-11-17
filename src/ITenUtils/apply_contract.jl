@@ -15,10 +15,14 @@ end
 
 """ Shorthand for simple apply(alg="naive"),  """
 function applyn(O::MPO, psi::MPS; kwargs...)
-
-    replaceprime(contractn(O, psi; kwargs...),  1 => 0)
+    replaceprime(contractn(O, sim(linkinds, psi); kwargs...),  1 => 0)
 end
 
+function applyn(O::MPO, Q::MPO; kwargs...)
+    replaceprime(contractn(O', Q; kwargs...),  2 => 1)
+end
+
+#= 
 """ Shorthand for simple apply(alg="naive") - accepts apply kwargs, defaults to truncate=false """
 function applyn(A::MPO, B::MPO; kwargs...)
 
@@ -39,16 +43,15 @@ function applyn(A::MPO, B::MPO; kwargs...)
     #@show truncate
     apply(A, B, alg="naive"; truncate, kwargs...)
 end
+=#
 
 
-
-""" Shorthand for apply with no truncation + swap indices """
+""" Shorthand for applyn + swap indices """
 function applyns(O::MPO, psi::MPS; kwargs...)
     applyn(O, prime(siteinds,psi); kwargs...)
-    #apply(swapprime(O, 0, 1, "Site"), psi, alg="naive", truncate=false)
-    #replaceprime(contractn(O, prime(siteinds,psi); kwargs...), 1 => 0)
 end
 
+# TODO Check: For MPOs, applyns(A,B) = applyn(B,A) ? 
 
 
 """ If we have dangling tensors at the right edge of an MPS """
@@ -62,12 +65,12 @@ end
 
 
 """ Copied from ITensorMPS's `contract` but adapted so that it can also extend """
-function contractn(A::MPO, ψ::MPS; preserve_tags_mps::Bool=false, kwargs...)
+function contractn(A::MPO, ψ::AbstractMPS; preserve_tags_mps::Bool=false, kwargs...)
 
     @assert length(A) >= length(ψ)
 
-    A = sim(linkinds, A)
-    ψ = sim(linkinds, ψ)
+    #A = sim(linkinds, A)
+    #ψ = isa(ψ, MPO) ? ψ' : sim(linkinds, ψ)
 
     N = max(length(A), length(ψ)) 
     n = min(length(A), length(ψ))
@@ -95,7 +98,7 @@ function contractn(A::MPO, ψ::MPS; preserve_tags_mps::Bool=false, kwargs...)
     contract_dangling!(ψ_out)
 
 
-    # truncation logic 
+    # truncation logic. Priority is explicit kwargs over TruncParams
 
     truncate = get(kwargs, :truncate, false)
     cutoff = nothing
@@ -110,6 +113,7 @@ function contractn(A::MPO, ψ::MPS; preserve_tags_mps::Bool=false, kwargs...)
 
     if haskey(kwargs, :cutoff) 
         cutoff = kwargs[:cutoff]
+        truncate = true
     end
     if haskey(kwargs, :maxdim)
         maxdim = kwargs[:maxdim]
