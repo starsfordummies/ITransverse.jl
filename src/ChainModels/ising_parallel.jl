@@ -145,10 +145,8 @@ function build_expH_ising_murg_new(p::IsingParams, dt::Number)
 end
 
 
-function build_expXX_murg(
-    sites::Vector{<:Index},
-    Jdt::Number)
-    """ Symmetric version of Murg exp(-iHising t) """
+""" Symmetric version (Murg) of Murg exp(+i Jdt*XX ) """
+function build_expXX_murg(sites::Vector{<:Index}, Jdt::Number)
 
     # For real dt this does REAL time evolution 
     # I should have already taken into account both the - sign in exp(-iHt) 
@@ -444,4 +442,24 @@ function build_expH_ising_murg_new_from_blocks(
     U_t = MPO(mpo_tensors)
 
     return U_t
+end
+
+
+
+""" Floquet Ising exp(-iJXX -iλX)exp(-igZ) """
+function build_expH_ising_floquet(sites::Vector{<:Index}, JXX::Real, gz::Real, λx::Real)
+
+    Uxx = build_expXX_murg(sites, -JXX)
+
+    # Recall Ra(theta) = exp(-i sigma_a(theta/2))
+    Ux = MPO([op(s, "Rx", θ=2*λx) for s in sites])
+    Uz = MPO([op(s, "Rz", θ=2*gz) for s in sites])
+
+    # Multiply in order:  exp(iZ/2)*exp(iX)*exp(iXX)*exp(iZ/2)
+    
+    U_t = iszero(λx) ? Uxx : applyn(Ux, Uxx) 
+    U_t = iszero(gz) ? U_t : applyn(Uz, U_t) 
+
+    return U_t
+
 end

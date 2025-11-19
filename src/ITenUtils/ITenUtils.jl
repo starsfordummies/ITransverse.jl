@@ -52,7 +52,7 @@ export mergedicts!, mergedicts, dictfromlist
 
 #from utils.jl
 export quick_mps, quick_mpo, pMPS,
-    quick_psipsio, myrMPO,
+    myrMPO,
     overlap_noconj, 
     check_symmetry_itensor_mpo, 
     check_symmetry_swap,
@@ -85,7 +85,8 @@ export symmetrize,
     vectorized_identity,
     itensor_to_vector,
     to_itensor,
-    vectorized_op
+    vectorized_op,
+    vectorize_mpo
 
 # gen_svdeig_symm.jl
 export
