@@ -120,7 +120,11 @@ end
 
 
 function renyi_entropies(in_psi::MPS; which_ents = [0.5, 1, 2])
-
     renyi_entropies(diagonalize_rdm(in_psi); which_ents)
-    
+end
+
+
+function renyi_entropies(in_w::MPO; which_ents = [0.5, 1, 2])
+    w_vectorized, combiners = vectorize_mpo(in_w)
+    renyi_entropies(diagonalize_rdm(w_vectorized); which_ents)
 end
