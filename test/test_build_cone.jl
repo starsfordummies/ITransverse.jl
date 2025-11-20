@@ -18,7 +18,7 @@ end
 
 
 
-
+@testset "Check that init_cone full vs triangular give the same result" begin
 tp = ising_tp()
 b = FoldtMPOBlocks(tp)
 nn = 6
@@ -28,3 +28,21 @@ c0_tri = init_cone(b, nn; full=false)
 #c0_alt = alt_init_cone(siteinds(c0), b, nn)
 
 @test fidelity(c0_full,c0_tri) ≈ 1 
+end
+
+@testset "Check init_cone(mps, mpo)" begin
+
+    tp = ising_tp()
+    b = FoldtMPOBlocks(tp)
+    nn = 6
+    ts = siteinds(4, nn)
+    psi = folded_tMPS(b, ts)
+    m = folded_tMPO(b,ts)
+
+    c0_mpsi = init_cone(psi, m)
+
+    c0_tri = init_cone(b, nn; full=false)
+
+    @test fidelity(c0_mpsi,c0_tri) ≈ 1 
+
+end

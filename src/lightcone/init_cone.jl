@@ -54,3 +54,13 @@ function init_cone(b::FoldtMPOBlocks, ts::Vector{Index{Int64}}; LR::Symbol, full
     return psi
 end
 
+# Alternatively, apply a column Nt times to the edge and it should be enough
+function init_cone(edge::MPS, column::MPO)
+    
+    Nt = length(edge)
+    for _ = 1:Nt
+        edge = apply(column, edge)
+    end
+
+    return edge
+end
