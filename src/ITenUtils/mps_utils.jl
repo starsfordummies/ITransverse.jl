@@ -396,3 +396,22 @@ function vectorized_local_op(ss::Vector{<:Index}; local_op::String="Id", site_op
 
     vo_local_ops, combiners = vectorize_mpo(o_local_ops)
 end
+
+""" ED for *short* MPOs """ 
+function diagonalize_mpo(w::MPO)
+    LL = length(w)
+    @assert LL <= 6 "this may blow up"
+
+    wcomb = w[1]
+    for jj = 2:LL
+        wcomb *= w[jj]
+    end
+
+    cs = combiner(firstsiteinds(w)...)
+
+    wcomb = wcomb * cs
+    wcomb = wcomb * cs' 
+
+    vals, vecs = eigen(wcomb, combinedind(cs), combinedind(cs)')
+
+end
