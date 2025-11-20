@@ -96,3 +96,12 @@ function beta_lims(Ntot::Int, nbeta::Int, init_beta_only::Bool)
 
     return b1,b2
 end
+
+""" Pretty(?) printing of an array truncating epsilons """
+function choparr(arr::AbstractArray; tol=1e-12)
+    return [abs(real(z)) < tol && abs(imag(z)) < tol ? 0 + 0im :
+            abs(real(z)) < tol ? 0 + imag(z)*im :
+            abs(imag(z)) < tol ? real(z) + 0im :
+            z for z in arr]
+end
+choparr(ten::ITensor; kwargs...) = choparr(array(ten), kwargs...)
