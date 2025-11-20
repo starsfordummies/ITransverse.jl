@@ -1,4 +1,4 @@
-""" Applies MPO to MPS from the other side: 
+""" Applies MPO to MPS from the other side (p' MPO leg, leaving open the p leg): 
 instead of 
 
 ``` psi--(p)-(p)--[O]--(p')-- =  Opsi--(p)-- ```
@@ -22,29 +22,6 @@ function applyn(O::MPO, Q::MPO; kwargs...)
     replaceprime(contractn(O', Q; kwargs...),  2 => 1)
 end
 
-#= 
-""" Shorthand for simple apply(alg="naive") - accepts apply kwargs, defaults to truncate=false """
-function applyn(A::MPO, B::MPO; kwargs...)
-
-    truncate = false
-    
-    # If :truncp, :cutoff or :maxdim keywords are present, set truncate=true
-    if haskey(kwargs, :truncp)
-        (;cutoff, maxbondim) = kwargs[:truncp]
-        kwargs = (;kwargs..., cutoff=cutoff, maxdim=maxbondim)
-        truncate = true
-    elseif haskey(kwargs, :cutoff) || haskey(kwargs, :maxdim)
-        truncate = true
-    end
-
-    # Override with kwargs truncate if specified explicitly
-    truncate = get(kwargs, :truncate, truncate)
-
-    #@show truncate
-    apply(A, B, alg="naive"; truncate, kwargs...)
-end
-=#
-
 
 """ Shorthand for applyn + swap indices """
 function applyns(O::MPO, psi::MPS; kwargs...)
@@ -52,6 +29,7 @@ function applyns(O::MPO, psi::MPS; kwargs...)
 end
 
 # TODO Check: For MPOs, applyns(A,B) = applyn(B,A) ? 
+
 
 
 """ If we have dangling tensors at the right edge of an MPS """
