@@ -1,3 +1,5 @@
+allsiteinds(A::AbstractMPS) = vcat(siteinds(A)...)
+
 """
     construct_tMPS_tMPO(ψ_i::MPS, Ut::Vector{MPO}, ϕ_f::MPS)
 ```
@@ -19,16 +21,20 @@ Ut[1]    U———U———U    ↑
 constructs two boundary tMPS (⟨L| and |R⟩) the tMPO TR with Nt temporal sites
 for further use in the power method.
 - Optionally if `return_swapped_T` also returns TL = swapprime(TR, 0, 1)`.
-- `ψ_i` and `ϕ_f` are assumed to be a valid (space-like) MPS
+- `psi_i` and `psi_f` are assumed to be a valid (space-like) MPS
 - each element of the vector `Ut` is assumed to be a valid MPO whereas the links match, respectively,
-- The (physical) sites are not necessarily(!) correctly primed to link up in the time direction.
-- The final MPS will be automatically daggered! If you do not want it to be daggered,
+- The (physical) sites need not be correctly primed to link up in the time direction.
+- The final MPS **will be automatically daggered**! If you do not want it to be daggered,
   use the flag `dagger_final=false`.
 """
 function construct_tMPS_tMPO(psi_i::MPS, in_Uts::Vector{MPO}, psi_f::MPS;
-  return_swapped_T::Bool=false, dagger_final::Bool=true
+  return_swapped_T::Bool=false, dagger_psif::Bool=true, new_siteinds=nothing
 )
 
+  @assert length(psi_i) == 3
+
+
+  # Fix inds 
   psi_i = replace_siteinds(psi_i, firstsiteinds(in_Uts[1]))
   psi_f = replace_siteinds(psi_f, firstsiteinds(in_Uts[end]))
 
@@ -40,10 +46,6 @@ function construct_tMPS_tMPO(psi_i::MPS, in_Uts::Vector{MPO}, psi_f::MPS;
   end
 
 
-  # @assert siteinds(psi_i) == firstsiteinds(in_Uts[1])
-  # @assert siteinds(psi_f) == firstsiteinds(in_Uts[1])
-  @assert length(psi_i) == 3
-
   Nrows = length(in_Uts)
 
   Uts = sim.(linkinds, in_Uts)
@@ -54,7 +56,7 @@ function construct_tMPS_tMPO(psi_i::MPS, in_Uts::Vector{MPO}, psi_f::MPS;
   ITransverse.ITenUtils.delete_link_from_prodMPS!(psi_i)
   ITransverse.ITenUtils.delete_link_from_prodMPS!(psi_f)
 
-  if dagger_final
+  if dagger_psif
     psi_f = dag(psi_f)
   end
 
@@ -74,18 +76,23 @@ function construct_tMPS_tMPO(psi_i::MPS, in_Uts::Vector{MPO}, psi_f::MPS;
   Tc = MPO(Ccol_data)
   psiR = MPS(Rcol_data)
 
-  # Now the mess: relabel the indices 
+  # Replace indices, starting from the right MPS 
 
-  ssL = siteinds(psiL)
-  ssLn = [noprime(sim(ssL[ii], tags="Site,nt=$(ii)")) for ii = 1:length(ssL)]
-  ssRn = dag(ssLn)
   ssR = siteinds(psiR)
+  new_siteinds = something(new_siteinds, [noprime(sim(ssR[ii], tags="Site,nt=$(ii)")) for ii = 1:length(ssR)])
+  new_siteindsP = dag(new_siteinds')
 
-  for ii in eachindex(ssL)
-    psiL[ii] = replaceind(psiL[ii], ssL[ii] => ssLn[ii])
-    Tc[ii] = replaceinds(Tc[ii], ssL[ii] => ssLn[ii]', ssR[ii] => ssRn[ii])
-    psiR[ii] = replaceind(psiR[ii], ssR[ii] => ssRn[ii])
+  replace_siteinds!(psiR, new_siteinds)
+ 
+  stc = allsiteinds(Tc)
+  ssL = uniqueinds(stc, ssR)
+  @assert length(uniqueinds(stc,ssR)) == length(ssR) "Something likely wrong in index labelling"
+  for ii in eachindex(ssR)
+      Tc[ii] = replaceinds(Tc[ii], ssR[ii] => new_siteinds[ii], ssL[ii] => new_siteindsP[ii])
   end
+
+  replace_siteinds!(psiL, new_siteinds)
+
 
   for col = [psiL, Tc, psiR]
     ll = linkinds(col)
@@ -105,10 +112,24 @@ end
 
 
 
-allsiteinds(A::AbstractMPS) = vcat(siteinds(A)...)
-
-""" Similar to `construct_tMPS_tMPO`, but takes input MPS/MPO larger than 3 and builts the appropriate sets of columns.
-returns left_mps, [list of columns], right mps """
+""" Similar to `construct_tMPS_tMPO`, but takes input MPS/MPO longer than 3 and builts the appropriate sets of columns.
+returns left_mps, [list of columns], right mps 
+```
+|ϕ_f⟩    o———o———o———o———o
+         |   |   |   |   |   
+Ut[end]  U———U———U———U———U
+         |   |   |   |   |   
+Ut[…]    ⋮       ⋮       ⋮
+         |   |   |   |   |   
+Ut[2]    U———U———U———U———U
+         |   |   |   |   |     time
+Ut[1]    U———U———U———U———U    ↑
+         |   |   |   |   |    |
+⟨ψ_i|    o———o———o———o———o    |
+                      
+        ⟨L|  T1 ..  TNx |R⟩
+```
+"""
 function construct_tMPS_tMPO_finite(psi_i::MPS, in_Uts::Vector{MPO}, psi_f::MPS; dagger_psif::Bool=true)
 
   # ensure siteinds match before rotation 
@@ -125,7 +146,7 @@ function construct_tMPS_tMPO_finite(psi_i::MPS, in_Uts::Vector{MPO}, psi_f::MPS;
   Nrows = length(in_Uts)
   Ncols = length(psi_i)
 
-  @info "Nt=$(Nrows) X L=$(Ncols)" 
+  @info "TN made by Nt=$(Nrows) X L=$(Ncols)" 
 
   # To avoid repeated inds in case we're feeding copies of the same MPO as rows
   Uts = sim.(linkinds, in_Uts)
