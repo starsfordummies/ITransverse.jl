@@ -536,3 +536,18 @@ function build_expH_potts_symmetric_svd(in_space_sites,
     return U_t
 
 end
+
+function build_expH_potts_symmetric_svd(in_space_sites, mp::PottsParams, dt::Number) 
+    build_expH_potts_symmetric_svd(in_space_sites, mp.JSS, mp.ftau, dt)
+end
+
+
+function build_expH_potts_symmetric_svd(in_space_sites, mp::PottsParams, dt::Number) 
+    build_expH_potts_symmetric_svd(in_space_sites, mp.JSS, mp.ftau, dt)
+end
+
+function build_expH_potts_symmetric_svd(mp::PottsParams, dt::Number) 
+    space_sites = siteinds("S=1", 3; conserve_qns = false)
+    build_expH_potts_symmetric_svd(space_sites, mp.JSS, mp.ftau, dt)
+end
+
