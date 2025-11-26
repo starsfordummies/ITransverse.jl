@@ -14,7 +14,13 @@ end
 
 
 """ Shorthand for simple apply(alg="naive"),  """
-function applyn(O::MPO, psi::MPS; kwargs...)
+function applyn(O::MPO, psi::MPS; check_matching_inds::Bool=true, kwargs...)
+    # sanity check .. 
+    if check_matching_inds
+        if siteind(psi,1) != firstsiteind(O,1)
+            psi = replace_siteinds(psi, firstsiteinds(O))
+        end
+    end
     replaceprime(contractn(O, sim(linkinds, psi); kwargs...),  1 => 0)
 end
 
@@ -42,13 +48,19 @@ function contract_dangling!(psi::AbstractMPS)
 end
 
 
-""" Copied from ITensorMPS's `contract` but adapted so that it can also extend """
+""" Copied from ITensorMPS's `contract` but adapted so that it can also extend. 
+Extension is done at the right (top), ie. contraction goes like 
+```
+    | | | | | | |
+A = o-o-o-o-o-o-o 
+    | | | | |  
+psi o o o o o      
+```
+"""
 function contractn(A::MPO, ψ::AbstractMPS; preserve_tags_mps::Bool=false, kwargs...)
 
+    # TODO Add offset for contraction to allow extension on both edges 
     @assert length(A) >= length(ψ)
-
-    #A = sim(linkinds, A)
-    #ψ = isa(ψ, MPO) ? ψ' : sim(linkinds, ψ)
 
     N = max(length(A), length(ψ)) 
     n = min(length(A), length(ψ))
