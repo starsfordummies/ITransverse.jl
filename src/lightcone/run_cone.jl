@@ -19,7 +19,7 @@ function run_cone(psi::MPS,
     nT_final::Int
     )
 
-    (; opt_method, optimize_op, which_evs, which_ents, checkpoint, truncp, vwidth) = cp
+    (; opt_method, optimize_op, which_evs, which_ents, checkpoints, truncp, vwidth) = cp
 
     #@show opt_method 
 
@@ -143,7 +143,7 @@ function run_cone(psi::MPS,
             end
 
 
-            if checkpoint > 0 && length(ll) > 50 && length(ll) % checkpoint == 0
+            if length(ll) in checkpoints
                 fn_cp = "cp_cone_$(length(ll))_chi_$(chis[end]).jld2"
                 infos[:times_range] = length(ll) - length(expvals) : length(ll)
                 llcp = tocpu(ll)

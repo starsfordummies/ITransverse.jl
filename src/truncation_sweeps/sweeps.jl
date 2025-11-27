@@ -2,12 +2,11 @@
 
 """ 
 Left truncation sweep. 
-First brings to regular RIGHT ortho form,
-then performs a LEFT generalized canonical sweep with SVD/EIG truncation.
+First brings to regular RIGHT ortho form <-<-<-<-<-<,
+then performs a LEFT>> generalized canonical sweep with SVD/EIG truncation.
 Returns 
 1,2) copies of the two input MPS
 3) an effective entropy computed from the SV of the environments
-4) the overlap between the two 
 """
 function truncate_lsweep(psi::MPS, phi::MPS, truncp::TruncParams)
     truncate_lsweep(psi, phi; cutoff=truncp.cutoff, chi_max=truncp.maxbondim)
@@ -85,7 +84,7 @@ So this can be seen as a "RL: Right(can)Left(gen)" sweep
 
 
 
-""" Truncate sweep to optimize overlap <psi|phi> .
+""" Truncate sweep based on RTM |psi><phi| 
 If `fast=true`, it only truncates without bringing to generalized canonical form (no multiplication by inverses of SV)
 
 Returns

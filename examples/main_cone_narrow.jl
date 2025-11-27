@@ -48,7 +48,7 @@ function main_cone()
     cone_params = ConeParams(;truncp, opt_method="RTM_SKEW", optimize_op, 
         which_evs=["X","Z"], 
         which_ents=["VN"], # ,"GENVN","GENR2"],
-        checkpoint=1000,
+        checkpoints=0,
         vwidth=n_ext)
 
     psi, psiR, chis, expvals, entropies, infos, last_cp = run_cone(c0, b, cone_params, Nsteps)

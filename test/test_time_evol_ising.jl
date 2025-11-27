@@ -49,7 +49,7 @@ state = tdvp(
 
 c0 = init_cone(b, 10; full=false)
 
-cone_params = ConeParams(;truncp, opt_method="RDM", optimize_op, which_evs=["X","Z"], checkpoint=0)
+cone_params = ConeParams(;truncp, opt_method="RDM", optimize_op, which_evs=["X","Z"], checkpoints=0)
 psi, psiR, chis, expvals, entropies, infos, last_cp = run_cone(c0, b, cone_params, Nsteps)
 #@show expvals["Z"]
 
