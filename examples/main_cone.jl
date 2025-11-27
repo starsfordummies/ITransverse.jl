@@ -23,7 +23,7 @@ function main_cone()
     #plus_state = Vector{ComplexF64}([1/sqrt(2),1/sqrt(2)])
 
     cutoff = 1e-8
-    maxbondim = 512
+    maxbondim = 128
     direction = "right"
 
     truncp = TruncParams(cutoff, maxbondim, direction)
@@ -40,7 +40,8 @@ function main_cone()
 
     #@info length(c0)
 
-    cone_params = ConeParams(;truncp, opt_method="RTM_R", optimize_op, which_evs=["X","Z"], which_ents=["VN"], checkpoints=20)
+    cone_params = ConeParams(;truncp, opt_method="RTM_R", optimize_op, 
+    which_evs=["X","Z"], which_ents=["VN"], checkpoints=40:40:100)
 
     psi, psiR, chis, expvals, entropies, infos, last_cp = run_cone(c0, b, cone_params, Nsteps)
 

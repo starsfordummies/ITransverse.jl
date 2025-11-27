@@ -4,7 +4,7 @@ struct ConeParams{T<:Number}
     optimize_op::Vector{T}
     which_evs::Vector{String}
     which_ents::Vector{String}
-    checkpoints::Tuple{Int}
+    checkpoints::Vector{Int}
     vwidth::Int 
 end
 
@@ -18,17 +18,18 @@ function ConeParams(; truncp::TruncParams,
     vwidth::Int=1) 
 
     checkpoints = if isa(checkpoints, Integer)
-        (50:checkpoints:10000,)         
-    elseif isa(checkpoints, Tuple)
+        collect(50:checkpoints:10000)         
+    elseif isa(checkpoints, Tuple{Int})
         checkpoints                              # tuple → keep as is
-    elseif isa(checkpoints, AbstractVector)
-        tuple(checkpoints...) 
-    elseif isa(checkpoints, AbstractRange)
-        tuple(checkpoints...)                    # range → tuple
+    elseif isa(checkpoints, AbstractVector{Int})
+        collect(checkpoints) 
+    elseif isa(checkpoints, AbstractRange{Int})
+        collect(checkpoints)                    # range → tuple
     else
         throw(ArgumentError("Unsupported input type $(typeof(checkpoints))"))
     end
 
+    @show typeof(checkpoints)
 
     return ConeParams(truncp, opt_method, optimize_op, which_evs, which_ents, checkpoints, vwidth)
 
