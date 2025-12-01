@@ -203,3 +203,16 @@ Given an operator as string, like "X" or "Sp", builds it for the input physical 
 function vectorized_op(operator, site)
    itensor_to_vector(ITensors.op(operator, site))
 end
+
+function random_uni(i1::Index)
+    m = random_itensor(i1, sim(i1))
+    q, _ = qr(m, i1)
+    return q 
+end
+
+function random_iso(i1::Index, i2::Index)
+    @assert dim(i1) >= dim(i2)
+    m = random_itensor(i1, sim(i1))
+    u,s,v = svd(m, i1)
+    return u,s,v
+end

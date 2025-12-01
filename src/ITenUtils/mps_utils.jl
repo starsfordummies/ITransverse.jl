@@ -397,7 +397,7 @@ function vectorized_local_op(ss::Vector{<:Index}; local_op::String="Id", site_op
     vo_local_ops, combiners = vectorize_mpo(o_local_ops)
 end
 
-""" ED for *short* MPOs """ 
+""" ED for *short* MPOs taken as one big matrix """ 
 function diagonalize_mpo(w::MPO)
     LL = length(w)
     @assert LL <= 6 "this may blow up"
@@ -413,5 +413,25 @@ function diagonalize_mpo(w::MPO)
     wcomb = wcomb * cs' 
 
     vals, vecs = eigen(wcomb, combinedind(cs), combinedind(cs)')
+
+end
+
+
+""" Full SVD for *short* MPOs taken as one big matrix""" 
+function svd_mpo(w::MPO)
+    LL = length(w)
+    @assert LL <= 6 "this may blow up"
+
+    wcomb = w[1]
+    for jj = 2:LL
+        wcomb *= w[jj]
+    end
+
+    cs = combiner(firstsiteinds(w)...)
+
+    wcomb = wcomb * cs
+    wcomb = wcomb * cs' 
+
+    u,s,vdag = svd(wcomb, combinedind(cs))
 
 end
