@@ -53,7 +53,7 @@ tr(--[LEFT]==[RIGHT]--[LEFT]==[RIGHT]--)
 
 ```
 """
-function rtm2_contracted(psi::MPS, phi::MPS, cut::Int; normalize_factor::Number=1.0)
+function rtm2_contracted(psi::MPS, phi::MPS, cut::Int; normalize_factor::Number=1.0, match_siteinds::Bool=true)
 
     # valid cuts go from 1 to L-1
     @assert cut < length(psi)
@@ -66,7 +66,9 @@ function rtm2_contracted(psi::MPS, phi::MPS, cut::Int; normalize_factor::Number=
     phi = sim(linkinds,phi)
 
     #replace_siteinds!(phi, siteinds(psi))
-    match_siteinds!(psi, phi)
+    if match_siteinds
+        match_siteinds!(psi, phi)
+    end
 
     left = ITensor(eltype(psi[1]),1.)
     right = ITensor(eltype(psi[1]),1.)
@@ -76,19 +78,15 @@ function rtm2_contracted(psi::MPS, phi::MPS, cut::Int; normalize_factor::Number=
         left *= phi[jj]
     end
 
-    for jj = length(psi):-1:cut+1
+    for jj = reverse(cut+1:length(psi))
         right *= psi[jj]
         right *= phi[jj]
     end
 
     @assert inds(left) == inds(right)
 
-
-    v_psi = linkind(psi,cut)
-    right = prime(right, v_psi)
-    
     #trace(rho^2) is just the product left * right * left * right as depicted above
-    tr_rho2 = left * right
+    tr_rho2 = left * prime(right, linkind(psi,cut))
     #@info "2: $(inds(tr_rho2))"
     tr_rho2 *= swapprime(tr_rho2, 1=>0)
     
@@ -103,13 +101,12 @@ function rtm2_contracted_m(psi::MPS, phi::MPS, cut::Int; normalize_factor::Numbe
     @assert cut < length(psi)
     @assert cut > 0
 
-
     phi = deepcopy(phi)
 
     phi = sim(linkinds,phi)
 
     #replace_siteinds!(phi, siteinds(psi))
-    match_siteinds!(psi, phi)
+    #match_siteinds!(psi, phi)
 
     left = ITensor(eltype(psi[1]),1.)
     right = ITensor(eltype(psi[1]),1.)
