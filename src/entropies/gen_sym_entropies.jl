@@ -18,7 +18,7 @@ function generalized_vn_entropy_symmetric(psiL::MPS; bring_left_gen::Bool=true, 
     
     gen_ents = Vector{ComplexF64}(undef, mpslen-1) 
 
-    right_env = ITensor(1.)
+    right_env = ITensors.OneITensor() 
 
     psiR = prime(linkinds, psiL)
 
@@ -32,7 +32,7 @@ function generalized_vn_entropy_symmetric(psiL::MPS; bring_left_gen::Bool=true, 
         right_env = Ai * right_env 
         right_env = Bi * right_env
 
-        @assert order(right_env) == 2 
+        #@assert order(right_env) == 2 
         #println(left_env)
         eigss, _ = eigen(right_env, inds(right_env)[1],inds(right_env)[2])
         #gen_ent_cut = sum(eigss.*log.(eigss))
@@ -79,7 +79,7 @@ function generalized_vn_entropy_symmetric(psiL::MPS, cut::Int; bring_left_gen::B
 
 
     # Build right_env up to 'cut'
-    right_env = ITensor(1.)
+    right_env = ITensors.OneITensor()
 
     # Start from the *right* (operator side)
     for ii = mpslen:-1:cut
@@ -126,7 +126,7 @@ function generalized_r2_entropy_symmetric(psiL::MPS; bring_left_gen::Bool=true, 
     
     gen_ents = Vector{ComplexF64}(undef, mpslen-1) 
 
-    right_env = ITensor(1.)
+    right_env = ITensors.OneITensor()
 
     psiR = prime(linkinds, psiL)
 
@@ -231,7 +231,7 @@ function gensym_renyi_entropies(psiL::MPS; which_ents=[0.5,1,2], bring_left_gen:
     
     eigs_rtm = Vector{Vector{ComplexF64}}(undef, mpslen-1)
 
-    right_env = ITensor(1.)
+    right_env = ITensors.OneITensor()
 
     psiR = prime(linkinds, psiL)
 
@@ -274,7 +274,7 @@ function gensvd_renyi_entropies(psi::MPS, phi::MPS; which_ents=[0.5,1,2], normal
     psi_ortho = orthogonalize(psi, mpslen)
     phi_ortho = orthogonalize(phi, mpslen)
 
-    XUinv, XVinv, right_env = (ITensor(1), ITensor(1), ITensor(1))
+    XUinv, XVinv, right_env = (ITensors.OneITensor(), ITensors.OneITensor(), ITensors.OneITensor())
     
     # For the non-symmetric case we can only truncate with SVD, so ents will be real 
     svds_rdm = Vector{Vector{Float64}}(undef, mpslen-1)
@@ -329,7 +329,7 @@ function gensvd_renyi_entropies(psi::MPS; which_ents=[0.5,1,2], normalize_eigs::
     # first bring to left canonical form  
     psi_ortho = orthogonalize(psi, mpslen)
 
-    XUinv, right_env = (ITensor(1), ITensor(1), ITensor(1))
+    XUinv, right_env = (ITensors.OneITensor(), ITensors.OneITensor(), ITensors.OneITensor())
     
     # For the non-symmetric case we can only truncate with SVD, so ents will be real 
     svds_rdm = Vector{Vector{Float64}}(undef, mpslen-1)

@@ -15,8 +15,8 @@ function truncate_lsweep_sym(in_psi::MPS; cutoff::Float64, chi_max::Int, method:
 
     ents_sites = ComplexF64[] 
 
-    XUinv= ITensor(1)
-    left_env = ITensor(1)
+    XUinv= ITensors.OneITensor()
+    left_env = ITensors.OneITensor()
 
     for ii = 1:mpslen-1
 
@@ -92,8 +92,8 @@ function truncate_rsweep_sym(in_psi::MPS; cutoff::Float64, chi_max::Int, method:
     # first bring to LEFT standard canonical form 
     psi_ortho = orthogonalize(in_psi, mpslen)
 
-    XUinv= ITensor(1)
-    right_env = ITensor(1)
+    XUinv= ITensors.OneITensor()
+    right_env = ITensors.OneITensor()
 
     ents_sites = fill(zero(ComplexF64), mpslen-1)  # Float64[]
 

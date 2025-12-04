@@ -28,7 +28,7 @@ function diagonalize_rtm_left_gen_sym(psiL::MPS, cut::Int; bring_left_gen::Bool=
         @warn" overlap not 1: $overlap"
     end
     
-    right_env = ITensor(1.)
+    right_env = ITensors.OneITensor()
 
     psiR = prime(linkinds, psiL)
 
@@ -74,7 +74,7 @@ function diagonalize_rtm_right_gen_sym(psi::MPS; bring_right_gen::Bool=false, no
 
     end
 
-    lenv= ITensor(1.)
+    lenv= ITensors.OneITensor()
     s = siteinds(psi_gauged)
 
     eigs_rtm_t = []
@@ -123,7 +123,7 @@ function diagonalize_rtm_symmetric(psiL::MPS; bring_left_gen::Bool=true, normali
     
     eigenvalues_rtm = []
     
-    right_env = ITensor(1.)
+    right_env = ITensors.OneITensor()
 
     psiR = prime(linkinds, psiL)
 

@@ -162,7 +162,7 @@ function rtm2_bruteforce(psi::MPS, phi::MPS)
     rho = outer(psi',phi)
     #ss = siteinds(rho)
 
-    rho_contracted = ITensor(1.)
+    rho_contracted = ITensors.OneITensor()
     for jj in eachindex(rho)
         rho_contracted = rho_contracted * rho[jj]
     end

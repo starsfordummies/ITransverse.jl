@@ -12,7 +12,7 @@ function expval_LR(ll::MPS, op_mpo::MPO, rr::MPS; match_inds::Bool=false)
 
   
     #O = ll[1]' * (op_mpo[1] * rr[1])
-    O = ITensor(1)
+    O = ITensors.OneITensor()
 
     for ii in 1:min(nL, nR)
         O = O * rr[ii]

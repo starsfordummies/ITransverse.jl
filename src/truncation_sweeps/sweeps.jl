@@ -20,7 +20,7 @@ function truncate_lsweep(psi::MPS, phi::MPS; cutoff::Real, chi_max::Int)
     psi_ortho = orthogonalize(psi, 1)
     phi_ortho = orthogonalize(phi, 1)
 
-    XUinv, XVinv, left_env = (ITensor(1),ITensor(1),ITensor(1))
+    XUinv, XVinv, left_env = (ITensors.OneITensor(),ITensors.OneITensor(),ITensors.OneITensor())
 
     #ents_sites = ComplexF64[]
     ents_sites = Vector{Float64}(undef, mpslen - 1) 
@@ -107,7 +107,7 @@ function truncate_rsweep(psi::MPS, phi::MPS; cutoff::Real=1e-12, chi_max::Int=ma
     psi_ortho = orthogonalize(psi, mpslen)
     phi_ortho = orthogonalize(phi, mpslen)
 
-    XUinv, XVinv, right_env = (ITensor(1), ITensor(1), ITensor(1))
+    XUinv, XVinv, right_env = (ITensors.OneITensor(), ITensors.OneITensor(), ITensors.OneITensor())
     
     # For the non-symmetric case we can only truncate with SVD, so ents will be real 
     ents_sites = fill(0., mpslen-1)  # Float64[]
@@ -238,7 +238,7 @@ function truncate_rsweep!(psi::MPS, phi::MPS; cutoff::Real=1e-12, chi_max=nothin
     orthogonalize!(psi, mpslen)
     orthogonalize!(phi, mpslen)
 
-    XUinv, XVinv, right_env = (ITensor(1), ITensor(1), ITensor(1))
+    XUinv, XVinv, right_env = (ITensors.OneITensor(), ITensors.OneITensor(), ITensors.OneITensor())
     
     # For the non-symmetric case we can only truncate with SVD, so ents will be real 
     ents_sites = fill(0., mpslen-1)  # Float64[]
