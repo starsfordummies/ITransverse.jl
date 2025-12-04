@@ -62,7 +62,8 @@ end
 
 
 
-""" Builds a folded MPS by joining two, returns the combined MPS and the combiners  """ 
+""" # TODO generalize to arbitrary folding like for MPOs 
+Builds a folded MPS by joining two, returns the combined MPS and the combiners  """ 
 function combine_mps_spacefold(W1::MPS, W2::MPS)
     #@assert siteinds(W1) == siteinds(W2)
     LL = length(W1)-1
