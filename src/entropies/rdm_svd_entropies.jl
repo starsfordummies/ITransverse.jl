@@ -55,7 +55,8 @@ returns a vector of floats containing the VN entropies
 """
 function vn_entanglement_entropy(psi::MPS)
 
-    workpsi = normalize(psi)
+    workpsi = orthogonalize(psi,1)
+    workpsi = workpsi/norm(workpsi)
 
     ents_vn = Vector{Float64}()
 
