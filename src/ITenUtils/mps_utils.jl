@@ -435,3 +435,5 @@ function svd_mpo(w::MPO)
     u,s,vdag = svd(wcomb, combinedind(cs))
 
 end
+
+allsiteinds(A::AbstractMPS) = vcat(siteinds(A)...)

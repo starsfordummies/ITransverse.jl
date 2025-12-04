@@ -1,4 +1,3 @@
-allsiteinds(A::AbstractMPS) = vcat(siteinds(A)...)
 
 """
     construct_tMPS_tMPO(ψ_i::MPS, Ut::Vector{MPO}, ϕ_f::MPS)
