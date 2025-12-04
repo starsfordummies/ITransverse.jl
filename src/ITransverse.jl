@@ -9,6 +9,8 @@ using ProgressMeter
 using ITensors.Adapt
 using Statistics: mean, std
 
+using ITensors: OneITensor
+
 include("ITenUtils/ITenUtils.jl")
 using .ITenUtils
 
@@ -116,6 +118,9 @@ export
 
 include("tmpo/build_Ut.jl")
 
+include("folding/foldings.jl")
+
+
 include("columns_envs/columns.jl")
 
 export Columns
@@ -141,10 +146,9 @@ export powermethod_op
 
 export powermethod_sym
 
-include("generic/contract_finite.jl")
+include("contractions/contract_finite.jl")
 
-
-include("generic/expvals_lr.jl")
+include("contractions/expvals_lr.jl")
 export expval_LR, compute_expvals
 
 include("lightcone/cone_tmpo.jl")
