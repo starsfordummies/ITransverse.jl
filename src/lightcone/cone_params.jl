@@ -18,7 +18,11 @@ function ConeParams(; truncp::TruncParams,
     vwidth::Int=1) 
 
     checkpoints = if isa(checkpoints, Integer)
-        collect(50:checkpoints:10000)         
+        if checkpoints > 0 
+            collect(50:checkpoints:10000)         
+        else
+            Int[]
+        end
     elseif isa(checkpoints, Tuple{Int})
         checkpoints                              # tuple → keep as is
     elseif isa(checkpoints, AbstractVector{Int})
