@@ -66,7 +66,8 @@ export quick_mps, quick_mpo, pMPS,
     gaugefix_left,
     fidelity,
     logfidelity,
-    normalize_for_overlap!
+    normalize_for_overlap!,
+    allsiteinds
 
 
 # moreutils.jl
