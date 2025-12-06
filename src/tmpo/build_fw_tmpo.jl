@@ -31,19 +31,6 @@ function fw_tMPO_opentr(b::FwtMPOBlocks, time_sites::Vector{<:Index};  bl::ITens
 
     b1,b2 = beta_lims(Ntot, nbeta, init_beta_only)
 
-    # b1 = if init_beta_only 
-    #     nbeta
-    # else
-    #     @assert iseven(nbeta)
-    #     div(nbeta,2)
-    # end
-
-    # b2 = if init_beta_only 
-    #     Ntot 
-    # else
-    #     Ntot - div(nbeta,2) 
-    # end
-
     (icL, icR, icP, icPs) = (rot_inds[:L], rot_inds[:R], rot_inds[:P], rot_inds[:Ps]) 
 
     # Make same indices for real and imag, it's easier aftwards 
@@ -173,26 +160,6 @@ function fw_tMPS(
 
     b1,b2 = beta_lims(Ntot, nbeta, init_beta_only)
 
-    # b1 = if init_beta_only 
-    #     nbeta
-    # else
-    #     if iseven(nbeta)
-    #         div(nbeta,2)
-    #     elseif nbeta == 1 
-    #         nbeta
-    #     else
-    #         error("even nbeta")
-    #     end  
-    # end
-
-    # b2 = if init_beta_only 
-    #     Ntot 
-    # else
-    #     Ntot - div(nbeta,2) 
-    # end
-
- 
-
     rot_links_mps = [Index(dim(iL), "Link,rotl=$ii") for ii in 1:(Ntot - 1)]
 
     tMPS = MPS(Ntot)
@@ -237,21 +204,7 @@ function fw_tMPO_opentr_p(b::FwtMPOBlocks, Ntot::Int;
     (; tp, Wc, Wc_im, rot_inds) = b
     nbeta = tp.nbeta 
 
-
     @assert nbeta <= Ntot
-
-    # b1 = if init_beta_only 
-    #     nbeta
-    # else
-    #     @assert iseven(nbeta)
-    #     div(nbeta,2)
-    # end
-
-    # b2 = if init_beta_only 
-    #     Ntot 
-    # else
-    #     Ntot - div(nbeta,2) 
-    # end
 
     b1,b2 = beta_lims(Ntot, nbeta, init_beta_only)
 

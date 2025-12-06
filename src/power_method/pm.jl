@@ -45,7 +45,7 @@ function powermethod_op(in_mps::MPS, in_mpo_1::MPO, in_mpo_O::MPO, pm_params::PM
     ll = deepcopy(in_mps)
     rr = deepcopy(in_mps)
 
-
+    sjj = fill(1., length(in_mps)-1)
     sprevs = fill(1., length(in_mps)-1)
     #LRprev = overlap_noconj(in_mps,in_mps)
 
@@ -55,9 +55,7 @@ function powermethod_op(in_mps::MPS, in_mpo_1::MPO, in_mpo_O::MPO, pm_params::PM
 
     for jj = 1:itermax  
 
-        if compute_fidelity
-            rr_prev = copy(rr)
-        end
+        rr_prev = compute_fidelity ? copy(rr) : nothing
 
         # When do we normalize? Here I choose to do it at the beginning of each iteration 
 

@@ -15,13 +15,13 @@ function build_expH_random_symm_svd_1o(dt::Number)
     X2 = op(s, "X", 2)
     X3 = op(s, "X", 3)
 
-    Z1 = op(s, "Z", 1)
-    Z2 = op(s, "Z", 2)
-    Z3 = op(s, "Z", 3)
+    # Z1 = op(s, "Z", 1)
+    # Z2 = op(s, "Z", 2)
+    # Z3 = op(s, "Z", 3)
 
-    Y1 = op(s, "Y", 1)
-    Y2 = op(s, "Y", 2)
-    Y3 = op(s, "Y", 3)
+    # Y1 = op(s, "Y", 1)
+    # Y2 = op(s, "Y", 2)
+    # Y3 = op(s, "Y", 3)
 
     c1=1 
 

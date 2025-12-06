@@ -52,7 +52,7 @@ end
     
     psi_gauged = gen_canonical_right(psi)
     
-    lenv= ITensor(1.)
+    lenv= ITensors.OneITensor()
     s = siteinds(psi_gauged)
     
     eigs_rho = []
@@ -71,7 +71,7 @@ end
         push!(eigs_rho, vals)
     
         if mpslen - jj < 5
-            renv = ITensor(1.)
+            renv = ITensors.OneITensor()
             for kk in mpslen:-1:jj+1
                 renv *= psi_gauged[kk]
                 renv *= psi_gauged[kk]'

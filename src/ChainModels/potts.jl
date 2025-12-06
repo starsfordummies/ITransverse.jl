@@ -305,7 +305,7 @@ function build_expH_potts_murg(sites,
 
     for n = 1:N
         # siteindex s
-        s = sites[n]
+        #s = sites[n]
 
         # left link index ll with daggered QN conserving direction (if applicable)
         # labels the rows
