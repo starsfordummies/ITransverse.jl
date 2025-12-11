@@ -14,12 +14,21 @@ function diagonalize_rdm(psi::MPS)
     return evs_rho
 end
 
+function LinearAlgebra.svdvals(a::ITensor, linds; kwargs...)
+    rinds = uniqueinds(a, linds)
+    cL = combiner(linds...)
+    cR = combiner(rinds...)
+
+    svds = svdvals(matrix(cL * a * cR))
+
+end
+
 """ At a given cut, performs SVD and returns the squares of the SVs, ie. the eigenvalues of the RDM"""
 function diagonalize_rdm!(psi::MPS, cut::Int)
 
     orthogonalize!(psi, cut)
 
-    _,S,_ = svd(psi[cut], (linkinds(psi, cut-1)..., siteinds(psi,cut)...))
+    S = svdvals(psi[cut], (linkinds(psi, cut-1)..., siteinds(psi,cut)...))
     eigenvals_rho = S.^2 
    
     return array(diag(eigenvals_rho))
@@ -45,7 +54,7 @@ end
 """ MPS-modifying VN entropy (orthogonalizes), by default assumes that MPS is already normalized """ 
 function vn_entanglement_entropy!(psi::MPS, bond::Int; normalize::Bool=false)
     orthogonalize!(psi, bond)
-    _,S,_ = svd(psi[bond], uniqueinds(psi[bond],psi[bond+1]))
+    S = svdvals(psi[bond], uniqueinds(psi[bond],psi[bond+1]))
     return vn_from_sv(S; normalize) 
 end
 
@@ -84,9 +93,9 @@ function renyi_entropy(in_psi::MPS, cut::Int, αr::Number)
         #println(norm(psi))
 
         if cut == 1
-            _,S,_ = svd(psi[cut], (siteind(psi,cut)))
+            S = svdvals(psi[cut], (siteind(psi,cut)))
         else
-            _,S,_ = svd(psi[cut], (linkind(psi, cut-1), siteind(psi,cut)))
+            S = svdvals(psi[cut], (linkind(psi, cut-1), siteind(psi,cut)))
         end
 
         S2α = S.^(2*αr)
@@ -126,6 +135,6 @@ end
 
 
 function renyi_entropies(in_w::MPO; which_ents = [0.5, 1, 2])
-    w_vectorized, combiners = vectorize_mpo(in_w)
+    w_vectorized, _ = vectorize_mpo(in_w)
     renyi_entropies(diagonalize_rdm(w_vectorized); which_ents)
 end
