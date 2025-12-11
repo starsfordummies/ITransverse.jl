@@ -46,7 +46,7 @@ end
 
 @testset "Testing right gauge symmetric RTM diagonalization vs full diag" begin
 
-    psi = quick_mps(20, 30)
+    psi = random_mps(ComplexF64, siteinds("S=1/2",20), linkdims=30)
     
     mpslen = length(psi)
     
