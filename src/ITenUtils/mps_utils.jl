@@ -35,30 +35,6 @@ function pMPS(site_tensors::AbstractVector{<:AbstractVector{<:Number}})
 end
 
 
-""" Quick random MPS for playing around """
-function quick_mps(len::Int=10, chi::Int=32)
-    s = siteinds("S=1/2", len)
-    p = random_mps(ComplexF64, s, linkdims=chi)
-
-    return p
-end
-
-function quick_mpo(len::Int=10, chi::Int=2)
-    s = siteinds("S=1/2", len)
-    myrMPO(s; linkdims=chi)
-end
-
-""" Return triple (psi,phi,o)  sharing the same sites"""
-function quick_psipsio(len::Int=10)
-    s = siteinds("S=1/2", len)
-    psi = random_mps(ComplexF64, s, linkdims=12)
-    phi = random_mps(ComplexF64, s, linkdims=20)
-
-    oo = myrMPO(s; linkdims=2)
-
-    return psi,phi, oo 
-end
-
 
 """ Computes the overlap (ll,rr) between two MPS *without* conjugating either one.
 If siteinds(ll) and siteinds(rr) do not match, it matches them before contracting.
@@ -236,25 +212,6 @@ function gaugefix_left(psi::MPS)
 end
 
 
-""" Builds a random MPO with `linkdims` bond dimension """
-function myrMPO(sites::Vector{<:Index}; linkdims::Int)
-    if linkdims > 15  # Break up into smaller pieces and sum them afterwards
-        ns = div(linkdims,10)
-        o = myrMPO(sites, linkdims=linkdims % 10)
-        @showprogress for _ = 1:ns
-            o += myrMPO(sites, linkdims=10)
-        end
-
-    else
-        o = random_mpo(sites)
-        for _ = 2:linkdims
-            o += random_mpo(sites)
-        end
-    end
-
-    return o
-
-end
 
 """ Given a list of tensors in the form [vL, p, p', vR], builds an MPO.
 Note that the index order sanity is left to the user!  """

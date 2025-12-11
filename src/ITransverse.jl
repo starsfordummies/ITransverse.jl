@@ -20,7 +20,7 @@ using .ChainModels
 include("BenchData/BenchData.jl")
 using .BenchData
 
-export quick_mps, myrMPO, pMPS,
+export pMPS,
     overlap_noconj, 
     applyn, applyns, applys,
     isid,
