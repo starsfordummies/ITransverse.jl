@@ -19,7 +19,7 @@ function LinearAlgebra.svdvals(a::ITensor, linds; kwargs...)
     cL = combiner(linds...)
     cR = combiner(rinds...)
 
-    svds = svdvals(matrix(cL * a * cR))
+    svdvals(matrix(cL * a * cR))
 
 end
 
@@ -31,21 +31,23 @@ function diagonalize_rdm!(psi::MPS, cut::Int)
     S = svdvals(psi[cut], (linkinds(psi, cut-1)..., siteinds(psi,cut)...))
     eigenvals_rho = S.^2 
    
-    return array(diag(eigenvals_rho))
+    return eigenvals_rho
 end
 
 
-vn_from_sv(sv::ITensor; normalize::Bool) = vn_from_sv(tensor(NDTensors.cpu(sv)); normalize)
+vn_from_sv(sv::ITensor; normalize::Bool) = vn_from_sv(diag(NDTensors.cpu(sv)); normalize)
 
-function vn_from_sv(sv::Tensor; normalize::Bool)
+function vn_from_sv(sv; normalize::Bool)
+
+    @assert ndims(sv) == 1 "input one-dimensional vector containing SV"
 
     if normalize
         sv = sv/norm(sv)
     end
 
    SvN = zero(eltype(sv))
-    for n=1:dim(sv, 1)
-        p = sv[n,n]^2
+    for n=1:size(sv, 1)
+        p = sv[n]^2
         SvN -= p * log(p)
     end
     return SvN
