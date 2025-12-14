@@ -2,7 +2,7 @@
 For this, we *remove* the *last* site tensors of both MPOS 
 and replace them with the folding operator `fold_op`
 """
-function combine_fold_mpos(W1::AbstractMPS, W2::AbstractMPS; fold_op=ComplexF64[1 0 ; 0 1], dag_W2::Bool=true)
+function combine_and_fold(W1::AbstractMPS, W2::AbstractMPS; fold_op=ComplexF64[1 0 ; 0 1], dag_W2::Bool=true)
 
     sites1_p =  siteinds(first, W1,plev=0)
     sites2_p =  siteinds(first, W2,plev=0)
@@ -62,43 +62,10 @@ end
 
 
 
-""" # TODO generalize to arbitrary folding like for MPOs 
-Builds a folded MPS by joining two, returns the combined MPS and the combiners  """ 
-function combine_mps_spacefold(W1::MPS, W2::MPS)
-    #@assert siteinds(W1) == siteinds(W2)
-    LL = length(W1)-1
-    sites1 = siteinds(W1)
-    sites2 = siteinds(W2)
-
-    links1 = linkinds(W1)
-    links2 = linkinds(W2)
-
-    W12 = MPS(LL)
-    comb_p = [ITransverse.ITenUtils.pcombiner(sites1[ii], sites2[ii]', tags="Site,nn=$(ii)") for ii = 1:LL]
- 
-    comb_link = [combiner(links1[ii],links2[ii]', tags="Link,ll=$(ii)") for ii = 1:LL-1]
-
-    for ii = 1:LL
-        W12[ii] = W1[ii]*(W2[ii]')
-        W12[ii] *= comb_p[ii]
-    end
-
-    W12[1] *= comb_link[1]
-    for ii = 2:LL-1 
-        W12[ii] *= comb_link[ii-1]
-        W12[ii] *= comb_link[ii]
-    end
-    W12[end] *= comb_link[end]
-
-    return W12, comb_p
-
-end
-
-
 
 function reopen_inds!(WWm::MPS, combs)
     for (ii, c) in enumerate(combs)
-        iinds = uniqueinds(inds(c), combinedind(c))
+        #iinds = uniqueinds(inds(c), combinedind(c))
         WWm[ii] *= dag(c)
     end
     return WWm
