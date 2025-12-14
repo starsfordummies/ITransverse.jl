@@ -11,11 +11,11 @@ fw2 = fw_tMPO(bfw, ts; tr=[1,1])
 
 fwmps = fw_tMPS(bfw,ts; tr=[1,1])
 
-fold, cP, cPs = ITransverse.combine_fold_mpos(fw, fw; fold_op = nothing)
-fold2, cP2, cPs2 = ITransverse.combine_fold_mpos(fw2, fw2; fold_op = [1,0,0,1])
+fold, cP, cPs = ITransverse.combine_and_fold(fw, fw; fold_op = nothing)
+fold2, cP2, cPs2 = ITransverse.combine_and_fold(fw2, fw2; fold_op = [1,0,0,1])
 
-foldMPS1, cPMPS1, cPsMPS1 = ITransverse.combine_fold_mpos(fwmps, fwmps; fold_op = [1,0,0,1])
-foldMPS2, cPMPS2, cPsMPS2 = ITransverse.combine_fold_mpos(fwmps, fwmps; fold_op = nothing)
+foldMPS1, cPMPS1, cPsMPS1 = ITransverse.combine_and_fold(fwmps, fwmps; fold_op = [1,0,0,1])
+foldMPS2, cPMPS2, cPsMPS2 = ITransverse.combine_and_fold(fwmps, fwmps; fold_op = nothing)
 
 tsf = siteinds(4, 7)
 fold_ref = folded_tMPO(bfold, tsf)
