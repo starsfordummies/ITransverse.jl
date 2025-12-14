@@ -97,6 +97,10 @@ function beta_lims(Ntot::Int, nbeta::Int, init_beta_only::Bool)
     return b1,b2
 end
 
+""" Remove nothing's from a list """
+filter_nothings(args...) = filter(x -> x !== nothing, args)
+
+
 """ Pretty(?) printing of an array truncating epsilons """
 function choparr(arr::AbstractArray; tol=1e-12)
     return [abs(real(z)) < tol && abs(imag(z)) < tol ? 0 + 0im :
