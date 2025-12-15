@@ -271,9 +271,6 @@ end
 Builds exp(Hpotts) with the expression a la Murg (sin/cos alike)
 Bond dimension is 3
 """
-function build_expH_potts_murg(sites, mp::PottsParams, dt::Number)
-    build_expH_potts_murg(sites, mp.JSS, mp.ftau, dt)
-end
 
 function build_expH_potts_murg(sites, 
     J::Real, fpotts::Real,
@@ -535,6 +532,13 @@ function build_expH_potts_symmetric_svd(in_space_sites,
 
     return U_t
 
+end
+
+
+# Boilerplate
+
+function build_expH_potts_murg(sites, mp::PottsParams, dt::Number)
+    build_expH_potts_murg(sites, mp.JSS, mp.ftau, dt)
 end
 
 function build_expH_potts_symmetric_svd(in_space_sites, mp::PottsParams, dt::Number) 

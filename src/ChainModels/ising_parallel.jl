@@ -140,16 +140,6 @@ function build_expH_ising_murg_new(sites::Vector{<:Index},
 end
 
 
-function build_expH_ising_murg_new(s::Vector{<:Index}, p::IsingParams, dt::Number)
-    build_expH_ising_murg_new(s, p.Jtwo, p.gperp, p.hpar, dt)
-end
-
-
-function build_expH_ising_murg_new(p::IsingParams, dt::Number)
-    s = siteinds("S=1/2", 3)
-    build_expH_ising_murg_new(s, p.Jtwo, p.gperp, p.hpar, dt)
-end
-
 
 """ Symmetric version (Murg) of Murg exp(+i Jdt*XX ) """
 function build_expXX_murg(sites::Vector{<:Index}, Jdt::Number; build_expZZ::Bool=false)
@@ -202,15 +192,7 @@ end
 
 
 
-function build_expH_ising_murg(s::Vector{<:Index}, p::IsingParams, dt::Number)
-    build_expH_ising_murg(s, p.Jtwo, p.gperp, p.hpar, dt)
-end
 
-function build_expH_ising_murg(mp::IsingParams, dt::Number)
-    space_sites = siteinds("S=1/2", 3; conserve_qns = false)
-    build_expH_ising_murg(space_sites, mp.Jtwo, mp.gperp, mp.hpar, dt)
-
-end
 
 function build_expH_ising_symm_svd(s::Vector{<:Index}, p::IsingParams, dt::Number)
 
@@ -331,14 +313,6 @@ end
 """ Fourth-order Trotter MPO for Murg exp(-i*H*dt) Ising 
 Convention H = -( JXX + gzZ + λxX )
 """
-function build_expH_ising_murg_4o(p::IsingParams, dt::Number)
-    s = siteinds("S=1/2", 3)
-    build_expH_ising_murg_4o(s, p, dt)
-end
-
-function build_expH_ising_murg_4o(s::Vector{<:Index}, p::IsingParams, dt::Number)
-    build_expH_ising_murg_4o(s, p.Jtwo, p.gperp, p.hpar, dt)
-end
 
 function build_expH_ising_murg_4o(
     sites::Vector{<:Index},
@@ -486,4 +460,42 @@ function build_expHZZ_ising_floquet(sites::Vector{<:Index}, JXX::Real, gperp::Re
 
     return U_t
 
+end
+
+
+# Boilerplate 
+
+function build_expH_ising_murg_new(s::Vector{<:Index}, p::IsingParams, dt::Number)
+    build_expH_ising_murg_new(s, p.Jtwo, p.gperp, p.hpar, dt)
+end
+
+function build_expH_ising_murg_new(p::IsingParams, dt::Number)
+    s = siteinds("S=1/2", 3)
+    build_expH_ising_murg_new(s, p.Jtwo, p.gperp, p.hpar, dt)
+end
+
+
+function build_expH_ising_murg(s::Vector{<:Index}, p::IsingParams, dt::Number)
+    build_expH_ising_murg(s, p.Jtwo, p.gperp, p.hpar, dt)
+end
+
+function build_expH_ising_murg(mp::IsingParams, dt::Number)
+    space_sites = siteinds("S=1/2", 3; conserve_qns = false)
+    build_expH_ising_murg(space_sites, mp.Jtwo, mp.gperp, mp.hpar, dt)
+
+end
+function build_expH_ising_murg_4o(p::IsingParams, dt::Number)
+    s = siteinds("S=1/2", 3)
+    build_expH_ising_murg_4o(s, p, dt)
+end
+
+function build_expH_ising_murg_4o(s::Vector{<:Index}, p::IsingParams, dt::Number)
+    build_expH_ising_murg_4o(s, p.Jtwo, p.gperp, p.hpar, dt)
+end
+
+build_expHZZ_ising_floquet(s::Vector{<:Index}, p::IsingParams; dt::Number) =   build_expHZZ_ising_floquet(s, p.Jtwo, p.gperp, p.hpar; dt)
+
+function build_expHZZ_ising_floquet(p::IsingParams; dt::Number)
+    space_sites = siteinds("S=1/2", 3; conserve_qns = false)
+    build_expHZZ_ising_floquet(space_sites, p.Jtwo, p.gperp, p.hpar; dt)
 end

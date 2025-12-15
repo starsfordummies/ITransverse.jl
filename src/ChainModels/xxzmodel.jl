@@ -22,9 +22,6 @@ function build_H_XXZ(sites, JXY::Real, ΔZZ::Real)
     # Convert these terms to MPO
     return MPO(os, sites)
 end
-function build_H_XXZ(sites, mp::XXZParams)
-    build_H_XXZ(sites, mp.J_XY, mp.J_ZZ)
-end
 
 
 """ Builds with autompo H XXZ Hamiltonian using S+ and S- operators, convention 
@@ -131,6 +128,12 @@ function build_expH_XX_svd(
 
     return U_t
 
+end
+
+# Boilerplate
+
+function build_H_XXZ(sites, mp::XXZParams)
+    build_H_XXZ(sites, mp.J_XY, mp.J_ZZ)
 end
 
 function build_expH_XXZ_2o_spin1(p,dt) 
