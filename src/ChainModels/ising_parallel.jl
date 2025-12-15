@@ -497,5 +497,5 @@ build_expHZZ_ising_floquet(s::Vector{<:Index}, p::IsingParams, dt::Number) =   b
 
 function build_expHZZ_ising_floquet(p::IsingParams, dt::Number)
     space_sites = siteinds("S=1/2", 3; conserve_qns = false)
-    build_expHZZ_ising_floquet(space_sites, p.Jtwo, p.gperp, p.hpar; dt)
+    build_expHZZ_ising_floquet(space_sites, p.Jtwo, p.gperp, p.hpar, dt)
 end
