@@ -427,7 +427,7 @@ end
 
 
 """ Floquet Ising exp(-iJXX - iλX)exp(-igZ) """
-function build_expH_ising_floquet(sites::Vector{<:Index}, JXX::Real, gz::Real, λx::Real; dt=1.0)
+function build_expH_ising_floquet(sites::Vector{<:Index}, JXX::Real, gz::Real, λx::Real, dt=1.0)
 
     Uxx = build_expXX_murg(sites, -JXX*dt)
 
@@ -445,7 +445,7 @@ function build_expH_ising_floquet(sites::Vector{<:Index}, JXX::Real, gz::Real, �
 end
 
 """ Floquet Ising exp(-iJZZ - iλZ)exp(-igX) """
-function build_expHZZ_ising_floquet(sites::Vector{<:Index}, JXX::Real, gperp::Real, λpar::Real; dt=1.0)
+function build_expHZZ_ising_floquet(sites::Vector{<:Index}, JXX::Real, gperp::Real, λpar::Real, dt=1.0)
 
     Uzz = build_expXX_murg(sites, -JXX*dt; build_expZZ=true)
 
@@ -493,9 +493,9 @@ function build_expH_ising_murg_4o(s::Vector{<:Index}, p::IsingParams, dt::Number
     build_expH_ising_murg_4o(s, p.Jtwo, p.gperp, p.hpar, dt)
 end
 
-build_expHZZ_ising_floquet(s::Vector{<:Index}, p::IsingParams; dt::Number) =   build_expHZZ_ising_floquet(s, p.Jtwo, p.gperp, p.hpar; dt)
+build_expHZZ_ising_floquet(s::Vector{<:Index}, p::IsingParams, dt::Number) =   build_expHZZ_ising_floquet(s, p.Jtwo, p.gperp, p.hpar, dt)
 
-function build_expHZZ_ising_floquet(p::IsingParams; dt::Number)
+function build_expHZZ_ising_floquet(p::IsingParams, dt::Number)
     space_sites = siteinds("S=1/2", 3; conserve_qns = false)
     build_expHZZ_ising_floquet(space_sites, p.Jtwo, p.gperp, p.hpar; dt)
 end
