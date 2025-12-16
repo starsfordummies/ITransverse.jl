@@ -21,8 +21,8 @@ struct FwtMPOBlocks
 end
 
 
-function FwtMPOBlocks(tp::tMPOParams; build_imag::Bool=true, init_state=nothing, kwargs...)
-    Wl, Wc, Wr, rot_inds = make_fwtmpoblocks(build_expH(tp; kwargs...))
+function FwtMPOBlocks(tp::tMPOParams; build_imag::Bool=true, init_state=nothing)
+    Wl, Wc, Wr, rot_inds = make_fwtmpoblocks(ModelUt(tp).Ut)
 
     if !isnothing(init_state)
         @info "Setting tp.init_state to $(init_state)"
@@ -30,7 +30,7 @@ function FwtMPOBlocks(tp::tMPOParams; build_imag::Bool=true, init_state=nothing,
     end
 
     if build_imag
-        Wl_im, Wc_im, Wr_im, rot_inds_im = make_fwtmpoblocks(build_expHim(tp; kwargs...))
+        Wl_im, Wc_im, Wr_im, rot_inds_im = make_fwtmpoblocks(ModelUt(tp; build_imag=true).Ut)
         iminds = (rot_inds_im[:L], rot_inds_im[:R], rot_inds_im[:P], rot_inds_im[:Ps])
         inds =   (   rot_inds[:L],    rot_inds[:R],    rot_inds[:P],    rot_inds[:Ps])
 
@@ -120,6 +120,6 @@ Adapt.adapt_structure(to, b::FwtMPOBlocks) = FwtMPOBlocks(
 
 
 function Base.show(io::IO, b::FwtMPOBlocks)
-    println(io, "fw tMPO Blocks, type $(NDTensors.unwrap_array_type(b.Wc))")
+    println(io, "forward tMPO Blocks, type $(NDTensors.unwrap_array_type(b.Wc))")
     println(io, b.tp)
 end

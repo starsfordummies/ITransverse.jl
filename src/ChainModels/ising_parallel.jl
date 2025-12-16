@@ -32,8 +32,7 @@ end
 Convention H = -( JXX + gzZ + λxX ) - For exp(-iHdt) dt must be included already in the parameters!
 """
 
-function build_expH_ising_murg(sites::Vector{<:Index},
-    JXX::Real, gz::Real, λx::Real)
+function build_expH_ising_murg(sites::Vector{<:Index}, JXX::Number, gz::Number, λx::Number)
     """ Symmetric version of Murg exp(-iHising t) """
 
     # For real dt this does REAL time evolution 
@@ -111,8 +110,8 @@ end
 
 
 
-function build_expH_ising_symm_svd(s::Vector{<:Index}, p::IsingParams, dt::Number)
-    w = build_expH_ising_symm_svd(p, dt)
+function build_expH_ising_symm_svd(s::Vector{<:Index}, Jtwodt::Number, hperpdt::Number, λpardt::Number)
+    w = build_expH_ising_symm_svd(Jtwodt, hperpdt, λpardt)
     wmpo = extend_mpo(s, w)
     return wmpo
 end

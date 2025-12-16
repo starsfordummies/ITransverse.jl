@@ -36,7 +36,9 @@ export build_H_potts_manual,
 export build_expH_random_symm_svd_1o
 
 # from xxzmodel.jl
-export build_expH_XXZ_2o
+#export build_expH_XXZ_2o
+
+export modelparams
 
 export timeEvo_MPO_2ndOrder, timeEvo_MPO_2ndOrder_LRflipped
 

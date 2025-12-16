@@ -158,6 +158,6 @@ Adapt.@adapt_structure FoldtMPOBlocks
 
 
 function Base.show(io::IO, b::FoldtMPOBlocks)
-    println(io, "*Folded* tMPO Blocks, type $(NDTensors.unwrap_array_type(b.WWc))")
+    println(io, "[[*Folded*]] tMPO Blocks, type $(NDTensors.unwrap_array_type(b.WWc))")
     println(io, b.tp)
 end

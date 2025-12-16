@@ -7,10 +7,8 @@ struct tMPOParams{T<:Union{Float64,ComplexF64}, MP, F}
 end
 
 function Base.show(io::IO, tp::tMPOParams)
-    println(io, "tMPOParams")
-    println(io, "dt:           $(tp.dt)    nbeta : $(tp.nbeta)")
-    println(io, "exp(H) func:  $(tp.expH_func)")
-    println(io, "Model params: $(tp.mp)")
+    println(io, "tMPOParams:   dt: $(tp.dt) | nbeta : $(tp.nbeta)")
+    println(io, "exp(H) func:  $(tp.expH_func)  |  Model params: $(tp.mp)")
     println(io, "Init state:   $(array(tp.bl))")
 end
 
@@ -22,7 +20,7 @@ function tMPOParams(
     mp::ModelParams,
     nbeta::Int,
     bl_in::AbstractVector)
-    
+
     blt = to_itensor(bl_in, "bl")
 
     return tMPOParams(dt, expH_func, mp, nbeta, blt)

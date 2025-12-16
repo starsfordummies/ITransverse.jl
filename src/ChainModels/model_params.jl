@@ -1,22 +1,26 @@
 # Custom param structures for models
-
-
 abstract type ModelParams end
+
 
 struct NoParams <: ModelParams
     phys_site::Index{Int64}
 end
 
-struct IsingParams <: ModelParams
-    Jtwo::Float64
-    gperp::Float64
-    hpar::Float64
+
+struct IsingParams{T <: Number} <: ModelParams
+    Jtwo::T
+    gperp::T
+    hpar::T
     phys_site::Index{Int64}
 
-    function IsingParams(Jtwo::Number, gperp::Number, hpar::Number)
-        new(Float64(Jtwo), Float64(gperp), Float64(hpar), Index(2, "S=1/2"))
-    end
 end
+
+function IsingParams(Jtwo::Number, gperp::Number, hpar::Number)
+    T = promote_type(typeof(Jtwo), typeof(gperp), typeof(hpar))
+    IsingParams{T}(T(Jtwo), T(gperp), T(hpar), Index(2, "S=1/2"))
+end
+
+Base.:*(dt::Number, mp::IsingParams) = IsingParams(mp.Jtwo * dt, mp.gperp * dt, mp.hpar * dt, mp.phys_site)
 
 # Defaults
 IsingParams() = IsingParams(1.0, -1.05, 0.5)
@@ -26,35 +30,38 @@ IsingParams() = IsingParams(1.0, -1.05, 0.5)
 IsingParams(x::IsingParams; Jtwo=x.Jtwo, gperp=x.gperp, hpar=x.hpar) = IsingParams(Jtwo, gperp, hpar)
 
 
-struct PottsParams <: ModelParams
-    JSS::Float64
-    ftau::Float64
-    hS::Float64
+struct PottsParams{T <: Number} <: ModelParams
+    JSS::T
+    ftau::T
+    hS::T
     phys_site::Index{Int64}
-    function PottsParams(Jtwo::Number, ftau::Number, hpar::Number=0.)
-        new(Float64(Jtwo), Float64(ftau), Float64(hpar), Index(3, "S=1"))
-    end
+end
+
+function  PottsParams(Jtwo::Number, ftau::Number, hpar::Number=0.)
+    T = promote_type(typeof(Jtwo), typeof(ftau), typeof(hpar))
+    PottsParams{T}(T(Jtwo), T(ftau), T(hpar), Index(3, "S=1"))
 end
 
 """ For XXZ We need to specify the physical site, as it can be defined for different spins """
 
-struct XXZParams <: ModelParams
-    J_XY::Float64
-    J_ZZ::Float64
-    hz::Float64
+struct XXZParams{T <: Number} <: ModelParams
+    J_XY::T
+    J_ZZ::T
+    hz::T
     phys_site::Index{Int64}
+end
 
-    function XXZParams(J_XY::Number, J_ZZ::Number, hz::Number=0., phys_site = Index(2, "S=1/2"))
-        new(Float64(J_XY), Float64(J_ZZ), Float64(hz), phys_site)
-    end
+function XXZParams(J_XY::Number, J_ZZ::Number, hz::Number=0., phys_site = Index(2, "S=1/2"))
+    T = promote_type(typeof(J_XY), typeof(J_ZZ), typeof(hz))
+    XXZParams{T}(T(J_XY), T(J_ZZ), T(hz), phys_site)
 end
 
 
-XXZParams(J_ZZ,hz, phys_site) = XXZParams(1, J_ZZ, hz, phys_site)
+XXZParams(J_ZZ, hz, phys_site) = XXZParams(1, J_ZZ, hz, phys_site)
 
 
 # Extract only the model parameters in reasonable order 
-modelparams(mp::IsingParams) = (mp.Jwo, mp.gperp, mp.hpar)
+modelparams(mp::IsingParams) = (mp.Jtwo, mp.gperp, mp.hpar)
 modelparams(mp::PottsParams) = (mp.JSS, mp.ftau, mp.hS)
 modelparams(mp::XXZParams) = (mp.J_XY, mp.J_ZZ, mp.hz)
 
@@ -68,5 +75,5 @@ struct ModelHam{T <: ModelParams}
 end
 
 function ModelHam(sites, HH::Function, mp::ModelParams)
-    return ModelHam(mp, HH(sites::Vector{<:Index}, modelparams(mp)))
+    return ModelHam(mp, HH(sites::Vector{<:Index}, modelparams(mp)...))
 end

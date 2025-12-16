@@ -3,12 +3,17 @@ struct ModelUt{T <: tMPOParams}
     Ut::MPO
 end
 
-function ModelUt(tp::tMPOParams)
+function ModelUt(tp::tMPOParams; build_imag::Bool=false)
     s = [sim(tp.mp.phys_site) for ii in 1:3]
-    return ModelUt(s, tp)
+    return ModelUt(s, tp; build_imag)
 end
-function ModelUt(sites::Vector{<:Index}, tp::tMPOParams)
-    Ut = tp.expH_func(sites, modelparams(tp.mp))
+function ModelUt(sites::Vector{<:Index}, tp::tMPOParams; build_imag::Bool=false)
+    Ut = if build_imag
+        tp.expH_func(sites, -im*tp.dt.*modelparams(tp.mp)...)
+    else
+        tp.expH_func(sites, tp.dt.*modelparams(tp.mp)...)
+    end
+
     return ModelUt(tp,Ut)
 end
 
