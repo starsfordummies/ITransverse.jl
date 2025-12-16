@@ -1,3 +1,4 @@
+
 """ Given `s` input sites and an MPO defined on three sites (Wl-Wc-Wr),
 extends it on the `s` input sites as (Wl-Wc-Wc-...-Wc-Wr) """
 function extend_mpo(s::Vector{<:Index}, w::MPO)

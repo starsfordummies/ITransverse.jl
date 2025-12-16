@@ -21,8 +21,8 @@ function tMPOParams(
     expH_func::Function,
     mp::ModelParams,
     nbeta::Int,
-    bl_in::AbstractVector
-)
+    bl_in::AbstractVector)
+    
     blt = to_itensor(bl_in, "bl")
 
     return tMPOParams(dt, expH_func, mp, nbeta, blt)

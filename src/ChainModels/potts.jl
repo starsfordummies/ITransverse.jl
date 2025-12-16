@@ -92,9 +92,6 @@ ITensors.op(::OpName"τplusτdag",::SiteType"S1_Z3") =
      010
 ```
  """
- function build_H_potts(sites_potts, mp::PottsParams)
-    build_H_potts(sites_potts, mp.JSS, mp.ftau)
- end
 
 function build_H_potts(sites_potts, JJ::Real, ff::Real)
  
@@ -178,68 +175,6 @@ function build_H_potts_manual(sites_potts, JJ::Real, ff::Real)
     return U_x
 end
 
-""" Potts H MPO built manually with lower-triangular form """
-function build_H_potts_manual_lowtri(sites_potts, JJ::Real, ff::Real)
- 
-    N = length(sites_potts)
-
-    link_dimension = 4
-
-    linkindices = [Index(link_dimension, "Link,l=$(n-1)") for n = 1:N+1]
-
-    U_x = MPO(N)
-
-
-    for n = 1:N
-
-        ll = dag(linkindices[n])
-
-        # right link index rl - labels the columns
-        rl = linkindices[n+1]
-
-        I = op(sites_potts, "Id", n)
-
-        Σ = op(sites_potts, "Σ", n)
-        Σd = op(sites_potts, "Σdag", n)
-        ττd = op(sites_potts, "τplusτdag",  n)
-
-
-        # Lower tri
-        # Init ITensor inside MPO
-        if n == 1
-            # Row vector at the left 
-            U_x[n] =  onehot(rl => 1) * -ff*ττd
-            U_x[n] += onehot(rl => 2) * -JJ*Σd
-            U_x[n] += onehot(rl => 3) * -JJ*Σ
-            U_x[n] += onehot(rl => 4) * I
-
-
-        elseif n == N
-            #U_x[n] = ITensor(ComplexF64, ll, dag(s), s')
-            U_x[n] =  onehot(ll => 1) * I
-            U_x[n] += onehot(ll => 2) * Σ
-            U_x[n] += onehot(ll => 3) * Σd
-            U_x[n] += onehot(ll => 4) * -ff*ττd
-
-        else
-
-            U_x[n] =  onehot(ll => 1, rl =>1) * I
-            U_x[n] += onehot(ll => 2, rl =>1) * Σ
-            U_x[n] += onehot(ll => 3, rl =>1) * Σd
-            U_x[n] += onehot(ll => 4, rl =>1) * -ff*ττd
-
-
-            U_x[n] += onehot(ll => 4, rl =>2) * -JJ*Σd
-            U_x[n] += onehot(ll => 4, rl =>3) * -JJ*Σ
-            U_x[n] += onehot(ll => 4, rl =>4) * I
-
-        end
-
-    end
-
-    return U_x
-end
-
 """ Builds Potts H MPO
 using the alternate prescription swapping basically Σ ↔ τ
 """
@@ -268,13 +203,11 @@ end
 
 
 """
-Builds exp(Hpotts) with the expression a la Murg (sin/cos alike)
+Builds exp(Hpotts) with the expression a la Murg (sin/cos alike). 
+dt should be already included in the parameters! 
 Bond dimension is 3
 """
-
-function build_expH_potts_murg(sites, 
-    J::Real, fpotts::Real,
-    dt::Number)
+function build_expH_potts_murg(sites, J::Number, fpotts::Number)
 
     fsumI_a(x) = (2*exp(-x) + exp(2*x))/3.
     fsumΣ_a(x) = (-exp(-x) + exp(2*x))/3.
@@ -291,7 +224,7 @@ function build_expH_potts_murg(sites,
     # for imag time evol we should have ϵ = -i dt
     # but we have an overall -J sign in the ham, so we should take 
 
-    ϵ = J * 1.0im * dt 
+    ϵ = J * 1.0im 
 
     #fI = fsumI(ϵ, 20)
     #fΣ = fsumΣ(ϵ, 20)
@@ -459,15 +392,14 @@ end
 """
 Builds exp(Hpotts) using Symmetric SVD decomposition,\\
 should be symmetric (p<->p') and (L<->R)
-Bond dimension is 3
+Bond dimension is 3. 
+dt should be already included in the parameters! 
 """
-function build_expH_potts_symmetric_svd(in_space_sites, 
-    J::Real, fpotts::Real,
-    dt::Number)
+function build_expH_potts_symmetric_svd(in_space_sites, J::Real, fpotts::Real)
 
     # ASSERT NEED SYMMETRY p<->p' OR WE SHOuLD BE MORE CAREFUL
 
-    ϵ = J * 1.0im * dt 
+    ϵ = J * 1.0im 
 
     N = length(in_space_sites)
 
@@ -535,7 +467,13 @@ function build_expH_potts_symmetric_svd(in_space_sites,
 end
 
 
+#= 
 # Boilerplate
+
+ function build_H_potts(sites_potts, mp::PottsParams)
+    build_H_potts(sites_potts, mp.JSS, mp.ftau)
+ end
+
 
 function build_expH_potts_murg(sites, mp::PottsParams, dt::Number)
     build_expH_potts_murg(sites, mp.JSS, mp.ftau, dt)
@@ -550,3 +488,5 @@ function build_expH_potts_symmetric_svd(mp::PottsParams, dt::Number)
     build_expH_potts_symmetric_svd(space_sites, mp.JSS, mp.ftau, dt)
 end
 
+
+=# 

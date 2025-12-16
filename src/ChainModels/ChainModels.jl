@@ -26,7 +26,6 @@ export build_H_ising,
     build_expH_ising_symm_svd,
     build_expH_ising_murg_4o
 
-    
 #from potts.jl
 export build_H_potts_manual,
     build_H_potts,
@@ -34,18 +33,10 @@ export build_H_potts_manual,
     build_expH_potts_murg,
     build_expH_potts_symmetric_svd
 
-
 export build_expH_random_symm_svd_1o
+
 # from xxzmodel.jl
 export build_expH_XXZ_2o
-
-# export build_H_XXZ_manual,
-#     #build_H_XXZ_manual_lowtri,
-#     build_H_XXZ,
-#     #build_expH_XXZ_1o,
-#     #build_expH_XXZ_2o,
-#     build_expH_XXZ_murg,
-#     build_expH_XXZZ_murg_from_ising
 
 export timeEvo_MPO_2ndOrder, timeEvo_MPO_2ndOrder_LRflipped
 

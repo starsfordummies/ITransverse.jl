@@ -51,9 +51,6 @@ function build_H_XXZ_SpSm(sites, JXX::Real, ΔZZ::Real, hz::Real)
     # Convert these terms to MPO
     return MPO(os, sites)
 end
-function build_H_XXZ_SpSm(sites, mp::XXZParams)
-    build_H_XXZ_SpSm(sites, mp.J_XY, mp.J_ZZ, mp.hz)
-end
 
 
 
@@ -130,7 +127,12 @@ function build_expH_XX_svd(
 
 end
 
+#= 
 # Boilerplate
+
+function build_H_XXZ_SpSm(sites, mp::XXZParams)
+    build_H_XXZ_SpSm(sites, mp.J_XY, mp.J_ZZ, mp.hz)
+end
 
 function build_H_XXZ(sites, mp::XXZParams)
     build_H_XXZ(sites, mp.J_XY, mp.J_ZZ)
@@ -147,3 +149,5 @@ function build_expH_XXZ_2o_spinhalf(p,dt)
 end
 
 build_expH_XXZ_2o(sites, p,dt) = timeEvo_MPO_2ndOrder(sites, fill("Id", 3), zeros(3), ["S+", "S-", "Sz"], [0.5*p.J_XY, 0.5*p.J_XY, p.J_ZZ], ["S-", "S+", "Sz"], ones(3), "Sz", p.hz, dt)
+
+=#
