@@ -86,6 +86,7 @@ export tMPOParams, ising_tp
 
 
 include("tmpo/build_expH.jl")
+export ModelUt
 
 include("tmpo/build_ww.jl")
 

@@ -29,11 +29,15 @@ end
 
 
 """ Symmetric prescription a la Murg for exp(-i*H*dt) Ising transverse+parallel
-Convention H = -( JXX + gzZ + λxX ) - For exp(-iHdt) dt must be included already in the parameters!
+Convention H = -( JXX + gzZ + λxX ) 
+- For exp(-iHdt) dt must be either included already in the parameters or via dt kwarg
 """
-
-function build_expH_ising_murg(sites::Vector{<:Index}, JXX::Number, gz::Number, λx::Number)
+function build_expH_ising_murg(sites::Vector{<:Index}, JXX::Number, gz::Number, λx::Number; dt=Number=1.0)
     """ Symmetric version of Murg exp(-iHising t) """
+
+    JXX = JXX*dt
+    gz = gz*dt
+    λx = λx*dt
 
     # For real dt this does REAL time evolution 
     # I should have already taken into account both the - sign in exp(-iHt) 
@@ -54,7 +58,6 @@ function build_expH_ising_murg(sites::Vector{<:Index}, JXX::Number, gz::Number, 
     return U_t
 
 end
-
 
 
 """ Symmetric version (Murg) of Murg exp(+i Jdt*XX ) """
@@ -112,7 +115,11 @@ end
 
 function build_expH_ising_symm_svd(s::Vector{<:Index}, Jtwodt::Number, hperpdt::Number, λpardt::Number)
     w = build_expH_ising_symm_svd(Jtwodt, hperpdt, λpardt)
-    wmpo = extend_mpo(s, w)
+    wmpo = if length(s) == 3
+        replace_siteinds(w, s)
+    else
+        extend_mpo(s, w)
+    end
     return wmpo
 end
 
@@ -245,7 +252,7 @@ function build_expHZZ_ising_floquet(sites::Vector{<:Index}, JXX::Number, gperp::
 
     # Multiply in order:  exp(iZ/2)*exp(iX)*exp(iXX)*exp(iZ/2)
     
-    U_t = iszero(λpar) ? Uxx : applyn(Uz, Uzz) 
+    U_t = iszero(λpar) ? Uzz : applyn(Uz, Uzz) 
     U_t = iszero(gperp) ? U_t : applyn(Ux, U_t) 
 
     return U_t

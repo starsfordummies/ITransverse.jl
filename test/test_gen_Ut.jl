@@ -35,7 +35,7 @@ function buildExpHTFI(
 
   N = length(sites)
 
-  EType = eltype(union(λ, J))
+  EType = promote_type(eltype(λ), eltype(J))
 
   # generate "regular" link indeces (i.e. without conserved QNs)
   linkindices = hasqns(sites) ? [Index([QN() => 1, QN("SzParity",1,2) => 1, QN("SzParity",0,2) => 1], "Link,l=$(n-1)") for n in 1:N+1] : [Index(link_dimension, "Link,l=$(n-1)") for n in 1:N+1]
@@ -162,7 +162,7 @@ end
 
 
     ##### Stefano's Ut
-    Ut1 = ITransverse.ChainModels.build_expH_ising_murg_new(ss, JXX, hz, gx, dt)
+    Ut1 = build_expH_ising_murg(ss, JXX, hz, gx; dt)
 
     psi_t1 = deepcopy(psi0)
     for tt = 1:n_iter

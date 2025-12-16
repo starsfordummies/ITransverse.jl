@@ -81,10 +81,11 @@ function fill_bulk_evolution_MPO(nt, sites, dt, Jxx, λ, hz, gx)
 end
 
 # function fill_bulk_symmetric(sites, dt, Jxx, hz, gx)
-#   tp1 = tMPOParams(dt,  ITransverse.ChainModels.build_expH_ising_murg_new, IsingParams(Jxx, hz, gx), 0, ITransverse.up_state)
+#   tp1 = tMPOParams(dt,  build_expH_ising_murg, IsingParams(Jxx, hz, gx), 0, ITransverse.up_state)
 #  return tp1.expH_func(sites, tp1.mp, dt)
 # end
-fill_bulk_symmetric(sites, dt, Jxx, hz, gx) = ITransverse.ChainModels.build_expH_ising_murg_new(sites, Jxx, hz, gx, dt)
+
+fill_bulk_symmetric(sites, dt, Jxx, hz, gx) = build_expH_ising_murg(sites, Jxx*dt, hz*dt, gx*dt)
 
 
 

@@ -2,11 +2,11 @@ using ITensors, ITensorMPS
 using ITransverse
 using Test
 
-using ITransverse: up_state, build_expH, phys_ind
+using ITransverse: up_state
 
 @testset "Building MPO blocks in different ways" begin
   tp = ising_tp()
-  eH = build_expH(tp)
+  eH = ModelUt(tp).Ut
 
   b = FwtMPOBlocks(tp)
   b = FwtMPOBlocks(tp, init_state=[0,1])
