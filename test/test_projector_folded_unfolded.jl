@@ -91,7 +91,7 @@ Nsteps = nbeta + Ntime_steps + nbeta
 
 mp_xxz = XXZParams(1, 0.7, 0.0, Index(3,"S=1"))
 
-tp_xxz = tMPOParams(dt, ITransverse.ChainModels.build_expH_XXZ_2o, mp_xxz, nbeta, [1,0,0])
+tp_xxz = tMPOParams(dt, ITransverse.ChainModels.expH_XXZ_2o, mp_xxz, nbeta, [1,0,0])
 
 rotated_phys = 7
 

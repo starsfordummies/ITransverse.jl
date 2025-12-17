@@ -1,4 +1,4 @@
-function build_expH_ising_murg_old(
+function expH_ising_murg_old(
     sites::Vector{<:Index},
     JXX::Real,
     gz::Real,
@@ -128,7 +128,7 @@ function build_murg_edge_tensor(JXX::Real, gz::Real, λx::Real; phys_ind::Index 
     return W
 end
 
-function build_expH_ising_murg_new_from_blocks(
+function expH_ising_murg_new_from_blocks(
     sites::Vector{<:Index},
     JXX::Real,
     gz::Real,
@@ -163,7 +163,7 @@ end
 
 
 
-function build_expH_ising_symm_svd_1o(p::IsingParams, dt::Number)
+function expH_ising_symm_svd_1o(p::IsingParams, dt::Number)
     
     JXX = p.Jtwo*dt
     hz = p.gpar*dt
@@ -196,7 +196,7 @@ end
 
 
 """ Potts H MPO built manually with lower-triangular form """
-function build_H_potts_manual_lowtri(sites_potts, JJ::Real, ff::Real)
+function H_potts_manual_lowtri(sites_potts, JJ::Real, ff::Real)
  
     N = length(sites_potts)
 

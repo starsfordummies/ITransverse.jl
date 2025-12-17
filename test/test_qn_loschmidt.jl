@@ -9,7 +9,7 @@ mp = IsingParams(1, 0.7, 0)
 nbeta = 4
 
 
-tp = tMPOParams(0.1, build_expH_ising_murg, mp, nbeta, [1,0])
+tp = tMPOParams(0.1, expH_ising_murg, mp, nbeta, [1,0])
 
 maxbondim=128
 Ntime_steps = 30
@@ -46,8 +46,8 @@ vn_rdm = vn_entanglement_entropy(psi_rdm)
 
 ss = siteinds("S=1/2",3, conserve_szparity=true)
 
-Utim = build_expH_ising_murg(ss, modelparams(tp.mp)...; dt=-im*0.1)
-Ut = build_expH_ising_murg(ss, modelparams(tp.mp)...; dt=0.1)
+Utim = build_Ut(expH_ising_murg, ss, tp.mp; dt=-im*0.1)
+Ut = build_Ut(expH_ising_murg, ss, tp.mp; dt=0.1)
 
 tp.bl.tensor.storage
 psi_i = MPS(ss, "Up")

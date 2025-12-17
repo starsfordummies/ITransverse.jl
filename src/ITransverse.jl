@@ -67,14 +67,16 @@ export ModelParams, IsingParams, PottsParams, XXZParams, NoParams
 
 export TruncParams
 
-export build_H_ising,
-    build_expH_ising_murg, 
-    build_expH_ising_murg_4o, 
+export H_ising,
+    expH_ising_murg, 
+    expH_ising_murg_4o, 
 
-    build_expH_ising_symm_svd,
-    build_expH_potts_murg, 
-    build_expH_potts_symmetric_svd,
-    build_expH_random_symm_svd_1o
+    expH_ising_symm_svd,
+    expH_potts_murg, 
+    expH_potts_symmetric_svd,
+    expH_random_symm_svd_1o
+
+export build_H, build_Ut
 
 export timeEvo_MPO_2ndOrder, timeEvo_MPO_2ndOrder_LRflipped
 
@@ -86,7 +88,7 @@ export tMPOParams, ising_tp
 
 
 include("tmpo/build_expH.jl")
-export ModelUt
+
 
 include("tmpo/build_ww.jl")
 

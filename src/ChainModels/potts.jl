@@ -93,7 +93,7 @@ ITensors.op(::OpName"τplusτdag",::SiteType"S1_Z3") =
 ```
  """
 
-function build_H_potts(sites_potts, JJ::Real, ff::Real)
+function H_potts(sites_potts, JJ::Real, ff::Real)
  
     N = length(sites_potts)
 
@@ -114,7 +114,7 @@ end
 
 
 """ Potts H MPO built manually with upper-triangular form """
-function build_H_potts_manual(sites_potts, JJ::Real, ff::Real)
+function H_potts_manual(sites_potts, JJ::Real, ff::Real)
  
     N = length(sites_potts)
 
@@ -178,7 +178,7 @@ end
 """ Builds Potts H MPO
 using the alternate prescription swapping basically Σ ↔ τ
 """
-function build_H_potts_tausigma(sites_potts, JJ, ff)
+function H_potts_tausigma(sites_potts, JJ, ff)
  
     N = length(sites_potts)
 
@@ -207,7 +207,7 @@ Builds exp(Hpotts) with the expression a la Murg (sin/cos alike).
 dt should be already included in the parameters! 
 Bond dimension is 3
 """
-function build_expH_potts_murg(sites, J::Number, fpotts::Number)
+function expH_potts_murg(sites, J::Number, fpotts::Number)
 
     fsumI_a(x) = (2*exp(-x) + exp(2*x))/3.
     fsumΣ_a(x) = (-exp(-x) + exp(2*x))/3.
@@ -295,97 +295,97 @@ function build_expH_potts_murg(sites, J::Number, fpotts::Number)
 end
 
 
-"""
-Builds exp(Hpotts) with the expression a la Murg (sin/cos alike),\\
-using the alternate prescription swapping basically Σ ↔ τ
-Bond dimension is 3
-"""
-function build_expH_potts_murg_alt(sites, 
-    J::Real, fpotts::Real,
-    dt::Number)
+# """
+# Builds exp(Hpotts) with the expression a la Murg (sin/cos alike),\\
+# using the alternate prescription swapping basically Σ ↔ τ
+# Bond dimension is 3
+# """
+# function expH_potts_murg_alt(sites, 
+#     J::Real, fpotts::Real,
+#     dt::Number)
 
-    fsumI_a(x) = (2*exp(-x) + exp(2*x))/3.
-    fsumΣ_a(x) = (-exp(-x) + exp(2*x))/3.
+#     fsumI_a(x) = (2*exp(-x) + exp(2*x))/3.
+#     fsumΣ_a(x) = (-exp(-x) + exp(2*x))/3.
 
-    N = length(sites)
+#     N = length(sites)
 
-    link_dimension = 3
+#     link_dimension = 3
 
-    linkindices = [Index(link_dimension, "Link,l=$(n-1)") for n = 1:N+1]
+#     linkindices = [Index(link_dimension, "Link,l=$(n-1)") for n = 1:N+1]
 
-    U_t = MPO(N)
+#     U_t = MPO(N)
 
-    # Here should be implemented exp(ϵ (ΣΣdag + ΣdagΣ))
-    # for imag time evol we should have ϵ = -i dt
-    # but we have an overall -J sign in the ham, so we should take 
+#     # Here should be implemented exp(ϵ (ΣΣdag + ΣdagΣ))
+#     # for imag time evol we should have ϵ = -i dt
+#     # but we have an overall -J sign in the ham, so we should take 
 
-    ϵ = J * 1.0im * dt 
+#     ϵ = J * 1.0im * dt 
 
-    fI = fsumI_a(ϵ)
-    fτ = fsumΣ_a(ϵ)
+#     fI = fsumI_a(ϵ)
+#     fτ = fsumΣ_a(ϵ)
 
-    for n = 1:N
-        # siteindex s
-        #s = sites[n]
+#     for n = 1:N
+#         # siteindex s
+#         #s = sites[n]
 
-        # left link index ll with daggered QN conserving direction (if applicable)
-        # labels the rows
-        ll = dag(linkindices[n])
+#         # left link index ll with daggered QN conserving direction (if applicable)
+#         # labels the rows
+#         ll = dag(linkindices[n])
 
-        # right link index rl - labels the columns
-        rl = linkindices[n+1]
+#         # right link index rl - labels the columns
+#         rl = linkindices[n+1]
 
-        I = op(sites, "Id", n)
+#         I = op(sites, "Id", n)
 
-        τ = op(sites, "τ", n)
-        τd = op(sites, "τdag", n)
+#         τ = op(sites, "τ", n)
+#         τd = op(sites, "τdag", n)
 
-        #@show matrix(τ)
-        #@show matrix(τd) 
+#         #@show matrix(τ)
+#         #@show matrix(τd) 
 
-        # Init ITensor inside MPO
-        if n == 1
-            # Row vector at the left 
-            U_t[n] =  onehot(rl => 1) * sqrt(fI) * I
-            U_t[n] += onehot(rl => 2) * sqrt(fτ) * τ
-            U_t[n] += onehot(rl => 3) * sqrt(fτ) * τd
+#         # Init ITensor inside MPO
+#         if n == 1
+#             # Row vector at the left 
+#             U_t[n] =  onehot(rl => 1) * sqrt(fI) * I
+#             U_t[n] += onehot(rl => 2) * sqrt(fτ) * τ
+#             U_t[n] += onehot(rl => 3) * sqrt(fτ) * τd
 
-        elseif n == N
-            #U_t[n] = ITensor(ComplexF64, ll, dag(s), s')
-            U_t[n] =  onehot(ll => 1) * sqrt(fI) * I
-            U_t[n] += onehot(ll => 2) * sqrt(fτ) * τd
-            U_t[n] += onehot(ll => 3) * sqrt(fτ) * τ
+#         elseif n == N
+#             #U_t[n] = ITensor(ComplexF64, ll, dag(s), s')
+#             U_t[n] =  onehot(ll => 1) * sqrt(fI) * I
+#             U_t[n] += onehot(ll => 2) * sqrt(fτ) * τd
+#             U_t[n] += onehot(ll => 3) * sqrt(fτ) * τ
 
-        else
-            U_t[n] =  onehot(ll => 1, rl =>1) * fI * I
-            U_t[n] += onehot(ll => 1, rl =>2) * sqrt(fI*fτ) * τ
-            U_t[n] += onehot(ll => 1, rl =>3) * sqrt(fI*fτ) * τd
+#         else
+#             U_t[n] =  onehot(ll => 1, rl =>1) * fI * I
+#             U_t[n] += onehot(ll => 1, rl =>2) * sqrt(fI*fτ) * τ
+#             U_t[n] += onehot(ll => 1, rl =>3) * sqrt(fI*fτ) * τd
 
-            U_t[n] += onehot(ll => 2, rl =>1) * sqrt(fI*fτ) * τd
-            U_t[n] += onehot(ll => 2, rl =>2) * fτ * I
-            U_t[n] += onehot(ll => 2, rl =>3) * fτ * τ
+#             U_t[n] += onehot(ll => 2, rl =>1) * sqrt(fI*fτ) * τd
+#             U_t[n] += onehot(ll => 2, rl =>2) * fτ * I
+#             U_t[n] += onehot(ll => 2, rl =>3) * fτ * τ
 
-            U_t[n] += onehot(ll => 3, rl =>1) * sqrt(fI*fτ) * τ
-            U_t[n] += onehot(ll => 3, rl =>2) * fτ * τd
-            U_t[n] += onehot(ll => 3, rl =>3) * fτ * I
+#             U_t[n] += onehot(ll => 3, rl =>1) * sqrt(fI*fτ) * τ
+#             U_t[n] += onehot(ll => 3, rl =>2) * fτ * τd
+#             U_t[n] += onehot(ll => 3, rl =>3) * fτ * I
 
-        end
+#         end
 
-        # Mutiply by f-tau part
+#         # Mutiply by f-tau part
 
-        if fpotts > 1e-10
+#         if fpotts > 1e-10
 
-            ssdag = op(sites, "ΣplusΣdag",  n)
-            expT = exp(ϵ * ssdag * fpotts/2)
+#             ssdag = op(sites, "ΣplusΣdag",  n)
+#             expT = exp(ϵ * ssdag * fpotts/2)
 
-            U_t[n] = prime(U_t[n]) * expT
-            U_t[n] = noprime(U_t[n] * prime(expT), 2)
-        end
+#             U_t[n] = prime(U_t[n]) * expT
+#             U_t[n] = noprime(U_t[n] * prime(expT), 2)
+#         end
 
-    end
+#     end
 
-    return U_t
-end
+#     return U_t
+# end
 
 
 
@@ -395,7 +395,7 @@ should be symmetric (p<->p') and (L<->R)
 Bond dimension is 3. 
 dt should be already included in the parameters! 
 """
-function build_expH_potts_symmetric_svd(in_space_sites, J::Real, fpotts::Real)
+function expH_potts_symmetric_svd(in_space_sites, J::Real, fpotts::Real)
 
     # ASSERT NEED SYMMETRY p<->p' OR WE SHOuLD BE MORE CAREFUL
 
@@ -470,22 +470,22 @@ end
 #= 
 # Boilerplate
 
- function build_H_potts(sites_potts, mp::PottsParams)
-    build_H_potts(sites_potts, mp.JSS, mp.ftau)
+ function H_potts(sites_potts, mp::PottsParams)
+    H_potts(sites_potts, mp.JSS, mp.ftau)
  end
 
 
-function build_expH_potts_murg(sites, mp::PottsParams, dt::Number)
-    build_expH_potts_murg(sites, mp.JSS, mp.ftau, dt)
+function expH_potts_murg(sites, mp::PottsParams, dt::Number)
+    expH_potts_murg(sites, mp.JSS, mp.ftau, dt)
 end
 
-function build_expH_potts_symmetric_svd(in_space_sites, mp::PottsParams, dt::Number) 
-    build_expH_potts_symmetric_svd(in_space_sites, mp.JSS, mp.ftau, dt)
+function expH_potts_symmetric_svd(in_space_sites, mp::PottsParams, dt::Number) 
+    expH_potts_symmetric_svd(in_space_sites, mp.JSS, mp.ftau, dt)
 end
 
-function build_expH_potts_symmetric_svd(mp::PottsParams, dt::Number) 
+function expH_potts_symmetric_svd(mp::PottsParams, dt::Number) 
     space_sites = siteinds("S=1", 3; conserve_qns = false)
-    build_expH_potts_symmetric_svd(space_sites, mp.JSS, mp.ftau, dt)
+    expH_potts_symmetric_svd(space_sites, mp.JSS, mp.ftau, dt)
 end
 
 

@@ -37,7 +37,7 @@ end
 
 function build_WW(tp::tMPOParams)
     @info "Building WW tensors using $(tp.expH_func), parameters $(tp.mp)"
-    eH = ModelUt(tp).Ut
+    eH = build_Ut(tp)
     build_WW(eH)
 end
     
@@ -74,7 +74,7 @@ end
 Returns the *unrotated* combined indices as well: vL, vR, p, p' 
 """
 function build_WWc(tp::tMPOParams)
-    eH = ModelUt(tp).Ut
+    eH = build_Ut(tp)
     build_WWc(eH)
 end
 

@@ -46,9 +46,9 @@ end
 """ Quick defaults for parallel field Ising, for playing around: J=1 hz=0.4, gx=0, init_state= |+> """
 function ising_tp(;hz = 0.4, integrable::Bool=true) 
     tp = if integrable
-         tMPOParams(0.1, build_expH_ising_murg, IsingParams(1.0, hz, 0.0),   0, [1.0+0im,1]/sqrt(2))
+         tMPOParams(0.1, expH_ising_murg, IsingParams(1.0, hz, 0.0),   0, [1.0+0im,1]/sqrt(2))
     else
-        tMPOParams(0.1,  build_expH_ising_murg, IsingParams(1.0, -1.05, 0.5), 0, [1,0])
+        tMPOParams(0.1,  expH_ising_murg, IsingParams(1.0, -1.05, 0.5), 0, [1,0])
     end
 
     return tp

@@ -22,7 +22,7 @@ end
 
 
 function FwtMPOBlocks(tp::tMPOParams; build_imag::Bool=true, init_state=nothing)
-    Wl, Wc, Wr, rot_inds = make_fwtmpoblocks(ModelUt(tp).Ut)
+    Wl, Wc, Wr, rot_inds = make_fwtmpoblocks(tp)
 
     if !isnothing(init_state)
         @info "Setting tp.init_state to $(init_state)"
@@ -30,7 +30,7 @@ function FwtMPOBlocks(tp::tMPOParams; build_imag::Bool=true, init_state=nothing)
     end
 
     if build_imag
-        Wl_im, Wc_im, Wr_im, rot_inds_im = make_fwtmpoblocks(ModelUt(tp; build_imag=true).Ut)
+        Wl_im, Wc_im, Wr_im, rot_inds_im = make_fwtmpoblocks(tp; build_imag=true)
         iminds = (rot_inds_im[:L], rot_inds_im[:R], rot_inds_im[:P], rot_inds_im[:Ps])
         inds =   (   rot_inds[:L],    rot_inds[:R],    rot_inds[:P],    rot_inds[:Ps])
 
@@ -57,6 +57,8 @@ function FwtMPOBlocks(b::FwtMPOBlocks;
     Wl=b.Wl, Wc=b.Wc, Wr=b.Wr, Wl_im=b.Wl_im, Wc_im=b.Wc_im, Wr_im=b.Wr_im, tp=b.tp, rot_inds=b.rot_inds)
     return FwtMPOBlocks(Wl, Wc, Wr, Wl_im, Wc_im, Wr_im, tp, rot_inds)
 end
+
+make_fwtmpoblocks(tp::tMPOParams; build_imag::Bool=false) = make_fwtmpoblocks(build_Ut(tp; build_imag))
 
 function make_fwtmpoblocks(eH::MPO; check_sym::Bool=true)
 

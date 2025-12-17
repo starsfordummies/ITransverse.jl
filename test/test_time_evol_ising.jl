@@ -35,12 +35,12 @@ truncp = TruncParams(cutoff, maxbondim)
 Nsteps = 30
 
 mp = IsingParams(JXX, hz, gx)
-tp = tMPOParams(dt, build_expH_ising_symm_svd, mp, nbeta, init_state)
+tp = tMPOParams(dt, expH_ising_symm_svd, mp, nbeta, init_state)
 b = FoldtMPOBlocks(tp)
 
 ss = siteinds("S=1/2", 80)
 psi0 = productMPS(ss, "+")
-H = build_H_ising(ss,modelparams(mp)...)
+H = build_H(H_ising, ss, mp)
 
 
 state = tdvp(

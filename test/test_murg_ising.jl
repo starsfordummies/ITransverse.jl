@@ -8,7 +8,7 @@ using Test
 ss = siteinds("S=1/2", 3)
 
 JJ = 0.7
-eH = ITransverse.ChainModels.build_expXX_murg(ss, JJ)
+eH = ITransverse.ChainModels.expXX_murg(ss, JJ)
 
 
 gate1 = eH[1] * eH[end] * delta( linkind(eH,1),linkind(eH,2) )

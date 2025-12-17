@@ -12,7 +12,6 @@ end
 function UtMPO(ss::Vector{<:Index}, b::FwtMPOBlocks, imag::Bool=false) 
     tp = b.tp
     w = tp.expH_func(ss, tp.mp, tp.dt)
-    
 end
 
 

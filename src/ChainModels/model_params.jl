@@ -20,8 +20,6 @@ function IsingParams(Jtwo::Number, gperp::Number, hpar::Number)
     IsingParams{T}(T(Jtwo), T(gperp), T(hpar), Index(2, "S=1/2"))
 end
 
-Base.:*(dt::Number, mp::IsingParams) = IsingParams(mp.Jtwo * dt, mp.gperp * dt, mp.hpar * dt, mp.phys_site)
-
 # Defaults
 IsingParams() = IsingParams(1.0, -1.05, 0.5)
 
@@ -42,6 +40,8 @@ function  PottsParams(Jtwo::Number, ftau::Number, hpar::Number=0.)
     PottsParams{T}(T(Jtwo), T(ftau), T(hpar), Index(3, "S=1"))
 end
 
+
+
 """ For XXZ We need to specify the physical site, as it can be defined for different spins """
 
 struct XXZParams{T <: Number} <: ModelParams
@@ -51,13 +51,15 @@ struct XXZParams{T <: Number} <: ModelParams
     phys_site::Index{Int64}
 end
 
+# Default to Spin 1/2 Heisenberg ? 
 function XXZParams(J_XY::Number, J_ZZ::Number, hz::Number=0., phys_site = Index(2, "S=1/2"))
     T = promote_type(typeof(J_XY), typeof(J_ZZ), typeof(hz))
     XXZParams{T}(T(J_XY), T(J_ZZ), T(hz), phys_site)
 end
 
 
-XXZParams(J_ZZ, hz, phys_site) = XXZParams(1, J_ZZ, hz, phys_site)
+# do we want this ? 
+#XXZParams(J_ZZ, hz, phys_site) = XXZParams(1, J_ZZ, hz, phys_site)
 
 
 # Extract only the model parameters in reasonable order 
@@ -65,15 +67,3 @@ modelparams(mp::IsingParams) = (mp.Jtwo, mp.gperp, mp.hpar)
 modelparams(mp::PottsParams) = (mp.JSS, mp.ftau, mp.hS)
 modelparams(mp::XXZParams) = (mp.J_XY, mp.J_ZZ, mp.hz)
 
-
-
-
-""" Model Hamiltonian struct. Contains ModelParams and the H MPO"""
-struct ModelHam{T <: ModelParams}
-    p::T
-    H::MPO
-end
-
-function ModelHam(sites, HH::Function, mp::ModelParams)
-    return ModelHam(mp, HH(sites::Vector{<:Index}, modelparams(mp)...))
-end

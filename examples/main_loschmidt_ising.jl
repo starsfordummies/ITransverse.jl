@@ -116,7 +116,7 @@ function (@main)(args)
     Tstep = 1
 
 
-    tp = tMPOParams(dt,  build_expH_ising_murg, mp, nbeta, init_state)
+    tp = tMPOParams(dt,  expH_ising_murg, mp, nbeta, init_state)
     psis, ds2s, leading_eigs, leading_eigsq, overlapsLR, entropies, maxents = ising_loschmidt(tp, Tmin, Tmax, nbeta; Tstep)
 
     rr2s = []
