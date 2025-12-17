@@ -2,7 +2,7 @@ using ITensors, ITensorMPS
 using ITransverse
 using Test
 
-using ITransverse: up_state
+using ITransverse: up_state, modelparams
 
 
 @testset "Test computing exp. values using symmetries, folded and unfolded" begin 
@@ -16,8 +16,8 @@ mp = IsingParams(1, 0.7, 0)
 
 
 sites = siteinds("S=1/2", Lx; conserve_qns=false)
-Ut = build_expH_ising_murg(sites, mp, 0.1)
-Ut2 = build_expH_ising_murg(sites, mp, 0.1)
+Ut = build_expH_ising_murg(sites, modelparams(mp)...; dt=0.1)
+Ut2 = build_expH_ising_murg(sites, modelparams(mp)...; dt=0.1)
 
 Utvec, _ = ITransverse.ITenUtils.vectorize_mpo(Ut)
 Ut2vec, _ = ITransverse.ITenUtils.vectorize_mpo(Ut2)
@@ -43,7 +43,7 @@ ss = siteinds("S=1/2", Lx; conserve_szparity=true)
 
 psi0 = MPS(ss, "Up")
 
-Ut_sym = build_expH_ising_murg(ss, mp, 0.1)
+Ut_sym = build_expH_ising_murg(ss, modelparams(mp)...; dt=0.1)
 
 UUt_sym = ITransverse.folded_UUt(Ut_sym)
 
@@ -86,7 +86,8 @@ rho0 = outer(psi0,dag(psi0)')
 rho0v, combis = ITransverse.ITenUtils.vectorize_mpo(rho0)
 
 
-Ut_sym = build_expH_ising_murg(ss3, mp, 0.1)
+Ut_sym = build_expH_ising_murg(ss3, modelparams(mp)...; dt=0.1)
+
 UUt_sym = ITransverse.folded_UUt(Ut_sym)
 UUt_sym2 = ITransverse.folded_UUt(Ut_sym)
 

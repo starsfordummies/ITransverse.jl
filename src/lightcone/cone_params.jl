@@ -33,7 +33,6 @@ function ConeParams(; truncp::TruncParams,
         throw(ArgumentError("Unsupported input type $(typeof(checkpoints))"))
     end
 
-    @show typeof(checkpoints)
 
     return ConeParams(truncp, opt_method, optimize_op, which_evs, which_ents, checkpoints, vwidth)
 

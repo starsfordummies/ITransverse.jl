@@ -128,17 +128,19 @@ function build_expH_XX_svd(
 end
 
 
-build_expH_XXZ_2o(sites, J_XY, J_ZZ, hz; dt) = timeEvo_MPO_2ndOrder(sites, fill("Id", 3), zeros(3), ["S+", "S-", "Sz"], [0.5*J_XY, 0.5*J_XY, J_ZZ], ["S-", "S+", "Sz"], ones(3), "Sz", hz, dt)
-
-function build_expH_XXZ_2o_spin1(J_XY, J_ZZ, hz; dt=0.1) 
-    s = siteinds("S=1", 3)
-    build_expH_XXZ_2o(s, J_XY, J_ZZ, hz; dt) 
+function build_expH_XXZ_2o(sites, J_XY, J_ZZ, hz) 
+     timeEvo_MPO_2ndOrder(sites, fill("Id", 3), zeros(3), ["S+", "S-", "Sz"], [0.5*J_XY, 0.5*J_XY, J_ZZ], ["S-", "S+", "Sz"], ones(3), "Sz", hz, 1.0)
 end
 
-function build_expH_XXZ_2o_spinhalf(J_XY, J_ZZ, hz; dt) 
-    s = siteinds("S=1/2", 3)
-    build_expH_XXZ_2o(s, J_XY, J_ZZ, hz ;dt) 
-end
+# function build_expH_XXZ_2o_spin1(J_XY, J_ZZ, hz; dt=0.1) 
+#     s = siteinds("S=1", 3)
+#     build_expH_XXZ_2o(s, J_XY, J_ZZ, hz; dt) 
+# end
+
+# function build_expH_XXZ_2o_spinhalf(J_XY, J_ZZ, hz; dt) 
+#     s = siteinds("S=1/2", 3)
+#     build_expH_XXZ_2o(s, J_XY, J_ZZ, hz ;dt) 
+# end
 
 
 #= 
