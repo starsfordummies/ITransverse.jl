@@ -37,3 +37,11 @@ p3 = ITransverse.reopen_inds!(copy(foldMPS1), cPMPS1)
 
 @test p1 ≈ p2
 @test p1 ≈ p3
+
+
+ss = siteinds("S=1/2", 12)
+oo = random_mpo(ss) + im*random_mpo(ss) 
+
+ofold2, c1, c2 = ITransverse.combine_and_fold(oo, oo; fold_op=nothing, dag_W2=true)
+ofold1 = ITransverse.folded_UUt(oo, new_siteinds=firstsiteinds(ofold2))
+@test ofold1 ≈ ofold2
