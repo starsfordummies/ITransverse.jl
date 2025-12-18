@@ -91,7 +91,7 @@ include("tmpo/fold_tmpo_blocks.jl")
 
 export FoldtMPOBlocks, FwtMPOBlocks
 
-include("tmpo/build_expH.jl")
+include("tmpo/build_Ut.jl")
 include("tmpo/build_ww.jl")
 
 include("tmpo/build_fw_tmpo.jl")
@@ -111,8 +111,6 @@ export
     folded_left_tMPS,
     folded_right_tMPS,
     folded_tMPO_in
-
-include("tmpo/build_Ut.jl")
 
 include("folding/foldings.jl")
 

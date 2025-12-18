@@ -1,6 +1,43 @@
-""" Join two MPOs fold-like, if `fold_op` != nothing we join the two sheets.
-For this, we *remove* the *last* site tensors of both MPOS 
-and replace them with the folding operator `fold_op`
+""" Given an MPO U, builds the folded version  UxUdag of it, optionally with `new_siteinds`
+TODO: we can do it with combine_and_fold ?  """
+function folded_UUt(Ut::MPO; new_siteinds=nothing)
+
+    N = length(Ut)
+
+    UUt = MPO(N)
+
+    sites_u = firstsiteinds(Ut)
+    links_u = linkinds(Ut)
+
+    for jj = 1:N
+        UUt[jj] = Ut[jj] * dag(prime(Ut[jj],2))
+        s = sites_u[jj]
+        cs = ITransverse.ITenUtils.pcombiner(s, dag(s)'', tags = tags(s); dir=ITensors.In)
+        UUt[jj] = UUt[jj] * cs  #TODO CHECK THIS 
+        UUt[jj] = UUt[jj] * dag(cs)'  #TODO CHECK THIS 
+    end
+
+    for jj=1:N-1
+        l = links_u[jj]
+        cl = combiner(l, dag(l)'', tags = "Link,l=$(jj)")
+    
+        UUt[jj] *= cl
+        UUt[jj + 1] *= dag(cl)
+       
+    end
+
+    if !isnothing(new_siteinds)
+        replace_siteinds!(UUt, new_siteinds)
+    end
+
+    return UUt
+end
+
+
+
+""" Join two MPS/MPOs fold-like, if `fold_op` != nothing we join the two sheets.
+- For this, we **remove** the **last** site tensors of both MP*S 
+and **replace** them with the folding operator `fold_op`
 """
 function combine_and_fold(W1::AbstractMPS, W2::AbstractMPS; fold_op=ComplexF64[1 0 ; 0 1], dag_W2::Bool=true)
 

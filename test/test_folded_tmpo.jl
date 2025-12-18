@@ -16,7 +16,7 @@ random_eh = expH_random_symm_svd_1o(0.9)
 ss = firstsiteinds(random_eh)
 
 tp = ising_tp()
-ising_eh = build_Ut(expH_ising_murg, ss, tp.mp; dt=0.2)
+ising_eh = build_Ut(ss, expH_ising_murg, tp.mp; dt=0.2)
 
 init_state = (rand(2))
 init_statef = kron(init_state,conj(init_state))

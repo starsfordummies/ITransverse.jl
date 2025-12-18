@@ -162,7 +162,7 @@ end
 
 
     ##### Stefano's Ut
-    Ut1 = build_Ut(expH_ising_murg, ss, JXX, hz, gx; dt)
+    Ut1 = build_Ut(ss, expH_ising_murg, JXX, hz, gx; dt)
 
     psi_t1 = deepcopy(psi0)
     for tt = 1:n_iter
