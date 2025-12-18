@@ -39,7 +39,7 @@ end
 - For this, we **remove** the **last** site tensors of both MP*S 
 and **replace** them with the folding operator `fold_op`
 """
-function combine_and_fold(W1::AbstractMPS, W2::AbstractMPS; fold_op=ComplexF64[1 0 ; 0 1], dag_W2::Bool=true)
+function combine_and_fold(W1::AbstractMPS, W2::AbstractMPS; fold_op=ComplexF64[1 0 ; 0 1], dag_W2::Bool=true, new_siteinds=false)
 
     sites1_p =  siteinds(first, W1,plev=0)
     sites2_p =  siteinds(first, W2,plev=0)
@@ -91,6 +91,12 @@ function combine_and_fold(W1::AbstractMPS, W2::AbstractMPS; fold_op=ComplexF64[1
     else
         W12[end] *= comb_link[end]
     end
+
+
+    if !isnothing(new_siteinds)
+        replace_siteinds!(W12, new_siteinds)
+    end
+
 
     return W12, comb_ps, comb_p
 

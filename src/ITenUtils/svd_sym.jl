@@ -78,8 +78,6 @@ function mytrunc_svd(
     #@show norm(rec_M - M)/norm(M)
     #@show truncerr, truncerr^0.5
 
-
-    # # ! TODO CHECK: Do we need to put MV or conj(transpose(MV) here??
     return SVD(MU,MS,MV'), spec
 
 end
