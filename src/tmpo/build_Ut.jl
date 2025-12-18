@@ -1,21 +1,3 @@
-
-
-timephysdim(b) = dim(b.rot_inds[:P])
-
-function linkphysdim(b)
-    @assert dim(b.rot_inds[:L]) == dim(b.rot_inds[:R]) 
-    dim(b.rot_inds[:L])
-end
-
-
-""" WIP: from b to U(t) MPO """ 
-function UtMPO(ss::Vector{<:Index}, b::FwtMPOBlocks, imag::Bool=false) 
-    tp = b.tp
-    w = tp.expH_func(ss, tp.mp, tp.dt)
-end
-
-
-
 """ Given an MPO U, builds the folded version  UxUdag of it, optionally with `new_siteinds` """
 function folded_UUt(Ut::MPO; new_siteinds=nothing)
 

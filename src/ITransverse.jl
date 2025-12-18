@@ -86,20 +86,13 @@ export construct_tMPS_tMPO
 include("tmpo/tmpo_params.jl")
 export tMPOParams, ising_tp
 
-
-include("tmpo/build_expH.jl")
-
-
-include("tmpo/build_ww.jl")
-
-
-
 include("tmpo/fw_tmpo_blocks.jl")
 include("tmpo/fold_tmpo_blocks.jl")
 
 export FoldtMPOBlocks, FwtMPOBlocks
 
-
+include("tmpo/build_expH.jl")
+include("tmpo/build_ww.jl")
 
 include("tmpo/build_fw_tmpo.jl")
 
