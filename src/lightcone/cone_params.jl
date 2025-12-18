@@ -17,6 +17,8 @@ function ConeParams(; truncp::TruncParams,
     checkpoints,
     vwidth::Int=1) 
 
+
+    # Checkpoints logic, let's try and be flexible 
     checkpoints = if isa(checkpoints, Integer)
         if checkpoints > 0 
             collect(50:checkpoints:10000)         

@@ -42,7 +42,7 @@ function run_cone(psi::MPS,
     # For checkpoints, we want to save CPU data 
     tp_cp =  tMPOParams(tp; bl=tocpu(tp.bl))
     
-    infos = Dict(:times => times, :tp => tp_cp, :coneparams => cp, :dtype => NDTensors.unwrap_array_type(tp.bl))
+    infos = Dict(:times => times, :tp => tp_cp, :coneparams => cp)
 
     time_dim = dim(b.WWc,1)
 
