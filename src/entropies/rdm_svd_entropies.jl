@@ -35,7 +35,7 @@ function diagonalize_rdm!(psi::MPS, cut::Int)
 end
 
 
-vn_from_sv(sv::ITensor; normalize::Bool) = vn_from_sv(diag(NDTensors.cpu(sv)); normalize)
+vn_from_sv(sv::ITensor; normalize::Bool) = vn_from_sv(array(diag(sv)); normalize)
 
 function vn_from_sv(sv; normalize::Bool)
 
@@ -45,11 +45,14 @@ function vn_from_sv(sv; normalize::Bool)
         sv = sv/norm(sv)
     end
 
+    #= Fails for GPU
    SvN = zero(eltype(sv))
     for n=1:size(sv, 1)
         p = sv[n]^2
         SvN -= p * log(p)
     end
+    =# 
+    SvN = -sum((sv .^ 2) .* log.(sv .^ 2))
     return SvN
 end
 
