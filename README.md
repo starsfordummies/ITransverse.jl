@@ -265,7 +265,7 @@ We provide tools for diagonalizing the RTMs and computing all sorts of generaliz
 ## Models
 
 The Ising model with transverse + parallel fields has been thoroughly tested and should work, one function
-to build the exp(Hising) we use is `build_expH_ising_murg()`, though we provide others.
+to build the exp(Hising) we use is `expH_ising_murg()`, though we provide others.
 
 We also provide implementations for the Potts and XXZ models.
 

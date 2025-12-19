@@ -12,10 +12,11 @@ Nsteps = 4
 time_sites = addtags(siteinds("S=1/2", Nsteps; conserve_qns=false), "time")
 time_sites_fold = addtags(siteinds(4, Nsteps; conserve_qns=false), "time")
 
-random_eh = build_expH_random_symm_svd_1o(0.9)
+random_eh = expH_random_symm_svd_1o(0.9)
 ss = firstsiteinds(random_eh)
 
-ising_eh = build_expH_ising_murg(ss, ising_tp().mp, 0.2)
+tp = ising_tp()
+ising_eh = build_Ut(ss, expH_ising_murg, tp.mp; dt=0.2)
 
 init_state = (rand(2))
 init_statef = kron(init_state,conj(init_state))

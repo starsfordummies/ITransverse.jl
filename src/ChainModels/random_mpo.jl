@@ -1,4 +1,4 @@
-function build_expH_random_symm_svd_1o(dt::Number)
+function expH_random_symm_svd_1o(dt::Number)
     # 1) Define the site indices for a three-site system
     
     s = siteinds("S=1/2", 3)
@@ -70,7 +70,7 @@ function build_expH_random_symm_svd_1o(dt::Number)
     return MPO([Wl, Wc, Wr])
 end
 
-function build_expH_random()
+function expH_random()
    
     s = siteinds("S=1/2", 3)
     

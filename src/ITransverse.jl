@@ -67,14 +67,16 @@ export ModelParams, IsingParams, PottsParams, XXZParams, NoParams
 
 export TruncParams
 
-export build_H_ising,
-    build_expH_ising_murg, 
-    build_expH_ising_murg_4o, 
+export H_ising,
+    expH_ising_murg, 
+    expH_ising_murg_4o, 
 
-    build_expH_ising_symm_svd,
-    build_expH_potts_murg, 
-    build_expH_potts_symmetric_svd,
-    build_expH_random_symm_svd_1o
+    expH_ising_symm_svd,
+    expH_potts_murg, 
+    expH_potts_symmetric_svd,
+    expH_random_symm_svd_1o
+
+export build_H, build_Ut
 
 export timeEvo_MPO_2ndOrder, timeEvo_MPO_2ndOrder_LRflipped
 
@@ -84,19 +86,13 @@ export construct_tMPS_tMPO
 include("tmpo/tmpo_params.jl")
 export tMPOParams, ising_tp
 
-
-include("tmpo/build_expH.jl")
-
-include("tmpo/build_ww.jl")
-
-
-
 include("tmpo/fw_tmpo_blocks.jl")
 include("tmpo/fold_tmpo_blocks.jl")
 
 export FoldtMPOBlocks, FwtMPOBlocks
 
-
+include("tmpo/build_Ut.jl")
+include("tmpo/build_ww.jl")
 
 include("tmpo/build_fw_tmpo.jl")
 
@@ -115,8 +111,6 @@ export
     folded_left_tMPS,
     folded_right_tMPS,
     folded_tMPO_in
-
-include("tmpo/build_Ut.jl")
 
 include("folding/foldings.jl")
 

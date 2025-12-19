@@ -3,15 +3,16 @@ using ITensorMPS
 using ITransverse
 using ITransverse: plus_state, up_state
 
+""" Builds the dominant vector for unfolded Ising using power method"""
 function ising_loschmidt(tp::tMPOParams, Tstart::Int, Tend::Int, nbeta::Int; Tstep::Int=1)
 
-    cutoff = 1e-14
+    cutoff = 1e-12
     maxbondim = 128
-    itermax = 800
+    itermax = 80
     eps_converged = 1e-6
 
     truncp = TruncParams(cutoff, maxbondim)
-    pm_params = PMParams(truncp, itermax, eps_converged, true, "RDM", "norm")
+    pm_params = PMParams(truncp, itermax, eps_converged, true, "RDM", "overlap")
 
     ll_murgs = Vector{MPS}()
     ds2s = [] # Vector{Float64}[]
@@ -42,9 +43,9 @@ function ising_loschmidt(tp::tMPOParams, Tstart::Int, Tend::Int, nbeta::Int; Tst
         mpo = fw_tMPO(b, time_sites, tr=tp.bl)
         start_mps = fw_tMPS(b, time_sites; tr=tp.bl, LR=:right)
 
-        #psi_trunc, ds2 = powermethod_sym(start_mps, mpo, pm_params)
+        psi_trunc, ds2 = powermethod_sym(start_mps, mpo, pm_params)
 
-        psi_trunc, ds2 = ITransverse.powermethod_both(start_mps, mpo, mpo, pm_params)
+        #psi_trunc, ds2 = ITransverse.powermethod_both(start_mps, mpo, mpo, pm_params)
 
 
         # Entropies 
@@ -74,9 +75,7 @@ function ising_loschmidt(tp::tMPOParams, Tstart::Int, Tend::Int, nbeta::Int; Tst
         push!(maxents, [maximum(real(sgen)), maximum(real(sgen_sv)), maximum(svn)])
 
 
-        curr_T = ts
-
-
+        # curr_T = ts
         # if ts % 40 == 0
         #     out_filename = "cp_ising_$(ts)_$(maxlinkdim(psi_trunc)).jld2"
         #     jldsave(out_filename; ll_murgs, ds2s, tp, pm_params, curr_T, allts, leading_eigs, leading_eigsq, overlapsLR, entropies, maxents)
@@ -91,7 +90,7 @@ end
 
 
 
-function main_ising_loschmidt()
+function (@main)(args)
 
     
     JXX = 1.0
@@ -102,7 +101,7 @@ function main_ising_loschmidt()
 
     dt = 0.1
 
-    nbeta = 4
+    nbeta = 0
 
     # init_state = plus_state
     init_state = up_state
@@ -112,13 +111,13 @@ function main_ising_loschmidt()
 
     @info ("Initial state $(init_state)  => quench @ $(mp) ")
     
-    Tmin = 80
-    Tmax = 80
+    Tmin = 50
+    Tmax = 50
     Tstep = 1
 
 
-    tp = tMPOParams(dt,  ITransverse.ChainModels.build_expH_ising_murg_new, mp, nbeta, init_state)
-    psis1, ds2s, leading_eigs, leading_eigsq, overlapsLR, entropies, maxents = ising_loschmidt(tp, Tmin, Tmax, nbeta; Tstep)
+    tp = tMPOParams(dt,  expH_ising_murg, mp, nbeta, init_state)
+    psis, ds2s, leading_eigs, leading_eigsq, overlapsLR, entropies, maxents = ising_loschmidt(tp, Tmin, Tmax, nbeta; Tstep)
 
     rr2s = []
     ir2s = []
@@ -134,9 +133,7 @@ function main_ising_loschmidt()
     #     push!(ir2s, maximum(imag(r2)))
     # end
 
-    return collect(Tmin:Tstep:Tmax), rr2s, ir2s, entropies, r2s 
+    return collect(Tmin:Tstep:Tmax), psis, rr2s, ir2s, entropies, r2s, ds2s
 
 
 end
-
-results = main_ising_loschmidt();

@@ -183,6 +183,10 @@ function ITensorMPS.replace_siteinds(W::MPO, new_in_sites, new_out_sites=dag(new
   replace_siteinds!(copy(W), new_in_sites, new_out_sites)
 end
 
+""" Replaces inplace siteinds of an MPO 
+- Assumes that the current indices have a "standard" notation, so that the p indices are 
+ found by the firstsiteinds(mpo) 
+"""
 function ITensorMPS.replace_siteinds!(W::MPO, new_in_sites, new_out_sites=dag(new_in_sites)')
   @assert length(new_in_sites) == length(W)
   # Here I assume that the MPO has the "standard" physical index notation  p - p' 

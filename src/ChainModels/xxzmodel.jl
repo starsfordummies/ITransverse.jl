@@ -5,7 +5,7 @@ using ITransverse.ITenUtils: symm_svd
 H = -( J(XX+YY+ Δ*ZZ) + 2*hZ ) 
 specify JXX, ΔZZ and hZ as input params 
 """
-function build_H_XXZ(sites, JXY::Real, ΔZZ::Real)
+function H_XXZ(sites, JXY::Real, ΔZZ::Real)
 
     # Input operator terms which define a Hamiltonian
     N = length(sites)
@@ -28,7 +28,7 @@ end
 H = -( J(XX+YY+ Δ*ZZ) + 2*hZ ) 
 specify JXX, ΔZZ and hZ as input params 
 """
-function build_H_XXZ_SpSm(sites, JXX::Real, ΔZZ::Real, hz::Real)
+function H_XXZ_SpSm(sites, JXX::Real, ΔZZ::Real, hz::Real)
 
     # Input operator terms which define a Hamiltonian
     N = length(sites)
@@ -51,15 +51,12 @@ function build_H_XXZ_SpSm(sites, JXX::Real, ΔZZ::Real, hz::Real)
     # Convert these terms to MPO
     return MPO(os, sites)
 end
-function build_H_XXZ_SpSm(sites, mp::XXZParams)
-    build_H_XXZ_SpSm(sites, mp.J_XY, mp.J_ZZ, mp.hz)
-end
 
 
 
 
 """ exp(-i*H_XX*t) using symmetric SVD - TODO Check """
-function build_expH_XX_svd(
+function expH_XX_svd(
     in_space_sites,
     JXX::Real,
     dt::Number)
@@ -130,20 +127,33 @@ function build_expH_XX_svd(
 
 end
 
+
+function expH_XXZ_2o(sites, J_XY, J_ZZ, hz) 
+     timeEvo_MPO_2ndOrder(sites, fill("Id", 3), zeros(3), ["S+", "S-", "Sz"], [0.5*J_XY, 0.5*J_XY, J_ZZ], ["S-", "S+", "Sz"], ones(3), "Sz", hz, 1.0)
+end
+
+# function expH_XXZ_2o_spin1(J_XY, J_ZZ, hz; dt=0.1) 
+#     s = siteinds("S=1", 3)
+#     expH_XXZ_2o(s, J_XY, J_ZZ, hz; dt) 
+# end
+
+# function expH_XXZ_2o_spinhalf(J_XY, J_ZZ, hz; dt) 
+#     s = siteinds("S=1/2", 3)
+#     expH_XXZ_2o(s, J_XY, J_ZZ, hz ;dt) 
+# end
+
+
+#= 
 # Boilerplate
 
-function build_H_XXZ(sites, mp::XXZParams)
-    build_H_XXZ(sites, mp.J_XY, mp.J_ZZ)
+function H_XXZ_SpSm(sites, mp::XXZParams)
+    H_XXZ_SpSm(sites, mp.J_XY, mp.J_ZZ, mp.hz)
 end
 
-function build_expH_XXZ_2o_spin1(p,dt) 
-    s = siteinds("S=1", 3)
-    build_expH_XXZ_2o(s, p,dt) 
+function H_XXZ(sites, mp::XXZParams)
+    H_XXZ(sites, mp.J_XY, mp.J_ZZ)
 end
 
-function build_expH_XXZ_2o_spinhalf(p,dt) 
-    s = siteinds("S=1/2", 3)
-    build_expH_XXZ_2o(s, p,dt) 
-end
 
-build_expH_XXZ_2o(sites, p,dt) = timeEvo_MPO_2ndOrder(sites, fill("Id", 3), zeros(3), ["S+", "S-", "Sz"], [0.5*p.J_XY, 0.5*p.J_XY, p.J_ZZ], ["S-", "S+", "Sz"], ones(3), "Sz", p.hz, dt)
+
+=#

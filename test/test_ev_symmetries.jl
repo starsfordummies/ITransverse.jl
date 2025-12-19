@@ -16,8 +16,8 @@ mp = IsingParams(1, 0.7, 0)
 
 
 sites = siteinds("S=1/2", Lx; conserve_qns=false)
-Ut = build_expH_ising_murg(sites, mp, 0.1)
-Ut2 = ITransverse.ChainModels.build_expH_ising_murg_new(sites, mp, 0.1)
+Ut =  build_Ut(sites, expH_ising_murg,  mp; dt=0.1)
+Ut2 = build_Ut(sites, expH_ising_murg,  mp; dt=0.1)
 
 Utvec, _ = ITransverse.ITenUtils.vectorize_mpo(Ut)
 Ut2vec, _ = ITransverse.ITenUtils.vectorize_mpo(Ut2)
@@ -43,7 +43,7 @@ ss = siteinds("S=1/2", Lx; conserve_szparity=true)
 
 psi0 = MPS(ss, "Up")
 
-Ut_sym = ITransverse.ChainModels.build_expH_ising_murg_new(ss, mp, 0.1)
+Ut_sym = build_Ut(ss, expH_ising_murg, mp; dt=0.1)
 
 UUt_sym = ITransverse.folded_UUt(Ut_sym)
 
@@ -86,7 +86,8 @@ rho0 = outer(psi0,dag(psi0)')
 rho0v, combis = ITransverse.ITenUtils.vectorize_mpo(rho0)
 
 
-Ut_sym = ITransverse.ChainModels.build_expH_ising_murg_new(ss3, mp, 0.1)
+Ut_sym = build_Ut(ss3, expH_ising_murg, mp; dt=0.1)
+
 UUt_sym = ITransverse.folded_UUt(Ut_sym)
 UUt_sym2 = ITransverse.folded_UUt(Ut_sym)
 

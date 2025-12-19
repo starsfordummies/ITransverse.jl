@@ -162,14 +162,14 @@ function bulk_timeEvo_ITensor_2ndOrder(
 
   # first element
   firstelement =
-    iszero(D) ? setelt(ll[1]) * (setelt(rl[1])) * local_Id :
-    setelt(ll[1]) *
-    setelt(rl[1]) *
+    iszero(D) ? onehot(ll[1]) * (onehot(rl[1])) * local_Id :
+    onehot(ll[1]) *
+    onehot(rl[1]) *
     (local_Id + τ * D + (τ^2 / 2) * replaceprime(D' * D, 2, 1) + (τ^3 / 6) * replaceprime(D'' * D' * D, 3, 1))
 
   # first row
   Cterm = mapreduce(
-    x -> setelt(ll[1]) * setelt(rl[1+x[1]]) * (x[2] + (τ / 2) * braket(x[2], D) + (τ^2 / 6) * braket2(x[2], D)),
+    x -> onehot(ll[1]) * onehot(rl[1+x[1]]) * (x[2] + (τ / 2) * braket(x[2], D) + (τ^2 / 6) * braket2(x[2], D)),
     +,
     enumerate(Cs)
   )
@@ -182,7 +182,7 @@ function bulk_timeEvo_ITensor_2ndOrder(
   Cterm2 = iszero(Cterm) ? emptyITensor(ll, rl, s', dag(s)) : Cterm
 
   Csquared_term = mapreduce(
-    x -> setelt(ll[1]) * setelt(rl[1+x[1]+NrOfTerms]) * (replaceprime(x[2]' * x[2], 2, 1) + (τ / 3) * braket2(D, x[2])),
+    x -> onehot(ll => 1) * onehot(rl => 1+x[1]+NrOfTerms) * (replaceprime(x[2]' * x[2], 2, 1) + (τ / 3) * braket2(D, x[2])),
     +,
     enumerate(Cs)
   )
@@ -190,7 +190,7 @@ function bulk_timeEvo_ITensor_2ndOrder(
 
   # first column (exept first row)
   Bterm = mapreduce(
-    x -> setelt(ll[1+x[1]]) * setelt(rl[1]) * (τ * x[2] + (τ^2 / 2) * braket(x[2], D) + (τ^3 / 6) * braket2(x[2], D)),
+    x -> onehot(ll => 1+x[1]) * onehot(rl => 1) * (τ * x[2] + (τ^2 / 2) * braket(x[2], D) + (τ^3 / 6) * braket2(x[2], D)),
     +,
     enumerate(Bs)
   )
@@ -198,8 +198,8 @@ function bulk_timeEvo_ITensor_2ndOrder(
 
   Bsquared_term = mapreduce(
     x ->
-      setelt(ll[1+x[1]+NrOfTerms]) *
-      setelt(rl[1]) *
+      onehot(ll => 1+x[1]+NrOfTerms) *
+      onehot(rl => 1) *
       ((τ^2 / 2) * replaceprime(x[2]' * x[2], 2, 1) + (τ^3 / 6) * braket2(D, x[2])),
     +,
     enumerate(Bs)
@@ -209,8 +209,8 @@ function bulk_timeEvo_ITensor_2ndOrder(
   # diagonal
   diagterm = mapreduce(
     x ->
-      setelt(ll[1+x[1]]) *
-      setelt(rl[1+x[1]]) *
+      onehot(ll => 1+x[1]) *
+      onehot(rl => 1+x[1]) *
       (
         x[2][1] +
         (τ / 2) * (braket(x[2][2], x[2][3]) + braket(x[2][1], D)) +
@@ -223,8 +223,8 @@ function bulk_timeEvo_ITensor_2ndOrder(
 
   diagsquaredterm = mapreduce(
     x ->
-      setelt(ll[1+x[1]+NrOfTerms]) *
-      setelt(rl[1+x[1]+NrOfTerms]) *
+      onehot(ll => 1+x[1]+NrOfTerms) *
+      onehot(rl => 1+x[1]+NrOfTerms) *
       (replaceprime(x[2][1]' * x[2][1], 2, 1) + (τ / 3) * (braket(x[2][1], x[2][2], x[2][3]) + braket2(D, x[2][1]))),
     +,
     enumerate(zip(As, Bs, Cs))
@@ -234,8 +234,8 @@ function bulk_timeEvo_ITensor_2ndOrder(
   # the "rest" of mixed terms
   mixedterm = mapreduce(
     x ->
-      setelt(ll[1+x[1]]) *
-      setelt(rl[1+x[1]+NrOfTerms]) *
+      onehot(ll => 1+x[1]) *
+      onehot(rl => 1+x[1]+NrOfTerms) *
       (braket(x[2][1], x[2][3]) + (τ / 3) * (braket(x[2][1], x[2][3], D) + braket2(x[2][2], x[2][3]))),
     +,
     enumerate(zip(As, Bs, Cs))
@@ -244,8 +244,8 @@ function bulk_timeEvo_ITensor_2ndOrder(
 
   mixedsquareterm = mapreduce(
     x ->
-      setelt(ll[1+x[1]+NrOfTerms]) *
-      (setelt(rl[1+x[1]])) *
+      onehot(ll => 1+x[1]+NrOfTerms) *
+      (onehot(rl => 1+x[1])) *
       ((τ / 2) * braket(x[2][1], x[2][2]) + (τ^2 / 6) * (braket(x[2][1], x[2][2], D) + braket2(x[2][3], x[2][2]))),
     +,
     enumerate(zip(As, Bs, Cs))
@@ -303,14 +303,14 @@ function bulk_timeEvo_ITensor_2ndOrder_LRflipped(
 
   # first element
   firstelement =
-    iszero(D) ? setelt(ll[1]) * (setelt(rl[1])) * local_Id :
-    setelt(ll[1]) *
-    setelt(rl[1]) *
+    iszero(D) ? onehot(ll => 1) * (onehot(rl => 1)) * local_Id :
+    onehot(ll => 1) *
+    onehot(rl[1]) *
     (local_Id + τ * D + (τ^2 / 2) * replaceprime(D' * D, 2, 1) + (τ^3 / 6) * replaceprime(D'' * D' * D, 3, 1))
 
   # first row
   Cterm = mapreduce(
-    x -> setelt(ll[1+x[1]]) * setelt(rl[1]) * (x[2] + (τ / 2) * braket(x[2], D) + (τ^2 / 6) * braket2(x[2], D)),
+    x -> onehot(ll => 1+x[1]) * onehot(rl => 1) * (x[2] + (τ / 2) * braket(x[2], D) + (τ^2 / 6) * braket2(x[2], D)),
     +,
     enumerate(Cs)
   )
@@ -323,7 +323,7 @@ function bulk_timeEvo_ITensor_2ndOrder_LRflipped(
   Cterm2 = iszero(Cterm) ? emptyITensor(ll, rl, s', dag(s)) : Cterm
 
   Csquared_term = mapreduce(
-    x -> setelt(ll[1+x[1]+NrOfTerms]) * setelt(rl[1]) * (replaceprime(x[2]' * x[2], 2, 1) + (τ / 3) * braket2(D, x[2])),
+    x -> onehot(ll => 1+x[1]+NrOfTerms) * onehot(rl => 1) * (replaceprime(x[2]' * x[2], 2, 1) + (τ / 3) * braket2(D, x[2])),
     +,
     enumerate(Cs)
   )
@@ -331,7 +331,7 @@ function bulk_timeEvo_ITensor_2ndOrder_LRflipped(
 
   # first column (exept first row)
   Bterm = mapreduce(
-    x -> setelt(ll[1]) * setelt(rl[1+x[1]]) * (τ * x[2] + (τ^2 / 2) * braket(x[2], D) + (τ^3 / 6) * braket2(x[2], D)),
+    x -> onehot(ll => 1) * onehot(rl => 1+x[1]) * (τ * x[2] + (τ^2 / 2) * braket(x[2], D) + (τ^3 / 6) * braket2(x[2], D)),
     +,
     enumerate(Bs)
   )
@@ -339,8 +339,8 @@ function bulk_timeEvo_ITensor_2ndOrder_LRflipped(
 
   Bsquared_term = mapreduce(
     x ->
-      setelt(ll[1]) *
-      setelt(rl[1+x[1]+NrOfTerms]) *
+      onehot(ll => 1) *
+      onehot(rl => 1+x[1]+NrOfTerms) *
       ((τ^2 / 2) * replaceprime(x[2]' * x[2], 2, 1) + (τ^3 / 6) * braket2(D, x[2])),
     +,
     enumerate(Bs)
@@ -350,8 +350,8 @@ function bulk_timeEvo_ITensor_2ndOrder_LRflipped(
   # diagonal
   diagterm = mapreduce(
     x ->
-      setelt(ll[1+x[1]]) *
-      setelt(rl[1+x[1]]) *
+      onehot(ll => 1+x[1]) *
+      onehot(rl => 1+x[1]) *
       (
         x[2][1] +
         (τ / 2) * (braket(x[2][2], x[2][3]) + braket(x[2][1], D)) +
@@ -364,8 +364,8 @@ function bulk_timeEvo_ITensor_2ndOrder_LRflipped(
 
   diagsquaredterm = mapreduce(
     x ->
-      setelt(ll[1+x[1]+NrOfTerms]) *
-      setelt(rl[1+x[1]+NrOfTerms]) *
+      onehot(ll => 1+x[1]+NrOfTerms) *
+      onehot(rl => 1+x[1]+NrOfTerms) *
       (replaceprime(x[2][1]' * x[2][1], 2, 1) + (τ / 3) * (braket(x[2][1], x[2][2], x[2][3]) + braket2(D, x[2][1]))),
     +,
     enumerate(zip(As, Bs, Cs))
@@ -375,8 +375,8 @@ function bulk_timeEvo_ITensor_2ndOrder_LRflipped(
   # the "rest" of mixed terms
   mixedterm = mapreduce(
     x ->
-      setelt(ll[1+x[1]+NrOfTerms]) *
-      setelt(rl[1+x[1]]) *
+      onehot(ll => 1+x[1]+NrOfTerms) *
+      onehot(rl => 1+x[1]) *
       (braket(x[2][1], x[2][3]) + (τ / 3) * (braket(x[2][1], x[2][3], D) + braket2(x[2][2], x[2][3]))),
     +,
     enumerate(zip(As, Bs, Cs))
@@ -385,8 +385,8 @@ function bulk_timeEvo_ITensor_2ndOrder_LRflipped(
 
   mixedsquareterm = mapreduce(
     x ->
-      setelt(ll[1+x[1]]) *
-      setelt(rl[1+x[1]+NrOfTerms]) *
+      onehot(ll => 1+x[1]) *
+      onehot(rl => 1+x[1]+NrOfTerms) *
       ((τ / 2) * braket(x[2][1], x[2][2]) + (τ^2 / 6) * (braket(x[2][1], x[2][2], D) + braket2(x[2][3], x[2][2]))),
     +,
     enumerate(zip(As, Bs, Cs))
@@ -446,15 +446,15 @@ function Left_timeEvo_ITensor_2ndOrder(
 
   # first element
   firstelement =
-    iszero(D) ? setelt(rl[1]) * local_Id :
-    setelt(rl[1]) *
+    iszero(D) ? onehot(rl[1]) * local_Id :
+    onehot(rl[1]) *
     (local_Id + τ * D + (τ^2 / 2) * replaceprime(D' * D, 2, 1) + (τ^3 / 6) * replaceprime(D'' * D' * D, 3, 1))
 
   # first row
   Cterm =
-    mapreduce(x -> setelt(rl[1+x[1]]) * (x[2] + (τ / 2) * braket(x[2], D) + (τ^2 / 6) * braket2(x[2], D)), +, enumerate(Cs))
+    mapreduce(x -> onehot(rl[1+x[1]]) * (x[2] + (τ / 2) * braket(x[2], D) + (τ^2 / 6) * braket2(x[2], D)), +, enumerate(Cs))
   Csquared_term = mapreduce(
-    x -> setelt(rl[1+x[1]+NrOfTerms]) * (replaceprime(x[2]' * x[2], 2, 1) + (τ / 3) * braket2(D, x[2])),
+    x -> onehot(rl[1+x[1]+NrOfTerms]) * (replaceprime(x[2]' * x[2], 2, 1) + (τ / 3) * braket2(D, x[2])),
     +,
     enumerate(Cs)
   )
@@ -556,18 +556,18 @@ function Right_timeEvo_ITensor_2ndOrder(
 
   # first element
   firstelement =
-    iszero(D) ? setelt(ll[1]) * local_Id :
-    setelt(ll[1]) *
+    iszero(D) ? onehot(ll[1]) * local_Id :
+    onehot(ll[1]) *
     (local_Id + τ * D + (τ^2 / 2) * replaceprime(D' * D, 2, 1) + (τ^3 / 6) * replaceprime(D'' * D' * D, 3, 1))
 
   # first column (exept first row)
   Bterm = mapreduce(
-    x -> setelt(ll[1+x[1]]) * (τ * x[2] + (τ^2 / 2) * braket(x[2], D) + (τ^3 / 6) * braket2(x[2], D)),
+    x -> onehot(ll[1+x[1]]) * (τ * x[2] + (τ^2 / 2) * braket(x[2], D) + (τ^3 / 6) * braket2(x[2], D)),
     +,
     enumerate(Bs)
   )
   Bsquared_term = mapreduce(
-    x -> setelt(ll[1+x[1]+NrOfTerms]) * ((τ^2 / 2) * replaceprime(x[2]' * x[2], 2, 1) + (τ^3 / 6) * braket2(D, x[2])),
+    x -> onehot(ll[1+x[1]+NrOfTerms]) * ((τ^2 / 2) * replaceprime(x[2]' * x[2], 2, 1) + (τ^3 / 6) * braket2(D, x[2])),
     +,
     enumerate(Bs)
   )

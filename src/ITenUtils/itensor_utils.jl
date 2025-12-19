@@ -135,11 +135,6 @@ function random_unitary_svd(linds::Tuple, rind::Index)
     return u 
 end
 
-""" TOOD WIP"""
-function nonzero_elements(A::ITensor)
-    return 0
-end
-
 
 """ hacky way to extract physical indices from an ITensor, hoping that we've been hintful enough.
 - if the ITensor has only 1 dim, that's the physical dim

@@ -4,12 +4,12 @@ using Test
 #using BenchmarkTools
 
 
-
+@testset "basic QN stuff " begin
 mp = IsingParams(1, 0.7, 0)
 nbeta = 4
 
 
-tp = tMPOParams(0.1, ITransverse.ChainModels.build_expH_ising_murg_new, mp, nbeta, [1,0])
+tp = tMPOParams(0.1, expH_ising_murg, mp, nbeta, [1,0])
 
 maxbondim=128
 Ntime_steps = 30
@@ -46,8 +46,10 @@ vn_rdm = vn_entanglement_entropy(psi_rdm)
 
 ss = siteinds("S=1/2",3, conserve_szparity=true)
 
-Utim = ITransverse.ChainModels.build_expH_ising_murg_new(ss, tp.mp, -im*0.1)
-Ut = ITransverse.ChainModels.build_expH_ising_murg_new(ss, tp.mp, 0.1)
+Utim = build_Ut(ss, expH_ising_murg, tp.mp; dt=-im*0.1)
+Ut   = build_Ut(ss, expH_ising_murg, tp.mp; dt=0.1)
+
+@test build_Ut(ss, expH_ising_murg, tp.mp; dt=-im*0.1) ≈ build_Ut(ss, expH_ising_murg, tp.mp; dt=0.1, build_imag=true)
 
 tp.bl.tensor.storage
 psi_i = MPS(ss, "Up")
@@ -56,6 +58,7 @@ psi_f = MPS(ss, "Up")
 Uts = [Utim, Utim, fill(Ut, Ntime_steps)..., Utim, Utim]
 psiL, Tm, psiR = ITransverse.construct_tMPS_tMPO(psi_i, Uts, psi_f);
 
+end
 
 # TODO powermethod_sym is broken with QNs
 # pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM", "norm")

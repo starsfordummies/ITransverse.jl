@@ -17,6 +17,8 @@ function ConeParams(; truncp::TruncParams,
     checkpoints,
     vwidth::Int=1) 
 
+
+    # Checkpoints logic, let's try and be flexible 
     checkpoints = if isa(checkpoints, Integer)
         if checkpoints > 0 
             collect(50:checkpoints:10000)         
@@ -33,7 +35,6 @@ function ConeParams(; truncp::TruncParams,
         throw(ArgumentError("Unsupported input type $(typeof(checkpoints))"))
     end
 
-    @show typeof(checkpoints)
 
     return ConeParams(truncp, opt_method, optimize_op, which_evs, which_ents, checkpoints, vwidth)
 

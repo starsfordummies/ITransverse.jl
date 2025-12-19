@@ -15,7 +15,7 @@ Nsteps = nbeta + Ntime_steps + nbeta
 time_sites = addtags(siteinds("S=1/2", Nsteps; conserve_qns=false), "time")
 time_sites_fold = addtags(siteinds(4, Nsteps; conserve_qns=false), "time")
 
-random_eh = build_expH_random_symm_svd_1o(0.5)
+random_eh = expH_random_symm_svd_1o(0.5)
 
 init_state = normalize(rand(2))
 init_statef = kron(init_state,conj(init_state))

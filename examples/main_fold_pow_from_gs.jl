@@ -25,7 +25,7 @@ function main_folded_pm()
 
 
     space_sites = siteinds("S=1/2", 80)
-    hisi = build_H_ising(space_sites, tp.mp)
+    hisi = build_H(space_sites, H_ising, mp)
     p0 = random_mps(space_sites)
     _, gs = dmrg(hisi, p0, nsweeps=6)
 

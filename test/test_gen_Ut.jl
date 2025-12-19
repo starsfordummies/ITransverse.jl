@@ -35,7 +35,7 @@ function buildExpHTFI(
 
   N = length(sites)
 
-  EType = eltype(union(λ, J))
+  EType = promote_type(eltype(λ), eltype(J))
 
   # generate "regular" link indeces (i.e. without conserved QNs)
   linkindices = hasqns(sites) ? [Index([QN() => 1, QN("SzParity",1,2) => 1, QN("SzParity",0,2) => 1], "Link,l=$(n-1)") for n in 1:N+1] : [Index(link_dimension, "Link,l=$(n-1)") for n in 1:N+1]
@@ -52,16 +52,16 @@ function buildExpHTFI(
     # init empty ITensor with
     H[n] = ITensor(EType, ll, dag(s), s', rl)
     # add both Identities as netral elements in the MPS at corresponding location (setelement function)
-    H[n] += setelt(ll[startState]) * setelt(rl[startState]) * op(sites, "Id", n)
-    H[n] += setelt(ll[endState]) * setelt(rl[endState]) * op(sites, "Id", n)
+    H[n] += onehot(ll[startState]) * onehot(rl[startState]) * op(sites, "Id", n)
+    H[n] += onehot(ll[endState]) * onehot(rl[endState]) * op(sites, "Id", n)
     # local nearest neighbour and exp. decaying interaction terms
-    H[n] += setelt(ll[startState]) * setelt(rl[2]) * op(sites, "X", n)
+    H[n] += onehot(ll[startState]) * onehot(rl[2]) * op(sites, "X", n)
     if !iszero(λ)
-      H[n] += setelt(ll[2]) * setelt(rl[2]) * op(sites, "Id", n) * λ  # λ Id,  on the diagonal
+      H[n] += onehot(ll[2]) * onehot(rl[2]) * op(sites, "Id", n) * λ  # λ Id,  on the diagonal
     end
-    H[n] += setelt(ll[2]) * setelt(rl[endState]) * op(sites, "X", n) * -J # Jxx σˣ
+    H[n] += onehot(ll[2]) * onehot(rl[endState]) * op(sites, "X", n) * -J # Jxx σˣ
     if !iszero(hz) || !iszero(gx) 
-      H[n] += setelt(ll[startState]) * setelt(rl[endState]) * (op(sites, "Z", n) * -hz + op(sites, "X", n) * -gx) # hz σᶻ
+      H[n] += onehot(ll[startState]) * onehot(rl[endState]) * (op(sites, "Z", n) * -hz + op(sites, "X", n) * -gx) # hz σᶻ
     end
   end
   # project out the left and right boundary MPO with unit row/column vector
@@ -115,16 +115,16 @@ function buildExpHTFI_LRflipped(
     # init empty ITensor with
     H[n] = ITensor(EType, ll, dag(s), s', rl)
     # add both Identities as netral elements in the MPS at corresponding location (setelement function)
-    H[n] += setelt(ll[startState]) * setelt(rl[startState]) * op(sites, "Id", n)
-    H[n] += setelt(ll[endState]) * setelt(rl[endState]) * op(sites, "Id", n)
+    H[n] += onehot(ll[startState]) * onehot(rl[startState]) * op(sites, "Id", n)
+    H[n] += onehot(ll[endState]) * onehot(rl[endState]) * op(sites, "Id", n)
     # local nearest neighbour and exp. decaying interaction terms
-    H[n] += setelt(ll[2]) * setelt(rl[startState]) * op(sites, "X", n)
+    H[n] += onehot(ll[2]) * onehot(rl[startState]) * op(sites, "X", n)
     if !iszero(λ)
-      H[n] += setelt(ll[2]) * setelt(rl[2]) * op(sites, "Id", n) * λ  # λ Id,  on the diagonal
+      H[n] += onehot(ll[2]) * onehot(rl[2]) * op(sites, "Id", n) * λ  # λ Id,  on the diagonal
     end
-    H[n] += setelt(ll[endState]) * setelt(rl[2]) * op(sites, "X", n) * -J # Jxx σˣ
+    H[n] += onehot(ll[endState]) * onehot(rl[2]) * op(sites, "X", n) * -J # Jxx σˣ
     if !iszero(hz) || !iszero(gx) 
-      H[n] += setelt(ll[endState]) * setelt(rl[startState]) * (op(sites, "Z", n) * -hz + op(sites, "X", n) * -gx) # hz σᶻ
+      H[n] += onehot(ll[endState]) * onehot(rl[startState]) * (op(sites, "Z", n) * -hz + op(sites, "X", n) * -gx) # hz σᶻ
     end
   end
   # project out the left and right boundary MPO with unit row/column vector
@@ -162,7 +162,7 @@ end
 
 
     ##### Stefano's Ut
-    Ut1 = ITransverse.ChainModels.build_expH_ising_murg_new(ss, JXX, hz, gx, dt)
+    Ut1 = build_Ut(ss, expH_ising_murg, JXX, hz, gx; dt)
 
     psi_t1 = deepcopy(psi0)
     for tt = 1:n_iter

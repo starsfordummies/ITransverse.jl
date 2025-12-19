@@ -7,10 +7,8 @@ struct tMPOParams{T<:Union{Float64,ComplexF64}, MP, F}
 end
 
 function Base.show(io::IO, tp::tMPOParams)
-    println(io, "tMPOParams")
-    println(io, "dt:           $(tp.dt)    nbeta : $(tp.nbeta)")
-    println(io, "exp(H) func:  $(tp.expH_func)")
-    println(io, "Model params: $(tp.mp)")
+    println(io, "tMPOParams:   dt: $(tp.dt) | nbeta : $(tp.nbeta)")
+    println(io, "exp(H) func:  $(tp.expH_func)  |  Model params: $(tp.mp)")
     println(io, "Init state:   $(array(tp.bl))")
 end
 
@@ -21,8 +19,8 @@ function tMPOParams(
     expH_func::Function,
     mp::ModelParams,
     nbeta::Int,
-    bl_in::AbstractVector
-)
+    bl_in::AbstractVector)
+
     blt = to_itensor(bl_in, "bl")
 
     return tMPOParams(dt, expH_func, mp, nbeta, blt)
@@ -48,9 +46,9 @@ end
 """ Quick defaults for parallel field Ising, for playing around: J=1 hz=0.4, gx=0, init_state= |+> """
 function ising_tp(;hz = 0.4, integrable::Bool=true) 
     tp = if integrable
-         tMPOParams(0.1, build_expH_ising_murg, IsingParams(1.0, hz, 0.0),   0, [1.0+0im,1]/sqrt(2))
+         tMPOParams(0.1, expH_ising_murg, IsingParams(1.0, hz, 0.0),   0, [1.0+0im,1]/sqrt(2))
     else
-        tMPOParams(0.1,  build_expH_ising_murg, IsingParams(1.0, -1.05, 0.5), 0, [1,0])
+        tMPOParams(0.1,  expH_ising_murg, IsingParams(1.0, -1.05, 0.5), 0, [1,0])
     end
 
     return tp

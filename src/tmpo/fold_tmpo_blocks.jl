@@ -72,7 +72,7 @@ function FoldtMPOBlocks(x::Union{tMPOParams, MPO}; init_state=nothing, build_ima
         else
             init_state = to_itensor(init_state, "bl")
         end
-
+        # If the input is an MPO, we don't build anyting else, just put placeholders in tp 
         build_imag = false
         phys_site = siteind(x,2)
         mp = NoParams(phys_site)
@@ -144,20 +144,8 @@ end
 
 Adapt.@adapt_structure FoldtMPOBlocks
 
-# Adapt.adapt_structure(to, b::FoldtMPOBlocks) = FoldtMPOBlocks(
-#     adapt(to, b.WWl), 
-#     adapt(to, b.WWc), 
-#     adapt(to, b.WWr),
-#     adapt(to, b.WWl_im), 
-#     adapt(to, b.WWc_im), 
-#     adapt(to, b.WWr_im),
-#     adapt(to, b.rho0),
-#     adapt(to, b.tp), 
-#     b.rot_inds
-# )
-
 
 function Base.show(io::IO, b::FoldtMPOBlocks)
-    println(io, "*Folded* tMPO Blocks, type $(NDTensors.unwrap_array_type(b.WWc))")
+    println(io, "[[*Folded*]] tMPO Blocks, type $(NDTensors.unwrap_array_type(b.WWc))")
     println(io, b.tp)
 end

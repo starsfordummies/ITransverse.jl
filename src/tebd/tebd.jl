@@ -15,7 +15,6 @@ function tebd_ev(Nx::Int, tp::tMPOParams, Nt::Int, ops::Vector{<:String}, truncp
 
 
     eH = tp.expH_func(ss, tp.mp, tp.dt)
-    #eH = build_expH_ising_murg(ss, 1.0, 0.7, 0.8, dt)
 
     #initial state
     psi0 = pMPS(ss, tp.bl.tensor.storage)
@@ -75,7 +74,6 @@ end
 """ Basic TEBD to compute the half-chain expectation value of <Z> at a given time """
 function tebd_z(Nt::Int, tp::tMPOParams; N::Int = 2*Nt+4, truncp=TruncParams())
 
-    #eH = build_expH_ising_murg(ss, 1.0, 0.7, 0.8, dt)
 
     ss = siteinds("S=1/2", N)
     eH = tp.expH_func(ss, tp.mp, tp.dt)

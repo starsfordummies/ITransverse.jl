@@ -1,53 +1,11 @@
+import .ChainModels: build_Ut
 
-
-timephysdim(b) = dim(b.rot_inds[:P])
-
-function linkphysdim(b)
-    @assert dim(b.rot_inds[:L]) == dim(b.rot_inds[:R]) 
-    dim(b.rot_inds[:L])
+function build_Ut(tp::tMPOParams; dt::Number=tp.dt, build_imag::Bool=false)
+    Ut = build_imag ? build_Ut(tp.expH_func, tp.mp; dt= -im*dt) : build_Ut(tp.expH_func, tp.mp; dt)
+    return Ut 
 end
 
-
-""" WIP: from b to U(t) MPO """ 
-function UtMPO(ss::Vector{<:Index}, b::FwtMPOBlocks, imag::Bool=false) 
-    tp = b.tp
-    w = tp.expH_func(ss, tp.mp, tp.dt)
-    
+function build_Ut(b::FwtMPOBlocks; dt::Number=b.tp.dt, build_imag::Bool=false)
+    Ut = build_imag ? build_Ut(b.tp.expH_func, b.tp.mp; dt= -im*dt) : build_Ut(b.tp.expH_func, b.tp.mp; dt)
+    return Ut 
 end
-
-
-
-""" Given an MPO U, builds the folded version  UxUdag of it, optionally with `new_siteinds` """
-function folded_UUt(Ut::MPO; new_siteinds=nothing)
-
-    N = length(Ut)
-
-    UUt = MPO(N)
-
-    sites_u = firstsiteinds(Ut)
-    links_u = linkinds(Ut)
-
-    for jj = 1:N
-        UUt[jj] = Ut[jj] * dag(prime(Ut[jj],2))
-        s = sites_u[jj]
-        cs = ITransverse.ITenUtils.pcombiner(s, dag(s)'', tags = tags(s); dir=ITensors.In)
-        UUt[jj] = UUt[jj] * cs  #TODO CHECK THIS 
-        UUt[jj] = UUt[jj] * dag(cs)'  #TODO CHECK THIS 
-    end
-
-    for jj=1:N-1
-        l = links_u[jj]
-        cl = combiner(l, dag(l)'', tags = "Link,l=$(jj)")
-    
-        UUt[jj] *= cl
-        UUt[jj + 1] *= dag(cl)
-       
-    end
-
-    if !isnothing(new_siteinds)
-        replace_siteinds!(UUt, new_siteinds)
-    end
-
-    return UUt
-end
-

@@ -1,3 +1,39 @@
+function build_H(sites::Vector{<:Index}, fH::Function, mp::ModelParams)
+    fH(sites, modelparams(mp)...)
+end
+
+function build_H(fH::Function, mp::ModelParams)
+    s = [sim(mp.phys_site) for _ in 1:3]
+    fH(s, modelparams(mp)...)
+end
+
+
+
+function build_Ut(sites::Vector{<:Index}, fUt::Function, par1::Number, par2::Number, par3::Number=0; dt::Number=1.0, build_imag::Bool=false)
+    if build_imag
+        dt = -im*dt
+    end
+    expanded_params = dt.*(par1,par2,par3)
+    fUt(sites, expanded_params...)
+end
+
+function build_Ut(sites::Vector{<:Index}, fUt::Function,  mp::ModelParams; dt::Number=1.0, build_imag::Bool=false)
+    if build_imag
+        dt = -im*dt
+    end
+    expanded_params = dt.*modelparams(mp)
+    fUt(sites, expanded_params...)
+end
+
+
+function build_Ut(fUt::Function, mp::ModelParams; dt::Number=1.0, build_imag::Bool=false)
+    ss = [sim(mp.phys_site) for _ in 1:3]
+    build_Ut(ss, fUt, mp; dt, build_imag)
+end
+
+
+
+
 """ Given `s` input sites and an MPO defined on three sites (Wl-Wc-Wr),
 extends it on the `s` input sites as (Wl-Wc-Wc-...-Wc-Wr) """
 function extend_mpo(s::Vector{<:Index}, w::MPO)
@@ -43,3 +79,4 @@ const minus_state = ComplexF64[1 / sqrt(2), -1 / sqrt(2)]
 const vX = ComplexF64[0,1,1,0]
 const vZ = ComplexF64[1,0,0,-1]
 const vI = ComplexF64[1,0,0,1]
+
