@@ -1,5 +1,4 @@
-
-function build_H_id(sites)
+function H_id(sites, unusedparams=nothing)
 
     N = length(sites)
     os = OpSum()

@@ -34,12 +34,35 @@ function folded_UUt(Ut::MPO; new_siteinds=nothing)
 end
 
 
+function FoldITensor(a::Array; ind_fw=Index(size(a,1), "fw"), ind_back=Index(size(a,2), "back"))
 
-""" Join two MPS/MPOs fold-like, if `fold_op` != nothing we join the two sheets.
-- For this, we **remove** the **last** site tensors of both MP*S 
+    ft = if ndims(a) == 1 
+        ia = Index(size(a,1))
+        open_ind(ITensor(a, ia), ia, ind_fw, ind_back)
+    elseif ndims(a) == 2
+        # by default, first ind is fw, second is back 
+        ITensor(a, ind_fw, ind_back)
+    else
+        @error "Not a good input tensor? $a"
+        nothing
+    end
+
+    return ft
+end
+
+FoldITensor(a::ITensor; kwargs...) = FoldITensor(array(a); kwargs...)
+ 
+
+
+""" Join two MPS/MPOs fold-like.
+- If `fold_op` is not empty/nothing, we join the two sheets. For this, we **remove** the **last** site tensors of both MP*S 
 and **replace** them with the folding operator `fold_op`
+- If `fold_init_state` is not empty/nothing, we **remove** the **first** site tensors of both and replace them with the folded initial state
 """
-function combine_and_fold(W1::AbstractMPS, W2::AbstractMPS; fold_op=ComplexF64[1 0 ; 0 1], dag_W2::Bool=true, new_siteinds=false)
+function combine_and_fold(W1::AbstractMPS, W2::AbstractMPS; dag_W2::Bool=false,
+    fold_op=nothing, fold_init_state=nothing,  new_siteinds=nothing)
+
+    LL = length(W1)
 
     sites1_p =  siteinds(first, W1,plev=0)
     sites2_p =  siteinds(first, W2,plev=0)
@@ -47,14 +70,12 @@ function combine_and_fold(W1::AbstractMPS, W2::AbstractMPS; fold_op=ComplexF64[1
     sites1_ps = siteinds(first, W1,plev=1)
     sites2_ps = siteinds(first, W2,plev=1)
 
-    @assert length(sites1_p) == length(sites2_p)  "Only equal-length MPS/MPOs are supported for now"
+    @assert LL == length(sites2_p)  "Only equal-length MPS/MPOs are supported for now: $(LL)-$(length(sites2_p))"
 
     links1 = linkinds(W1)
     links2 = linkinds(W2)
 
-    LL = !isnothing(fold_op) ? length(W1)-1 : length(W1)
-    folding_tensor = !isnothing(fold_op) ? ITensor(fold_op, links1[end], links2[end]'') : nothing
- 
+
     if dag_W2 
         W2 = dag(W2)
     end
@@ -79,18 +100,27 @@ function combine_and_fold(W1::AbstractMPS, W2::AbstractMPS; fold_op=ComplexF64[1
     end
 
 
-    W12[1] *= comb_link[1]
     for ii = 2:LL-1 
         W12[ii] *= comb_link[ii-1]
         W12[ii] *= comb_link[ii]
     end
 
-    if !isnothing(folding_tensor)
-        W12[end] *= comb_link[end]
-        W12[end] *= folding_tensor 
+    if !isnothing(fold_init_state)
+        popfirst!(W12.data)
+        W12[1] *= (FoldITensor(fold_init_state; ind_fw=links1[1], ind_back=links2[1]'') * comb_link[1])
+    else
+        W12[1] *= comb_link[1]
+    end
+
+
+
+    if !isnothing(fold_op)
+        pop!(W12.data)
+        W12[end] *= (FoldITensor(fold_op; ind_fw=links1[end], ind_back=links2[end]'') * comb_link[end])
     else
         W12[end] *= comb_link[end]
     end
+
 
 
     if !isnothing(new_siteinds)
@@ -103,8 +133,11 @@ function combine_and_fold(W1::AbstractMPS, W2::AbstractMPS; fold_op=ComplexF64[1
 end
 
 
-
-
+function open_ind(a::ITensor, comb_ind::Index, i1::Index, i2::Index)
+    c = combiner(i1,i2)
+    replaceind!(c, combinedind(c), comb_ind)
+    return a * dag(c)
+end
 
 function reopen_inds!(WWm::MPS, combs)
     for (ii, c) in enumerate(combs)
@@ -141,4 +174,3 @@ function trace_combinedind(a::ITensor, combiner::ITensor)
     a = a * delta(c1,c2)
     return a 
 end
-

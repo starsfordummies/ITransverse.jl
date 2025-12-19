@@ -1,4 +1,4 @@
-function build_H(fH::Function, sites::Vector{<:Index}, mp::ModelParams)
+function build_H(sites::Vector{<:Index}, fH::Function, mp::ModelParams)
     fH(sites, modelparams(mp)...)
 end
 

@@ -40,7 +40,7 @@ b = FoldtMPOBlocks(tp)
 
 ss = siteinds("S=1/2", 80)
 psi0 = productMPS(ss, "+")
-H = build_H(H_ising, ss, mp)
+H = build_H(ss, H_ising, mp)
 
 
 state = tdvp(
