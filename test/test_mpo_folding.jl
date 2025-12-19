@@ -17,16 +17,30 @@ fold2, cP2, cPs2 = ITransverse.combine_and_fold(fw2, fw2; fold_op = [1 0 ; 0 1],
 
 foldMPS1, cPMPS1, cPsMPS1 = ITransverse.combine_and_fold(fwmps, fwmps; fold_op = [1 0;0 1], dag_W2=true)
 foldMPS2, cPMPS2, cPsMPS2 = ITransverse.combine_and_fold(fwmps, fwmps; dag_W2=true)
+foldMPS3, cPMPS3, cPsMPS3 = ITransverse.combine_and_fold(fwmps, fwmps; fold_op = [1 0;0 1], fold_init_state = [1,0,0,1], dag_W2=true)
 
 tsf = siteinds(4, 7)
 fold_ref = folded_tMPO(bfold, tsf)
+
 
 vecfold2, combs = ITransverse.ITenUtils.vectorize_mpo(fold2)
 vecfold_ref, combs2 = ITransverse.ITenUtils.vectorize_mpo(fold_ref)
 
 @test fidelity(vecfold2, vecfold_ref) ≈ 1
 
-foldMPS3, cPMPS3, cPsMPS3 = ITransverse.combine_and_fold(fwmps, fwmps; fold_op = [1 0;0 1], fold_init_state = [1,0,0,1], dag_W2=true)
+
+tsf3 = siteinds(4, 6)
+fold_ref3 = folded_tMPO(bfold, tsf3, rho0=ITensor([1,0,0,1], Index(4)))
+
+fold3, cP3, cPs3 = ITransverse.combine_and_fold(fw2, fw2; fold_op = [1 0 ; 0 1], fold_init_state=[1,0,0,1], dag_W2=true)
+
+
+vecfold3, combs = ITransverse.ITenUtils.vectorize_mpo(fold3)
+vecfold_ref3, combs2 = ITransverse.ITenUtils.vectorize_mpo(fold_ref3)
+
+@test fidelity(vecfold3, vecfold_ref3) ≈ 1
+
+
 
 clegs =  MPO(cPMPS1)
 
