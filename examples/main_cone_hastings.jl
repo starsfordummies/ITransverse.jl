@@ -38,8 +38,7 @@ function main_cone()
     b = FoldtMPOBlocks(tp)
     c0 = init_cone(b)
 
-    cone_params = ConeParams(;truncp, opt_method="RTM_R", optimize_op, which_evs=["X","Z"], which_ents=["VN","GENVN","GENR2","GENR2_Pz","GENVN_Pz"], checkpoints=100)
-
+    cone_params = ConeParams(;truncp, opt_method="RTM_R", optimize_op)
 
 
     cp = DoCheckpoint(
@@ -64,7 +63,6 @@ function main_cone()
 
 end
 
-psi, psiR, chis, expvals, entropies, infos, last_cp = main_cone()
+psi, psiR, cp = main_cone()
 
 println(chis)
-println(real(expvals["Z"]))

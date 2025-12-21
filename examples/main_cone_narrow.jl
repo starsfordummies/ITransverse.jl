@@ -45,17 +45,13 @@ function main_cone()
 
 
     #RTM_R
-    cone_params = ConeParams(;truncp, opt_method="RTM_SKEW", optimize_op, 
-        which_evs=["X","Z"], 
-        which_ents=["VN"], # ,"GENVN","GENR2"],
-        checkpoints=0,
-        vwidth=n_ext)
+    cone_params = ConeParams(;truncp, opt_method="RTM_SKEW", optimize_op, vwidth=n_ext)
 
 
     cp = DoCheckpoint(
         "cp_cone.jld2";
         params=tp,
-        save_at=10,
+        save_at=0,
         observables = (
             SVN = s -> vn_entanglement_entropy(s.R),
             overlap = s -> overlap_noconj(s.L, s.R),

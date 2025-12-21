@@ -64,7 +64,7 @@ cp = DoCheckpoint(
     )
 )
 
-cone_params = ConeParams(;truncp, opt_method="RDM", optimize_op, which_evs=["X","Z"], checkpoints=0)
+cone_params = ConeParams(;truncp, opt_method="RDM", optimize_op)
 
 
 psi, psiR, cp = run_cone(c0, b, cone_params, Nsteps)
