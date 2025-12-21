@@ -1,0 +1,79 @@
+function which_cps(checkpoints)
+    # Checkpoints logic, let's try and be flexible 
+    checkpoints = if isa(checkpoints, Integer)
+        if checkpoints > 0 
+            collect(50:checkpoints:20000)         
+        else
+            Int[]
+        end
+    elseif isa(checkpoints, Tuple{Int})
+        checkpoints                              # tuple → keep as is
+    elseif isa(checkpoints, AbstractVector{Int})
+        collect(checkpoints) 
+    elseif isa(checkpoints, AbstractRange{Int})
+        collect(checkpoints)                    # range → tuple
+    else
+        throw(ArgumentError("Unsupported input type $(typeof(checkpoints))"))
+    end
+
+    return checkpoints
+end
+
+
+mutable struct DoCheckpoint{TParams, TObs, TLatestFns}
+    filename::String
+    save_at::Vector{Int}
+    params::TParams
+    steps::Vector{Int}
+    observables::TObs
+    history::Dict{Symbol, Vector}
+    latest_savers::TLatestFns
+    latest::Union{Nothing,NamedTuple}
+end
+
+
+# Initialize CP
+function DoCheckpoint(filename;
+                      params,
+                      save_at=Int[],
+                      observables=NamedTuple(),
+                      latest_savers=NamedTuple())
+
+    history = Dict{Symbol, Vector}()
+    for name in keys(observables)
+        history[name] = Any[]
+    end
+
+    DoCheckpoint(
+        filename,
+        which_cps(save_at),
+        params,
+        Int[],
+        observables,
+        history,
+        latest_savers,
+        nothing  # empty snapshot
+    )
+end
+
+function (cp::DoCheckpoint)(state, step::Int)
+    push!(cp.steps, step)
+
+    # historical observables
+    for (name, obs) in pairs(cp.observables)
+        push!(cp.history[name], obs(state))
+    end
+
+    # build latest snapshot
+    cp.latest = NamedTuple(
+        name => f(state) for (name, f) in pairs(cp.latest_savers)
+    )
+
+    if step in cp.save_at
+        @info "Saving CP $(cp.filename)..." 
+        save(cp.filename,
+             "steps", cp.steps,
+             "observables", cp.history,
+             "latest", cp.latest)
+    end
+end

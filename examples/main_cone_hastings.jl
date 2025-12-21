@@ -40,9 +40,27 @@ function main_cone()
 
     cone_params = ConeParams(;truncp, opt_method="RTM_R", optimize_op, which_evs=["X","Z"], which_ents=["VN","GENVN","GENR2","GENR2_Pz","GENVN_Pz"], checkpoints=100)
 
-    psi, psiR, chis, expvals, entropies, infos, last_cp = run_cone(c0, b, cone_params, Nsteps)
 
-    return  psi, psiR, chis, expvals, entropies, infos, last_cp
+
+    cp = DoCheckpoint(
+        "cp_cone.jld2";
+        params=tp,
+        save_at=10,
+        observables = (
+            SVN = s -> vn_entanglement_entropy(s.R),
+            overlap = s -> overlap_noconj(s.L, s.R),
+            ZX = s -> compute_expvals(s.L, s.R, ["Z","X"], s.b)
+        ),
+        latest_savers = (
+            L = s -> s.L,
+            R = s -> s.R,
+            b = s -> s.b
+        )
+    )
+
+    psi, psiR, cp = run_cone(c0, b, cone_params, cp, Nsteps)
+
+    return  psi, psiR, cp
 
 end
 

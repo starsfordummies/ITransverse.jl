@@ -51,13 +51,30 @@ function main_cone()
         checkpoints=0,
         vwidth=n_ext)
 
-    psi, psiR, chis, expvals, entropies, infos, last_cp = run_cone(c0, b, cone_params, Nsteps)
 
-    return  psi, psiR, chis, expvals, entropies, infos, last_cp
+    cp = DoCheckpoint(
+        "cp_cone.jld2";
+        params=tp,
+        save_at=10,
+        observables = (
+            SVN = s -> vn_entanglement_entropy(s.R),
+            overlap = s -> overlap_noconj(s.L, s.R),
+            ZX = s -> compute_expvals(s.L, s.R, ["Z","X"], s.b)
+        ),
+        latest_savers = (
+            L = s -> s.L,
+            R = s -> s.R,
+            b = s -> s.b
+        )
+    )
+
+    psi, psiR, cp = run_cone(c0, b, cone_params, cp, Nsteps)
+
+    return  psi, psiR, cp
 
 end
 
-psi, psiR, chis, expvals, entropies, infos, last_cp = main_cone()
+psi, psiR, cp = main_cone()
 
 println(infos[:times])
 println(chis)

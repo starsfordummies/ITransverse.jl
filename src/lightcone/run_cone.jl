@@ -12,37 +12,19 @@ which I think only works with the "naive" algorithm. We don't perform any trunca
         o-o-o-o-o-o
 ``` 
 """
-
 function run_cone(psi::MPS, 
     b::FoldtMPOBlocks,
-    cp::ConeParams,
+    cone_pars::ConeParams,
+    checkpoint::DoCheckpoint,
     nT_final::Int
-    )
+)
 
-    (; opt_method, optimize_op, which_evs, which_ents, checkpoints, truncp, vwidth) = cp
-
-    #@show opt_method 
-
-    fn_cp = nothing
-
-    tp = b.tp
+    (; opt_method, optimize_op, truncp, vwidth) = cone_pars
 
     ll = deepcopy(psi)
     rr = deepcopy(psi)
 
     Id = vectorized_identity(dim(b.rot_inds[:R]))
-
-    chis = Int[]
-    overlaps = ComplexF64[]
-    times = typeof(b.tp.dt)[]
-
-    entropies = dictfromlist(which_ents)
-    expvals = dictfromlist(which_evs)
-
-    # For checkpoints, we want to save CPU data 
-    tp_cp =  tMPOParams(tp; bl=tocpu(tp.bl))
-    
-    infos = Dict(:times => times, :tp => tp_cp, :coneparams => cp)
 
     time_dim = dim(b.WWc,1)
 
@@ -98,58 +80,9 @@ function run_cone(psi::MPS,
             ll *= sqrt(1/overlapLR)
             rr *= sqrt(1/overlapLR)
 
-            evs_computed = compute_expvals(ll, rr, which_evs, b)
+            state = (L=ll, R=rr, b=b)
+            checkpoint(state, nt)
 
-            mergedicts!(expvals, evs_computed)
-
-            #@show evs_computed
-            #@show expvals
-
-            push!(chis, maxlinkdim(ll))
-            push!(overlaps, overlapLR)
-            push!(times, length(ll)*tp.dt)
-
-
-            #ent = vn_entanglement_entropy(ll)
-            #TODO Compute entropies
-            if haskey(entropies, "VN")
-                push!(entropies["VN"], vn_entanglement_entropy(rr))
-            end
-            if haskey(entropies, "GENR2")
-                push!(entropies["GENR2"], rtm2_contracted(ll,rr))
-            end
-            if haskey(entropies, "GENR2_Pz")
-                tmpo = folded_tMPO(b, ts, fold_op=[1,0,0,0])
-                rr2 = apply(tmpo, rr;  cutoff=truncp.cutoff, maxdim=truncp.maxbondim)
-                ll2 = applys(tmpo, ll; cutoff=truncp.cutoff, maxdim=truncp.maxbondim)
-                for jj = 1:7
-                    rr2 = apply(tmpo, rr2;  cutoff=truncp.cutoff, maxdim=truncp.maxbondim)
-                    ll2 = applys(tmpo, ll2; cutoff=truncp.cutoff, maxdim=truncp.maxbondim)
-                end
-                push!(entropies["GENR2_Pz"], rtm2_contracted(ll2,rr2))
-            end
-            if haskey(entropies, "GENVN_Pz")
-                tmpo = folded_tMPO(b, ts, fold_op=[1,0,0,0])
-                rr2 = apply(tmpo, rr;  cutoff=truncp.cutoff, maxdim=truncp.maxbondim)
-                for jj = 1:11
-                    rr2 = apply(tmpo, rr2;  cutoff=truncp.cutoff, maxdim=truncp.maxbondim)
-                    #ll2 = applys(tmpo, ll; cutoff=truncp.cutoff, maxdim=truncp.maxbondim)
-                end
-                #rr2 = apply(tmpo, rr; cutoff=truncp.cutoff, maxdim=truncp.maxbondim)
-                push!(entropies["GENVN_Pz"], generalized_vn_entropy_symmetric(rr2))
-            end
-            if haskey(entropies, "GENVN")
-                push!(entropies["GENVN"], generalized_vn_entropy_symmetric(ll))
-            end
-
-
-            if length(ll) in checkpoints
-                fn_cp = "cp_cone_$(length(ll))_chi_$(chis[end]).jld2"
-                infos[:times_range] = length(ll) - length(expvals) : length(ll)
-                llcp = tocpu(ll)
-                rrcp = tocpu(rr)
-                jldsave(fn_cp; llcp, rrcp, chis, times, expvals, entropies, infos)
-            end
 
             next!(p; showvalues = [(:Info,"[$(length(ll))] χ=$(maxlinkdim(ll)), (L|R) = $overlapLR " )])
 
@@ -157,5 +90,6 @@ function run_cone(psi::MPS,
     end
 
 
-    return ll, rr, chis, expvals, entropies, infos, fn_cp
+    return ll, rr, checkpoint
 end
+

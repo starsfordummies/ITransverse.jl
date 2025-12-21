@@ -49,9 +49,28 @@ state = tdvp(
 
 c0 = init_cone(b, 10; full=false)
 
+
+cp = DoCheckpoint(
+    "cp_cone.jld2";
+    params=tp,
+    save_at=0,
+    observables = (
+        Z = s -> expval_LR(s.L, s.R, [1,0,0,-1], s.b),
+    ),
+    latest_savers = (
+        L = s -> s.L,
+        R = s -> s.R,
+        b = s -> s.b
+    )
+)
+
 cone_params = ConeParams(;truncp, opt_method="RDM", optimize_op, which_evs=["X","Z"], checkpoints=0)
-psi, psiR, chis, expvals, entropies, infos, last_cp = run_cone(c0, b, cone_params, Nsteps)
+
+
+psi, psiR, cp = run_cone(c0, b, cone_params, Nsteps)
+ez = cp.history[:Z][end]
+@test abs(ex_rtm_lr - ex_rtm_r) < 0.001
 #@show expvals["Z"]
 
-@info norm(expvals["Z"] - obs.Z[11:end])
-@test norm(expvals["Z"] - obs.Z[11:end]) < 0.05
+@info norm(ez - obs.Z[11:end])
+@test norm(ez - obs.Z[11:end]) < 0.05
