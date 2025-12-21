@@ -69,6 +69,8 @@ function (cp::DoCheckpoint)(state, step::Int)
         name => f(state) for (name, f) in pairs(cp.latest_savers)
     )
 
+    # TODO  PROMOTE ANYs  # v2 = collect(promote(v...))
+    # TODO CONVERT to CPU the state 
     if step in cp.save_at
         @info "Saving CP $(cp.filename)..." 
         save(cp.filename,
