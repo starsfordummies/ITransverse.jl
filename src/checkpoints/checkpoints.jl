@@ -1,3 +1,4 @@
+""" Build list of steps at which we should checkpoint """
 function which_cps(checkpoints)
     # Checkpoints logic, let's try and be flexible 
     checkpoints = if isa(checkpoints, Integer)
@@ -32,7 +33,7 @@ mutable struct DoCheckpoint{TParams, TObs, TLatestFns}
 end
 
 
-# Initialize CP
+""" Initialize CP """
 function DoCheckpoint(filename;
                       params,
                       save_at=Int[],
@@ -56,22 +57,27 @@ function DoCheckpoint(filename;
     )
 end
 
+""" Saves checkpoint """
 function (cp::DoCheckpoint)(state, step::Int)
     push!(cp.steps, step)
 
-    # historical observables
+    # history observables
     for (name, obs) in pairs(cp.observables)
         push!(cp.history[name], obs(state))
     end
 
     # build latest snapshot
     cp.latest = NamedTuple(
-        name => f(state) for (name, f) in pairs(cp.latest_savers)
+        name => tocpu(f(state)) for (name, f) in pairs(cp.latest_savers)
     )
 
     # TODO  PROMOTE ANYs  # v2 = collect(promote(v...))
     # TODO CONVERT to CPU the state 
     if step in cp.save_at
+
+        for (k,v) in pairs(cp.history)
+            cp.history[k] = collect(promote(v...))
+        end
         @info "Saving CP $(cp.filename)..." 
         save(cp.filename,
              "steps", cp.steps,
