@@ -6,7 +6,7 @@ end
 
 
 """ Forward tMPO with open top (=right, after rotation) leg, so we can plug anything afterwards """
-function fwback_tMPO_opentr(b::FwtMPOBlocks, time_sites::Vector{<:Index};  bl::ITensor = b.tp.bl, init_beta_only::Bool=false)
+function fwback_tMPO_opentr(b::FwtMPOBlocks, time_sites::Vector{<:Index}; mid_op = [1,0,0,1], bl::ITensor = b.tp.bl, init_beta_only::Bool=false)
 
     Ntot = length(time_sites) 
     @assert Ntot % 2 == 0 
@@ -35,6 +35,10 @@ function fwback_tMPO_opentr(b::FwtMPOBlocks, time_sites::Vector{<:Index};  bl::I
     for ii = b1+1:Nt
         tMPO[ii] = replaceinds(Wc, (icP, icPs), (time_sites[ii],time_sites[ii]') )
     end
+    @show inds(tMPO[Nt])
+    tMPO[Nt] = replaceind(tMPO[Nt] * ITensor(mid_op, icR, icR'), icR' => icR)
+    @show inds(tMPO[Nt])
+
     for ii = Nt+1:b2
         tMPO[ii] = replaceinds(dag(Wc), (icP, icPs), (time_sites[ii]',time_sites[ii]) )  # TODO Check 
     end
