@@ -143,15 +143,16 @@ end
 - throws error otherwise
 """
 function phys_ind(A::ITensor)
-    if ndims(A) == 1
-        physind = ind(A,1)
+    physind = if ndims(A) == 1
+        ind(A,1)
     else
         if !isempty(inds(A,"phys"))
-            physind = inds(A,"phys")[1]
+            inds(A,"phys")[1]
         elseif !isempty(inds(A,"Site"))
-            physind = inds(A,"Site")[1]
+            inds(A,"Site")[1]
         else
             @error "Not sure what to do here, please label physical index in tensor"
+            nothing
         end
     end
 

@@ -36,28 +36,42 @@ b = FoldtMPOBlocks(tp)
 
 c0 = init_cone(b)
 
-cone_params = ConeParams(;truncp, opt_method="RDM", optimize_op, which_evs=["X","Z"], checkpoints=0)
-psi, psiR, chis, expvals, entropies, infos, last_cp = run_cone(c0, b, cone_params, Nsteps)
-@show expvals
+cp = DoCheckpoint(
+        "cp_cone.jld2";
+        params=tp,
+        save_at=0,
+        observables = (
+            X = s -> expval_LR(s.L, s.R, [0,1,1,0], s.b),
+        ),
+        latest_savers = (
+            L = s -> s.L,
+            R = s -> s.R,
+            b = s -> s.b
+        )
+    )
 
-@test abs(expvals["X"][end] - ITransverse.BenchData.bench_X_04_plus[length(psi)]) < 0.001
-@show(expvals["X"][end], ITransverse.BenchData.bench_X_04_plus[length(psi)])
+cone_params = ConeParams(;truncp, opt_method="RDM", optimize_op)
+psi, psiR, cp = run_cone(c0, b, cone_params, cp, Nsteps)
+ex_rdm = cp.history[:X][end]
 
-cone_params = ConeParams(;truncp, opt_method="RTM_LR", optimize_op, which_evs=["X","Z"], checkpoints=0)
-_, _, _, expvals_lr, _, _, _ = run_cone(c0, b, cone_params, Nsteps)
+@test abs(ex_rdm- ITransverse.BenchData.bench_X_04_plus[length(psi)]) < 0.001
 
-@test abs(expvals_lr["X"][end] - expvals["X"][end]) < 0.001
-@show(expvals_lr["X"][end])
+cone_params = ConeParams(;truncp, opt_method="RTM_LR", optimize_op)
+psi, psiR, cp = run_cone(c0, b, cone_params, cp, Nsteps)
+ex_rtm_lr = cp.history[:X][end]
 
-cone_params = ConeParams(;truncp, opt_method="RTM_R", optimize_op, which_evs=["X","Z","XX"], checkpoints=0)
-_, _, _, expvals_r, _, _, _ = run_cone(c0, b, cone_params, Nsteps)
-@test abs(expvals_lr["X"][end] - expvals_r["X"][end]) < 1e-6
-@show(expvals_r["X"][end])
+@test abs(ex_rtm_lr - ex_rdm) < 0.001
+
+cone_params = ConeParams(;truncp, opt_method="RTM_R", optimize_op)
+psi, psiR, cp = run_cone(c0, b, cone_params, cp, Nsteps)
+ex_rtm_r = cp.history[:X][end]
+@test abs(ex_rtm_lr - ex_rtm_r) < 0.001
 
 
-cone_params = ConeParams(;truncp, opt_method="RTM_R", optimize_op, which_evs=["X","Z","XX"], checkpoints=0, vwidth=2)
-_, _, _, expvals_r, _, _, _ = run_cone(c0, b, cone_params, Nsteps)
-@test abs(expvals_lr["X"][end] - expvals_r["X"][end]) < 1e-3
-@show(expvals_r["X"][end])
+cone_params = ConeParams(;truncp, opt_method="RTM_R", optimize_op, vwidth=2)
+psi, psiR, cp = run_cone(c0, b, cone_params, cp, Nsteps)
+ex_rtm_rw = cp.history[:X][end]
+@test abs(ex_rtm_rw - ex_rtm_r) < 0.001
+
 
 end

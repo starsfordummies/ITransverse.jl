@@ -45,10 +45,11 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams; fast::Bo
             maxbondim = max_chi
         end
 
-        if opt_method == "RDM"
-            psi_ortho = apply(in_mpo, psi_ortho; cutoff=cutoff, maxdim=maxbondim)
-            overlap = overlap_noconj(psi_ortho, psi_ortho)
-            sjj = vn_entanglement_entropy(psi_ortho)
+        psi_ortho, sjj, overlap = if opt_method == "RDM"
+            psi_ortho_n = apply(in_mpo, psi_ortho; cutoff=cutoff, maxdim=maxbondim)
+            overlap_n = overlap_noconj(psi_ortho, psi_ortho)
+            sjj_n = vn_entanglement_entropy(psi_ortho)
+            (psi_ortho_n, sjj_n, overlap_n)
         elseif opt_method == "RTM"
             # if jj % 200 == 0 
             #     psi_ortho = apply(in_mpo, psi_ortho; maxdim=maxbondim)
@@ -57,7 +58,7 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams; fast::Bo
             #     psi_ortho = apply(in_mpo, psi_ortho; maxdim=maxbondim)
             # end
             psi = applyn(in_mpo, psi_ortho)
-            psi_ortho, sjj, overlap = truncate_rsweep_sym(psi; cutoff=cutoff, chi_max=maxbondim, method="SVD", fast)
+            truncate_rsweep_sym(psi; cutoff=cutoff, chi_max=maxbondim, method="SVD", fast)
         elseif opt_method == "RTMRDM"
             if jj == div(itermax,2)
                 #increase_chi = false
@@ -68,12 +69,12 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams; fast::Bo
                 sjj = vn_entanglement_entropy(psi_ortho)
             else # do RTM
                 psi = applyn(in_mpo, psi_ortho)
-                psi_ortho, sjj, overlap = truncate_rsweep_sym(psi, cutoff=cutoff, chi_max=maxbondim, method="SVD")
+                truncate_rsweep_sym(psi, cutoff=cutoff, chi_max=maxbondim, method="SVD")
             end
         #  TODO this can be less accurate
         elseif opt_method == "RTM_EIG"
             psi = applyn(in_mpo, psi_ortho)
-            psi_ortho, sjj, overlap = truncate_rsweep_sym(psi, cutoff=cutoff, chi_max=maxbondim, method="EIG")
+            truncate_rsweep_sym(psi, cutoff=cutoff, chi_max=maxbondim, method="EIG")
         else
             @error "Specify a valid opt_method: RDM|RTM|..."
         end

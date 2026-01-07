@@ -129,6 +129,10 @@ export Environments,
     sweep_rebuild_envs_rtm!,
     overlap_envs
 
+
+include("checkpoints/checkpoints.jl")
+export DoCheckpoint
+
 include("power_method/pm_params.jl")
 
 export PMParams
