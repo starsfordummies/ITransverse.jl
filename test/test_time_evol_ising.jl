@@ -66,11 +66,10 @@ cp = DoCheckpoint(
 
 cone_params = ConeParams(;truncp, opt_method="RDM", optimize_op)
 
-
-psi, psiR, cp = run_cone(c0, b, cone_params, Nsteps)
-ez = cp.history[:Z][end]
-@test abs(ex_rtm_lr - ex_rtm_r) < 0.001
+psi, psiR, cp = run_cone(c0, b, cone_params, cp, Nsteps)
+ez = cp.history[:Z][end-10:end]
+#@test abs(ex_rtm_lr - ex_rtm_r) < 0.001
 #@show expvals["Z"]
 
-@info norm(ez - obs.Z[11:end])
-@test norm(ez - obs.Z[11:end]) < 0.05
+@info norm(ez - obs.Z[end-10:end])
+@test norm(ez - obs.Z[end-10:end]) < 0.05

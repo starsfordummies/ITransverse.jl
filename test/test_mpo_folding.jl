@@ -2,6 +2,8 @@ using ITensors, ITensorMPS, ITransverse
 using Test
 using ITransverse: FoldITensor
 
+@testset "MPO folding " begin
+
 tp = ising_tp()
 bfw = FwtMPOBlocks(tp)
 bfold = FoldtMPOBlocks(tp)
@@ -84,10 +86,12 @@ fwpsi = fw_tMPO(bfw, ts; tr=[1,0])
 
 foldpsi, cP2, cPs2 = ITransverse.combine_and_fold(fwpsi, fwpsi; fold_op = [1 0 ;0 1], fold_init_state=[1 0 ; 0 1], dag_W2=true)
 
-psik = copy(foldpsi)
+# psik = copy(foldpsi)
 
-for jj = 1:300
-    psik = apply(fold2, psik; cutoff=1e-10, maxdim=32)
-    normalize!(psik)
-    @show maxlinkdim(psik)
+# for jj = 1:300
+#     psik = apply(fold2, psik; cutoff=1e-10, maxdim=32)
+#     normalize!(psik)
+#     @show maxlinkdim(psik)
+# end
+
 end
