@@ -95,11 +95,12 @@ include("tmpo/build_Ut.jl")
 include("tmpo/build_ww.jl")
 
 include("tmpo/build_fw_tmpo.jl")
+export fw_tMPO, fw_tMPS
+include("tmpo/build_fwback_tmpo.jl")
+export fwback_tMPO, fwback_tMPS
 
 #from build_tmpo_[fw|expval].jl
-export 
-    fw_tMPO, 
-    fw_tMPS
+
 
 include("tmpo/build_fold_tmpo.jl")
 include("tmpo/build_fold_tmpo_in.jl")
