@@ -31,13 +31,12 @@ IsingParams(x::IsingParams; Jtwo=x.Jtwo, gperp=x.gperp, hpar=x.hpar) = IsingPara
 struct PottsParams{T <: Number} <: ModelParams
     JSS::T
     ftau::T
-    hS::T
     phys_site::Index{Int64}
 end
 
-function  PottsParams(Jtwo::Number, ftau::Number, hpar::Number=0.)
-    T = promote_type(typeof(Jtwo), typeof(ftau), typeof(hpar))
-    PottsParams{T}(T(Jtwo), T(ftau), T(hpar), Index(3, "S=1"))
+function  PottsParams(Jtwo::Number, ftau::Number)
+    T = promote_type(typeof(Jtwo), typeof(ftau))
+    PottsParams{T}(T(Jtwo), T(ftau), Index(3, "S=1"))
 end
 
 
@@ -64,6 +63,5 @@ end
 
 # Extract only the model parameters in reasonable order 
 modelparams(mp::IsingParams) = (mp.Jtwo, mp.gperp, mp.hpar)
-modelparams(mp::PottsParams) = (mp.JSS, mp.ftau, mp.hS)
+modelparams(mp::PottsParams) = (mp.JSS, mp.ftau)
 modelparams(mp::XXZParams) = (mp.J_XY, mp.J_ZZ, mp.hz)
-
