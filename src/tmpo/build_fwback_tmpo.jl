@@ -36,7 +36,8 @@ function fwback_tMPO_opentr(b::FwtMPOBlocks, time_sites::Vector{<:Index}; mid_op
         tMPO[ii] = replaceinds(Wc, (icP, icPs), (time_sites[ii],time_sites[ii]') )
     end
     @show inds(tMPO[Nt])
-    tMPO[Nt] = replaceind(tMPO[Nt] * ITensor(mid_op, icR, icR'), icR' => icR)
+    ten_mid_op = adapt(NDTensors.unwrap_array_type(tMPO[Nt]), ITensor(mid_op, icR, icR'))
+    tMPO[Nt] = replaceind(tMPO[Nt] * ten_mid_op, icR' => icR)
     @show inds(tMPO[Nt])
 
     for ii = Nt+1:b2
