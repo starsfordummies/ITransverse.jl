@@ -278,7 +278,7 @@ function expH_potts_murg(sites, J::Number, fpotts::Number)
 
         # Mutiply by f-tau part
 
-        if fpotts > 1e-10
+        if abs(fpotts) > 1e-10
 
             ttdag = op(sites, "τplusτdag",  n)
             expT = exp(ϵ * ttdag * fpotts/2)
