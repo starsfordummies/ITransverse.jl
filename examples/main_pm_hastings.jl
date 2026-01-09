@@ -27,9 +27,6 @@ function main_folded_pm()
 
     pm_params = PMParams(truncp, itermax, eps_converged, true, "RDM", "norm")
 
-    #sigX = ComplexF64[0,1,1,0]
-    #sigZ = ComplexF64[1,0,0,-1]
-
     evs = [] 
 
     rvecs = []

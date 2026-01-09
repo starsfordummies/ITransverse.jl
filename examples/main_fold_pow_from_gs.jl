@@ -29,10 +29,6 @@ function main_folded_pm()
     p0 = random_mps(space_sites)
     _, gs = dmrg(hisi, p0, nsweeps=6)
 
-    #gs1 = random_itensor(ComplexF64,Index(3,"lef"),  Index(3, "rig"), Index(2, "phys"))
-
-    gs1 = adapt(ComplexF64, gs[40])
-
     tp = tMPOParams(tp; nbeta=0)
 
 

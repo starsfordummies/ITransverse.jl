@@ -150,7 +150,6 @@ function H_potts_manual(sites_potts, JJ::Real, ff::Real)
 
 
         elseif n == N
-            #U_x[n] = ITensor(ComplexF64, ll, dag(s), s')
             U_x[n] =  onehot(ll => 1) * -ff*ττd
             U_x[n] += onehot(ll => 2) * -JJ*Σd
             U_x[n] += onehot(ll => 3) * -JJ*Σ
@@ -258,7 +257,6 @@ function expH_potts_murg(sites, J::Number, fpotts::Number)
             U_t[n] += onehot(rl => 3) * sqrt(fΣ) * Σd
 
         elseif n == N
-            #U_t[n] = ITensor(ComplexF64, ll, dag(s), s')
             U_t[n] =  onehot(ll => 1) * sqrt(fI) * I
             U_t[n] += onehot(ll => 2) * sqrt(fΣ) * Σd
             U_t[n] += onehot(ll => 3) * sqrt(fΣ) * Σ

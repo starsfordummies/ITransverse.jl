@@ -18,10 +18,6 @@ function main_cone()
     optimize_op = vZ
     init_state = up_state
 
-
-    #up_state = Vector{ComplexF64}([1,0])
-    #plus_state = Vector{ComplexF64}([1/sqrt(2),1/sqrt(2)])
-
     cutoff = 1e-8
     maxbondim = 128
     direction = "right"

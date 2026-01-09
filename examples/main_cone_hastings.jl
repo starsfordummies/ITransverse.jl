@@ -15,9 +15,6 @@ function main_cone()
 
     nbeta = 0
 
-    #up_state = Vector{ComplexF64}([1,0])
-    #plus_state = Vector{ComplexF64}([1/sqrt(2),1/sqrt(2)])
-
     init_state = up_state
 
     cutoff = 1e-10

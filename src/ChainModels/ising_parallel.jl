@@ -85,17 +85,13 @@ function expXX_murg(sites::Vector{<:Index}, Jdt::Number; make_expZZ::Bool=false)
         X = make_expZZ ? op(sites, "Z", n) : op(sites, "X", n)
 
         if n == 1
-            #U_t[n] = ITensor(ComplexF64, dag(s), s', dag(rl))
             U_XX[n] = onehot(rl => 1) * sqrt(cos(Jdt))*I
             U_XX[n] += onehot(rl => 2) * sqrt(im*sin(Jdt))*X
         elseif n == N
-            #U_XX[n] = ITensor(ComplexF64, ll, dag(s), s')
             U_XX[n] = onehot(ll => 1) * sqrt(cos(Jdt))*I
             U_XX[n] += onehot(ll => 2) * sqrt(im*sin(Jdt))*X
 
         else
-            #U_XX[n] = ITensor(ComplexF64, ll, dag(s), s', dag(rl))
-
             U_XX[n]  = onehot(ll => 1, rl =>1) * cos(Jdt)*I
             U_XX[n] += onehot(ll => 1, rl =>2) * sqrt(im*sin(Jdt))*sqrt(cos(Jdt))*X
             U_XX[n] += onehot(ll => 2, rl =>1) * sqrt(im*sin(Jdt))*sqrt(cos(Jdt))*X
