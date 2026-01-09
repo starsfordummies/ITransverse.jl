@@ -54,8 +54,9 @@ FoldITensor(a::ITensor; kwargs...) = FoldITensor(array(a); kwargs...)
  
 
 
-""" Join two MPS/MPOs fold-like.
-- If `fold_op` is not empty/nothing, we join the two sheets. For this, we **remove** the **last** site tensors of both MP*S 
+""" Join two MPS/MPOs fold-like. We assume the standard (p,p') structure for physical indices.
+- If dag_W2, we both **conjugate** the tensors second object and **flip** them.
+- If `fold_op` is **not** empty/nothing, we join the two sheets. For this, we **remove** the **last** site tensors of both MP*S 
 and **replace** them with the folding operator `fold_op`
 - If `fold_init_state` is not empty/nothing, we **remove** the **first** site tensors of both and replace them with the folded initial state
 """
@@ -64,11 +65,11 @@ function combine_and_fold(W1::AbstractMPS, W2::AbstractMPS; dag_W2::Bool=false,
 
     LL = length(W1)
 
-    sites1_p =  siteinds(first, W1,plev=0)
-    sites2_p =  siteinds(first, W2,plev=0)
+    sites1_p =  siteinds(first, W1, plev=0)
+    sites2_p =  siteinds(first, W2, plev=0)
 
-    sites1_ps = siteinds(first, W1,plev=1)
-    sites2_ps = siteinds(first, W2,plev=1)
+    sites1_ps = siteinds(first, W1, plev=1)
+    sites2_ps = siteinds(first, W2, plev=1)
 
     @assert LL == length(sites2_p)  "Only equal-length MPS/MPOs are supported for now: $(LL)-$(length(sites2_p))"
 
@@ -76,23 +77,31 @@ function combine_and_fold(W1::AbstractMPS, W2::AbstractMPS; dag_W2::Bool=false,
     links2 = linkinds(W2)
 
 
-    if dag_W2 
-        W2 = dag(W2)
-    end
- 
     W12 = typeof(W1)(LL)
-    comb_p = [ITransverse.ITenUtils.pcombiner(sites1_p[ii], sites2_p[ii]'', tags="Site,nn=$(ii)") for ii = 1:LL]
-    comb_ps = comb_p
+
+    comb_p = if dag_W2 || isa(W12, MPS) # if we dag, we also transpose (so in the end it's not flipped)
+        [ITransverse.ITenUtils.pcombiner(sites1_p[ii], sites2_p[ii]'', tags="Site,nn=$(ii)") for ii = 1:LL]
+    else
+        [ITransverse.ITenUtils.pcombiner(sites1_p[ii], sites2_ps[ii]'', tags="Site,nn=$(ii)") for ii = 1:LL]
+    end
+
+
+    comb_ps = nothing
  
     comb_link = [combiner(links1[ii],links2[ii]'', tags="Link,ll=$(ii)") for ii = 1:LL-1]
 
     for ii = 1:LL
-        W12[ii] = W1[ii]*(W2[ii]'')
+        W12[ii] = dag_W2 ? W1[ii]*dag(W2[ii]'') : W1[ii]*(W2[ii]'')
         W12[ii] *= comb_p[ii]
     end
 
-    if W12 isa MPO
-        comb_ps = [combiner(sites1_ps[ii], sites2_ps[ii]'', tags="Site,nn=$(ii)") for ii = 1:LL]
+    if W12 isa MPO # We also need to join p' indices 
+        comb_ps = if dag_W2
+            [combiner(sites1_ps[ii], sites2_ps[ii]'') for ii = 1:LL]
+        else
+            [combiner(sites1_ps[ii], sites2_p[ii]'') for ii = 1:LL]
+        end
+
         for ii = 1:LL
             replaceind!(comb_ps[ii], combinedind(comb_ps[ii]), combinedind(comb_p[ii])' )
             W12[ii] *= comb_ps[ii]
@@ -128,7 +137,7 @@ function combine_and_fold(W1::AbstractMPS, W2::AbstractMPS; dag_W2::Bool=false,
     end
 
 
-    return W12, comb_ps, comb_p
+    return W12, comb_p, comb_ps
 
 end
 

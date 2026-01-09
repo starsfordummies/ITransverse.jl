@@ -110,7 +110,7 @@ function FoldtMPOBlocks(x::Union{tMPOParams, MPO}; init_state=nothing, build_ima
             iP_rho0 = Index(dim(rho0,1),"rho0,time,Site")
             rho0 = replaceinds(rho0, lrinds, (iP_rho0, iP_rho0'))
         end
-    elseif physdim_init == dim(P) ÷ 2
+    elseif physdim_init == isqrt(dim(P))
         rho0 = (init_state) * dag(init_state')
         comb_phys = combiner(iP, iP')
         rho0 *= comb_phys

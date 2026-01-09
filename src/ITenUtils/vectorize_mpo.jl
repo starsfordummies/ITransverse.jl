@@ -1,11 +1,14 @@
 """ Vectorizes an MPO by "folding" (joining) its physical indices.
- Returns the corresponding MPS *and* the list of combiners used to join the indices, for later use"""
+ Returns the corresponding MPS *and* the list of combiners used to join the indices, for later use.
+ We assume standard (p,p') labelling and try to join indices as (phys, phys')
+ """
 function vectorize_mpo(w::MPO)
 
-    ss = siteinds(w)
+    sites_p =  siteinds(first, w, plev=0)
+    sites_ps =  siteinds(first, w, plev=1)
     tensors = deepcopy(w.data)
 
-    combiners = [combiner(ss[jj], tags="fold, s=$(jj)") for jj in eachindex(w)]
+    combiners = [combiner(sites_p[jj], sites_ps[jj], tags="fold, s=$(jj)") for jj in eachindex(w)]
 
     for jj in eachindex(w)
         tensors[jj] *= combiners[jj]
@@ -14,22 +17,6 @@ function vectorize_mpo(w::MPO)
     return MPS(tensors), combiners
 end
 
-#=  Don't like this too much, as it makes more sense to return an MPS and this doesn't allow to 
-""" Vectorizes an MPO by "folding" (joining) its physical indices, inplace version.
- Returns the list of combiners used to join the indices, for later use"""
-function vectorize_mpo!(w::MPO)
-
-    ss = siteinds(w)
-
-    combiners = [combiner(ss[jj], tags="fold, s=$(jj)") for jj in eachindex(w)]
-
-    for jj in eachindex(w)
-        w.data[jj] *= combiners[jj]
-    end
-
-    return w, combiners
-end
-=# 
 
 """ Given a vectorized MPO (ie. an MPS) and the list of combiners used, unfolds the MPS converting it back to MPO """
 function unvectorize_mpo(w::MPS, combiners)

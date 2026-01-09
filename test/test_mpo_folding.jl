@@ -1,8 +1,9 @@
 using ITensors, ITensorMPS, ITransverse
 using Test
 using ITransverse: FoldITensor
+using LinearAlgebra
 
-@testset "MPO folding " begin
+#@testset "MPO folding " begin
 
 tp = ising_tp()
 bfw = FwtMPOBlocks(tp)
@@ -47,15 +48,15 @@ vecfold_ref3, combs2 = ITransverse.ITenUtils.vectorize_mpo(fold_ref3)
 clegs =  MPO(cPMPS1)
 
 
-p1 = apply(clegs, foldMPS2)
+p1 = MPO(apply(clegs, foldMPS2).data)
 
-p2 = ITransverse.reopen_inds!(copy(foldMPS2), clegs)
+p2 = ITransverse.reopen_inds(foldMPS2, clegs)
 
-p3 = ITransverse.reopen_inds!(copy(foldMPS2), cPMPS1)
+p3 = ITransverse.reopen_inds(foldMPS2, cPMPS1)
 
 
 @test p1 ≈ p2
-@test p1 ≈ p3
+@test p2 ≈ p3
 
 
 ss = siteinds("S=1/2", 12)
@@ -86,12 +87,27 @@ fwpsi = fw_tMPO(bfw, ts; tr=[1,0])
 
 foldpsi, cP2, cPs2 = ITransverse.combine_and_fold(fwpsi, fwpsi; fold_op = [1 0 ;0 1], fold_init_state=[1 0 ; 0 1], dag_W2=true)
 
-# psik = copy(foldpsi)
 
-# for jj = 1:300
-#     psik = apply(fold2, psik; cutoff=1e-10, maxdim=32)
-#     normalize!(psik)
-#     @show maxlinkdim(psik)
-# end
+Nsites = 8
+# XXZ non-symmetric anywhere 
 
-end
+tp = tMPOParams(0.1,  ITransverse.ChainModels.expH_XXZ_2o, XXZParams(1.0, 0.8), 0, [1,0])
+tp = tMPOParams(0.1,  expH_potts_murg, PottsParams(1.0, 0.8), 0, [1,0,0])
+
+b_fw = FwtMPOBlocks(tp)
+b_fold = FoldtMPOBlocks(tp)
+
+ts = siteinds(dim(tp.mp.phys_site), Nsites)
+fw = fw_tMPO(b_fw, ts; tr=[1,0,0])
+
+fold, cP, cPs = ITransverse.combine_and_fold(fw, fw; fold_op  = [1 0 0; 0 1 0; 0 0 1],  fold_init_state = nothing, dag_W2=true)
+fold_alt, cP, cPs = ITransverse.combine_and_fold(fw, dag(fw); fold_op  = [1 0 0; 0 1 0; 0 0 1],  fold_init_state = nothing, dag_W2=false)
+
+tsf = siteinds(dim(tp.mp.phys_site)^2, Nsites-1)
+fold_ref = folded_tMPO(b_fold, tsf)
+
+
+vecfold, combs = ITransverse.ITenUtils.vectorize_mpo(fold)
+vecfold_ref, combs = ITransverse.ITenUtils.vectorize_mpo(fold_ref)
+
+@test fidelity(vecfold, vecfold_ref) ≈ 1
