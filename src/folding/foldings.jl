@@ -144,8 +144,36 @@ function reopen_inds!(WWm::MPS, combs)
         #iinds = uniqueinds(inds(c), combinedind(c))
         WWm[ii] *= dag(c)
     end
-    return WWm
+    return MPO(WWm.data)
 end
+
+
+""" Reopen inds assuming they're folded, we make quite a few assumptions here... """
+function reopen_inds!(folded_psi::MPS; different_fwback_inds::Bool=true)
+
+    sqdim = isqrt(dim(siteind(folded_psi,1)))
+    ss = siteinds(folded_psi)
+
+    for i in eachindex(folded_psi)
+        fw_ind, bk_ind = if different_fwback_inds
+            Index(sqdim,"Site,n=$i,fw"), Index(sqdim,"Site,n=$i,back")'
+        else
+            temp = Index(sqdim,"Site,n=$i,unfold")
+            temp, temp'
+        end
+
+        comb = combiner(fw_ind, bk_ind)
+        kc = combinedind(comb)
+        comb = replaceind(comb, kc, ss[i])
+        folded_psi[i] *= dag(comb)
+    end
+
+    return MPO(folded_psi.data)
+end
+
+reopen_inds(folded_psi::MPS, combs) = reopen_inds!(copy(folded_psi), combs)
+reopen_inds(folded_psi::MPS; kwargs...) = reopen_inds!(copy(folded_psi); kwargs...)
+
 
 
 """ Traces over combined indices of ITensors. On a vectorized DM it should basically give the norm of the state"""

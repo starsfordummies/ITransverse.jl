@@ -398,3 +398,14 @@ function svd_mpo(w::MPO)
 end
 
 allsiteinds(A::AbstractMPS) = vcat(siteinds(A)...)
+
+function trace_mpo(w::MPO)
+    sw = siteinds(w)
+
+    ttrace = ITensors.OneITensor()
+    for ii in eachindex(sw) 
+        ttrace *= (w[ii] * delta(sw[ii]))
+    end
+
+    return scalar(ttrace)
+end
