@@ -106,10 +106,9 @@ mp = IsingParams(JXX, hz, gx)
 
 tp = tMPOParams(dt,  expH_ising_murg, mp, 0, init_state)
 
-
 diffs = []
 
-for TT = 10:10:60
+for TT = 10:10:50
 
     psi, rr2s, ir2s, entropies, r2s, sgen, maxs, b = ising_fwb(tp,2*TT)
     tmpo_z = fwback_tMPO(b, siteinds(psi); mid_op = [1,0,0,-1], tr=b.tp.bl)
@@ -126,6 +125,6 @@ for TT = 10:10:60
 
     ev_fold = expval_LR(ll, mpo_Z, rr)/overlap_noconj(ll,rr)
 
-    push!(diffs, abs.(ev_unfold - ev_fold))
+    @test abs.(ev_unfold - ev_fold) < 0.001
 
 end

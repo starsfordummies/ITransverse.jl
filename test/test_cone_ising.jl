@@ -13,10 +13,6 @@ dt = 0.1
 
 nbeta = 0
 
-#sigX = ComplexF64[0,1,1,0]
-#sigZ = ComplexF64[1,0,0,-1]
-#Id = ComplexF64[1,0,0,1]
-
 optimize_op = vX
 
 init_state = plus_state

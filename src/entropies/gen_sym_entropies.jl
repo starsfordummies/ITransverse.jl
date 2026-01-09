@@ -34,24 +34,27 @@ function generalized_vn_entropy_symmetric(psiL::MPS; bring_left_gen::Bool=true, 
 
         #@assert order(right_env) == 2 
         #println(left_env)
-        eigss, _ = eigen(right_env, inds(right_env)[1],inds(right_env)[2])
+        eigss = eigvals(right_env)
         #gen_ent_cut = sum(eigss.*log.(eigss))
         
+        sumeigss = sum(eigss)
         
         if normalize_eigs
-            eigss = eigss/sum(eigss) 
+            eigss = eigss/sumeigss
         else # If we don't normalize, warn if normalization is off
-            if abs(sum(eigss) - 1.) > 0.01
+            if abs(sumeigss- 1.) > 0.01
                 @warn "RTM not well normalized? Σeigs = 1-$(abs(sum(eigss) - 1.)) "
             end
         end
 
-        gen_ent_cut = ComplexF64(0.)
-        for n=1:dim(eigss, 1)
-            p = eigss[n,n]        # I don't think we need the ^2 here 
-            gen_ent_cut -= p * log(p)
-            #println("[$ii]temp = $(gen_ent_cut) | sum = $(sum(eigss))")
-        end
+        # gen_ent_cut = ComplexF64(0.)
+        # for n=1:dim(eigss, 1)
+        #     p = eigss[n,n]        # I don't think we need the ^2 here 
+        #     gen_ent_cut -= p * log(p)
+        #     #println("[$ii]temp = $(gen_ent_cut) | sum = $(sum(eigss))")
+        # end
+        gen_ent_cut = -sum(p -> p * log(p), eigss)
+
 
         gen_ents[ii-1] = gen_ent_cut
     
@@ -89,7 +92,7 @@ function generalized_vn_entropy_symmetric(psiL::MPS, cut::Int; bring_left_gen::B
 
     @assert order(right_env) == 2 
     #println(left_env)
-    eigss, _ = eigen(right_env, inds(right_env)[1],inds(right_env)[2])
+    eigss = eigvals(right_env)
     #gen_ent_cut = sum(eigss.*log.(eigss))
     
     if normalize_eigs
@@ -142,7 +145,7 @@ function generalized_r2_entropy_symmetric(psiL::MPS; bring_left_gen::Bool=true, 
 
         @assert order(right_env) == 2 
         #println(left_env)
-        eigss, _ = eigen(right_env, inds(right_env)[1],inds(right_env)[2])
+        eigss = eigvals(right_env)
         #gen_ent_cut = sum(eigss.*log.(eigss))
         
         
@@ -245,15 +248,14 @@ function gensym_renyi_entropies(psiL::MPS; which_ents=[0.5,1,2], bring_left_gen:
         right_env = Bi * right_env
 
         @assert order(right_env) == 2 
-        eigss, _ = eigen(right_env, inds(right_env)[1],inds(right_env)[2])
+        eigss = eigvals(right_env)
  
-        
         if normalize_eigs
             eigss = eigss/sum(eigss) 
         end
 
 
-        eigs_rtm[ii-1] = array(diag(eigss))
+        eigs_rtm[ii-1] = eigss
     
     end
 

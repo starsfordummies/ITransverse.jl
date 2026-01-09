@@ -4,22 +4,20 @@ using ITensors, ITensorMPS
 using ITransverse 
 using ITransverse: diagonalize_rtm_right_gen_sym
 
-function trim_near_zero(v, cutoff)
-    mags = abs.(v)  # Elementwise magnitude, works for real and complex
-    first_nz = findfirst(x -> x > cutoff, mags)
-    last_nz = findlast(x -> x > cutoff, mags)
-    if isnothing(first_nz) || isnothing(last_nz)
-        return []
-    end
-    return v[first_nz:last_nz]
+function nonzero_match(A, B; tol=1e-8)
+    # Filter nonzeros
+    A_nz = filter(x -> abs(x) > tol, A)
+    B_nz = filter(x -> abs(x) > tol, B)
+    
+    # Count how many times each unique element appears (with tolerance)
+    # For complex numbers, use approximate matching
+    # Here we sort and compare
+    sortA = sort(A_nz, by=abs)
+    sortB = sort(B_nz, by=abs)
+    
+    return length(sortA) == length(sortB) &&
+           all(isapprox.(sortA, sortB, atol=tol))
 end
-
-function equal_up_to_cutoff(a, b; cutoff=1e-8, rtol=1e-8)
-    ta = trim_near_zero(a, cutoff)
-    tb = trim_near_zero(b, cutoff)
-    length(ta) == length(tb) && isapprox(ta, tb; atol=cutoff, rtol=rtol)
-end
-
 
 @testset "Diagonalization of RTM using symmetric gauges" begin
 s = siteinds(4, 20)
@@ -35,9 +33,10 @@ eigs_r = diagonalize_rtm_right_gen_sym(ll; bring_right_gen=true, normalize_facto
 # @show eigs_l[5]
 # @show eigs_r[5]
 
-@test equal_up_to_cutoff(eigs_l[5], eigs_r[5]; cutoff=1e-9, rtol=1e-9)
-@test equal_up_to_cutoff(eigs_l[10], eigs_r[10]; cutoff=1e-9, rtol=1e-9)
-@test equal_up_to_cutoff(eigs_l[14], eigs_r[14]; cutoff=1e-9, rtol=1e-9)
+
+@test nonzero_match(eigs_l[5], eigs_r[5]; tol=1e-9)
+@test nonzero_match(eigs_l[10], eigs_r[10]; tol=1e-9)
+@test nonzero_match(eigs_l[14], eigs_r[14]; tol=1e-9)
 # @test eigs_l ≈ eigs_r 
 
 
@@ -55,9 +54,6 @@ end
     lenv= ITensors.OneITensor()
     s = siteinds(psi_gauged)
     
-    eigs_rho = []
-    eigs_rho_check = []
-    
     for jj in 1:mpslen-1
     
         lenv *= psi_gauged[jj]
@@ -66,10 +62,8 @@ end
     
         @assert ndims(lenv) == 2 
     
-        vals, vecs = eigen(lenv, ind(lenv,1), ind(lenv,2))
-    
-        push!(eigs_rho, vals)
-    
+        vals = eigvals(lenv)
+  
         if mpslen - jj < 5
             renv = ITensors.OneITensor()
             for kk in mpslen:-1:jj+1
@@ -81,13 +75,17 @@ end
             #@info "RTM full size: $(size(rtm_full))"
             vals_full, _ = eigen(rtm_full, inds(rtm_full,plev=0), inds(rtm_full,plev=1))
     
-            push!(eigs_rho_check, vals_full)
+            @show jj 
+            @show vals 
+            @test nonzero_match(vals, array(vals_full))
         end
     
     end
     
-    
-    @test diag.(matrix.((eigs_rho[end-3:end]))) ≈ diag.(matrix.(eigs_rho_check))
+    # @show (eigs_rho)
+    # @show diag.(matrix.(eigs_rho_check))
+
+    # @test diag.(matrix.((eigs_rho[end-3:end]))) ≈ diag.(matrix.(eigs_rho_check))
     
     end
 

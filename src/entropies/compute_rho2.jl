@@ -180,7 +180,7 @@ function rtm2_bruteforce(psi::MPS, phi::MPS)
         rho_t *= comb'
         #@show inds(rho_t)
         #diagonalize
-        vals, _ = eigen(rho_t)
+        vals = eigvals(rho_t)
         #@info "[$jj] $(rho2(diag(matrix(vals))))"
         push!(r2s, rho2(vals))
         # revert merge 

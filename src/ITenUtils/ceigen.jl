@@ -60,3 +60,10 @@ function LinearAlgebra.eigen(
   V = complex(tensor(Dense(vec(VM)), Vinds))
   return D, V, spec
 end
+
+
+
+""" Overriding eigvals()"""
+LinearAlgebra.eigvals(T::ITensor) = eigvals(matrix(T))
+LinearAlgebra.eigvals(T::ITensor, inds_T) = eigvals(Matrix(T, inds_T...))
+  

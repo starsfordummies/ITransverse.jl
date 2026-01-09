@@ -43,7 +43,7 @@ function diagonalize_rtm_left_gen_sym(psiL::MPS, cut::Int; bring_left_gen::Bool=
 
     @assert order(right_env) == 2 
     #println(left_env)
-    eigss, _ = eigen(right_env, inds(right_env)[1],inds(right_env)[2])
+    eigss = eigvals(right_env)
     
     if abs(sum(eigss) - 1.) > 0.01
         @warn "RTM not well normalized? Σeigs-1 = $(abs(sum(eigss) - 1.)) "
@@ -62,7 +62,7 @@ end
 Bring psi in generalized RIGHT symmetric canonical form,
 then contract LEFT enviroments and diagonalize them.
 Returns an array of arrays containing the eigenvalues of the RTM for each cut """
-function diagonalize_rtm_right_gen_sym(psi::MPS; bring_right_gen::Bool=false, normalize_factor::Number=1.0)
+function diagonalize_rtm_right_gen_sym(psi::MPS; bring_right_gen::Bool=false, normalize_factor::Number=1.0, sort_by_largest::Bool=true)
 
     mpslen = length(psi)
 
@@ -92,9 +92,13 @@ function diagonalize_rtm_right_gen_sym(psi::MPS; bring_right_gen::Bool=false, no
 
         @assert ndims(lenv) == 2 
 
-        eigss, _ = eigen(lenv, inds(lenv)[1],inds(lenv)[2])
+        eigss = eigvals(lenv)
+
+        if sort_by_largest
+            eigss = sort(filter(x -> abs(x) >= 1e-20, eigss), by=abs, rev=true)
+        end
         
-        push!(eigs_rtm_t, diag(matrix(eigss)))
+        push!(eigs_rtm_t, eigss)
 
     end
 
@@ -134,9 +138,7 @@ function diagonalize_rtm_symmetric(psiL::MPS; bring_left_gen::Bool=true, normali
         right_env = psiR[ii] * right_env
 
         @assert order(right_env) == 2 
-        eigss, _ = eigen(right_env, inds(right_env)[1],inds(right_env)[2])
-        
-        eigss = vector(diag(eigss))
+        eigss = eigvals(right_env)
         
         if normalize_eigs
             eigss = eigss/sum(eigss) 
