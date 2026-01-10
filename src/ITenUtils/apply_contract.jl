@@ -38,11 +38,17 @@ end
 
 """ If we have dangling tensors at the right edge of an MPS """
 function contract_dangling!(psi::AbstractMPS)
+    changed = false
     while length(psi) > 1 && ndims(psi[end]) == 1 && hascommoninds(psi[end], psi[end-1]) 
         psi[end-1] = psi[end] * psi[end-1]
         pop!(psi.data)
-        ITensorMPS.reset_ortho_lims!(psi)  # TODO can probably do better with some logic here...
+        changed = true
     end
+    
+    if changed 
+        ITensorMPS.reset_ortho_lims!(psi) 
+    end
+
 end
 
 
@@ -60,7 +66,7 @@ function contractn(A::MPO, ψ::AbstractMPS; preserve_tags_mps::Bool=false, kwarg
     # TODO Add offset for contraction to allow extension on both edges 
     @assert length(A) >= length(ψ)
 
-    N = max(length(A), length(ψ)) 
+    N = length(A)
     n = min(length(A), length(ψ))
 
     ψ_out = typeof(ψ)(N)

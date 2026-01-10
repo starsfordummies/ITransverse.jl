@@ -192,7 +192,7 @@ function construct_tMPS_tMPO_finite(psi_i::MPS, in_Uts::Vector{MPO}, psi_f::MPS;
     for Tc in reverse(Tcs)
         stc = allsiteinds(Tc)
         ssL = uniqueinds(stc, ssR)
-        @assert length(uniqueinds(stc,ssR)) == length(ssR) "Something likely wrong in index labelling"
+        @assert length(ssL) == length(ssR) "Something likely wrong in index labelling"
         for ii in eachindex(ssR)
             Tc[ii] = replaceinds(Tc[ii], ssR[ii] => ssNew[ii], ssL[ii] => ssNewP[ii])
         end
@@ -203,7 +203,7 @@ function construct_tMPS_tMPO_finite(psi_i::MPS, in_Uts::Vector{MPO}, psi_f::MPS;
     replace_siteinds!(psiL, ssNew)
 
 
-  for col = [psiL, Tcs..., psiR]
+  for col in (psiL, Tcs..., psiR)
     ll = linkinds(col)
     for ii in eachindex(ll)
       lln = noprime(sim(ll[ii], tags="Link,lt=$(ii)"))

@@ -132,14 +132,14 @@ function fw_tMPS(
     @assert nbeta <= Ntot
 
     # Choose direction-dependent fields and indices
-    if LR == :left
+    (iL, iR, iP) = if LR == :left
         W = b.Wl
         W_im = b.Wl_im
-        (iL, iR, iP) = (b.rot_inds[:L], b.rot_inds[:R], b.rot_inds[:Ps])
+        (b.rot_inds[:L], b.rot_inds[:R], b.rot_inds[:Ps])
     elseif LR == :right
         W = b.Wr
         W_im = b.Wr_im
-        (iL, iR, iP) = (b.rot_inds[:L], b.rot_inds[:R], b.rot_inds[:P])
+        (b.rot_inds[:L], b.rot_inds[:R], b.rot_inds[:P])
     else
         error("Unknown LR: $(LR)")
     end

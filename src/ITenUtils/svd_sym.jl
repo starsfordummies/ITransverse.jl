@@ -17,7 +17,7 @@ TruncSVD has no field Vt
 
 
 """ SVD of matrix M with truncation. Returns SVD() object and spectrum """
-function mytrunc_svd(
+function old_mytrunc_svd(
         M::AbstractMatrix;
         maxdim=nothing,
         mindim=nothing,
@@ -82,18 +82,6 @@ function mytrunc_svd(
 
 end
 
-function check_mytrunc_svd(f::SVD, M::AbstractMatrix, cutoff::Float64)
-
-    rec_M = f.U * Diagonal(f.S) * f.V'
-    delta_norm2 = LinearAlgebra.norm2(rec_M - M)/LinearAlgebra.norm2(M) 
-    if delta_norm2 > cutoff 
-        @warn("SVD decomp maybe not accurate, norm2 error $(delta_norm2) > $(cutoff)")
-        return delta_norm2
-    end
-
-    return 0
-end
-
 
 
 """ Symmetric SVD decomposition of a matrix. 
@@ -102,11 +90,11 @@ Remember that the cutoff is applied to the sum of the squares of the singular va
 the norm error on the truncated object is ~ sqrt(cutoff)
 F = symm_svd(M) ; F.U * Diagonal(F.S) * transpose(F.U) ≈ M # true
 """
-function symm_svd(M::Matrix; maxdim=nothing, cutoff=nothing, use_absolute_cutoff=nothing, use_relative_cutoff=nothing)
+function old_symm_svd(M::Matrix; maxdim=nothing, cutoff=nothing, use_absolute_cutoff=nothing, use_relative_cutoff=nothing)
 
     M = symmetrize(M) #inclues check 
 
-    F, spec = mytrunc_svd(M; maxdim, cutoff, use_absolute_cutoff, use_relative_cutoff)
+    F, spec = old_mytrunc_svd(M; maxdim, cutoff, use_absolute_cutoff, use_relative_cutoff)
     u,s,v = F
     
     #u,s,v = svd(M; maxdim, cutoff, use_absolute_cutoff, use_relative_cutoff)
@@ -226,40 +214,40 @@ function symm_svd(a::ITensor, linds; cutoff=nothing, maxdim=nothing)
 end
 
 
-
-""" When called on ITensors, `symm_svd` returns a single `TruncSVD` object
-""" 
-function symm_svd_old(a::ITensor, linds; cutoff=nothing, maxdim=nothing)
+""" New version trying to avoid having to go through trunc_svd.. """
+function symm_svd_n1(a::ITensor, linds; cutoff=nothing, maxdim=nothing)
     rinds = uniqueinds(a, linds)
 
     cL = combiner(linds)
     cR = combiner(rinds)
-    am = matrix(a * cL * cR)
 
-    # returns SVD() object and spectrum - recall unpacking of SVD() gives 
-    F, spec, trunc_err = symm_svd(am; cutoff, maxdim)
-    #u,s,ustar = F
+    ac = a * cL * cR
 
-    index_u = Index(size(F.S,1), "u")
-    index_v = Index(size(F.S,1), "v")
+    iL = combinedind(cL)
+    iR = combinedind(cR)
 
-    #@show size(F.Vt), dim(index_v), dim(combinedind(cR))
+    ac = symmetrize(ac)
 
-    u = ITensor(F.U, combinedind(cL), index_u) * dag(cL)
-    s = diag_itensor(F.S, index_u, index_v)
-    uT = ITensor(F.Vt, index_v, combinedind(cR)) * dag(cR)
-  
-    return ITensors.TruncSVD(u,s,uT, spec, index_u, index_v)
+    # u * s * vd ≈ a 
+    F = svd(ac, iL; cutoff, maxdim)
+   
+    z = noprime(dag(F.U) * replaceind(F.V' , iR' => iL))
+
+    # Best way is probably still to rely on Schur decomposition from Julia's matrix utils !? 
+    sq_z = sqrt(z) # ITensor(sqrt(matrix(z)), inds(z))
+
+    uS = F.U * sq_z
+    u = replaceinds(uS, F.v => F.u)* dag(cL)
+    uS = replaceinds(uS, iL => iR) * dag(cR)
+
+    return ITensors.TruncSVD(u,F.S,uS, F.spec, F.u, F.v)
 end
 
+
 """ If we don't specify linds, assume we're working with a matrix and just do index1 vs index2 """
-function symm_svd(a::ITensor; cutoff=nothing, maxdim=nothing)
-    if ndims(a) != 2
-        @error "$(ndims(a))(>2)-dimensional tensor, need to specify linds"
-    end
-
-    symm_svd(a, ind(a,1); cutoff, maxdim)
-
+function symm_svd(a::ITensor; kwargs...)
+    @assert ndims(a) == 2
+    symm_svd(a, ind(a,1); kwargs...)
 end
 
 

@@ -50,7 +50,7 @@ fs, spec = symm_svd(s1)
 
 @test fs.U * Diagonal(fs.S) * fs.V' ≈ s1
 
-ts1 = randsymITensor(10)
+ts1 = randsymITensor(400)
 is1 = ind(ts1,1)
 
 fst = symm_svd(ts1, is1)
@@ -60,3 +60,12 @@ fst.U * fst.S * fst.V ≈ ts1
 u,s,uT = symm_svd(ts1, is1)
 
 @test u * s * uT ≈ ts1
+
+
+u2,s2,uT2 = ITransverse.ITenUtils.symm_svd_n1(ts1, is1)
+
+@test u2 * s2 * uT2 ≈ ts1
+
+array(u) ≈ array(u2)
+array(s) ≈ array(s2)
+array(uT) ≈ transpose(array(uT2))
