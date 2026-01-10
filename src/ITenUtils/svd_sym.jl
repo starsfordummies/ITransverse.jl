@@ -17,7 +17,7 @@ TruncSVD has no field Vt
 
 
 """ SVD of matrix M with truncation. Returns SVD() object and spectrum """
-function old_mytrunc_svd(
+function truncated_svd(
         M::AbstractMatrix;
         maxdim=nothing,
         mindim=nothing,
@@ -50,8 +50,7 @@ function old_mytrunc_svd(
     MU, MS, MV = MUSV
 
 
-    # The truncation - first we square the SVs since they should sum^2 = 1 
-    # then discard SVs so that sum(SV^2[cut:end] < cutoff)
+    # discard SVs so that sum(SV^2[cut:end] < cutoff)
 
     P = MS .^ 2
     if any(!isnothing, (maxdim, cutoff))
@@ -72,12 +71,6 @@ function old_mytrunc_svd(
         MV = MV[:, 1:dS]
     end
 
-    #rec_M = MU * Diagonal(MS) * MV'
-
-    #@show isapprox(rec_M, M, rtol=cutoff)
-    #@show norm(rec_M - M)/norm(M)
-    #@show truncerr, truncerr^0.5
-
     return SVD(MU,MS,MV'), spec
 
 end
@@ -90,48 +83,25 @@ Remember that the cutoff is applied to the sum of the squares of the singular va
 the norm error on the truncated object is ~ sqrt(cutoff)
 F = symm_svd(M) ; F.U * Diagonal(F.S) * transpose(F.U) ≈ M # true
 """
-function old_symm_svd(M::Matrix; maxdim=nothing, cutoff=nothing, use_absolute_cutoff=nothing, use_relative_cutoff=nothing)
+function symm_svd(M::Matrix; maxdim=nothing, cutoff=nothing, use_absolute_cutoff=nothing, use_relative_cutoff=nothing)
 
     M = symmetrize(M) #inclues check 
 
-    F, spec = old_mytrunc_svd(M; maxdim, cutoff, use_absolute_cutoff, use_relative_cutoff)
+    F, spec = truncated_svd(M; maxdim, cutoff, use_absolute_cutoff, use_relative_cutoff)
     u,s,v = F
-    
-    #u,s,v = svd(M; maxdim, cutoff, use_absolute_cutoff, use_relative_cutoff)
 
-    #@show isapprox(u*Diagonal(s)*vd, M)
-    #@show isapprox(u*Diagonal(s)*conj(transpose(vd)), M)
-
-    # z = u^* vdag 
     z = transpose(conj(u)) * transpose(v')
-    #@show z   # should be at most block-diag
-    #sq_z = sqrt.(Diagonal(diag(z)))
-    # If z is diagonal, just invert its diag 
-    diagz = Diagonal(diag(z))
 
-    if norm(z - diagz) < 1e-8
-        sq_z = diagz^0.5
+    sq_z = if isapproxdiag(z)
+        # If z is diagonal, just invert its diag 
+        Diagonal(sqrt.(diag(z)))
     else
-        sq_z = z^0.5
+        sq_z = sqrt(z)
     end
 
-    @show u 
-    @show v
-    @show z
-    @show sq_z
-
-    # sq_z should be symmetric 
-    if norm(sq_z - transpose(sq_z))/norm(sq_z) > 1e-6
-        #println("fff")
-        @error "sqrt(z) not symmetric? "
-        # @show norm(z - transpose(z))
-        # @show norm(z - Diagonal(diag(z)))
-        # @show norm(sq_z - transpose(sq_z)), norm(sq_z - transpose(sq_z))/norm(sq_z)
-        # @show z 
-    end
-
-    #uz = u * Diagonal(transpose(sq_z))
-    uz = u * (transpose(sq_z))
+    #uz = u * Diagonal(transpose(sq_z))  
+    #sq_z should be symmetric
+    uz = u * sq_z
 
     M_rec = uz * Diagonal(s) * transpose(uz)
 

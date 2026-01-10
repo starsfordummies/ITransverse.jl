@@ -26,7 +26,7 @@ function check_gencan_left(psi::MPS, phi::MPS; verbose::Bool=false)
         left_env *= phi[ii]
         @assert order(left_env) == 2
         
-        is_left_gencan = check_diag_matrix(matrix(left_env))
+        is_left_gencan = isapproxdiag(matrix(left_env))
         is_left_gencan = check_id_matrix(matrix(left_env))
 
         push!(is_left_s, is_left_gencan)
@@ -70,7 +70,7 @@ function check_gencan_right(psi::MPS, phi::MPS; verbose::Bool=false)
 
         @assert order(right_env) == 2
 
-        is_right_gencan = check_diag_matrix(matrix(right_env))
+        is_right_gencan = isapproxdiag(matrix(right_env))
         is_right_gencan = check_id_matrix(matrix(right_env))
 
         push!(is_right_s, is_right_gencan)

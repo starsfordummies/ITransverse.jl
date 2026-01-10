@@ -139,7 +139,7 @@ function powermethod_op(in_mps::MPS, in_mpo_1::MPO, in_mpo_O::MPO, pm_params::PM
 
         push!(info_iterations[:logfidelityRRnew], logfidelityRRnew)
         
-        maxnormS = maximum([norm(ss) for ss in sjj])
+        #maxnormS = maximum([norm(ss) for ss in sjj])
 
         if ds2 < eps_converged
             @info ("[$(length(ll))] converged after $jj steps - χ=$(maxlinkdim(ll))")
@@ -150,7 +150,7 @@ function powermethod_op(in_mps::MPS, in_mpo_1::MPO, in_mpo_O::MPO, pm_params::PM
             @warn ("NOT converged after $jj steps - χ=$(maxlinkdim(ll))")
         end
 
-        next!(p; showvalues = [(:Info,"[$(jj)][χ=$(maxlinkdim(ll))] ds2=$(ds2), logfidelity(<R|Rnew>)=$(logfidelityRRnew) |S|=$(maxnormS)" )])
+        next!(p; showvalues = [(:Info,"[$(jj)][χ=$(maxlinkdim(ll))] ds2=$(ds2), logfidelity(<R|Rnew>)=$(logfidelityRRnew)" )])
 
     end
 

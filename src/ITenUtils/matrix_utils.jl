@@ -1,5 +1,4 @@
-
-""" TODO Check
+""" 
 Builds a random matrix with a decaying singular value spectrum
 """
 function randmat_decayspec(n::Int)
@@ -26,16 +25,16 @@ end
 
 """ Checks if a matrix is diagonal within a given cutoff
 """
-
-function check_diag_matrix(d::AbstractMatrix; cutoff::Float64=1e-8, verbose::Bool=false)
+function isapproxdiag(d::AbstractMatrix; atol::Float64=1e-8, verbose::Bool=false)
 
     isdiag = true
 
-    #delta_diag = norm(d - Diagonal(d))/norm(d)
     delta_diag = sqrt(maximum(abs2, d - Diagonal(d))/maximum(abs2,diag(d)))
 
-    if delta_diag > cutoff
-        verbose && @warn "Matrix non diagonal: Δ=$(delta_diag) [cutoff=$(cutoff)]"
+    if delta_diag > atol 
+        if verbose
+            @warn "Matrix non diagonal: Δ=$(delta_diag) [cutoff=$(cutoff)]"
+        end
         isdiag = false
     end
     return isdiag
@@ -69,10 +68,9 @@ end
 """ Symmetrizes a matrix to improve numerical stability (throws an error if it's not too symetric to begin with)
     TODO This fails for GPU matrices?!  """
 function symmetrize(a::AbstractMatrix, tol::Float64=1e-6)
-    if size(a,1) != size(a,2)
-        @error("Not square")
-    end
-    if norm(a - transpose(a))/norm(a) > tol
+    @assert size(a,1) == size(a,2) "Matrix is not square"
+
+    if !isapprox(a, transpose(a); atol=tol)
         @error("Not symmetric? norm(a-aT)=$(norm(a - transpose(a)))")
         #sleep(2)
     end
@@ -80,13 +78,6 @@ function symmetrize(a::AbstractMatrix, tol::Float64=1e-6)
 end
 
 
-# """ build a random dxd unitary matrix as exp(iHermitian) """
-# function myrandom_unitary(d::Int)
-#     m = rand(ComplexF64, d,d)
-#     m = m + m'
-#     u = exp(im*m)
-#     return u 
-# end
 
 """ build a random dxd unitary matrix as the U of an SVD of a random matrix"""
 function random_unitary_svd(d::Int)

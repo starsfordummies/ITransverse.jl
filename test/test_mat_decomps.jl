@@ -2,6 +2,7 @@ using LinearAlgebra
 using ITensors
 using ITransverse
 using ITransverse.ITenUtils
+using ITransverse.ITenUtils: truncated_svd
 using Test
 
 @testset "Testing symmetric SVD/EIG" begin
@@ -30,7 +31,7 @@ cutoff = 1e-12
 
 @test issymmetric(m)
 
-f,spec = mytrunc_svd(m; cutoff)
+f,spec = truncated_svd(m; cutoff)
 @test norm(m - f.U * Diagonal(f.S) * f.V') < sqrt(cutoff) 
 
 f,spec = symm_svd(m; cutoff)
@@ -45,13 +46,13 @@ f, spec = symm_oeig(m; cutoff)
 @test norm(m - f.vectors * Diagonal(f.values) * transpose(f.vectors)) < sqrt(cutoff)
 
 
-@info "Testing mytrunc_svd VS ITensors truncated svd()"
+@info "Testing truncated_svd VS ITensors truncated svd()"
 
 m = randITensor_decayspec(40)
 m = 1234*m
 cutoff = 1e-8
 
-fmy, spec =  mytrunc_svd(matrix(m); cutoff)
+fmy, spec =  truncated_svd(matrix(m); cutoff)
 fiten = svd(m, ind(m,1); cutoff)
 @test fmy.S ≈ diag(fiten.S)
 @test fmy.U ≈ matrix(fiten.U)
@@ -59,16 +60,6 @@ fiten = svd(m, ind(m,1); cutoff)
 
 
 
-# m = ITensor(hermitianpart(matrix(m)), inds(m))
-# cutoff = 1e-5
-
-
-# TODO Check truncation are not exactly the same..
-# fmy, spec =  mytrunc_eig(Matrix(matrix(m)); cutoff)
-# fiten = eigen(m, ind(m,1), ind(m,2); cutoff)
-# @test fmy.values ≈ diag(fiten.D)
-#@test fmy.U ≈ matrix(fiten.U)
-#@test fmy.Vt ≈ Matrix(fiten.V, fiten.v, ind(m,2))
 
 ms = randsymITensor(40)
 ms /= norm(ms)

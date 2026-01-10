@@ -79,7 +79,7 @@ export randsymITensor,
 # matrix_utils.jl
 export symmetrize,
     check_id_matrix,
-    check_diag_matrix,
+    isapproxdiag,
     randmat_decayspec,
     matrix_svd,
     vectorized_identity,
@@ -93,7 +93,6 @@ export symmetrize,
 export
     symm_svd,
     symm_oeig,
-    mytrunc_svd,
     mytrunc_eig
 
 export beta_lims

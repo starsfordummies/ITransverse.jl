@@ -3,6 +3,7 @@ using LinearAlgebra
 using ITransverse.ITenUtils
 using Test
 
+@testset "symmetric SVD" begin
 m1 = rand(ComplexF64, 8, 13)
 
 f = svd(m1)
@@ -69,3 +70,5 @@ u2,s2,uT2 = ITransverse.ITenUtils.symm_svd_n1(ts1, is1)
 array(u) ≈ array(u2)
 array(s) ≈ array(s2)
 array(uT) ≈ transpose(array(uT2))
+
+end
