@@ -204,6 +204,11 @@ function trace_mps_inds!(WWm::MPS, combs)
 end
 
 
+trace_mpo(psi::MPS) = trace_mpo(reopen_inds(psi; different_fwback_inds=false))
+trace_mpo_squared(psi::MPS) = trace_mpo_squared(reopen_inds(psi; different_fwback_inds=false))
+
+
+
 """ Trace an ITensor over combined indices given by the combiner """
 function trace_combinedind(a::ITensor, combiner::ITensor)
     (_, c1, c2) = inds(combiner)

@@ -87,7 +87,7 @@ export symmetrize,
     to_itensor,
     vectorized_op,
     vectorize_mpo,
-    trace_mpo
+    trace_mpo, trace_mpo_squared
 
 # gen_svdeig_symm.jl
 export

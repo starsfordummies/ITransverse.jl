@@ -409,3 +409,16 @@ function trace_mpo(w::MPO)
 
     return scalar(ttrace)
 end
+
+function trace_mpo_squared(rho::MPO)
+    trace = ITensors.OneITensor()
+    rho2 = swapprime(sim(linkinds,rho), 0,1)
+    for jj in eachindex(rho)
+        trace *= rho[jj]
+        trace *= rho2[jj]
+        @show jj, inds(trace)
+    end
+
+    return scalar(trace)
+end
+
