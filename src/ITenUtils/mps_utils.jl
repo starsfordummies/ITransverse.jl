@@ -422,3 +422,19 @@ function trace_mpo_squared(rho::MPO)
     return scalar(trace)
 end
 
+function trace_mpo_ab(mpoA::MPO, mpoB::MPO, flip_b_sites::Bool=false)
+    @assert siteinds(mpoA) == siteinds(mpoB) "Siteinds should match for now"
+    trace = ITensors.OneITensor()
+    mpoB = sim(linkinds,mpoB)
+    if flip_b_sites
+        mpoB = swapprime(mpoB, 0,1)
+    end
+    for jj in eachindex(mpoA)
+        trace *= mpoA[jj]
+        trace *= mpoB[jj]
+        @assert ndims(trace) < 5
+    end
+
+    return scalar(trace)
+end
+

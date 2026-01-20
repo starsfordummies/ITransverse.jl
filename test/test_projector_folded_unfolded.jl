@@ -21,6 +21,7 @@ time_sites_fold = addtags(siteinds(4, Nsteps; conserve_qns=false), "time")
 
 #init_state = up_state #  rand(ComplexF64, 2)
 init_state = rand(ComplexF64, 2)
+@show init_state
 
 mp = IsingParams(1, 0.7, 0)
 
@@ -72,7 +73,7 @@ maxlinkdim(ll)
 maxlinkdim(rr)
 
 overlap_noconj(ll,rr)
-
+@show abs.(Lsq - overlap_noconj(ll,rr))/Lsq 
 @test abs.(Lsq - overlap_noconj(ll,rr))/Lsq < 1e-4
 
 end
