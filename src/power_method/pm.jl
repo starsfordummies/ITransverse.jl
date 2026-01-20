@@ -35,12 +35,12 @@ by applying the relevant MPO to the resulting leading eigenvectors.
 """
 function powermethod_op(in_mps::MPS, in_mpo_1::MPO, in_mpo_O::MPO, pm_params::PMParams)
 
-    (; opt_method, itermax, eps_converged, truncp, normalization, compute_fidelity) = pm_params
+    (; opt_method, itermax, truncp, normalization, compute_fidelity, eps_converged) = pm_params
     (; cutoff, maxbondim) = truncp
 
     # Normalize eps_converged by system size or larger chains will never converge as good...
     eps_converged = eps_converged * length(in_mps)
-  
+    stopper = PMstopper(pm_params; eps_converged)
 
     ll = deepcopy(in_mps)
     rr = deepcopy(in_mps)
@@ -51,7 +51,7 @@ function powermethod_op(in_mps::MPS, in_mpo_1::MPO, in_mpo_O::MPO, pm_params::PM
 
     p = Progress(itermax; desc="[PM|$(opt_method)] L=$(length(ll)), cutoff=$(cutoff), maxbondim=$(maxbondim), normalize=$(normalization)", showspeed=true) 
 
-    info_iterations = Dict(:ds2 => ComplexF64[], :logfidelityRRnew => Float64[], :LRdiff => ComplexF64[] )
+    info_iterations = Dict(:chis => Int[], :ds2 => Float64[], :logfidelityRRnew => Float64[], :LRdiff => ComplexF64[] )
 
     for jj = 1:itermax  
 
@@ -126,11 +126,6 @@ function powermethod_op(in_mps::MPS, in_mpo_1::MPO, in_mpo_O::MPO, pm_params::PM
         end
 
 
-
-        # LRnew = overlap_noconj(ll,rr)
-        # push!(info_iterations[:LRdiff], abs(LRnew-LRprev))
-        # LRprev = LRnew
-   
         ds2 = norm(sprevs - sjj)
         push!(info_iterations[:ds2], ds2)
         sprevs = sjj
@@ -138,16 +133,25 @@ function powermethod_op(in_mps::MPS, in_mpo_1::MPO, in_mpo_O::MPO, pm_params::PM
         logfidelityRRnew = compute_fidelity ? logfidelity(rr_prev,rr) : NaN
 
         push!(info_iterations[:logfidelityRRnew], logfidelityRRnew)
+        chimax = max(maxlinkdim(ll),maxlinkdim(rr))
+        push!(info_iterations[:chis], chimax)
         
         #maxnormS = maximum([norm(ss) for ss in sjj])
 
-        if ds2 < eps_converged
-            @info ("[$(length(ll))] converged after $jj steps - χ=$(maxlinkdim(ll))")
-            break
+        if jj == itermax
+            @warn ("NOT converged after $jj steps - χ=$(chimax)")
         end
 
-        if jj == itermax
-            @warn ("NOT converged after $jj steps - χ=$(maxlinkdim(ll))")
+        stop, reason = should_stop_ds2!(stopper,ds2)
+
+
+        if stop
+            if reason == :converged
+                @info "Converged after $jj steps (ds2=$(ds2) chi=$(chimax))"
+            elseif reason == :stuck
+                @warn "Iteration stuck after $jj steps (ds2=$(ds2)); stopping."
+            end
+            break
         end
 
         next!(p; showvalues = [(:Info,"[$(jj)][χ=$(maxlinkdim(ll))] ds2=$(ds2), logfidelity(<R|Rnew>)=$(logfidelityRRnew)" )])
@@ -179,6 +183,7 @@ function powermethod_both(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::
 
     # Normalize eps_converged by system size or larger chains will never converge as good...
     eps_converged = eps_converged * length(in_mps)
+    stopper = PMstopper(pm_params; eps_converged)
   
     cutoff = truncp.cutoff
     maxdim = truncp.maxbondim
@@ -220,6 +225,7 @@ function powermethod_both(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::
 
         #@show overlap_noconj(ll,rr)
 
+        chimax = max(maxlinkdim(ll),maxlinkdim(rr))
 
         ds2 = norm(sprevs - sjj)
         push!(ds2s, ds2)
@@ -229,11 +235,20 @@ function powermethod_both(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::
         fidelity_step = compute_fidelity ? logfidelity(ll, llprev) : NaN
 
         next!(p; showvalues = [(:Info,"[$(jj)] | ds2=$(ds2) | logfidelity(L|Lnew) = $(fidelity_step) | chi=$(maxlinkdim(ll))" )])
+        
+        stop, reason = should_stop_ds2!(stopper,ds2)
 
-        if ds2 < eps_converged 
-            println("converged after $jj steps")
+        # --- stopping check ---
+
+        if stop
+            if reason == :converged
+                @info "Converged after $jj steps (ds2=$(ds2))"
+            elseif reason == :stuck
+                @warn "Iteration stuck after $jj steps (ds2=$(ds2)); stopping."
+            end
             break
         end
+
 
     end
 

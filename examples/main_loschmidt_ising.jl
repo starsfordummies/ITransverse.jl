@@ -8,11 +8,12 @@ function ising_loschmidt(tp::tMPOParams, Tstart::Int, Tend::Int, nbeta::Int; Tst
 
     cutoff = 1e-12
     maxbondim = 128
-    itermax = 80
-    eps_converged = 1e-6
+    itermax = 800
+    eps_converged = 1e-12
+    stuck_after = 100
 
     truncp = TruncParams(cutoff, maxbondim)
-    pm_params = PMParams(truncp, itermax, eps_converged, true, "RDM", "overlap")
+    pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM", "overlap", true, stuck_after)
 
     ll_murgs = Vector{MPS}()
     ds2s = [] # Vector{Float64}[]
@@ -90,7 +91,7 @@ end
 
 
 
-function (@main)(args)
+function main_losch()
 
     
     JXX = 1.0
@@ -137,3 +138,6 @@ function (@main)(args)
 
 
 end
+
+
+main_losch()

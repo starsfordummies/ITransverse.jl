@@ -17,6 +17,7 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams; fast::Bo
 
     # Normalize eps_converged by system size or larger chains will never converge as good...
     eps_converged = eps_converged * length(in_mps)
+    stopper = PMstopper(pm_params; eps_converged)
   
     # normalize initial boundary for stability
     psi_ortho = normalize(in_mps)
@@ -51,12 +52,6 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams; fast::Bo
             sjj_n = vn_entanglement_entropy(psi_ortho)
             (psi_ortho_n, sjj_n, overlap_n)
         elseif opt_method == "RTM"
-            # if jj % 200 == 0 
-            #     psi_ortho = apply(in_mpo, psi_ortho; maxdim=maxbondim)
-            #     psi_ortho = apply(in_mpo, psi_ortho; maxdim=maxbondim)
-            #     psi_ortho = apply(in_mpo, psi_ortho; maxdim=maxbondim)
-            #     psi_ortho = apply(in_mpo, psi_ortho; maxdim=maxbondim)
-            # end
             psi = applyn(in_mpo, psi_ortho)
             truncate_rsweep_sym(psi; cutoff=cutoff, chi_max=maxbondim, method="SVD", fast)
         elseif opt_method == "RTMRDM"
@@ -94,6 +89,8 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams; fast::Bo
             NaN
         end
 
+        chimax = maxlinkdim(psi_ortho)
+
         ds2 = norm(sprevs - sjj)
         push!(ds2s, [ds2, fidelity])
 
@@ -101,10 +98,18 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams; fast::Bo
 
         next!(p; showvalues = [(:Info,"[$(jj)] ds2=$(ds2), <R|Rprev> = $(fidelity), chi=$(maxlinkdim(psi_ortho))" )])
 
-        # Check convergence 
-        if ds2 < eps_converged
+        stop, reason = should_stop_ds2!(stopper,ds2)
+
+        # should we stop?
+        if stop
+            if reason == :converged
+                @info "Converged after $jj steps (ds2=$(ds2))"
+            elseif reason == :stuck
+                @warn "Iteration stuck after $jj steps (ds2=$(ds2)); stopping."
+            end
             break
         end
+
 
     end
 

@@ -30,8 +30,6 @@ function ising_fwb(tp::tMPOParams, TT::Int)
 
     psi_trunc, ds2 = powermethod_sym(start_mps, mpo, pm_params)
 
-    #psi_trunc, ds2 = ITransverse.powermethod_both(start_mps, mpo, mpo, pm_params)
-
 
     # Entropies 
     sgen = generalized_vn_entropy_symmetric(psi_trunc)

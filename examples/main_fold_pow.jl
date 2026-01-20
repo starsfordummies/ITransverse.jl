@@ -20,12 +20,13 @@ function main_folded_pm()
 
     cutoff = 1e-12
     maxbondim = 128
-    itermax = 500
+    itermax = 800
+    stuck_after = 100
     eps_converged=1e-8
 
     truncp = TruncParams(cutoff, maxbondim)
 
-    pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM_R", "overlap")
+    pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM_R", "norm", true, stuck_after)
 
     evs = [] 
 
@@ -34,7 +35,7 @@ function main_folded_pm()
     r2s = [] 
 
 
-    ts = 50:50
+    ts = 60:60
     alltimes = ts.* tp.dt
 
     infos = Dict(:tp => tp, :pm_params => pm_params, :b => b, :times => alltimes)
@@ -47,7 +48,7 @@ function main_folded_pm()
         init_mps = folded_right_tMPS(b, time_sites)
 
         mpo_X = folded_tMPO(b, time_sites; fold_op=vX)
-        mpo_Z = folded_tMPO(b, time_sites; fold_op=vZ)
+        #mpo_Z = folded_tMPO(b, time_sites; fold_op=vZ)
 
         mpo_1 = folded_tMPO(b, time_sites)
 
@@ -78,4 +79,3 @@ end
 rvecs, evs, ds2s, r2s, alltimes, infos = main_folded_pm()
 
 println(evs)
-
