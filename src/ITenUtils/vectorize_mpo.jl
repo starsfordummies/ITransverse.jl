@@ -29,15 +29,3 @@ function unvectorize_mpo(w::MPS, combiners)
 
     return MPO(tensors)
 end
-
-#= again inplace doesn't make too much sense... 
-""" Same as unvectorize_mpo but inplace destroying the input MPS """
-function unvectorize_mpo!(w::MPS, combiners)
-
-    for jj in eachindex(w)
-        w.data[jj] *= dag(combiners[jj])
-    end
-
-    return MPS(w.data), combiners
-end
-=#
