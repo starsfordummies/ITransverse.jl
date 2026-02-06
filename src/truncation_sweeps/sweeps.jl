@@ -170,27 +170,6 @@ end
 
 
 
-function truncate_normalize_lsweep(psi::MPS, phi::MPS, truncp::TruncParams)
-    psi_n, phi_n, ee = truncate_lsweep(psi, phi, cutoff=truncp.cutoff, chi_max=truncp.maxbondim)
-    ov_alt =  overlap_noconj(psi_n,phi_n)
- 
-    psi_n[end] /= sqrt(ov_alt)
-    phi_n[end] /= sqrt(ov_alt)
-    
-    return psi_n, phi_n, [e./sum(e) for e in ee]
-end
-
-function truncate_normalize_rsweep(psi::MPS, phi::MPS, truncp::TruncParams)
-    psi_n, phi_n, ee = truncate_rsweep(psi, phi, cutoff=truncp.cutoff, chi_max=truncp.maxbondim,fast=false)
-    ov_alt =  overlap_noconj(psi_n,phi_n)
-
-    psi_n[1] /= sqrt(ov_alt)
-    phi_n[1] /= sqrt(ov_alt)
-
-    return psi_n, phi_n, [e./sum(e) for e in ee]
-end
-
-
 """ Generic sweep, calls left or right according to `truncp.direction` """
 function truncate_sweep(psi::MPS, phi::MPS, truncp::TruncParams; method::String="RTM")
 
@@ -199,10 +178,8 @@ function truncate_sweep(psi::MPS, phi::MPS, truncp::TruncParams; method::String=
         truncate!(phi, cutoff=truncp.cutoff, maxdim=truncp.maxbondim)
     else
         if truncp.direction == "left"
-            #@info "initial state side sweep"
             truncate_lsweep(psi, phi, truncp)
         elseif truncp.direction == "right"
-            #@info "operator state side sweep"
             truncate_rsweep(psi, phi, truncp)
         else
             @error "Sweep direction should be left|right"
@@ -210,18 +187,6 @@ function truncate_sweep(psi::MPS, phi::MPS, truncp::TruncParams; method::String=
     end
 end
 
-""" Generic sweep, calls left or right according to `truncp.direction` """
-function truncate_normalize_sweep(psi::MPS, phi::MPS, truncp::TruncParams)
-    if truncp.direction == "left"
-        #@info "initial state side sweep"
-        truncate_normalize_lsweep(psi, phi, truncp)
-    elseif truncp.direction == "right"
-        #@info "operator state side sweep"
-        truncate_normalize_rsweep(psi, phi, truncp)
-    else
-        @error "Sweep direction should be left|right"
-    end
-end
 
 
 
