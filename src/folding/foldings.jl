@@ -216,3 +216,50 @@ function trace_combinedind(a::ITensor, combiner::ITensor)
     a = a * delta(c1,c2)
     return a 
 end
+
+
+# Assume we work with combined fw-back indices
+function trace_combinedind(A::ITensor, iA::Index)
+
+        dA = dim(iA)
+        sqdA = isqrt(dA)
+
+        @assert hasind(A, iA)
+
+        temp_i1 = Index(sqdA)
+        temp_i2 = Index(sqdA)
+
+        comb = combiner(temp_i1, temp_i2)
+        comb = replaceind(comb, combinedind(comb), iA)
+        
+        trace_combinedind(A, comb)
+end
+
+
+function ptranspose_contract(A::ITensor, B::ITensor, iA::Index, iB::Index)
+
+    @assert hasind(A, iA)
+    @assert hasind(B, iB)
+   
+    dA = dim(iA)
+    sqdA = isqrt(dA)
+
+    @assert hasind(A, iA)
+
+    temp_i1 = Index(sqdA)
+    temp_i2 = Index(sqdA)
+
+
+    c1 = combiner(temp_i1, temp_i2)
+    c2 = combiner(temp_i2, temp_i1)
+
+    combA = A * replaceind(c1, combinedind(c1), iA)
+    combB = B * replaceind(c2, combinedind(c2), iB)
+
+    #@show commoninds(combA, combB)
+
+    AB = combA * combB
+
+    return AB
+
+end
