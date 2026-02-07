@@ -17,8 +17,9 @@ import NDTensors:
  default_use_absolute_cutoff,
  default_use_relative_cutoff,
  expose,
- truncate!!
-
+ truncate!!,
+ Algorithm,
+ @Algorithm_str
 
 include("ctruncate.jl")
 include("ceigen.jl")
@@ -29,7 +30,9 @@ include("matrix_utils.jl")
 include("itensor_utils.jl")
 
 include("mps_utils.jl")
+
 include("apply_contract.jl")
+include("trunc_apply.jl")
 
 # Symmetric SVD/EIG decompositions
 include("svd_sym.jl")
@@ -50,15 +53,15 @@ export sqrt
 
 export mergedicts!, mergedicts, dictfromlist
 
+export TruncatedMPS
+
 #from utils.jl
 export pMPS,
     overlap_noconj, 
     check_symmetry_itensor_mpo, 
     check_symmetry_swap,
     normbyfactor,
-    applyn,
-    applyns,
-    applys,
+    tapply, applyn, applys, applyns,
     match_siteinds, match_siteinds!,
     replace_linkinds!,
     phys_ind,

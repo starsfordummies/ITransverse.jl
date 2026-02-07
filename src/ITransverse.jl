@@ -11,6 +11,8 @@ using Statistics: mean, std
 
 using ITensors: OneITensor
 
+import NDTensors: Algorithm, @Algorithm_str
+
 include("ITenUtils/ITenUtils.jl")
 using .ITenUtils
 
@@ -21,8 +23,8 @@ include("BenchData/BenchData.jl")
 using .BenchData
 
 export pMPS,
-    overlap_noconj, 
-    applyn, applyns, applys,
+    overlap_noconj,
+    tapply, applyn, applys, applyns,
     isid,
     mergedicts!,
     fidelity, logfidelity,

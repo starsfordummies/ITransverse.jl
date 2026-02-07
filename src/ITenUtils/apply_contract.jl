@@ -1,3 +1,6 @@
+ITensors.IndexSet(args...) = ITensors.IndexSet((i for i in args if i !== nothing)...)
+
+
 """ Applies MPO to MPS from the other side (p' MPO leg, leaving open the p leg): 
 instead of 
 
@@ -8,24 +11,18 @@ it contracts
 ``` --(p)--[O]--(p')-(p)--psi =  -(p)--Opsi ```
 """
 function applys(O::MPO, psi::AbstractMPS; kwargs...)
-    #apply(swapprime(O, 0, 1, "Site"), psi; cutoff, maxdim)
     contract(O, prime(siteinds,psi); kwargs...)
 end
 
 
 """ Shorthand for simple apply(alg="naive"),  """
-function applyn(O::MPO, psi::MPS; check_matching_inds::Bool=true, kwargs...)
-    # sanity check .. 
-    if !hascommoninds(O[1], psi[1]) # cheap and not robust way to check
-        psi = replace_siteinds(psi, firstsiteinds(O))
-    end
+function applyn(O::MPO, psi::MPS; kwargs...)
     replaceprime(contractn(O, sim(linkinds, psi); kwargs...),  1 => 0)
 end
 
 function applyn(O::MPO, Q::MPO; kwargs...)
     replaceprime(contractn(O', Q; kwargs...),  2 => 1)
 end
-
 
 """ Shorthand for applyn + swap indices """
 function applyns(O::MPO, psi::MPS; kwargs...)
@@ -123,7 +120,7 @@ function contractn(A::MPO, ψ::AbstractMPS; preserve_tags_mps::Bool=false, kwarg
 end
 
 
-ITensors.IndexSet(args...) = ITensors.IndexSet((i for i in args if i !== nothing)...)
+
 
 applyd_l(A::MPO, psi::MPS; kwargs...) = noprime(contractd_l(A,psi; kwargs...))
 
