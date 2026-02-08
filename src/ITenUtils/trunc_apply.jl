@@ -13,7 +13,7 @@ function ttruncate!(
         M::AbstractMPS;
         site_range = 1:length(M),
         callback = Returns(nothing), 
-        maxdim,
+        maxdim=maxlinkdim(M),
         kwargs...
     )
     # Left-orthogonalize all tensors to make
@@ -58,19 +58,23 @@ it contracts
 ``` --(p)--[O]--(p')-(p)--psi =  -(p)--Opsi ```
 """
 function tapplys(alg, O::MPO, psi::AbstractMPS; kwargs...)
-    tpsi, sv = tcontract(alg, O, sim(linkinds, psi); kwargs...)
-    TruncatedMPS(tpsi; SV=sv)
+    tpsi, sv = tcontract(alg, O, prime(siteinds,psi); kwargs...)
+    return replaceprime(tpsi, 2 => 0), sv
 end
 
+tapply(a,b; alg="naive", kwargs...) = tapply(Algorithm(alg), a,b; kwargs...)
 
-function tapply(alg, O::MPO, psi::AbstractMPS; kwargs...)
-    tpsi, sv = tcontract(alg, O, sim(linkinds, psi); kwargs...)
-    TruncatedMPS(replaceprime(tpsi,  1 => 0); SV=sv)
+function tapply(alg, O::MPO, psi::MPS; kwargs...)
+    tpsi, sv = tcontract(alg, O, psi; kwargs...)
+    return replaceprime(tpsi,  1 => 0), sv
 end
 
+function tapply(alg, O::MPO, Q::MPO; kwargs...)
+    tpsi, sv = tcontract(alg, O, sim(linkinds, Q); kwargs...)
+    return replaceprime(tpsi,  1 => 0), sv
+end
 
 # TODO Check: For MPOs, applyns(A,B) = apply(Algorithm"naive",B,A) ? 
-
 
 
 """ Copied from ITensorMPS's `contract` but adapted so that it can also extend. 
@@ -82,7 +86,7 @@ A = o-o-o-o-o-o-o
 psi o o o o o      
 ```
 """
-function tcontract(::Algorithm"naive", A::MPO, ψ::AbstractMPS; preserve_tags_mps::Bool=false, kwargs...)
+function tcontract(::Algorithm"naive", A::MPO, ψ::AbstractMPS; preserve_tags_mps::Bool=false, truncate=false, kwargs...)
 
     # TODO Add offset for contraction to allow extension on both edges 
     @assert length(A) >= length(ψ)
@@ -112,26 +116,18 @@ function tcontract(::Algorithm"naive", A::MPO, ψ::AbstractMPS; preserve_tags_mp
 
     contract_dangling!(ψ_out)
 
-
-    # truncation logic. Priority is explicit kwargs over TruncParams
-
-    truncate = get(kwargs, :truncate, false)
-    cutoff = nothing
-    maxdim = nothing 
-    
     # If :truncp, :cutoff or :maxdim keywords are present, set truncate=true
     if haskey(kwargs, :truncp)
         (;cutoff, maxbondim) = kwargs[:truncp]
         kwargs = (;kwargs..., cutoff=cutoff, maxdim=maxbondim)
         truncate = true
-    end
-
-    if haskey(kwargs, :cutoff) 
+    elseif haskey(kwargs, :cutoff) 
         cutoff = kwargs[:cutoff]
+        maxdim = maxlinkdim(ψ_out)
         truncate = true
-    end
-    if haskey(kwargs, :maxdim)
+    elseif haskey(kwargs, :maxdim)
         maxdim = kwargs[:maxdim]
+        cutoff=1e-14
         truncate = true
     end
 

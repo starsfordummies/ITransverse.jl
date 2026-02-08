@@ -15,15 +15,6 @@ function init_cone(b::FoldtMPOBlocks, n::Int=6; LR::Symbol=:right, full::Bool=tr
 
     init_cone(b, ts; LR, full)
 
-    # psi = folded_tMPS(b, [ts[1]]; LR)
-
-    # for jj = 2:n
-    #     m = folded_tMPO_ext(b,ts[1:jj]; LR)
-    #     psi = applyn(m, psi)
-    #     orthogonalize!(psi, length(psi))
-    # end
-
-    # return psi, b
 end
 
 
