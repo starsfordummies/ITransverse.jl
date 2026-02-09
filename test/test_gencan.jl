@@ -27,10 +27,10 @@ lln, rrn = truncate_lsweep(ll, rr, cutoff=1e-12, chi_max=test_chimax)
 ll = random_mps(ComplexF64, s, linkdims=test_linkdim)
 llc = deepcopy(ll)
 
-lln, ents, overlap = truncate_rsweep_sym(ll,  cutoff=1e-12, chi_max=test_chimax, method="SVD")
+lln, ents = truncate_rsweep_sym(ll,  cutoff=1e-12, chi_max=test_chimax, method="SVD")
 @test check_gencan_right(lln, lln)
 
-lln, ents, overlap = truncate_rsweep_sym(ll,  cutoff=1e-12, chi_max=test_chimax, method="EIG")
+lln, ents = truncate_rsweep_sym(ll,  cutoff=1e-12, chi_max=test_chimax, method="EIG")
 @test check_gencan_right(lln, lln)
 
 #test we don't touch the original 

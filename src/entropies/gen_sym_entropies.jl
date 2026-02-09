@@ -178,7 +178,7 @@ Generalized entropy for a *symmetric* environment (psiL,psiL)
 """
 function generalized_svd_vn_entropy_symmetric(psi::MPS)
 
-    _, ents, _ = truncate_rsweep_sym(psi; cutoff=1e-12, chi_max=maxlinkdim(psi), method="SVD")
+    _, ents = truncate_rsweep_sym(psi; cutoff=1e-12, maxdim=maxlinkdim(psi), method="SVD")
      
     return real(ents)
 

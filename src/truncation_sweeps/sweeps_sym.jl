@@ -86,10 +86,10 @@ end
 
 
 """ Symmetric truncate for MPS optimizing RTM |psi^*><psi| """
-function truncate_rsweep_sym(in_psi::MPS; cutoff::Float64, chi_max::Int, method::String, fast::Bool=false)
+function truncate_rsweep_sym(in_psi::MPS; cutoff::Float64, maxdim::Int, method::String, fast::Bool=false)
 
     mpslen = length(in_psi)
-    elt = eltype(in_psi[1])
+    #elt = eltype(in_psi[1])
     sits = siteinds(in_psi)
     sits_prime = prime(sits)
 
@@ -101,7 +101,7 @@ function truncate_rsweep_sym(in_psi::MPS; cutoff::Float64, chi_max::Int, method:
 
     # ents_sites = fill(0., mpslen-1)  # Float64[]
 
-    S_all = zeros(Float64, chi_max, mpslen-1)
+    S_all = zeros(Float64, maxdim, mpslen-1)
 
     for ii = mpslen:-1:2
         Ai = XUinv * psi_ortho[ii]
@@ -117,7 +117,7 @@ function truncate_rsweep_sym(in_psi::MPS; cutoff::Float64, chi_max::Int, method:
         @assert order(right_env) == 2
 
         if method == "SVD"
-            F = symm_svd(right_env, ind(right_env,1), cutoff=cutoff, maxdim=chi_max)
+            F = symm_svd(right_env, ind(right_env,1); cutoff, maxdim)
             U = F.U
             S = F.S
 
@@ -135,7 +135,7 @@ function truncate_rsweep_sym(in_psi::MPS; cutoff::Float64, chi_max::Int, method:
             end
 
         elseif method == "EIG"
-            F = symm_oeig(right_env, ind(right_env,1); cutoff)
+            F = symm_oeig(right_env, ind(right_env,1); cutoff, maxdim)
             U = F.V
             S = F.D
 
@@ -162,7 +162,7 @@ function truncate_rsweep_sym(in_psi::MPS; cutoff::Float64, chi_max::Int, method:
         #S = S/sum(S)
         #ents_sites[ii-1] =  scalar(-S*log.(S))
 
-        Svec = collect(S.tensor.storage.data)/sum(F.S)  
+        Svec = collect(S.tensor.storage.data)/sum(S)  
  
         S_all[1:length(Svec), ii-1] .= Svec  
     end
@@ -170,12 +170,10 @@ function truncate_rsweep_sym(in_psi::MPS; cutoff::Float64, chi_max::Int, method:
     # the last one 
     An = XUinv * psi_ortho[1]
 
-    overlap = scalar(An * An)
-
     # normalize overlap to 1 at the last tensor ?
     psi_ortho[1] =  An # /sqrt(scalar(overlap))
 
-    return psi_ortho, S_all, overlap
+    return psi_ortho, S_all
 
 end
 
@@ -198,13 +196,13 @@ Just bring the MPS to generalized *right* canonical form without truncating (as 
 TODO should use chi_min here to make sure ! 
 """
 function gen_canonical_right(in_mps::MPS)
-    psi_rightgencan, _, _ = truncate_rsweep_sym(in_mps; cutoff=1e-14, maxdim=2*maxlinkdim(in_mps), method="EIG")
+    psi_rightgencan, _ = truncate_rsweep_sym(in_mps; cutoff=1e-14, maxdim=2*maxlinkdim(in_mps), method="EIG")
     return psi_rightgencan
 end
 
 
 
-function tcontract(::Algorithm"RTMsym", A::MPO, ψ::MPS; preserve_tags_mps::Bool=false, kwargs...)
-    psi, _ = apply(A, ψ, alg="naive", preserve_tags_mps, truncate=false)
-    psi = truncate_rsweep_sym(psi, kwargs...)
+function ITenUtils.tcontract(::Algorithm"RTMsym", A::MPO, ψ::MPS; preserve_tags_mps::Bool=false, kwargs...)
+    psi = apply(A, ψ; alg="naive", preserve_tags_mps, truncate=false)
+    psi, svals = truncate_rsweep_sym(psi; kwargs...)
 end
