@@ -62,7 +62,7 @@ function tapplys(alg, O::MPO, psi::AbstractMPS; kwargs...)
     return replaceprime(tpsi, 2 => 0), sv
 end
 
-tapply(a,b; alg="naive", kwargs...) = tapply(Algorithm(alg), a,b; kwargs...)
+tapply(a::AbstractMPS,b::AbstractMPS; alg="naive", kwargs...) = tapply(Algorithm(alg), a,b; kwargs...)
 
 function tapply(alg, O::MPO, psi::MPS; kwargs...)
     tpsi, sv = tcontract(alg, O, psi; kwargs...)

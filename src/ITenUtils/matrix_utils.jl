@@ -153,3 +153,28 @@ function vectorized_identity(dsquared::Int)
     #@assert d^2 == len "Input length must be a perfect square"
     return vec(Matrix{Float64}(I, d, d))
 end
+
+
+
+""" Return max(abs(A-B)), if quick=true it chops non-overlapping value """
+function max_diff(A::Matrix, B::Matrix; quick::Bool=true)
+    aR, aC = size(A)
+    bR, bC = size(B)
+    
+    @assert aR == bR "aR=$(aR) != $(bR)=bR"
+    
+    minC = min(aC, bC)
+    
+    # Max difference in overlapping region
+    max_val = maximum(abs.(view(A, :, 1:minC) .- view(B, :, 1:minC)))
+    
+    if !quick         # Check non-overlapping columns (treated as zeros)
+        if aC > bC
+            max_val = max(max_val, maximum(abs.(view(A, :, (bC+1):aC))))
+        elseif bC > aC
+            max_val = max(max_val, maximum(abs.(view(B, :, (aC+1):bC))))
+        end
+    end
+
+    return max_val
+end
