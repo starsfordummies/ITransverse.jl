@@ -13,12 +13,11 @@ function truncate_lsweep_sym(in_psi::MPS; cutoff::Float64, maxdim::Int, method::
     sits = siteinds(psi_ortho)
     sits_prime = prime(sits)
 
-    ents_sites = ComplexF64[] 
-
     XUinv= ITensors.OneITensor()
     left_env = ITensors.OneITensor()
 
-    S_all = zeros(Float64, maxdim, mpslen-1)
+    elt = method == "SVD" ? Float64 : ComplexF64
+    S_all = zeros(elt, mpslen-1, maxdim)
 
     for ii = 1:mpslen-1
 
@@ -65,20 +64,18 @@ function truncate_lsweep_sym(in_psi::MPS; cutoff::Float64, maxdim::Int, method::
         # S = NDTensors.cpu(S./sum(S))
         # push!(ents_sites, scalar(-S*log.(S)))
 
-        Svec = collect(S.tensor.storage.data)/sum(F.S)  
+        Svec = collect(S.tensor.storage.data)/sum(S)  
  
-        S_all[1:length(Svec), ii-1] .= Svec  
+        S_all[ii, 1:length(Svec)] .= Svec  
     end
 
     An = XUinv * psi_ortho[end]
-
-    overlap = An * An 
 
     psi_ortho[end] = An
 
     @debug "Sweep done, normalization $(overlap_noconj(psi_ortho, psi_ortho))"
 
-    return psi_ortho, S_all, overlap
+    return psi_ortho, S_all
 
 end
 
@@ -99,9 +96,7 @@ function truncate_rsweep_sym(in_psi::MPS; cutoff::Float64, maxdim::Int, method::
     XUinv= ITensors.OneITensor()
     right_env = ITensors.OneITensor()
 
-    # ents_sites = fill(0., mpslen-1)  # Float64[]
-
-    S_all = zeros(Float64, maxdim, mpslen-1)
+    SVs = zeros(Float64, mpslen-1, maxdim)
 
     for ii = mpslen:-1:2
         Ai = XUinv * psi_ortho[ii]
@@ -164,7 +159,7 @@ function truncate_rsweep_sym(in_psi::MPS; cutoff::Float64, maxdim::Int, method::
 
         Svec = collect(S.tensor.storage.data)/sum(S)  
  
-        S_all[1:length(Svec), ii-1] .= Svec  
+        SVs[ii-1, 1:length(Svec)] .= Svec  
     end
 
     # the last one 
@@ -173,7 +168,7 @@ function truncate_rsweep_sym(in_psi::MPS; cutoff::Float64, maxdim::Int, method::
     # normalize overlap to 1 at the last tensor ?
     psi_ortho[1] =  An # /sqrt(scalar(overlap))
 
-    return psi_ortho, S_all
+    return psi_ortho, SVs
 
 end
 
@@ -187,7 +182,7 @@ This is symmetric, so we use symmetric eigenvalue decomposition, A => O D O^T wi
 """
 function gen_canonical_left(in_mps::MPS)  # TODO: polar decomp?
     temp = deepcopy(in_mps)
-    psi_leftgencan, _, _ = truncate_lsweep_sym(temp; cutoff=1e-14, maxdim=2*maxlinkdim(in_mps), method="EIG")
+    psi_leftgencan, _ = truncate_lsweep_sym(temp; cutoff=1e-14, maxdim=2*maxlinkdim(in_mps), method="EIG")
     return psi_leftgencan
 end
 
