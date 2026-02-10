@@ -1,14 +1,9 @@
 """ Check that two MPS are in (generalized-symmetric) *left* canonical form """
-function check_gencan_left(psi::MPS, phi::MPS; verbose::Bool=false)
-
-    #TODO that's another way of doing it ...
-    dtype = mapreduce(NDTensors.unwrap_array_type, promote_type, psi)
-    #adapt(dtype,...)
+function check_gencan_left(psi::MPS, phi::MPS=psi; verbose::Bool=false)
 
     mpslen = length(psi)
 
-    is_left_gencan = true
-    is_left_s = Bool[]
+    is_left_s = falses(mpslen-1)
 
     @assert length(psi) == length(phi)
 
@@ -17,7 +12,6 @@ function check_gencan_left(psi::MPS, phi::MPS; verbose::Bool=false)
     if verbose
         @info "Checking LEFT gen/sym form"
     end
-    
 
     # Start from the left 
     left_env = ITensors.OneITensor()
@@ -26,14 +20,14 @@ function check_gencan_left(psi::MPS, phi::MPS; verbose::Bool=false)
         left_env *= phi[ii]
         @assert order(left_env) == 2
         
-        is_left_gencan = isapproxdiag(matrix(left_env))
-        is_left_gencan = check_id_matrix(matrix(left_env))
+        #is_left_gencan = isapproxdiag(matrix(left_env))
+        is_left_s[ii] = check_id_matrix(matrix(left_env))
 
-        push!(is_left_s, is_left_gencan)
     end
 
     if verbose
         @info("Done checking LEFT gen/sym form")
+        @info is_left_s
     end
 
     is_left_gencan = all(is_left_s)
@@ -48,11 +42,11 @@ end
 
 
 """ Check that two MPS are in (generalized-symmetric) *right* canonical form"""
-function check_gencan_right(psi::MPS, phi::MPS; verbose::Bool=false)
+function check_gencan_right(psi::MPS, phi::MPS=psi; verbose::Bool=false)
 
     mpslen = length(psi)
 
-    is_right_s = Bool[] 
+    is_right_s = falses(mpslen-1)
 
     # this should make that psi and phi have different linkinds but same siteinds
     phi = match_siteinds(psi, sim(linkinds, phi))
@@ -70,14 +64,14 @@ function check_gencan_right(psi::MPS, phi::MPS; verbose::Bool=false)
 
         @assert order(right_env) == 2
 
-        is_right_gencan = isapproxdiag(matrix(right_env))
-        is_right_gencan = check_id_matrix(matrix(right_env))
+        #is_right_gencan = isapproxdiag(matrix(right_env))
+        is_right_s[ii-1] = is_right_gencan = check_id_matrix(matrix(right_env))
 
-        push!(is_right_s, is_right_gencan)
     end
 
     if verbose
         @info("Done checking RIGHT gen/sym form")
+        @info is_right_s
     end
 
     if all(is_right_s)

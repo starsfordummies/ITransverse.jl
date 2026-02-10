@@ -29,7 +29,7 @@ function ttruncate!(
     for j in reverse((first(site_range) + 1):last(site_range))
         rinds = uniqueinds(M[j], M[j - 1])
         ltags = tags(commonind(M[j], M[j - 1]))
-        U, S, V, spec = svd(M[j], rinds; lefttags = ltags, kwargs...)
+        U, S, V, spec = svd(M[j], rinds; lefttags = ltags, maxdim, kwargs...)
         M[j] = U
         M[j - 1] *= (S * V)
         setrightlim!(M, j)
@@ -63,6 +63,7 @@ function tapplys(alg, O::MPO, psi::AbstractMPS; kwargs...)
 end
 
 tapply(a::AbstractMPS,b::AbstractMPS; alg="naive", kwargs...) = tapply(Algorithm(alg), a,b; kwargs...)
+tapplys(a::AbstractMPS,b::AbstractMPS; alg="naive", kwargs...) = tapplys(Algorithm(alg), a,b; kwargs...)
 
 function tapply(alg, O::MPO, psi::MPS; kwargs...)
     tpsi, sv = tcontract(alg, O, psi; kwargs...)
@@ -86,7 +87,12 @@ A = o-o-o-o-o-o-o
 psi o o o o o      
 ```
 """
-function tcontract(::Algorithm"naive", A::MPO, ψ::AbstractMPS; preserve_tags_mps::Bool=false, truncate=false, kwargs...)
+function tcontract(::Algorithm"naive",
+     A::MPO, 
+     ψ::AbstractMPS; 
+     preserve_tags_mps::Bool=false, 
+     cutoff::Float64=1e-14, 
+     maxdim::Int=maxlinkdim(A)*maxlinkdim(ψ))
 
     # TODO Add offset for contraction to allow extension on both edges 
     @assert length(A) >= length(ψ)
@@ -116,28 +122,8 @@ function tcontract(::Algorithm"naive", A::MPO, ψ::AbstractMPS; preserve_tags_mp
 
     contract_dangling!(ψ_out)
 
-    # If :truncp, :cutoff or :maxdim keywords are present, set truncate=true
-    if haskey(kwargs, :truncp)
-        (;cutoff, maxbondim) = kwargs[:truncp]
-        kwargs = (;kwargs..., cutoff=cutoff, maxdim=maxbondim)
-        truncate = true
-    elseif haskey(kwargs, :cutoff) 
-        cutoff = kwargs[:cutoff]
-        maxdim = maxlinkdim(ψ_out)
-        truncate = true
-    elseif haskey(kwargs, :maxdim)
-        maxdim = kwargs[:maxdim]
-        cutoff=1e-14
-        truncate = true
-    end
-
-    ψ_out, SVs = if truncate
-        #@info "truncating, $(cutoff) - $(maxdim)"
-        ttruncate!(ψ_out; cutoff, maxdim)
-    else
-        ψ_out, zeros(length(ψ_out)-1, maxlinkdim(ψ_out))
-    end
-
+    ψ_out, SVs = ttruncate!(ψ_out; cutoff, maxdim)
+  
     return ψ_out, SVs
 end
 
@@ -214,21 +200,16 @@ function tcontract(::Algorithm"densitymatrix",
 
         @assert ndims(rho) < 5 " $j $(inds(rho))"
 
-        @show inds(rho)
-        @show Lis
+        # @show inds(rho)
+        # @show Lis
 
         F = eigen(rho, Lis, Ris; ishermitian = true, tags = ts, cutoff, maxdim, mindim, kwargs...)
         D, U, Ut = F.D, F.V, F.Vt
         l_renorm, r_renorm = F.l, F.r
 
-        @show inds(U)
-        @show inds(Ut)
-        @show l_renorm, r_renorm
-
-        # F = symm_svd(rho, Lis; cutoff, maxdim, kwargs...)
-
-        # D, U, Ut = F.S, F.U, F.U
-        # l_renorm, r_renorm = F.u, F.v
+        # @show inds(U)
+        # @show inds(Ut)
+        # @show l_renorm, r_renorm
 
         ψ_out[j] = Ut
 
@@ -328,7 +309,7 @@ if we work with light cone """
 function tcontract(::Algorithm"RTM",
         A::MPO,
         ψ::MPS;
-        cutoff = 1.0e-13,
+        cutoff = 1.0e-14,
         maxdim = maxlinkdim(A) * maxlinkdim(ψ),
         mindim = 1,
         kwargs...,

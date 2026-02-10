@@ -33,12 +33,12 @@ function run_cone(psi::MPS,
     elseif  truncp.direction == "left"
         sweep_str = "psi0 >> Op"
     else
-        sweep_str = "??????"
+        sweep_str = "???"
     end
 
     nsteps = nT_final - length(psi)
 
-    p = Progress(div(nsteps, vwidth); desc="[cone(v=$vwidth)|$(opt_method)] [$(sweep_str)] $cutoff=$(truncp.cutoff), maxbondim=$(truncp.maxbondim))", showspeed=true) 
+    p = Progress(div(nsteps, vwidth); desc="[cone(v=$vwidth)|$(opt_method)] [$(sweep_str)] $cutoff=$(truncp.cutoff), maxdim=$(truncp.maxdim))", showspeed=true) 
 
     for nt = 1:nsteps
 
@@ -67,7 +67,8 @@ function run_cone(psi::MPS,
                 ll = rr
             elseif opt_method == "RDM" # TODO Non-symmetric case with RDM ?
                 tmpo = folded_tMPO_ext(b, ts; LR=:right, n_ext=vwidth)
-                rr = applyn(tmpo,rr; truncate=true, cutoff=truncp.cutoff, maxdim=truncp.maxbondim)
+                #rr = applyn(tmpo,rr; truncate=true, cutoff=truncp.cutoff, maxdim=truncp.maxdim)
+                rr, _ = ITransverse.tapply(tmpo,rr; alg="densitymatrix", cutoff=truncp.cutoff, maxdim=truncp.maxdim)
                 ll = rr
             else
                 error("no valid update method specified ($(opt_method))")

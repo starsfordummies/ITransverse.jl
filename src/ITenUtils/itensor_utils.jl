@@ -25,9 +25,9 @@ end
 
 """ Check if an ITensor is identity within a given cutoff 
 """
-function isid(a::ITensor, cutoff::Float64=1e-8)
+function isid(a::ITensor, tol::Float64=1e-8)
     @assert ndims(a) == 2
-    check_id_matrix(matrix(a), cutoff)
+    check_id_matrix(matrix(a); tol)
 end
 
 

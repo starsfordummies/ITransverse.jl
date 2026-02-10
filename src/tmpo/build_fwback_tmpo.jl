@@ -35,6 +35,8 @@ end
 function fwback_tMPO(b::FwtMPOBlocks, time_sites::Vector{<:Index}, nbetai::Int, nfw::Int, nback::Int, nbetaf::Int; 
     mid_op = [1,0,0,1], t_op::Int=nbetai+nfw, bl::ITensor = b.tp.bl, tr = b.tp.bl)
 
+    @info "Building fwback with $(nbetai)-$(nfw)-$(nback)-$(nbetaf) - operator at $(nbetai+nfw)"
+
     Ntot = length(time_sites) 
     @assert nbetai + nfw + nback + nbetaf == Ntot
 
@@ -65,7 +67,7 @@ function fwback_tMPO(b::FwtMPOBlocks, time_sites::Vector{<:Index}, nbetai::Int, 
     for ii = nbetai+nfw+1:nbetai+nfw+nback
         tMPO[ii] = replaceinds(dag(Wc), (icP, icPs), (time_sites[ii]',time_sites[ii]) )  # TODO Check 
     end
-    for ii = nbetai+nfw+nback:Ntot
+    for ii = nbetai+nfw+nback+1:Ntot
         #@info "$(ii) imag"
         tMPO[ii] = replaceinds(dag(Wc_im), (icP, icPs), (time_sites[ii],time_sites[ii]'))
     end
