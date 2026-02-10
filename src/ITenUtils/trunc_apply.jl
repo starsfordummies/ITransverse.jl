@@ -214,10 +214,16 @@ function tcontract(::Algorithm"densitymatrix",
 
         @assert ndims(rho) < 5 " $j $(inds(rho))"
 
+        @show inds(rho)
+        @show Lis
+
         F = eigen(rho, Lis, Ris; ishermitian = true, tags = ts, cutoff, maxdim, mindim, kwargs...)
         D, U, Ut = F.D, F.V, F.Vt
         l_renorm, r_renorm = F.l, F.r
 
+        @show inds(U)
+        @show inds(Ut)
+        @show l_renorm, r_renorm
 
         # F = symm_svd(rho, Lis; cutoff, maxdim, kwargs...)
 
@@ -229,7 +235,7 @@ function tcontract(::Algorithm"densitymatrix",
         L = L * dag(Ut) * ψ[j+1] * A[j+1]
         simL_c = simL_c * U* ψ_c[j+1] * simA_c[j+1]
 
-        Dvec = collect(D.tensor.storage.data)/tr(D)  
+        Dvec = collect(D.tensor.storage.data)/sum(D)  
  
         S_all[j, 1:length(Dvec)] .= Dvec  
     
@@ -312,4 +318,123 @@ function tcontract(::Algorithm"zipup",
   #truncate!(C; kwargs...) #TODO truncate?
   return C, zeros(N-1,maxlinkdim(C))  # TODO SVs ?
 end
+
+
+
+
+
+""" Contract MPO-MPS with algorithm densitymatrix, starting from the left. At the end we can chop/extend 
+if we work with light cone """
+function tcontract(::Algorithm"RTM",
+        A::MPO,
+        ψ::MPS;
+        cutoff = 1.0e-13,
+        maxdim = maxlinkdim(A) * maxlinkdim(ψ),
+        mindim = 1,
+        kwargs...,
+    )
+
+    @assert length(A) >= length(ψ)
+
+    N = length(A)
+    n = length(ψ)
+
+
+    mindim = max(mindim, 1)
+    requested_maxdim = maxdim
+    ψ_out = typeof(ψ)(N)
+
+    # In case A and ψ have the same link indices
+    A = sim(linkinds, A)
+
+    ψ_c = (ψ)''
+    simA_c = prime(A, 2)
+    A_c = replaceprime(simA_c, 3 => 1)
+
+    # Store the right environment tensors
+    E = Vector{ITensor}(undef, N)
+
+    E[N] = N > n ?  A[N] * A_c[N] : ψ[N] * A[N] * A_c[N] * ψ_c[N]
+
+    for j in reverse(n+1:N-1)
+        E[j] = E[j + 1] * A[j] * A_c[j] 
+    end
+    for j in reverse(2:min(N-1,n))
+        E[j] = E[j + 1] * ψ[j] * A[j] * A_c[j] * ψ_c[j]
+
+    end
+
+    # @show E
+
+
+    L = ψ[1] * A[1]
+    simL_c =  ψ_c[1] * simA_c[1]
+    l_renorm = nothing
+    r_renorm = nothing
+
+    S_all = zeros(Float64, n-1, maxdim)
+
+    for j in 1:min(n-1,N-1)
+
+        # @show j 
+
+        # Determine smallest maxdim to use
+        cip = commoninds(ψ[j], E[j + 1])
+        ciA = commoninds(A[j], E[j + 1])
+        prod_dims = dim(cip) * dim(ciA)
+        maxdim = min(prod_dims, requested_maxdim)
+
+        s = siteinds(uniqueinds, A, ψ, j)
+        s̃ = siteinds(uniqueinds, simA_c, ψ_c, j)
+        rho = E[j + 1] * L * simL_c
+        l = linkind(ψ, j)
+        ts = isnothing(l) ? "" : tags(l)
+        Lis = isnothing(l_renorm) ? IndexSet(s...) : IndexSet(s..., l_renorm)
+        Ris = isnothing(r_renorm) ? IndexSet(s̃...) : IndexSet(s̃..., r_renorm)
+
+        @assert ndims(rho) < 5 " $j $(inds(rho))"
+
+        # F = eigen(rho, Lis, Ris; ishermitian = true, tags = ts, cutoff, maxdim, mindim, kwargs...)
+        # D, U, Ut = F.D, F.V, F.Vt
+        # l_renorm, r_renorm = F.l, F.r
+
+
+        # @show j
+
+        # @show inds(rho)
+        # @show Lis
+        F = symm_oeig(rho, Lis; cutoff, maxdim)
+        D, U, Ut = F.D, F.Vt, F.V
+        l_renorm, r_renorm = F.l, F.r
+
+        # @show inds(U)
+        # @show inds(Ut)
+        # @show l_renorm, r_renorm
+
+        ψ_out[j] = Ut
+
+        L = L * (Ut) * ψ[j+1] * A[j+1]
+        simL_c = simL_c * U* ψ_c[j+1] * simA_c[j+1]
+
+        Dvec = collect(D.tensor.storage.data)/sum(D)  
+ 
+        S_all[j, 1:length(Dvec)] .= Dvec  
+    
+    end
+
+    ψ_out[n] = L
+
+
+    for j = n+1:N 
+        ψ_out[j] = A[j]
+    end
+
+
+    #@info "Setting ortho lims $(n-1):$(N+1)"
+    ITensorMPS.setleftlim!(ψ_out, n-1)
+    ITensorMPS.setrightlim!(ψ_out, N+1)
+
+    return ψ_out, S_all
+end
+
 
