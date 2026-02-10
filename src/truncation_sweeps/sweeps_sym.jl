@@ -17,7 +17,7 @@ function truncate_lsweep_sym(in_psi::MPS; cutoff::Float64, maxdim::Int, method::
     left_env = ITensors.OneITensor()
 
     elt = method == "SVD" ? Float64 : ComplexF64
-    S_all = zeros(elt, mpslen-1, maxdim)
+    SV_all = zeros(elt, mpslen-1, maxdim)
 
     for ii = 1:mpslen-1
 
@@ -66,7 +66,7 @@ function truncate_lsweep_sym(in_psi::MPS; cutoff::Float64, maxdim::Int, method::
 
         Svec = collect(S.tensor.storage.data)/sum(S)  
  
-        S_all[ii, 1:length(Svec)] .= Svec  
+        SV_all[ii, 1:length(Svec)] .= Svec  
     end
 
     An = XUinv * psi_ortho[end]
@@ -75,7 +75,7 @@ function truncate_lsweep_sym(in_psi::MPS; cutoff::Float64, maxdim::Int, method::
 
     @debug "Sweep done, normalization $(overlap_noconj(psi_ortho, psi_ortho))"
 
-    return psi_ortho, S_all
+    return psi_ortho, SV_all
 
 end
 
@@ -96,7 +96,8 @@ function truncate_rsweep_sym(in_psi::MPS; cutoff::Float64, maxdim::Int, method::
     XUinv= ITensors.OneITensor()
     right_env = ITensors.OneITensor()
 
-    SVs = zeros(Float64, mpslen-1, maxdim)
+    elt = method == "SVD" ? Float64 : ComplexF64
+    SV_all = zeros(elt, mpslen-1, maxdim)
 
     for ii = mpslen:-1:2
         Ai = XUinv * psi_ortho[ii]
@@ -159,7 +160,7 @@ function truncate_rsweep_sym(in_psi::MPS; cutoff::Float64, maxdim::Int, method::
 
         Svec = collect(S.tensor.storage.data)/sum(S)  
  
-        SVs[ii-1, 1:length(Svec)] .= Svec  
+        SV_all[ii-1, 1:length(Svec)] .= Svec  
     end
 
     # the last one 
@@ -168,7 +169,7 @@ function truncate_rsweep_sym(in_psi::MPS; cutoff::Float64, maxdim::Int, method::
     # normalize overlap to 1 at the last tensor ?
     psi_ortho[1] =  An # /sqrt(scalar(overlap))
 
-    return psi_ortho, SVs
+    return psi_ortho, SV_all
 
 end
 
@@ -201,3 +202,86 @@ function ITenUtils.tcontract(::Algorithm"RTMsym", A::MPO, ψ::MPS; preserve_tags
     psi = apply(A, ψ; alg="naive", preserve_tags_mps, truncate=false)
     psi, svals = truncate_rsweep_sym(psi; kwargs...)
 end
+
+
+
+""" Symmetric truncate for MPS optimizing RTM |psi^*><psi| """
+function gen_canonical(in_psi::MPS, ortho_center::Int; cutoff::Float64=1e-13)
+
+    mpslen = length(in_psi)
+    #elt = eltype(in_psi[1])
+    sits = siteinds(in_psi)
+    sits_prime = prime(sits)
+    maxdim = maxlinkdim(in_psi)
+
+    # first bring to LEFT standard canonical form. 
+    # Shouldn't matter if we are not truncating ... 
+    # psi_ortho = orthogonalize(in_psi, mpslen)
+
+    psi_ortho = copy(in_psi)
+
+    XUinv= ITensors.OneITensor()
+    right_env = ITensors.OneITensor()
+
+    for ii = reverse(ortho_center+1:mpslen)
+        Ai = XUinv * psi_ortho[ii]
+
+        right_env *= Ai
+        right_env *= replaceind(Ai', sits_prime[ii] => sits[ii])
+
+        @assert order(right_env) == 2
+        F = symm_oeig(right_env, ind(right_env,1); cutoff, maxdim)
+        U = F.V
+        S = F.D
+
+        sqS = S.^(0.5)
+        isqS = sqS.^(-1)
+
+        XU = U * isqS
+        XUinv = sqS * U
+
+        psi_ortho[ii] = Ai * XU
+
+        right_env *= XU 
+        right_env *= XU' 
+
+    end
+
+    # the last one 
+    psi_ortho[ortho_center] = XUinv * psi_ortho[ortho_center]
+
+
+    XUinv= ITensors.OneITensor()
+    left_env = ITensors.OneITensor()
+
+    for ii = 1:ortho_center-1
+        Ai = XUinv * psi_ortho[ii]
+
+        left_env *= Ai
+        left_env *= replaceind(Ai', sits_prime[ii] => sits[ii])
+
+        @assert order(left_env) == 2
+        F = symm_oeig(left_env, ind(left_env,1); cutoff, maxdim)
+        U = F.V
+        S = F.D
+
+        sqS = S.^(0.5)
+        isqS = sqS.^(-1)
+
+        XU = U * isqS
+        XUinv = sqS * U
+
+
+        psi_ortho[ii] = Ai * XU
+
+        left_env *= XU 
+        left_env *= XU' 
+
+    end
+    psi_ortho[ortho_center] = XUinv * psi_ortho[ortho_center]
+
+
+    return psi_ortho
+
+end
+

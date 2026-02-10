@@ -24,7 +24,7 @@ start_mps = fw_tMPS(b, time_sites; LR=:right, tr = tp.bl)
 
 mycutoff=1e-12
 itermax=600
-eps_converged = 1e-6
+eps_converged = 1e-8
 
 @testset "Testing Loschmidt echo optimizers" begin
 

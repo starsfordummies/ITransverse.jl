@@ -54,7 +54,7 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams; fast::Bo
 
         psi_work, sv = if opt_method == "RDM"
             tapply(Algorithm("densitymatrix"), in_mpo, psi_work; cutoff=cutoff, maxdim=maxbondim)
-        elseif opt_method == "RTM" || "RTMRDM"
+        elseif opt_method == "RTM" || opt_method == "RTMRDM"
             tapply(Algorithm("RTMsym"), in_mpo, psi_work; cutoff=cutoff, maxdim=maxbondim, method="SVD", fast)
         elseif opt_method == "RTM_EIG" # this can be less accurate
             tapply(Algorithm("RTMsym"), in_mpo, psi_work; cutoff=cutoff, maxdim=maxbondim, method="EIG", fast)
@@ -79,7 +79,7 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams; fast::Bo
         end
 
         ds2 = max_diff(sprevs, sv) 
-        @show jj, ds2
+        @debug jj, ds2
 
         push!(ds2s, [ds2, fidelity])
 

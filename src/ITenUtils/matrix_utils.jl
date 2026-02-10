@@ -25,44 +25,63 @@ end
 
 """ Checks if a matrix is diagonal within a given cutoff
 """
-function isapproxdiag(d::AbstractMatrix; atol::Float64=1e-8, verbose::Bool=false)
-
-    isdiag = true
-
-    delta_diag = sqrt(maximum(abs2, d - Diagonal(d))/maximum(abs2,diag(d)))
-
-    if delta_diag > atol 
-        if verbose
-            @warn "Matrix non diagonal: Δ=$(delta_diag) [cutoff=$(cutoff)]"
-        end
-        isdiag = false
-    end
-    return isdiag
-end
-
-
-""" Check if a matrix is identity within a given cutoff 
-"""
-function check_id_matrix(m::Matrix, cutoff::Float64=1e-8)
-
-    is_id_matrix = true 
-
-    if size(m,1) == size(m,2)
-        delta_diag = norm(m - I(size(m,1)))/norm(m)
-        if delta_diag > cutoff
-            @warn("Not identity: off by(norm) $delta_diag")
-            if norm(m./m[1,1] - I(size(m,1)))/norm(m) < cutoff
-                @info("But proportional to identity, factor $(m[1,1])")
-            end
-            is_id_matrix = false
-        end
+function isapproxdiag(d::AbstractMatrix; tol::Float64=1e-8, verbose::Bool=false)
+    
+    off_diag_norm = norm(d - Diagonal(d))
+    matrix_norm = norm(d)
+    
+    # Absolute + relative tolerance
+    threshold = tol * max(matrix_norm, 1.0)
+    
+    if off_diag_norm <= threshold
+        return true
     else
-        @error ("Not even square? $(size(m))")
-        is_id_matrix = false
+        verbose && @warn "Matrix non-diagonal: ||off-diag||=$off_diag_norm, threshold=$threshold"
+        return false
     end
-
-    return is_id_matrix
 end
+
+
+# function check_id_matrix(m::Matrix, cutoff::Float64=1e-8)
+
+#     is_id_matrix = true 
+
+#     if size(m,1) == size(m,2)
+#         delta_diag = norm(m - I(size(m,1)))/norm(m)
+#         if delta_diag > cutoff
+#             @warn("Not identity: off by(norm) $delta_diag")
+#             if norm(m./m[1,1] - I(size(m,1)))/norm(m) < cutoff
+#                 @info("But proportional to identity, factor $(m[1,1])")
+#             end
+#             is_id_matrix = false
+#         end
+#     else
+#         @error ("Not even square? $(size(m))")
+#         is_id_matrix = false
+#     end
+
+#     return is_id_matrix
+# end
+
+""" Check if a matrix is identity within a given tol """
+function check_id_matrix(m::Matrix; tol=1e-6)
+    isid = false
+    if size(m,1) == size(m,2)
+        if norm(m - I) < tol * max(norm(m), 1)
+            isid = true
+        else
+            @warn "Not identity: max deviation $(maximum(abs.(m - I)))"
+            
+            # Check proportional
+            factor = tr(m) / size(m, 1)  # Average of diagonal
+            if abs(factor) > eps() && isapprox(m, factor * I; atol=tol)
+                @info "Proportional to identity, factor ≈ $factor"
+            end
+        end
+    end
+    return isid
+end
+
 
 
 """ Symmetrizes a matrix to improve numerical stability (throws an error if it's not too symetric to begin with)

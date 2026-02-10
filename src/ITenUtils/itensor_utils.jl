@@ -33,7 +33,7 @@ end
 
 function LinearAlgebra.isdiag(a::ITensor)
     @assert ndims(a) == 2
-    isapproxdiag(matrix(a); atol=1e-10)
+    isapproxdiag(matrix(a); tol=1e-8)
 end
 
 
