@@ -174,24 +174,24 @@ end
 
 
 """
-Generalized entropy for a *symmetric* environment (psiL,psiL)
+TODO update SVD entropies to new 
 """
-function generalized_svd_vn_entropy_symmetric(psi::MPS)
+# function generalized_svd_vn_entropy_symmetric(psi::MPS)
 
-    _, ents = truncate_rsweep_sym(psi; cutoff=1e-12, maxdim=maxlinkdim(psi), method="SVD")
+#     _, ents = truncate_rsweep_sym(psi; cutoff=1e-12, maxdim=maxlinkdim(psi), method="SVD")
      
-    return real(ents)
+#     return real(ents)
 
-end
+# end
 
 
 
-""" We can compute the "SVD" VN entropy by just doing a right (generalized) sweep """
-function generalized_svd_vn_entropy(psi::MPS, phi::MPS)
-    truncp = TruncParams(1e-12, maxlinkdim(psi)+maxlinkdim(phi))
-    _, _, ents = truncate_rsweep(psi, phi, truncp)
-    return real(ents)
-end
+# """ We can compute the "SVD" VN entropy by just doing a right (generalized) sweep """
+# function generalized_svd_vn_entropy(psi::MPS, phi::MPS)
+#     truncp = TruncParams(1e-12, maxlinkdim(psi)+maxlinkdim(phi))
+#     _, _, ents = truncate_rsweep(psi, phi, truncp)
+#     return real(ents)
+# end
 
 
 function renyi_eigs(eigss::ITensor, alpha::Number) 
@@ -372,3 +372,38 @@ function gensvd_renyi_entropies(psi::MPS; which_ents=[0.5,1,2], normalize_eigs::
     return gen_svd_ents
     
 end
+
+""" Slow compute generalized Renyi2 for symmetric case RTM (psi,psi) for an interval [iA-fA] """
+function gen_renyi2_sym_interval_manual(psi::MPS, iA::Int, fA::Int)
+
+    LL = length(psi)
+
+    psip = prime(linkinds, psi)
+    lenv = ITensor(1)
+    for kk = 1:iA-1
+        lenv *= psi[kk]
+        lenv *= psip[kk]
+    end
+
+    renv = ITensor(1)
+    for kk = reverse(fA+1:LL)
+        renv *= psi[kk]
+        renv *= psip[kk]
+    end
+
+    mid = ITensor(1)
+    for kk = iA:fA
+        mid *= psi[kk]
+        mid *= psip[kk]
+    end
+
+    t2 = lenv * mid'
+    t2 *= lenv''
+    t2 *= replaceprime(replaceprime(mid, 0=>3), 1=>0)
+    t2 *= renv
+    t2 *= renv''
+    
+    t2 = scalar(t2)
+end
+
+
