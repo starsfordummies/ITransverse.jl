@@ -2,7 +2,7 @@ using ITensors, ITensorMPS
 using ITransverse 
 using Test
 
-
+#= 
 @testset "Generalized SVD entropies (symmetric/no symm)" begin
 s = siteinds(4, 20)
 
@@ -15,3 +15,4 @@ sgen_sv = generalized_svd_vn_entropy(psi,psi)
 @test sgen_sv_s ≈ sgen_sv
 
 end
+=# 

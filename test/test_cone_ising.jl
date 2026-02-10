@@ -20,9 +20,9 @@ init_state = plus_state
 @testset "Testing light cone for folded tMPO" begin
 
 cutoff = 1e-20
-maxbondim = 200
+maxdim = 200
 
-truncp = TruncParams(cutoff, maxbondim)
+truncp = TruncParams(cutoff, maxdim)
 
 Nsteps = 20
 

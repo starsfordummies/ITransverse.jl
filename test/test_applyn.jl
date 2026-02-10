@@ -179,7 +179,7 @@ oo = random_mpo(ss) + random_mpo(ss)
 pp = random_mpo(ss) + random_mpo(ss)
 
 opsi = apply(oo, psi; cutoff=1e-12)
-opsi2, sv = tapply(oo, psi; cutoff=1e-12)
+opsi2, sv = tapply(oo, psi; alg="naive", cutoff=1e-12)
 opsi3, sv = tapply(oo, psi; alg="densitymatrix", cutoff=1e-12)
 opsi4, sv = tapply(oo, psi; alg="zipup", cutoff=1e-12)
 

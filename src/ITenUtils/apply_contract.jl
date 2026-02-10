@@ -97,8 +97,8 @@ function contractn(A::MPO, ψ::AbstractMPS; preserve_tags_mps::Bool=false, kwarg
     
     # If :truncp, :cutoff or :maxdim keywords are present, set truncate=true
     if haskey(kwargs, :truncp)
-        (;cutoff, maxbondim) = kwargs[:truncp]
-        kwargs = (;kwargs..., cutoff=cutoff, maxdim=maxbondim)
+        (;cutoff, maxdim) = kwargs[:truncp]
+        kwargs = (;kwargs..., cutoff=cutoff, maxdim=maxdim)
         truncate = true
     end
 

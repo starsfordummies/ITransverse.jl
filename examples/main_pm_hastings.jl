@@ -19,11 +19,11 @@ function main_folded_pm()
 
 
     cutoff = 1e-12
-    maxbondim = 128
+    maxdim = 128
     itermax = 500
     eps_converged=1e-8
 
-    truncp = TruncParams(cutoff, maxbondim, "left")  # "left" = start from initial state (Hastings)
+    truncp = TruncParams(cutoff, maxdim, "left")  # "left" = start from initial state (Hastings)
 
     pm_params = PMParams(truncp, itermax, eps_converged, true, "RDM", "norm")
 

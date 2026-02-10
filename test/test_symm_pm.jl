@@ -18,11 +18,11 @@ function test_symmpm(Tstart::Int, Tend::Int, nbeta::Int; Tstep::Int=1)
 
 
     cutoff = 1e-14
-    maxbondim = 140
+    maxdim = 140
     itermax = 800
     eps_converged = 1e-6
 
-    truncp = TruncParams(cutoff, maxbondim)
+    truncp = TruncParams(cutoff, maxdim)
 
     mp = IsingParams(JXX, hz, gx)
     tp = tMPOParams(dt, expH_ising_murg, mp, nbeta, init_state)

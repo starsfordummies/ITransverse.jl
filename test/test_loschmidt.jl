@@ -4,7 +4,7 @@ using Test
 
 tp = ising_tp()
 
-maxbondim=100
+maxdim=100
 Ntime_steps = 60
 nbeta = 4
 
@@ -29,7 +29,7 @@ eps_converged = 1e-8
 @testset "Testing Loschmidt echo optimizers" begin
 
 
-    truncp = TruncParams(mycutoff, maxbondim)
+    truncp = TruncParams(mycutoff, maxdim)
 
 
     pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM", "norm")

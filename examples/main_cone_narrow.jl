@@ -20,12 +20,12 @@ function main_cone()
     init_state = up_state
 
     cutoff = 1e-10
-    maxbondim = 512
+    maxdim = 512
     direction = "left"
 
     optimize_op = vZ
     
-    truncp = TruncParams(cutoff, maxbondim, direction)
+    truncp = TruncParams(cutoff, maxdim, direction)
 
     Nsteps = 20
 

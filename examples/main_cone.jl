@@ -19,12 +19,12 @@ function main_cone()
     init_state = up_state
 
     cutoff = 1e-8
-    maxbondim = 128
+    maxdim = 128
     direction = "right"
 
-    truncp = TruncParams(cutoff, maxbondim, direction)
+    truncp = TruncParams(cutoff, maxdim, direction)
 
-    Nsteps = 80
+    Nsteps = 60
 
     #time_sites = siteinds("S=3/2", 1)
 
@@ -60,7 +60,4 @@ function main_cone()
 
 end
 
-psi, psiR, cp = main_cone()
-
-println(chis)
-println(real(expvals["Z"]))
+@time psi, psiR, cp = main_cone()

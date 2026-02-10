@@ -3,15 +3,17 @@ using ITensorMPS
 using ITransverse
 using ITransverse: plus_state, up_state, vX, vZ
 
+using Test
+
 """ Builds the dominant vector for unfolded Ising using power method"""
 function ising_fwb(tp::tMPOParams, TT::Int)
 
     cutoff = 1e-12
-    maxbondim = 256
+    maxdim = 256
     itermax = 200
-    eps_converged = 1e-6
+    eps_converged = 1e-9
 
-    truncp = TruncParams(cutoff, maxbondim)
+    truncp = TruncParams(cutoff, maxdim)
     pm_params = PMParams(truncp, itermax, eps_converged, true, "RDM", "overlap")
 
     @info ("Optimizing for T=$(TT) with $(tp.nbeta) imag steps ")
@@ -31,13 +33,13 @@ function ising_fwb(tp::tMPOParams, TT::Int)
     psi_trunc, ds2 = powermethod_sym(start_mps, mpo, pm_params)
 
 
-    # Entropies 
+    # # Entropies 
     sgen = generalized_vn_entropy_symmetric(psi_trunc)
-    sgen_sv = generalized_svd_vn_entropy_symmetric(psi_trunc)
+    # sgen_sv = generalized_svd_vn_entropy_symmetric(psi_trunc)
 
     # tsallis_gen = ITransverse.generalized_r2_entropy_symmetric(psi_trunc)
 
-    svn = vn_entanglement_entropy(psi_trunc)
+    #svn = vn_entanglement_entropy(psi_trunc)
 
     leading_eig = inner(conj(psi_trunc'), mpo, psi_trunc)
 
@@ -48,7 +50,7 @@ function ising_fwb(tp::tMPOParams, TT::Int)
     normalization = overlap_noconj(psi_trunc,psi_trunc)
     leading_eig, leading_sq, normalization
 
-    return psi_trunc, ds2, leading_eig, leading_sq, normalization, sgen, [maximum(real(sgen)), maximum(real(sgen_sv)), maximum(svn)], b
+    return psi_trunc, b
 
 
 end
@@ -61,11 +63,11 @@ function ffolded(tp::tMPOParams, TT::Int)
     b = FoldtMPOBlocks(tp)
 
     cutoff = 1e-12
-    maxbondim = 256
+    maxdim = 256
     itermax = 500
-    eps_converged=1e-8
+    eps_converged=1e-9
 
-    truncp = TruncParams(cutoff, maxbondim)
+    truncp = TruncParams(cutoff, maxdim)
 
     pm_params = PMParams(truncp, itermax, eps_converged, true, "RDM", "overlap")
 
@@ -89,6 +91,9 @@ end
 
 
 
+@testset "folded/unfolded" begin
+    
+
 JXX = 1.0
 hz = 0.7
 gx = 0.0
@@ -106,9 +111,9 @@ tp = tMPOParams(dt,  expH_ising_murg, mp, 0, init_state)
 
 diffs = []
 
-for TT = 10:10:50
+for TT = 10:10:30
 
-    psi, rr2s, ir2s, entropies, r2s, sgen, maxs, b = ising_fwb(tp,2*TT)
+    psi, b = ising_fwb(tp,2*TT)
     tmpo_z = fwback_tMPO(b, siteinds(psi); mid_op = [1,0,0,-1], tr=b.tp.bl)
     ev_unfold = expval_LR(psi, tmpo_z, psi)/overlap_noconj(psi,psi)
 
@@ -123,6 +128,10 @@ for TT = 10:10:50
 
     ev_fold = expval_LR(ll, mpo_Z, rr)/overlap_noconj(ll,rr)
 
+    @show TT, ev_fold, ev_unfold 
+
     @test abs.(ev_unfold - ev_fold) < 0.001
+
+end
 
 end

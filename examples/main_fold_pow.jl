@@ -11,7 +11,7 @@ using ITransverse: vX, vZ, vI
 function main_folded_pm()
 
     tp = ising_tp()
-    tp =  tMPOParams(0.1, expH_ising_murg, IsingParams(1.0, 0.7, 0.0), 0, [1,0])
+    tp =  tMPOParams(0.1, expH_ising_murg, IsingParams(1.0, 0.7, 0.0), 0, [1,0,0,1])
 
     tp = tMPOParams(tp; nbeta=0)
 
@@ -19,12 +19,12 @@ function main_folded_pm()
     b = FoldtMPOBlocks(tp)
 
     cutoff = 1e-12
-    maxbondim = 128
+    maxdim = 128
     itermax = 800
     stuck_after = 100
     eps_converged=1e-8
 
-    truncp = TruncParams(cutoff, maxbondim)
+    truncp = TruncParams(cutoff, maxdim)
 
     pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM_R", "norm", true, stuck_after)
 

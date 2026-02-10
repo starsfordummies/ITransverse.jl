@@ -13,7 +13,7 @@ Power method for *symmetric* case: takes as input a single MPS |L>,
 function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams; fast::Bool=false)
 
     (; itermax, eps_converged, opt_method, truncp, increase_chi, normalization, compute_fidelity) = pm_params
-    (; cutoff, maxbondim) = truncp
+    (; cutoff, maxdim) = truncp
 
     # Normalize eps_converged by system size or larger chains will never converge as good...
     eps_converged = eps_converged * length(in_mps)
@@ -23,13 +23,12 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams; fast::Bo
     psi_work = normalize(in_mps)
 
     ds2s = [] 
-    ds2 = 0. 
     sprevs = ones(length(in_mps)-1, maxlinkdim(in_mps)*maxlinkdim(in_mpo))
 
-    p = Progress(itermax; desc="[Symmetric PM|$(opt_method)] L=$(length(in_mps)), cutoff=$(cutoff), χmax=$(maxbondim), normalize=$(normalization))", showspeed=true) 
+    p = Progress(itermax; desc="[Symmetric PM|$(opt_method)] L=$(length(in_mps)), cutoff=$(cutoff), χmax=$(maxdim), normalize=$(normalization))", showspeed=true) 
 
-    max_chi = maxbondim
-    maxbondim = 20 
+    max_chi = maxdim
+    maxdim = 20 
 
     for jj = 1:itermax
 
@@ -46,18 +45,18 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams; fast::Bo
         end
 
         if increase_chi
-            maxbondim += 2
-            maxbondim = minimum([maxbondim, max_chi])
+            maxdim += 2
+            maxdim = minimum([maxdim, max_chi])
         else
-            maxbondim = max_chi
+            maxdim = max_chi
         end
 
         psi_work, sv = if opt_method == "RDM"
-            tapply(Algorithm("densitymatrix"), in_mpo, psi_work; cutoff=cutoff, maxdim=maxbondim)
+            tapply(Algorithm("densitymatrix"), in_mpo, psi_work; cutoff=cutoff, maxdim=maxdim)
         elseif opt_method == "RTM" || opt_method == "RTMRDM"
-            tapply(Algorithm("RTMsym"), in_mpo, psi_work; cutoff=cutoff, maxdim=maxbondim, method="SVD", fast)
+            tapply(Algorithm("RTMsym"), in_mpo, psi_work; cutoff=cutoff, maxdim=maxdim, method="SVD", fast)
         elseif opt_method == "RTM_EIG" # this can be less accurate
-            tapply(Algorithm("RTMsym"), in_mpo, psi_work; cutoff=cutoff, maxdim=maxbondim, method="EIG", fast)
+            tapply(Algorithm("RTMsym"), in_mpo, psi_work; cutoff=cutoff, maxdim=maxdim, method="EIG", fast)
         else
             error("Specify a valid opt_method: RDM|RTM|...")
         end

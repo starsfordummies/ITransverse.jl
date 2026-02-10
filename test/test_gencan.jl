@@ -9,7 +9,7 @@ s = siteinds(4, 50)
 ll = random_mps(ComplexF64, s, linkdims=test_linkdim)
 rr = ll + dag(ll)
 
-lln, rrn, ss = truncate_rsweep(ll, rr, cutoff=1e-12, chi_max=test_chimax, fast=false)
+lln, rrn, ss = truncate_rsweep(ll, rr, cutoff=1e-12, maxdim=test_chimax, fast=false)
 
 @test check_gencan_right(lln, rrn)
 
@@ -17,7 +17,7 @@ lln, rrn, ss = truncate_rsweep(ll, rr, cutoff=1e-12, chi_max=test_chimax, fast=f
 ll = random_mps(ComplexF64, s, linkdims=test_linkdim)
 rr = ll + dag(ll)
 
-lln, rrn = truncate_lsweep(ll, rr, cutoff=1e-12, chi_max=test_chimax)
+lln, rrn = truncate_lsweep(ll, rr, cutoff=1e-12, maxdim=test_chimax)
 
 @test check_gencan_left(lln, rrn)
 
@@ -27,10 +27,10 @@ lln, rrn = truncate_lsweep(ll, rr, cutoff=1e-12, chi_max=test_chimax)
 ll = random_mps(ComplexF64, s, linkdims=test_linkdim)
 llc = deepcopy(ll)
 
-lln, ents = truncate_rsweep_sym(ll,  cutoff=1e-12, chi_max=test_chimax, method="SVD")
+lln, ents = truncate_rsweep_sym(ll,  cutoff=1e-12, maxdim=test_chimax, method="SVD")
 @test check_gencan_right(lln, lln)
 
-lln, ents = truncate_rsweep_sym(ll,  cutoff=1e-12, chi_max=test_chimax, method="EIG")
+lln, ents = truncate_rsweep_sym(ll,  cutoff=1e-12,maxdim=test_chimax, method="EIG")
 @test check_gencan_right(lln, lln)
 
 #test we don't touch the original 
@@ -40,14 +40,15 @@ lln, ents = truncate_rsweep_sym(ll,  cutoff=1e-12, chi_max=test_chimax, method="
 
 ll = random_mps(ComplexF64, s, linkdims=test_linkdim)
 llc = deepcopy(ll)
-lln, ents, overlap = truncate_lsweep_sym(ll,  cutoff=1e-12, chi_max=test_chimax, method="SVD")
+lln, ents = truncate_lsweep_sym(ll,  cutoff=1e-12, maxdim=test_chimax, method="SVD")
 @test !any([hasplev(ii,1) for ii in siteinds(lln)])
 @test check_gencan_left(lln, lln)
 
-lln, ents, overlap = truncate_lsweep_sym(ll,  cutoff=1e-12, chi_max=test_chimax, method="EIG")
+lln, ents = truncate_lsweep_sym(ll,  cutoff=1e-12, maxdim=test_chimax, method="EIG")
 @test check_gencan_left(lln, lln)
 @test !any([hasplev(ii,1) for ii in siteinds(lln)])
 
 
 #test we didn't touch the original 
 @test llc[5] == ll[5] 
+
