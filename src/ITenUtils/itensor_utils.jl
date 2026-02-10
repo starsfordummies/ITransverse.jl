@@ -173,26 +173,13 @@ function itensor_to_vector(t::ITensor)
     return t.tensor.storage.data 
 end
 
-function to_itensor(x::ITensor, name::String)
-    #@assert ndims(x) == 1 
-    settags(x, name)
-    # idx = sim(ind(x,1); tags=name)
-    # return replaceind(x, ind(x,1), idx)
-end
+# Core conversion: Vector → ITensor
+to_itensor(x::AbstractVector, idx::Index) = ITensor(complex(x), idx)
+to_itensor(x::AbstractVector, name::String="v") = ITensor(complex(x), Index(length(x), name))
 
-function to_itensor(x::ITensor, idx::Index)
-    #@assert ndims(x) == 1
-    return replaceind(x, ind(x,1), idx)
-end
-
-function to_itensor(x::AbstractVector, name::String)
-    return ITensor(complex(x), Index(length(x), name))
-end
-
-function to_itensor(x::AbstractVector, idx::Index)
-    return ITensor(complex(x), idx)
-end
-
+# ITensor retagging/reindexing
+to_itensor(x::ITensor, idx::Index) = replaceind(x, only(inds(x)), idx)
+to_itensor(x::ITensor, name::String) = settags(x, name)
 
 """ This is maybe not too fast but should be general and generalizable enough.
 Given an operator as string, like "X" or "Sp", builds it for the input physical site and returns an Array with its (vectorized) elements.  """
@@ -211,4 +198,10 @@ function random_iso(i1::Index, i2::Index)
     m = random_itensor(i1, sim(i1))
     u,s,v = svd(m, i1)
     return u,s,v
+end
+
+function ITensors.contract(t1::ITensor, t2::ITensor, i1::Index, i2::Index)
+    @assert hasind(t1, i1)
+    @assert hasind(t2, i2)
+    return t1 * replaceind(t2, i2 => i1)
 end

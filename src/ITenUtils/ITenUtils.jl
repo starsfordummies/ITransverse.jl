@@ -14,7 +14,7 @@ using ITensors.Adapt: adapt
 
 using ITensorMPS:  setleftlim!, setrightlim!
 
-import NDTensors:
+using NDTensors:
  replace_nothing,
  default_use_absolute_cutoff,
  default_use_relative_cutoff,

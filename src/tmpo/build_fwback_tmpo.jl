@@ -1,49 +1,71 @@
+########################
+########## MPO #########
+########################
+
 
 function fwback_tMPO(tp::tMPOParams, time_sites::Vector{<:Index}; kwargs...)
     b = FwtMPOBlocks(tp)
     fwback_tMPO(b, time_sites; kwargs...)
 end
 
-
-""" Forward tMPO with open top (=right, after rotation) leg, so we can plug anything afterwards """
-function fwback_tMPO_opentr(b::FwtMPOBlocks, time_sites::Vector{<:Index}; mid_op = [1,0,0,1], bl::ITensor = b.tp.bl, init_beta_only::Bool=false)
+function fwback_tMPO(b::FwtMPOBlocks, time_sites::Vector{<:Index}, init_beta_only::Bool=false; kwargs...)
+    nbeta = b.tp.nbeta
 
     Ntot = length(time_sites) 
-    @assert Ntot % 2 == 0 
-    Nt = div(length(time_sites),2)
+    Nt = Ntot - nbeta
+
+    @assert Nt >= 0 && iseven(Nt)
+
+    Nfw = div(Nt,2)
+
+    betai, betaf = init_beta_only ? (div(nbeta,2), div(nbeta,2)) : (nbeta, 0)
+
+    fwback_tMPO(b, time_sites, betai, Nfw, Nfw, betaf; kwargs...)
+end
+
+
+
+""" Unfolded tMPO with 
+- `nbetai` initial steps of imaginary time evolution 
+- `nfw` steps of forward time evolution 
+-  (optionally) a `mid_op` operator insertion 
+- `nback` steps of backwards time evolution
+- `nbetaf` steps of imaginary time evolution
+"""
+function fwback_tMPO(b::FwtMPOBlocks, time_sites::Vector{<:Index}, nbetai::Int, nfw::Int, nback::Int, nbetaf::Int; 
+    mid_op = [1,0,0,1], t_op::Int=nbetai+nfw, bl::ITensor = b.tp.bl, tr = b.tp.bl)
+
+    Ntot = length(time_sites) 
+    @assert nbetai + nfw + nback + nbetaf == Ntot
 
     (; tp, Wc, Wc_im, rot_inds) = b
-    nbeta = tp.nbeta 
-
-    @assert nbeta <= Nt
-
-    b1,b2 = beta_lims(Ntot, nbeta, init_beta_only)
-
     (icL, icR, icP, icPs) = (rot_inds[:L], rot_inds[:R], rot_inds[:P], rot_inds[:Ps]) 
+
+    elt = NDTensors.unwrap_array_type(tp.bl)
+
+    tr = adapt(elt, to_itensor(tr, icR))
+    ind_op = sim(icR, tags="op")
+    ten_mid_op = adapt(elt, ITensor(mid_op, ind_op, ind_op'))
 
     # Make same indices for real and imag, it's easier aftwards 
     replaceinds!(Wc_im, inds(Wc_im), inds(Wc))
 
     time_links = [Index(dim(icL), "Link,rotl=$ii") for ii in 1:(Ntot-1)]
 
-    tMPO =  MPO(fill(Wc, Ntot))
+    tMPO =  MPO(Ntot)
 
-    for ii = 1:b1
+    for ii = 1:nbetai
         #@info "$(ii) imag"
         tMPO[ii] = replaceinds(Wc_im, (icP, icPs), (time_sites[ii],time_sites[ii]'))
     end
-    for ii = b1+1:Nt
+    for ii = nbetai+1:nbetai+nfw
         tMPO[ii] = replaceinds(Wc, (icP, icPs), (time_sites[ii],time_sites[ii]') )
     end
-    @show inds(tMPO[Nt])
-    ten_mid_op = adapt(NDTensors.unwrap_array_type(tMPO[Nt]), ITensor(mid_op, icR, icR'))
-    tMPO[Nt] = replaceind(tMPO[Nt] * ten_mid_op, icR' => icR)
-    @show inds(tMPO[Nt])
 
-    for ii = Nt+1:b2
+    for ii = nbetai+nfw+1:nbetai+nfw+nback
         tMPO[ii] = replaceinds(dag(Wc), (icP, icPs), (time_sites[ii]',time_sites[ii]) )  # TODO Check 
     end
-    for ii = b2+1:Ntot
+    for ii = nbetai+nfw+nback:Ntot
         #@info "$(ii) imag"
         tMPO[ii] = replaceinds(dag(Wc_im), (icP, icPs), (time_sites[ii],time_sites[ii]'))
     end
@@ -58,10 +80,17 @@ function fwback_tMPO_opentr(b::FwtMPOBlocks, time_sites::Vector{<:Index}; mid_op
         tMPO[ii] = replaceinds(tMPO[ii], (icL, icR), (time_links[ii-1],time_links[ii]))
     end
 
-    tMPO[end] = replaceinds(tMPO[end], (icL, icR), (time_links[end] , Index(dim(icR), "Link,tr") ))
+    tMPO[end] = replaceind(tMPO[end], icL => time_links[end])
 
-    # Contract boundary states (bottom/left)
+
+    # Plug operator in the column
+    cl = commonind(tMPO[t_op], tMPO[t_op+1])
+    tMPO[t_op] = replaceind(contract(tMPO[t_op], ten_mid_op, cl, ind_op), ind_op' => cl)
+    #@show inds(tMPO[Nt])
+    
+    # Contract boundary states (bottom/left and top/right)
     tMPO[1] = tMPO[1] * bl  
+    tMPO[end] = tMPO[end] * tr  
 
     return tMPO
 
@@ -71,28 +100,17 @@ end
 function fwback_tMPO(ww::MPO, tr)
     tr_link = only(inds(ww[end],"Link,tr"))
     tr = to_itensor(tr, tr_link)
-    ww[end] *= tr
     return ww
 end
 
 
-function fwback_tMPO(b::FwtMPOBlocks, time_sites::Vector{<:Index}; tr, kwargs...)
-    ww = fwback_tMPO_opentr(b, time_sites; kwargs...)
-    fw_tMPO(ww, tr)
-end
 
 
 
-""" Builds forward tMPO with nbeta steps on one side only: 
-in-U(β)-U(β)-..U(β)-U(idt)-U(idt)-U(idt)-U(idt)-fin 
-   |___nbeta_____|     
-   Returns tMPO 
-"""
-function fwback_tMPO_initbetaonly(b::FwtMPOBlocks, time_sites::Vector{<:Index}; bl::ITensor = b.tp.bl, tr::ITensor)
-    ww = fw_tMPO_opentr(b, time_sites; init_beta_only=true, bl, tr)
-    fw_tMPO(ww, tr)
-end
 
+################# 
+#### MPS ########
+#################
 
 
 function fwback_left_tMPS( b::FwtMPOBlocks, time_sites::Vector{<:Index}; kwargs...)
