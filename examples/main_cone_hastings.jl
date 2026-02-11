@@ -18,7 +18,7 @@ function main_cone()
     init_state = up_state
 
     cutoff = 1e-10
-    maxdim = 512
+    maxdim = 256
     direction = "left"
 
     optimize_op = vI
@@ -61,5 +61,3 @@ function main_cone()
 end
 
 psi, psiR, cp = main_cone()
-
-println(chis)

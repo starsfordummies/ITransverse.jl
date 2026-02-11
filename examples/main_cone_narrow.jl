@@ -71,7 +71,3 @@ function main_cone()
 end
 
 psi, psiR, cp = main_cone()
-
-println(infos[:times])
-println(chis)
-println(real(expvals["Z"]))

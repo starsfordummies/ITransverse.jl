@@ -185,6 +185,7 @@ opsi4, sv = tapply(oo, psi; alg="zipup", cutoff=1e-12)
 
 @test opsi ≈ opsi2
 @test opsi ≈ opsi3
-@test opsi ≈ opsi4
+@test norm(opsi - opsi4) < 1e-7
+@show norm(opsi - opsi4)
 
 end

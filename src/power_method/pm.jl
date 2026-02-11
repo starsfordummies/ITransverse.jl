@@ -38,16 +38,12 @@ function powermethod_op(in_mps::MPS, in_mpo_1::MPO, in_mpo_O::MPO, pm_params::PM
     (; opt_method, itermax, truncp, normalization, compute_fidelity, eps_converged) = pm_params
     (; cutoff, maxdim) = truncp
 
-    # Normalize eps_converged by system size or larger chains will never converge as good...
-    eps_converged = eps_converged * length(in_mps)
     stopper = PMstopper(pm_params; eps_converged)
 
     ll = deepcopy(in_mps)
     rr = deepcopy(in_mps)
 
     sprevs = ones(length(in_mps)-1, maxlinkdim(in_mps)*max(maxlinkdim(in_mpo_1),maxlinkdim(in_mpo_O)))
-
-    #LRprev = overlap_noconj(in_mps,in_mps)
 
     p = Progress(itermax; desc="[PM|$(opt_method)] L=$(length(ll)), cutoff=$(cutoff), maxdim=$(maxdim), normalize=$(normalization)", showspeed=true) 
 
@@ -56,18 +52,6 @@ function powermethod_op(in_mps::MPS, in_mpo_1::MPO, in_mpo_O::MPO, pm_params::PM
     for jj = 1:itermax  
 
         rr_prev = compute_fidelity ? copy(rr) : nothing
-
-        # When do we normalize? Here I choose to do it at the beginning of each iteration 
-
-        if normalization == "norm"
-            ll = orthogonalize!(ll,1)
-            rr = orthogonalize!(rr,1)
-
-            ll = normalize(ll)
-            rr = normalize(rr)
-        else
-            normalize_for_overlap!(ll,rr)
-        end
 
 
         if opt_method == "RTM_LR"
@@ -117,6 +101,19 @@ function powermethod_op(in_mps::MPS, in_mpo_1::MPO, in_mpo_O::MPO, pm_params::PM
         else
             @error "Wrong optimization method: $opt_method"
         end
+
+
+        # Normalize after each step 
+        if normalization == "norm"
+            ll = orthogonalize!(ll,1)
+            rr = orthogonalize!(rr,1)
+
+            ll = normalize(ll)
+            rr = normalize(rr)
+        else
+            normalize_for_overlap!(ll,rr)
+        end
+
 
 
         ds2 = max_diff(sprevs, SVs) 
