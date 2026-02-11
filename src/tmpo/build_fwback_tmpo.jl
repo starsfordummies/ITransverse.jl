@@ -8,7 +8,7 @@ function fwback_tMPO(tp::tMPOParams, time_sites::Vector{<:Index}; kwargs...)
     fwback_tMPO(b, time_sites; kwargs...)
 end
 
-function fwback_tMPO(b::FwtMPOBlocks, time_sites::Vector{<:Index}, init_beta_only::Bool=false; kwargs...)
+function fwback_tMPO(b::FwtMPOBlocks, time_sites::Vector{<:Index}; init_beta_only::Bool=false, kwargs...)
     nbeta = b.tp.nbeta
 
     Ntot = length(time_sites) 
@@ -18,7 +18,7 @@ function fwback_tMPO(b::FwtMPOBlocks, time_sites::Vector{<:Index}, init_beta_onl
 
     Nfw = div(Nt,2)
 
-    betai, betaf = init_beta_only ? (div(nbeta,2), div(nbeta,2)) : (nbeta, 0)
+    betai, betaf = init_beta_only ? (nbeta, 0) : (div(nbeta,2), div(nbeta,2)) 
 
     fwback_tMPO(b, time_sites, betai, Nfw, Nfw, betaf; kwargs...)
 end
