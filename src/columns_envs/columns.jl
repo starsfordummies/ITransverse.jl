@@ -78,7 +78,7 @@ function contract_cols(cc::Columns; maxdim=1024)
     rr = cc[end]
 
     for jj = NN-1:-1:div(NN,2)+1
-        rr, _ = tapply(Algorithm("densitymatrix"), cc[jj], rr; truncate=true, maxdim)
+        rr, _ = tapply(Algorithm("densitymatrix"), cc[jj], rr; maxdim)
     end
 
     overlap_noconj(ll,rr)
