@@ -72,12 +72,12 @@ function vn_entanglement_entropy(psi::MPS)
     workpsi = orthogonalize(psi,1)
     workpsi = workpsi/norm(workpsi)
 
-    ents_vn = Vector{Float64}()
+    ents_vn = Vector{Float64}(undef, length(workpsi)-1)
 
     for icut=1:length(workpsi)-1
         Si = vn_entanglement_entropy!(workpsi, icut, normalize=false)
         # no need to normalize if we normalize psi already before
-        push!(ents_vn, Si)
+        ents_vn[icut] = Si
     end
 
     return ents_vn

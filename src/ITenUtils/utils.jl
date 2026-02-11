@@ -74,6 +74,9 @@ function convert_keys_to_symbols_recursive(dict::Dict)
 end
 
 
+""" Determines how to distribute `nbeta` steps along a chain of total length `Ntot`. 
+If `init_beta_only=true` it puts all of them at the beginning, otherwise it puts half of them 
+at the beginning and the other half at the end. Returns limits b1,b2 """
 function beta_lims(Ntot::Int, nbeta::Int, init_beta_only::Bool)
 
     b1 = if init_beta_only 

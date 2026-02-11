@@ -27,7 +27,7 @@ cut_sv = 1e-12
     psi_c = deepcopy(psi)
     phi_c = deepcopy(phi)
 
-    psi_trunc, phi_trunc, s = truncate_lsweep(psi, phi, cutoff=cut_sv, chi_max=chimaxs)
+    psi_trunc, phi_trunc, s = truncate_lsweep(psi, phi, cutoff=cut_sv, maxdim=chimaxs)
 
     # test we don't mess up with data
     @test inner(psi, psi_c) ≈ 1
@@ -51,7 +51,7 @@ end
     psi_c = deepcopy(psi)
     phi_c = deepcopy(phi)
 
-    psi_trunc, phi_trunc, s = truncate_rsweep(psi, phi, cutoff=cut_sv, chi_max=chimaxs)
+    psi_trunc, phi_trunc, s = truncate_rsweep(psi, phi, cutoff=cut_sv, maxdim=chimaxs)
     
     # test we don't mess up with data
     @test inner(psi, psi_c) ≈ 1
@@ -74,8 +74,8 @@ end
 a = random_mps(ComplexF64, sites, linkdims=chimaxs)
 b = random_mps(ComplexF64, sites, linkdims=chimaxs)
 
-atr, btr, ss = truncate_rsweep(a,b, cutoff=cut_sv, chi_max=chimaxs)
-btr2, atr2, ss2 = truncate_rsweep(b,a, cutoff=cut_sv, chi_max=chimaxs)
+atr, btr, ss = truncate_rsweep(a,b, cutoff=cut_sv, maxdim=chimaxs)
+btr2, atr2, ss2 = truncate_rsweep(b,a, cutoff=cut_sv, maxdim=chimaxs)
 
 @test atr ≈ atr2 
 @test btr ≈ btr2 
@@ -97,9 +97,9 @@ end
         @info "Cutting at $(cut_sv)"
         @info overlap_noconj(a,b)
 
-        atr, btr, s1 = truncate_rsweep(a,b, cutoff=cut_sv, chi_max=chimaxs);
-        atr2, btr2, s2 = truncate_rsweep(a,b, cutoff=cut_sv, chi_max=chimaxs, fast=true);
-        s3 = truncate_rsweep!(a,b, cutoff=cut_sv, chi_max=chimaxs)
+        atr, btr, s1 = truncate_rsweep(a,b, cutoff=cut_sv, maxdim=chimaxs);
+        atr2, btr2, s2 = truncate_rsweep(a,b, cutoff=cut_sv, maxdim=chimaxs, fast=true);
+        s3 = truncate_rsweep!(a,b, cutoff=cut_sv, maxdim=chimaxs)
         
         @test norm(atr-atr2) < 1e-14
         @test norm(btr-btr2) < 1e-14
@@ -137,8 +137,8 @@ end
         @info "Cutting at $(cut_sv)"
         @show overlap_noconj(a,a)
 
-        atr1,s1 = truncate_rsweep_sym(a, cutoff=cut_sv, chi_max=chimaxs, method="SVD");
-        atr2,s2 = truncate_rsweep_sym(a, cutoff=cut_sv, chi_max=chimaxs, method="SVD", fast=true);
+        atr1,s1 = truncate_rsweep_sym(a, cutoff=cut_sv, maxdim=chimaxs, method="SVD");
+        atr2,s2 = truncate_rsweep_sym(a, cutoff=cut_sv, maxdim=chimaxs, method="SVD", fast=true);
         
         @test norm(atr1-atr2) < 1e-14
         @test s1 ≈ s2 

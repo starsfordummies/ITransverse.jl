@@ -18,12 +18,12 @@ function main_cone()
     init_state = up_state
 
     cutoff = 1e-10
-    maxbondim = 512
+    maxdim = 256
     direction = "left"
 
     optimize_op = vI
     
-    truncp = TruncParams(cutoff, maxbondim, direction)
+    truncp = TruncParams(cutoff, maxdim, direction)
 
     Nsteps = 16
 
@@ -61,5 +61,3 @@ function main_cone()
 end
 
 psi, psiR, cp = main_cone()
-
-println(chis)

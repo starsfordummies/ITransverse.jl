@@ -43,6 +43,7 @@ end
 
 
 mutable struct PMstopper
+    icurr::Int
     best_ds2::Float64
     iters_without_improvement::Int
     eps_converged::Float64
@@ -50,8 +51,12 @@ mutable struct PMstopper
     stuck_after::Int
 end
 
-function PMstopper(pmp::PMParams; init_ds2 = Inf, eps_converged=pmp.eps_converged, eps_max::Float64=1e-2, stuck_after::Int=pmp.stuck_after)
-    PMstopper(init_ds2, 0, eps_converged, eps_max, stuck_after)
+function PMstopper(pmp::PMParams; 
+    init_ds2 = Inf, 
+    eps_converged=pmp.eps_converged, 
+    eps_max::Float64=0.05, 
+    stuck_after::Int=pmp.stuck_after)
+    PMstopper(0, init_ds2, 0, eps_converged, eps_max, stuck_after)
 end
 
 function should_stop_ds2!(

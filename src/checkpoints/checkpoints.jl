@@ -41,6 +41,7 @@ function DoCheckpoint(filename;
                       latest_savers=NamedTuple())
 
     history = Dict{Symbol, Vector}()
+    @info "CP: Initializing observables $(keys(observables))"
     for name in keys(observables)
         history[name] = Any[]
     end

@@ -30,7 +30,7 @@ function tebd_ev(Nx::Int, tp::tMPOParams, Nt::Int, ops::Vector{<:String}, truncp
 
     for nt = 1:Nt
         # println("timestep N°=$(nt)\ttime=$(t)")
-        psi_t = apply(eH, psi_t; maxdim = truncp.maxbondim, cutoff = truncp.cutoff, normalize = true)
+        psi_t = apply(eH, psi_t; maxdim = truncp.maxdim, cutoff = truncp.cutoff, normalize = true)
         for op in keys(evs)
             push!(evs[op], expect(psi_t, op)[LL÷2])
         end
@@ -62,7 +62,7 @@ function tebd(psi0::MPS, tp::tMPOParams, Nt::Int, truncp::TruncParams)
 
     for nt = 1:Nt
         # println("timestep N°=$(nt)\ttime=$(t)")
-        psi_t = apply(eH, psi_t; maxdim = truncp.maxbondim, cutoff = truncp.cutoff, normalize = true)
+        psi_t = apply(eH, psi_t; maxdim = truncp.maxdim, cutoff = truncp.cutoff, normalize = true)
         @info "T=$(dt*nt), chi=$(maxlinkdim(psi_t))"
     end
 
@@ -87,7 +87,7 @@ function tebd_z(Nt::Int, tp::tMPOParams; N::Int = 2*Nt+4, truncp=TruncParams())
     evs = []
     for nt = 1:Nt
         # println("timestep N°=$(nt)\ttime=$(t)")
-        psi_t = apply(eH, psi_t; maxdim = truncp.maxbondim, cutoff = truncp.cutoff, normalize = true)
+        psi_t = apply(eH, psi_t; maxdim = truncp.maxdim, cutoff = truncp.cutoff, normalize = true)
         push!(evs,expect(psi_t, "Z")[div(LL,2)])
     end
     

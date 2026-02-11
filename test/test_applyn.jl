@@ -88,6 +88,11 @@ end
 
 end
 
+@testset "various apply" begin
+
+
+b = FoldtMPOBlocks(ising_tp())
+ss = siteinds(4, 10)
 
 n_ext = 3 
 
@@ -166,3 +171,21 @@ oooR = ITransverse.folded_tMPO_ext(b, ss; LR=:right, n_ext=3, fold_op=[1,0,0,-1]
 psiR = random_mps(ss[1:end-3], linkdims=20)
 
 expval_LR(psiL, oooR, psiR)
+
+
+ss = siteinds("S=1/2", 10)
+psi = random_mps(ss, linkdims=20)
+oo = random_mpo(ss) + random_mpo(ss)
+pp = random_mpo(ss) + random_mpo(ss)
+
+opsi = apply(oo, psi; cutoff=1e-12)
+opsi2, sv = tapply(oo, psi; alg="naive", cutoff=1e-12)
+opsi3, sv = tapply(oo, psi; alg="densitymatrix", cutoff=1e-12)
+opsi4, sv = tapply(oo, psi; alg="zipup", cutoff=1e-12)
+
+@test opsi ≈ opsi2
+@test opsi ≈ opsi3
+@test norm(opsi - opsi4) < 1e-7
+@show norm(opsi - opsi4)
+
+end

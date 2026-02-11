@@ -13,110 +13,100 @@ Power method for *symmetric* case: takes as input a single MPS |L>,
 function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams; fast::Bool=false)
 
     (; itermax, eps_converged, opt_method, truncp, increase_chi, normalization, compute_fidelity) = pm_params
-    (; cutoff, maxbondim) = truncp
+    (; cutoff, maxdim) = truncp
 
     # Normalize eps_converged by system size or larger chains will never converge as good...
     eps_converged = eps_converged * length(in_mps)
     stopper = PMstopper(pm_params; eps_converged)
   
     # normalize initial boundary for stability
-    psi_ortho = normalize(in_mps)
+    psi_work = normalize(in_mps)
 
     ds2s = [] 
-    ds2 = 0. 
-    sprevs = fill(1., length(in_mps)-1)
+    sprevs = ones(length(in_mps)-1, maxlinkdim(in_mps)*maxlinkdim(in_mpo))
 
-    p = Progress(itermax; desc="[Symmetric PM|$(opt_method)] L=$(length(in_mps)), cutoff=$(cutoff), χmax=$(maxbondim), normalize=$(normalization))", showspeed=true) 
+    p = Progress(itermax; desc="[Symmetric PM|$(opt_method)] L=$(length(in_mps)), cutoff=$(cutoff), χmax=$(maxdim), normalize=$(normalization))", showspeed=true) 
 
-    max_chi = maxbondim
-    maxbondim = 20 
+    max_chi = maxdim
+    maxdim = 20 
 
     for jj = 1:itermax
 
+        if opt_method == "RTMRDM" && jj == div(itermax,2)
+            #increase_chi = false
+            max_chi = maxlinkdim(psi_work)+4 # give it some room for adjustment
+            opt_method = "RDM"
+            @info "$(jj) - Changing method to RDM "
+        end
+
         if compute_fidelity
-            psi_prev = copy(psi_ortho)
+            psi_prev = copy(psi_work)
             prev_norm = norm(psi_prev)
         end
 
-
         if increase_chi
-            maxbondim += 2
-            maxbondim = minimum([maxbondim, max_chi])
+            maxdim += 2
+            maxdim = minimum([maxdim, max_chi])
         else
-            maxbondim = max_chi
+            maxdim = max_chi
         end
 
-        psi_ortho, sjj, overlap = if opt_method == "RDM"
-            psi_ortho_n = apply(in_mpo, psi_ortho; cutoff=cutoff, maxdim=maxbondim)
-            overlap_n = overlap_noconj(psi_ortho, psi_ortho)
-            sjj_n = vn_entanglement_entropy(psi_ortho)
-            (psi_ortho_n, sjj_n, overlap_n)
-        elseif opt_method == "RTM"
-            psi = applyn(in_mpo, psi_ortho)
-            truncate_rsweep_sym(psi; cutoff=cutoff, chi_max=maxbondim, method="SVD", fast)
-        elseif opt_method == "RTMRDM"
-            if jj == div(itermax,2)
-                #increase_chi = false
-                max_chi = maxlinkdim(psi_ortho)+4 # give it some room for adjustment
-                opt_method = "RDM"
-                @info "$(jj) - Changing method to RDM "
-                overlap = overlap_noconj(psi_ortho, psi_ortho)
-                sjj = vn_entanglement_entropy(psi_ortho)
-            else # do RTM
-                psi = applyn(in_mpo, psi_ortho)
-                truncate_rsweep_sym(psi, cutoff=cutoff, chi_max=maxbondim, method="SVD")
-            end
-        #  TODO this can be less accurate
-        elseif opt_method == "RTM_EIG"
-            psi = applyn(in_mpo, psi_ortho)
-            truncate_rsweep_sym(psi, cutoff=cutoff, chi_max=maxbondim, method="EIG")
+        psi_work, sv = if opt_method == "RDM"
+            tapply(Algorithm("densitymatrix"), in_mpo, psi_work; cutoff=cutoff, maxdim=maxdim)
+        elseif opt_method == "RTM" || opt_method == "RTMRDM"
+            tapply(Algorithm("RTMsym"), in_mpo, psi_work; cutoff=cutoff, maxdim=maxdim, method="SVD", fast)
+        elseif opt_method == "RTM_EIG" # this can be less accurate
+            tapply(Algorithm("RTMsym"), in_mpo, psi_work; cutoff=cutoff, maxdim=maxdim, method="EIG", fast)
         else
-            @error "Specify a valid opt_method: RDM|RTM|..."
+            error("Specify a valid opt_method: RDM|RTM|...")
         end
-            
+
 
         if normalization == "norm"
             #orthogonalize!(psi_ortho,1)
-            normalize!(psi_ortho)
+            normalize!(psi_work)
         elseif normalization == "overlap"
             # normalize so that <L|R> = 1 
-            psi_ortho = psi_ortho / sqrt(overlap)
+            overlap = overlap_noconj(psi_work,psi_work)
+            psi_work = psi_work / sqrt(overlap)
         end # otherwise we do nothing - norm can blow up! 
 
         fidelity = if compute_fidelity 
-           abs( log(abs(inner(psi_ortho, psi_prev))) - log(norm(psi_ortho)) - log(norm(psi_prev)) ) / length(psi_ortho)
+           abs( log(abs(inner(psi_work, psi_prev))) - log(norm(psi_work)) - log(norm(psi_prev)) ) / length(psi_work)
         else 
             NaN
         end
 
-        chimax = maxlinkdim(psi_ortho)
+        ds2 = max_diff(sprevs, sv) 
+        @debug jj, ds2
 
-        ds2 = norm(sprevs - sjj)
         push!(ds2s, [ds2, fidelity])
 
-        sprevs = sjj
+        sprevs = sv
 
-        next!(p; showvalues = [(:Info,"[$(jj)] ds2=$(ds2), <R|Rprev> = $(fidelity), chi=$(maxlinkdim(psi_ortho))" )])
+        next!(p; showvalues = [(:Info,"[$(jj)] ds2=$(ds2), <R|Rprev> = $(fidelity), chi=$(maxlinkdim(psi_work))" )])
 
-        stop, reason = should_stop_ds2!(stopper,ds2)
+        if jj > 100
+            stop, reason = should_stop_ds2!(stopper,ds2)
 
-        # should we stop?
-        if stop
-            if reason == :converged
-                @info "Converged after $jj steps (ds2=$(ds2))"
-            elseif reason == :stuck
-                @warn "Iteration stuck after $jj steps (ds2=$(ds2)); stopping."
+            # should we stop?
+            if stop
+                if reason == :converged
+                    @info "Converged after $jj steps (ds2=$(ds2))"
+                elseif reason == :stuck
+                    @warn "Iteration stuck after $jj steps (ds2=$(ds2)); stopping."
+                end
+                break
             end
-            break
-        end
 
+        end
 
     end
 
-    println("Stopped after $(length(ds2s)) steps, final ds^2 = $(ds2s[end]), chimax=$(maxlinkdim(psi_ortho))")
+    println("Stopped after $(length(ds2s)) steps, final ds^2 = $(ds2s[end]), chimax=$(maxlinkdim(psi_work))")
 
     # nicer link labels
-    replace_linkinds!(psi_ortho, "Link,rotl=")
-    return psi_ortho, ds2s
+    replace_linkinds!(psi_work, "Link,rotl=")
+    return psi_work, ds2s
 
 end

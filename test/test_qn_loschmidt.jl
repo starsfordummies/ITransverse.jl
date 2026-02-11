@@ -11,7 +11,7 @@ nbeta = 4
 
 tp = tMPOParams(0.1, expH_ising_murg, mp, nbeta, [1,0])
 
-maxbondim=128
+maxdim=128
 Ntime_steps = 30
 
 mycutoff=1e-12
@@ -28,7 +28,7 @@ mpo= fw_tMPO(b, time_sites; tr = tp.bl)
 start_mps = fw_tMPS(b, time_sites; LR=:right, tr = tp.bl)
 
 
-truncp = TruncParams(mycutoff, maxbondim)
+truncp = TruncParams(mycutoff, maxdim)
 
 pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM", "norm")
 psi_svd, ds2 = powermethod_sym(start_mps, mpo, pm_params)

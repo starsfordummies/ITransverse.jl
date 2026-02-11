@@ -20,11 +20,11 @@ init_state = plus_state
 @testset "Testing light cone for folded tMPO" begin
 
 cutoff = 1e-20
-maxbondim = 200
+maxdim = 200
 
-truncp = TruncParams(cutoff, maxbondim)
+truncp = TruncParams(cutoff, maxdim)
 
-Nsteps = 20
+Nsteps = 30
 
 mp = IsingParams(JXX, hz, gx)
 tp = tMPOParams(dt, expH_ising_murg, mp, nbeta, init_state)
@@ -69,5 +69,5 @@ psi, psiR, cp = run_cone(c0, b, cone_params, cp, Nsteps)
 ex_rtm_rw = cp.history[:X][end]
 @test abs(ex_rtm_rw - ex_rtm_r) < 0.001
 
-
+@show ex_rdm, ex_rtm_r, ex_rtm_lr, ex_rtm_rw
 end

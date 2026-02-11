@@ -36,20 +36,16 @@ by applying the relevant MPO to the resulting leading eigenvectors.
 function powermethod_op(in_mps::MPS, in_mpo_1::MPO, in_mpo_O::MPO, pm_params::PMParams)
 
     (; opt_method, itermax, truncp, normalization, compute_fidelity, eps_converged) = pm_params
-    (; cutoff, maxbondim) = truncp
+    (; cutoff, maxdim) = truncp
 
-    # Normalize eps_converged by system size or larger chains will never converge as good...
-    eps_converged = eps_converged * length(in_mps)
     stopper = PMstopper(pm_params; eps_converged)
 
     ll = deepcopy(in_mps)
     rr = deepcopy(in_mps)
 
-    sjj = fill(1., length(in_mps)-1)
-    sprevs = fill(1., length(in_mps)-1)
-    #LRprev = overlap_noconj(in_mps,in_mps)
+    sprevs = ones(length(in_mps)-1, maxlinkdim(in_mps)*max(maxlinkdim(in_mpo_1),maxlinkdim(in_mpo_O)))
 
-    p = Progress(itermax; desc="[PM|$(opt_method)] L=$(length(ll)), cutoff=$(cutoff), maxbondim=$(maxbondim), normalize=$(normalization)", showspeed=true) 
+    p = Progress(itermax; desc="[PM|$(opt_method)] L=$(length(ll)), cutoff=$(cutoff), maxdim=$(maxdim), normalize=$(normalization)", showspeed=true) 
 
     info_iterations = Dict(:chis => Int[], :ds2 => Float64[], :logfidelityRRnew => Float64[], :LRdiff => ComplexF64[] )
 
@@ -57,8 +53,57 @@ function powermethod_op(in_mps::MPS, in_mpo_1::MPO, in_mpo_O::MPO, pm_params::PM
 
         rr_prev = compute_fidelity ? copy(rr) : nothing
 
-        # When do we normalize? Here I choose to do it at the beginning of each iteration 
 
+        if opt_method == "RTM_LR"
+    
+            # optimize <LO|1R> -> new |R> 
+            OpsiR = applyn(in_mpo_1, rr)
+            OpsiL = applyns(in_mpo_O, ll)  
+
+            rr, _, SVs = truncate_sweep(OpsiR, OpsiL, truncp)
+
+            # optimize <L1|OR> -> new <L|  
+            #TODO: we could be using either the new rr here or the previous rr (in that case should define rr_work = rr before)
+            OpsiR = applyn(in_mpo_O, rr)
+            OpsiL = applyns(in_mpo_1, ll)  
+
+            _, ll, _ = truncate_sweep(OpsiR, OpsiL, truncp)
+
+        elseif opt_method == "RTM_R"
+
+            OpsiR = applyn(in_mpo_1, rr)
+            OpsiL = applyns(in_mpo_O, ll)  
+
+            rr, _, SVs = truncate_sweep(OpsiR, OpsiL, truncp)
+            ll = rr
+
+        elseif opt_method == "RTM_R_twolayers"
+
+            OpsiR = applyn(in_mpo_1, rr)
+            OpsiR = applyn(in_mpo_1, OpsiR)
+
+            OpsiL = applyns(in_mpo_1, rr)  
+            OpsiL = applyns(in_mpo_O, OpsiL)  
+
+            rr, _, SVs = truncate_sweep(OpsiR, OpsiL, truncp)
+            ll = rr
+
+        elseif opt_method == "RDM"
+        
+            ll, _ = tapplys(in_mpo_1, ll; cutoff, maxdim)
+            rr, SVs = tapply(in_mpo_1, rr; cutoff, maxdim)
+
+        elseif opt_method == "RDM_R"
+   
+            rr, SVs = tapply(in_mpo_1, rr; cutoff, maxdim)
+            ll = rr
+
+        else
+            @error "Wrong optimization method: $opt_method"
+        end
+
+
+        # Normalize after each step 
         if normalization == "norm"
             ll = orthogonalize!(ll,1)
             rr = orthogonalize!(rr,1)
@@ -70,65 +115,10 @@ function powermethod_op(in_mps::MPS, in_mpo_1::MPO, in_mpo_O::MPO, pm_params::PM
         end
 
 
-        if opt_method == "RTM_LR"
-    
-            # optimize <LO|1R> -> new |R> 
-            OpsiR = applyn(in_mpo_1, rr)
-            OpsiL = applyns(in_mpo_O, ll)  
 
-            rr, _, sjj = truncate_sweep(OpsiR, OpsiL, truncp)
-
-            # optimize <L1|OR> -> new <L|  
-            #TODO: we could be using either the new rr here or the previous rr (in that case should define rr_work = rr before)
-            OpsiR = applyn(in_mpo_O, rr)
-            OpsiL = applyns(in_mpo_1, ll)  
-
-            _, ll, _ = truncate_sweep(OpsiR, OpsiL, truncp)
-
-
-        elseif opt_method == "RTM_R"
-
-            OpsiR = applyn(in_mpo_1, rr)
-            OpsiL = applyns(in_mpo_O, ll)  
-
-            rr, _, sjj = truncate_sweep(OpsiR, OpsiL, truncp)
-            ll = rr
-
-        elseif opt_method == "RTM_R_twolayers"
-
-            OpsiR = applyn(in_mpo_1, rr)
-            OpsiR = applyn(in_mpo_1, OpsiR)
-
-            OpsiL = applyns(in_mpo_1, rr)  
-            OpsiL = applyns(in_mpo_O, OpsiL)  
-
-            rr, _, sjj = truncate_sweep(OpsiR, OpsiL, truncp)
-            ll = rr
-
-
-        elseif opt_method == "RDM"
-        
-            ll = applys(in_mpo_1, ll, cutoff=cutoff, maxdim=maxbondim)
-            rr = apply(in_mpo_1, rr, cutoff=cutoff, maxdim=maxbondim)
-
-            sjj = vn_entanglement_entropy(rr)
-
-            #@show jj, norm(ll), norm(rr), overlap_noconj(ll,rr)
-
-        elseif opt_method == "RDM_SYMLR"
-   
-            rr = apply(in_mpo_1, rr, cutoff=cutoff, maxdim=maxbondim)
-            sjj = vn_entanglement_entropy(rr)
-            ll = rr
-
-        else
-            @error "Wrong optimization method: $opt_method"
-        end
-
-
-        ds2 = norm(sprevs - sjj)
+        ds2 = max_diff(sprevs, SVs) 
         push!(info_iterations[:ds2], ds2)
-        sprevs = sjj
+        sprevs = SVs
 
         logfidelityRRnew = compute_fidelity ? logfidelity(rr_prev,rr) : NaN
 
@@ -186,7 +176,7 @@ function powermethod_both(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::
     stopper = PMstopper(pm_params; eps_converged)
   
     cutoff = truncp.cutoff
-    maxdim = truncp.maxbondim
+    maxdim = truncp.maxdim
 
     mpslen = length(in_mps)
 
@@ -197,7 +187,7 @@ function powermethod_both(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::
     ll = deepcopy(in_mps)
     rr = deepcopy(in_mps)
 
-    p = Progress(itermax; desc="L=$(length(ll)), cutoff=$(truncp.cutoff), χmax=$(truncp.maxbondim), normalize=$(normalization)", showspeed=true) 
+    p = Progress(itermax; desc="L=$(length(ll)), cutoff=$(truncp.cutoff), χmax=$(truncp.maxdim), normalize=$(normalization)", showspeed=true) 
 
     for jj = 1:itermax
 

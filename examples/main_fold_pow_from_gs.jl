@@ -7,11 +7,11 @@ function main_folded_pm()
     tp = ising_tp()
 
     cutoff = 1e-20
-    maxbondim = 120
+    maxdim = 120
     itermax = 100
     eps_converged=1e-6
 
-    truncp = TruncParams(cutoff, maxbondim)
+    truncp = TruncParams(cutoff, maxdim)
 
     pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM_LR", "norm")
 

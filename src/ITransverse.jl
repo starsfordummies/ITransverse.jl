@@ -11,6 +11,8 @@ using Statistics: mean, std
 
 using ITensors: OneITensor
 
+import NDTensors: Algorithm, @Algorithm_str
+
 include("ITenUtils/ITenUtils.jl")
 using .ITenUtils
 
@@ -21,8 +23,8 @@ include("BenchData/BenchData.jl")
 using .BenchData
 
 export pMPS,
-    overlap_noconj, 
-    applyn, applyns, applys,
+    overlap_noconj,
+    tapply, applyn, applys, applyns,
     isid,
     mergedicts!,
     fidelity, logfidelity,
@@ -47,6 +49,8 @@ include("entropies/rdm_svd_entropies.jl")
 include("entropies/gen_sym_entropies.jl")
 include("entropies/diagonalize_sym_rtm.jl")
 include("entropies/compute_rho2.jl")
+
+include("entropies/mutual_infos.jl")
 
 export vn_entanglement_entropy, 
     renyi_entropies,

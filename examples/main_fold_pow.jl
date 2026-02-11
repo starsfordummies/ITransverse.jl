@@ -19,14 +19,15 @@ function main_folded_pm()
     b = FoldtMPOBlocks(tp)
 
     cutoff = 1e-12
-    maxbondim = 128
+    maxdim = 128
     itermax = 800
     stuck_after = 100
-    eps_converged=1e-8
+    eps_converged=1e-9
 
-    truncp = TruncParams(cutoff, maxbondim)
+    truncp = TruncParams(cutoff, maxdim)
 
-    pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM_R", "norm", true, stuck_after)
+    pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM_R", "overlap", true, stuck_after)
+    #pm_params = PMParams(truncp, itermax, eps_converged, true, "RDM", "norm", true, stuck_after)
 
     evs = [] 
 
@@ -35,7 +36,7 @@ function main_folded_pm()
     r2s = [] 
 
 
-    ts = 60:60
+    ts = 50:50
     alltimes = ts.* tp.dt
 
     infos = Dict(:tp => tp, :pm_params => pm_params, :b => b, :times => alltimes)
@@ -52,13 +53,6 @@ function main_folded_pm()
 
         mpo_1 = folded_tMPO(b, time_sites)
 
-
-        # ll, rr, ds2_pm  = ITransverse.powermethod_sweep(init_mps, mpo_1, mpo_X, pm_params) 
-
-        # @show maxlinkdim(ll), maxlinkdim(rr)
-        # ev = compute_expvals(ll, rr, ["Z"], b)
-
-        # @show ev
         ll, rr, ds2_pm  = powermethod_op(init_mps, mpo_1, mpo_X, pm_params) 
 
         ev = compute_expvals(ll, rr, ["X","Z"], b)

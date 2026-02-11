@@ -1,7 +1,7 @@
 """ Builds left and right envs from a Columns struct. Returns left_envs, right_envs """
 function initialize_envs_rdm(cc::Columns, trunc_params; verbose::Bool=false)
 
-    (; cutoff, maxbondim) =  trunc_params
+    (; cutoff, maxdim) =  trunc_params
 
     NN = length(cc)
 
@@ -20,7 +20,7 @@ function initialize_envs_rdm(cc::Columns, trunc_params; verbose::Bool=false)
             @info "Building L[$(jj+1)] = LL[$(jj)]*E[$(jj+1)]"
         end
   
-        ll = applyns(cc[jj+1], left_envs[jj]; truncate=true, cutoff, maxdim=maxbondim)
+        ll = applyns(cc[jj+1], left_envs[jj]; truncate=true, cutoff, maxdim=maxdim)
 
         update_env!(left_envs, jj+1, ll)
 
@@ -39,7 +39,7 @@ function initialize_envs_rdm(cc::Columns, trunc_params; verbose::Bool=false)
             @info "Building R[$(jj-1)] = E[$(jj)]*R[$(jj)]"
         end
         #@show length(rr), length(mpo_R)
-        rr = applyn(cc[jj], right_envs[jj]; truncate=true, cutoff, maxdim=maxbondim)
+        rr = apply(Algorithm"naive",cc[jj], right_envs[jj]; truncate=true, cutoff, maxdim=maxdim)
         #@show rr
 
         update_env!(right_envs, jj-1, rr)

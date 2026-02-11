@@ -1,6 +1,6 @@
 struct TruncParams
     cutoff::Float64
-    maxbondim::Int64
+    maxdim::Int64
     direction::String
 end
 
@@ -8,6 +8,6 @@ end
 TruncParams() = TruncParams(1e-12, 256)
 
 # Default to right sweeps
-TruncParams(cutoff::Float64, maxbondim::Int64) = TruncParams(cutoff, maxbondim, "right")
+TruncParams(cutoff::Float64, maxdim::Int64) = TruncParams(cutoff, maxdim, "right")
  
-TruncParams(tp::TruncParams; cutoff::Real=tp.cutoff, maxbondim::Int=tp.maxbondim, direction=tp.direction) = TruncParams(cutoff,maxbondim,direction)
+TruncParams(tp::TruncParams; cutoff::Real=tp.cutoff, maxdim::Int=tp.maxdim, direction=tp.direction) = TruncParams(cutoff,maxdim,direction)

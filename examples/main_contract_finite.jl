@@ -12,9 +12,9 @@ function contract_strings(N::Int, length_string::Int, ts::Int, nbeta::Int)
     tp = tMPOParams(0.1, expH_ising_murg, mp, nbeta, [1,0])
 
     cutoff = 1e-12
-    maxbondim = 128
+    maxdim = 128
   
-    truncp = TruncParams(cutoff, maxbondim)
+    truncp = TruncParams(cutoff, maxdim)
 
     P_up = ComplexF64[1,0,0,0]
 

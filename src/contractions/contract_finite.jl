@@ -44,7 +44,7 @@ end
 """ One simple step of power method, just applies in_mpo to rr using RDM and computes its VN entropy"""
 function pm_step(in_mpo::MPO, rr::MPS, truncp::TruncParams)
     cutoff = truncp.cutoff
-    maxdim = truncp.maxbondim
+    maxdim = truncp.maxdim
 
     rr = apply(in_mpo, rr; cutoff, maxdim)
     sjj = vn_entanglement_entropy(rr)

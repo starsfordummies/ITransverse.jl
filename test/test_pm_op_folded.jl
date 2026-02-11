@@ -9,13 +9,12 @@ using Test
     tp = ising_tp()
 
     cutoff = 1e-20
-    maxbondim = 120
+    maxdim = 120
     itermax = 100
     verbose=false
-    eps_converged=1e-6
+    eps_converged=1e-10
 
-    truncp = TruncParams(cutoff, maxbondim)
-
+    truncp = TruncParams(cutoff, maxdim)
 
     sigX = ComplexF64[0,1,1,0]
 
@@ -43,14 +42,14 @@ using Test
     evsym = compute_expvals(ll, rr, ["X"], b)
     χ_R = maxlinkdim(ll)
 
-    truncp = TruncParams(sqrt(cutoff), maxbondim)
+    truncp = TruncParams(sqrt(cutoff), maxdim)
     pm_params = PMParams(truncp, itermax, eps_converged, true, "RDM", "norm")
     ll, rr, ds2_pm  = powermethod_op(init_mps, mpo_1, mpo_X, pm_params) 
     ev_rdm = compute_expvals(ll, rr, ["X"], b)
     χ_RDM = maxlinkdim(ll)
 
-    truncp = TruncParams(sqrt(cutoff), maxbondim)
-    pm_params = PMParams(truncp, itermax, eps_converged, true, "RDM_SYMLR", "norm")
+    truncp = TruncParams(sqrt(cutoff), maxdim)
+    pm_params = PMParams(truncp, itermax, eps_converged, true, "RDM_R", "norm")
     ll, rr, ds2_pm  = powermethod_op(init_mps, mpo_1, mpo_X, pm_params) 
     ev_sym_rdm = compute_expvals(ll, rr, ["X"], b)
     χ_sym_rdm = maxlinkdim(ll)
@@ -76,6 +75,7 @@ using Test
     @test Δ_RDM < 0.001
     @test Δ_RDMsym < 0.001
 
+    @show ev1, ev2, ev3, ev4
     @show χ_LR, χ_R, χ_RDM, χ_sym_rdm
     @show Δ_LR, Δ_R, Δ_RDM, Δ_RDMsym
 
