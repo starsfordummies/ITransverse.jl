@@ -79,7 +79,7 @@ function (cp::DoCheckpoint)(state, step::Int)
         for (k,v) in pairs(cp.history)
             cp.history[k] = collect(promote(v...))
         end
-        @info "Saving CP $(cp.filename)..." 
+        @info "Step $(step): Saving CP $(cp.filename)..." 
         save(cp.filename,
              "steps", cp.steps,
              "observables", cp.history,
