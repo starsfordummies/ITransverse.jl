@@ -172,26 +172,29 @@ function generalized_r2_entropy_symmetric(psiL::MPS; bring_left_gen::Bool=true, 
     
 end
 
+function vn_from_matrix(λ_matrix::Matrix{T}) where {T<:Real}
+    λ_safe = max.(λ_matrix, eps(T))
+    
+    # Compute -λ*log(λ) element-wise, zeroing out tiny eigenvalues
+    contrib = @. ifelse(λ_matrix > eps(T), -λ_matrix * log(λ_safe), 0.0)
+    
+    # Sum along columns (eigenvalues) for each row (bipartition)
+    return vec(sum(contrib, dims=2))
+end
 
-"""
-TODO update SVD entropies to new 
-"""
-# function generalized_svd_vn_entropy_symmetric(psi::MPS)
-
-#     _, ents = truncate_rsweep_sym(psi; cutoff=1e-12, maxdim=maxlinkdim(psi), method="SVD")
-     
-#     return real(ents)
-
-# end
+function generalized_svd_vn_entropy_symmetric(psi::MPS)
+    _, svs = truncate_rsweep_sym(psi; cutoff=1e-12, maxdim=maxlinkdim(psi), method="SVD")
+    return vn_from_matrix(svs)
+end
 
 
 
-# """ We can compute the "SVD" VN entropy by just doing a right (generalized) sweep """
-# function generalized_svd_vn_entropy(psi::MPS, phi::MPS)
-#     truncp = TruncParams(1e-12, maxlinkdim(psi)+maxlinkdim(phi))
-#     _, _, ents = truncate_rsweep(psi, phi, truncp)
-#     return real(ents)
-# end
+""" We can compute the "SVD" VN entropy by just doing a right (generalized) sweep """
+function generalized_svd_vn_entropy(psi::MPS, phi::MPS)
+    truncp = TruncParams(1e-12, maxlinkdim(psi)+maxlinkdim(phi))
+    _, _, svs = truncate_rsweep(psi, phi, truncp)
+    return vn_from_matrix(svs)
+end
 
 
 function renyi_eigs(eigss::ITensor, alpha::Number) 
