@@ -25,7 +25,7 @@ function main_folded_pm()
 
     truncp = TruncParams(cutoff, maxdim, "left")  # "left" = start from initial state (Hastings)
 
-    pm_params = PMParams(truncp, itermax, eps_converged, true, "RDM", "norm")
+    pm_params = PMParams(;truncp, itermax, eps_converged, opt_method="RDM", normalization="norm")
 
     evs = [] 
 

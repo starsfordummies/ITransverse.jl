@@ -147,16 +147,22 @@ end
 
 
 """ Generic sweep, calls left or right according to `truncp.direction` """
-function truncate_sweep(psi::MPS, phi::MPS, truncp::TruncParams; method::String="RTM")
+function truncate_sweep(psi::MPS, phi::MPS, truncp::TruncParams; method::String="RTM") 
+    (;cutoff,maxdim,direction) = truncp
+    truncate_sweep(psi, phi; cutoff,maxdim,direction,method)
+end
+
+
+function truncate_sweep(psi::MPS, phi::MPS; cutoff::Float64, maxdim::Int, direction::String, method::String="RTM")
 
     if method == "RDM"
-        ttruncate!(psi, cutoff=truncp.cutoff, maxdim=truncp.maxdim)
-        ttruncate!(phi, cutoff=truncp.cutoff, maxdim=truncp.maxdim)
+        ttruncate!(psi; cutoff,maxdim)
+        ttruncate!(phi; cutoff, maxdim)
     else
-        if truncp.direction == "left"
-            truncate_lsweep(psi, phi, truncp)
-        elseif truncp.direction == "right"
-            truncate_rsweep(psi, phi, truncp)
+        if direction == "left"
+            truncate_lsweep(psi, phi; cutoff,maxdim)
+        elseif direction == "right"
+            truncate_rsweep(psi, phi; cutoff,maxdim)
         else
             @error "Sweep direction should be left|right"
         end

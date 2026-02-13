@@ -57,8 +57,6 @@ export vn_entanglement_entropy,
     gensym_renyi_entropies,
     diagonalize_rdm,
     generalized_vn_entropy_symmetric,
-    generalized_svd_vn_entropy_symmetric,
-    generalized_svd_vn_entropy,
     diagonalize_rtm_symmetric,
     gen_renyi2
 

@@ -30,10 +30,10 @@ start_mps = fw_tMPS(b, time_sites; LR=:right, tr = tp.bl)
 
 truncp = TruncParams(mycutoff, maxdim)
 
-pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM", "norm")
+pm_params = PMParams(;truncp, itermax, eps_converged, opt_method="RTM", normalization="norm")
 psi_svd, ds2 = powermethod_sym(start_mps, mpo, pm_params)
 
-pm_params = PMParams(truncp, itermax, eps_converged, true, "RDM", "norm")
+pm_params = PMParams(;truncp, itermax, eps_converged, opt_method="RDM", normalization="norm")
 psi_rdm, ds2 = powermethod_sym(start_mps, mpo, pm_params)
 
 

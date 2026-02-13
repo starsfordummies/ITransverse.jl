@@ -56,8 +56,8 @@ function main_cone()
 
     psi, psiR, cp = run_cone(c0, b, cone_params, cp, Nsteps)
 
-    return  psi, psiR, cp
+    return  psi, psiR, checkpt
 
 end
 
-@time psi, psiR, cp = main_cone()
+@time psi, psiR, checkpt = main_cone()

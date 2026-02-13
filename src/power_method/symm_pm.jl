@@ -12,23 +12,15 @@ Power method for *symmetric* case: takes as input a single MPS |L>,
 """
 function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams; fast::Bool=false)
 
-    (; itermax, eps_converged, opt_method, truncp, increase_chi, normalization, compute_fidelity) = pm_params
-    (; cutoff, maxdim) = truncp
+    (; itermax, opt_method, truncp, normalization, compute_fidelity) = pm_params
 
-    # Normalize eps_converged by system size or larger chains will never converge as good...
-    eps_converged = eps_converged * length(in_mps)
-    stopper = PMstopper(pm_params; eps_converged)
-  
+    stepper, info_iterations, maxdims = init_pm(pm_params)
+    
     # normalize initial boundary for stability
     psi_work = normalize(in_mps)
 
-    ds2s = [] 
-    sprevs = ones(length(in_mps)-1, maxlinkdim(in_mps)*maxlinkdim(in_mpo))
+    p = Progress(itermax; desc="[Symmetric PM|$(opt_method)] L=$(length(in_mps)), cutoff=$(truncp.cutoff), χmax=$(maxdims[end]), normalize=$(normalization))", showspeed=true) 
 
-    p = Progress(itermax; desc="[Symmetric PM|$(opt_method)] L=$(length(in_mps)), cutoff=$(cutoff), χmax=$(maxdim), normalize=$(normalization))", showspeed=true) 
-
-    max_chi = maxdim
-    maxdim = 20 
 
     for jj = 1:itermax
 
@@ -41,22 +33,14 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams; fast::Bo
 
         if compute_fidelity
             psi_prev = copy(psi_work)
-            prev_norm = norm(psi_prev)
-        end
-
-        if increase_chi
-            maxdim += 2
-            maxdim = minimum([maxdim, max_chi])
-        else
-            maxdim = max_chi
         end
 
         psi_work, sv = if opt_method == "RDM"
-            tapply(Algorithm("densitymatrix"), in_mpo, psi_work; cutoff=cutoff, maxdim=maxdim)
+            tapply(Algorithm("densitymatrix"), in_mpo, psi_work; cutoff=truncp.cutoff, maxdim=maxdims[jj])
         elseif opt_method == "RTM" || opt_method == "RTMRDM"
-            tapply(Algorithm("RTMsym"), in_mpo, psi_work; cutoff=cutoff, maxdim=maxdim, method="SVD", fast)
+            tapply(Algorithm("RTMsym"), in_mpo, psi_work; cutoff=truncp.cutoff, maxdim=maxdims[jj], method="SVD", fast)
         elseif opt_method == "RTM_EIG" # this can be less accurate
-            tapply(Algorithm("RTMsym"), in_mpo, psi_work; cutoff=cutoff, maxdim=maxdim, method="EIG", fast)
+            psi_work, sv = tapply(Algorithm("RTMsym"), in_mpo, psi_work; cutoff=truncp.cutoff, maxdim=maxdims[jj], method="EIG", fast)
         else
             error("Specify a valid opt_method: RDM|RTM|...")
         end
@@ -77,36 +61,33 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams; fast::Bo
             NaN
         end
 
-        ds2 = max_diff(sprevs, sv) 
-        @debug jj, ds2
 
-        push!(ds2s, [ds2, fidelity])
+        stop, reason = pm_itercheck!(stepper, info_iterations, psi_work, sv)
 
-        sprevs = sv
-
-        next!(p; showvalues = [(:Info,"[$(jj)] ds2=$(ds2), <R|Rprev> = $(fidelity), chi=$(maxlinkdim(psi_work))" )])
-
-        if jj > 100
-            stop, reason = should_stop_ds2!(stopper,ds2)
-
-            # should we stop?
-            if stop
-                if reason == :converged
-                    @info "Converged after $jj steps (ds2=$(ds2))"
-                elseif reason == :stuck
-                    @warn "Iteration stuck after $jj steps (ds2=$(ds2)); stopping."
-                end
-                break
+        # should we stop?
+        if stop
+            if reason == :converged
+                @info "PM Converged after $jj steps | ds=$(last(info_iterations[:ds])) | chi=$(maxlinkdim(psi_work))"
+            elseif reason == :stuck
+                @warn "PM Stuck after $(stepper.iters_without_improvement)/$(jj) steps | ds=$(last(info_iterations[:ds])) | chi=$(maxlinkdim(psi_work))"
             end
-
+          
+            break
         end
+
+        if jj == itermax
+            @warn "PM **not** converged after $(jj) steps | ds=$(last(info_iterations[:ds])) | chi=$(maxlinkdim(psi_work))"
+        end
+
+
+        next!(p; showvalues = [(:Info,"[$(jj)]  chi=$(maxlinkdim(psi_work)) | ds2=$(last(info_iterations[:ds])) | <R|Rprev> = $(fidelity)" )])
+
+            
 
     end
 
-    println("Stopped after $(length(ds2s)) steps, final ds^2 = $(ds2s[end]), chimax=$(maxlinkdim(psi_work))")
-
-    # nicer link labels
+    # nicer link labels at the end
     replace_linkinds!(psi_work, "Link,rotl=")
-    return psi_work, ds2s
+    return psi_work, info_iterations
 
 end

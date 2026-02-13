@@ -7,14 +7,14 @@ using ITransverse: plus_state, up_state
 function ising_loschmidt(tp::tMPOParams, Tstart::Int, Tend::Int, nbeta::Int; Tstep::Int=1)
 
     cutoff = 1e-12
-    maxdim = 128
-    itermax = 800
+    maxdim = 32
+    itermax = 80
     eps_converged = 1e-12
-    stuck_after = 100
 
     truncp = TruncParams(cutoff, maxdim)
     #pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM", "overlap", true, stuck_after)
-    pm_params = PMParams(truncp, itermax, eps_converged, true, "RDM", "norm", true, stuck_after)
+    pm_params = PMParams(;truncp, itermax, eps_converged, opt_method="RTM", normalization="norm", stuck_after=200)
+
 
     ll_murgs = Vector{MPS}()
     ds2s = [] # Vector{Float64}[]
@@ -52,7 +52,6 @@ function ising_loschmidt(tp::tMPOParams, Tstart::Int, Tend::Int, nbeta::Int; Tst
 
         # Entropies 
         sgen = generalized_vn_entropy_symmetric(psi_trunc)
-        sgen_sv = generalized_svd_vn_entropy_symmetric(psi_trunc)
 
         # tsallis_gen = ITransverse.generalized_r2_entropy_symmetric(psi_trunc)
 
@@ -74,7 +73,7 @@ function ising_loschmidt(tp::tMPOParams, Tstart::Int, Tend::Int, nbeta::Int; Tst
         push!(overlapsLR, normalization)
         #push!(entropies, [sgen, sgen_sv, svn])
         push!(entropies, sgen)
-        push!(maxents, [maximum(real(sgen)), maximum(real(sgen_sv)), maximum(svn)])
+        push!(maxents, [maximum(real(sgen)), maximum(svn)])
 
 
         # curr_T = ts

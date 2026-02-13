@@ -14,7 +14,7 @@ function ising_fwb(tp::tMPOParams, TT::Int)
     eps_converged = 1e-9
 
     truncp = TruncParams(cutoff, maxdim)
-    pm_params = PMParams(truncp, itermax, eps_converged, true, "RDM", "overlap")
+    pm_params = PMParams(;truncp, itermax, eps_converged, opt_method="RDM", normalization="overlap")
 
     @info ("Optimizing for T=$(TT) with $(tp.nbeta) imag steps ")
     @info ("Initial state $(tp.bl)")
@@ -69,7 +69,7 @@ function ffolded(tp::tMPOParams, TT::Int)
 
     truncp = TruncParams(cutoff, maxdim)
 
-    pm_params = PMParams(truncp, itermax, eps_converged, true, "RDM", "overlap")
+    pm_params = PMParams(;truncp, itermax, eps_converged, opt_method="RDM", normalization="overlap")
 
 
     Nsteps = TT

@@ -21,13 +21,12 @@ function main_folded_pm()
     cutoff = 1e-12
     maxdim = 128
     itermax = 800
-    stuck_after = 100
     eps_converged=1e-9
 
     truncp = TruncParams(cutoff, maxdim)
 
-    pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM_R", "overlap", true, stuck_after)
-    #pm_params = PMParams(truncp, itermax, eps_converged, true, "RDM", "norm", true, stuck_after)
+    #pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM_R", "overlap", true, stuck_after)
+    pm_params = PMParams(;truncp, itermax, eps_converged, opt_method="RDM", normalization="norm")
 
     evs = [] 
 
