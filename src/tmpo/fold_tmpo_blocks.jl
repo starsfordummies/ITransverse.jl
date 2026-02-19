@@ -44,10 +44,17 @@ function FoldtMPOBlocks(x::Union{tMPOParams, MPO}; init_state=nothing, build_ima
     time_R = Index(dim(Ps), "Link,time")
 
     if check_sym
-        @info "Checking symmetry MPO tensor on physical(space) => bond(time) indices"
-        check_symmetry_swap(WWc, P, Ps)
-        @info "Checking symmetry MPO tensor on bond(space) => phys(time) indices"
-        check_symmetry_swap(WWc, link1, link2)
+        if check_symmetry_swap(WWc, P, Ps; verbose=false)
+            @info "MPO tensor symmetric in physical(space)  [=bond(time)] indices"
+        else
+            @warn "MPO tensor *not* symmetric in physical(space)  [=bond(time)] indices"
+        end
+
+        if check_symmetry_swap(WWc, link1, link2; verbose=false)
+            @info "MPO tensor symmetric in bond(space) [=phys(time)]  indices"
+        else
+            @warn "MPO tensor *not* symmetric in bond(space) [=phys(time)] indices"
+        end
     end
 
     unrotated_inds = (link1, link2, P, Ps)

@@ -83,13 +83,17 @@ function normdiff_under_swap(T::ITensor, i::Index, j::Index)
 end
 
 """ Checks if ITensor T is symmetric under swap of indices (i,j) (up to atol) """
-function check_symmetry_swap(T::ITensor, i::Index, j::Index; atol=1e-12)
+function check_symmetry_swap(T::ITensor, i::Index, j::Index; atol=1e-12, verbose::Bool=true)
     norm_difference = normdiff_under_swap(T, i, j)
     if norm_difference < atol
-        @info("Tensor Symmetric $i <-> $j")
+        if verbose
+            @info("Tensor Symmetric $i <-> $j")
+        end
         return true 
     else
-        @warn "Tensor *Not* Symmetric $i <-> $j, normdiff = $(norm_difference)"
+        if verbose
+            @warn "Tensor *Not* Symmetric $i <-> $j, normdiff = $(norm_difference)"
+        end
         return false
     end
 end
