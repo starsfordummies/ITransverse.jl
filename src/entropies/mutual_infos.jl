@@ -1,29 +1,3 @@
-# using ITensors, ITensorMPS, ITransverse
-# using JLD2
-# using ProgressMeter
-
-
-# using ITransverse: ptranspose_contract, trace_combinedind
-
-
-# # Assume we work with combined fw-back indices
-# function ITransverse.trace_combinedind(A::ITensor, iA::Index)
-
-#         dA = dim(iA)
-#         sqdA = isqrt(dA)
-
-#         @assert hasind(A, iA)
-
-#         temp_i1 = Index(sqdA)
-#         temp_i2 = Index(sqdA)
-
-#         comb = combiner(temp_i1, temp_i2)
-#         comb = replaceind(comb, combinedind(comb), iA)
-
-#         trace_combinedind(A, comb)
-# end
-
-
 """ Assume folded tMPS with physical indices time = fw x back,
 computes Renyi2 mutual info of IF seen as density matrix (operator) """
 function renyi2_mutual_folded_bipartition_rho(psi::MPS; normalize::String="trrho")
