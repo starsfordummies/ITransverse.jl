@@ -98,7 +98,7 @@ function renyi2_mutual_folded_bipartition_rho_2(psi::MPS; normalize::String="trr
         # Trace over rho, 
         trrho = ITensors.OneITensor()
         for kk in eachindex(W)
-            trrho *= ITransverse.trace_combinedind(W[kk], siteind(W,kk)) 
+            trrho *= trace_combinedind(W[kk], siteind(W,kk)) 
         end
 
         W = W/scalar(trrho)
@@ -120,7 +120,7 @@ function renyi2_mutual_folded_bipartition_rho_2(psi::MPS; normalize::String="trr
 
         halfBblock = ITensor(1.)
         for kk = reverse(cut+1:length(W))
-            halfBblock *= ITransverse.trace_combinedind(W[kk], siteind(W,kk))
+            halfBblock *= trace_combinedind(W[kk], siteind(W,kk))
             @assert ndims(halfBblock) <= 1  "[B $(kk) inds? $(inds(halfBblock))"
 
         end
@@ -134,7 +134,7 @@ function renyi2_mutual_folded_bipartition_rho_2(psi::MPS; normalize::String="trr
 
         halfAblock = ITensor(1.)
         for kk = 1:cut
-            halfAblock *= ITransverse.trace_combinedind(W[kk], siteind(W,kk))
+            halfAblock *= trace_combinedind(W[kk], siteind(W,kk))
         end
 
         Bblock = ITensor(1.)
@@ -181,8 +181,8 @@ function renyi2_mutual_folded_bipartition_rhoLrhoR(psiL::MPS, psiR::MPS; normali
         trrhoR = ITensor(1)
 
         for kk in eachindex(psiL)
-            trrhoL *= ITransverse.trace_combinedind(psiL[kk], siteind(psiL,kk)) 
-            trrhoR *= ITransverse.trace_combinedind(psiR[kk], siteind(psiR,kk)) 
+            trrhoL *= trace_combinedind(psiL[kk], siteind(psiL,kk)) 
+            trrhoR *= trace_combinedind(psiR[kk], siteind(psiR,kk)) 
         end
 
         psiL = psiL/scalar(trrhoL)
@@ -214,8 +214,8 @@ function renyi2_mutual_folded_bipartition_rhoLrhoR(psiL::MPS, psiR::MPS; normali
         BLblock = ITensor(1)
         BRblock = ITensor(1)
         for kk = reverse(cut+1:length(psiL))
-            BLblock *= ITransverse.trace_combinedind(psiL[kk], siteind(psiL,kk)) 
-            BRblock *= ITransverse.trace_combinedind(psiR[kk], siteind(psiR,kk)) 
+            BLblock *= trace_combinedind(psiL[kk], siteind(psiL,kk)) 
+            BRblock *= trace_combinedind(psiR[kk], siteind(psiR,kk)) 
             @assert ndims(BLblock) <= 1  "[B $(kk) inds? $(inds(BLblock))"
             @assert ndims(BRblock) <= 1  "[B $(kk) inds? $(inds(BRblock))"
         end
@@ -235,8 +235,8 @@ function renyi2_mutual_folded_bipartition_rhoLrhoR(psiL::MPS, psiR::MPS; normali
         ARblock = ITensor(1)
 
         for kk = 1:cut
-            ALblock *= ITransverse.trace_combinedind(psiL[kk], siteind(psiL,kk)) 
-            ARblock *= ITransverse.trace_combinedind(psiR[kk], siteind(psiR,kk)) 
+            ALblock *= trace_combinedind(psiL[kk], siteind(psiL,kk)) 
+            ARblock *= trace_combinedind(psiR[kk], siteind(psiR,kk)) 
             @assert ndims(ALblock) <= 1  "[A $(kk) inds? $(inds(ALblock))"
             @assert ndims(ARblock) <= 1  "[A $(kk) inds? $(inds(ARblock))"
 
@@ -295,8 +295,8 @@ function renyi2_mutual_folded_bipartition_LR(psiL::MPS, psiR::MPS; normalize::St
         trrhoR = ITensor(1)
 
         for kk in eachindex(psiL)
-            trrhoL *= ITransverse.trace_combinedind(psiL[kk], siteind(psiL,kk)) 
-            trrhoR *= ITransverse.trace_combinedind(psiR[kk], siteind(psiR,kk)) 
+            trrhoL *= trace_combinedind(psiL[kk], siteind(psiL,kk)) 
+            trrhoR *= trace_combinedind(psiR[kk], siteind(psiR,kk)) 
         end
 
         psiL = psiL/scalar(trrhoL)
@@ -390,61 +390,6 @@ end
 
 
 
-""" Trace an ITensor over combined indices given by the combiner """
-function trace_cind(a::ITensor, combiner::ITensor)
-    (_, c1, c2) = inds(combiner)
-    a = a * dag(combiner)
-    a = a * delta(c1,c2)
-    return a 
-end
-
-
-# Assume we work with combined fw-back indices
-function trace_cind(A::ITensor, iA::Index)
-
-        dA = dim(iA)
-        sqdA = isqrt(dA)
-
-        @assert hasind(A, iA)
-
-        temp_i1 = Index(sqdA)
-        temp_i2 = Index(sqdA)
-
-        comb = combiner(temp_i1, temp_i2)
-        comb = replaceind(comb, combinedind(comb), iA)
-        
-        trace_combinedind(A, comb)
-end
-
-
-function ptr_contract(A::ITensor, B::ITensor, iA::Index, iB::Index)
-
-    @assert hasind(A, iA)
-    @assert hasind(B, iB)
-   
-    dA = dim(iA)
-    sqdA = isqrt(dA)
-
-    @assert hasind(A, iA)
-
-    temp_i1 = Index(sqdA)
-    temp_i2 = Index(sqdA)
-
-
-    c1 = combiner(temp_i1, temp_i2)
-    c2 = combiner(temp_i2, temp_i1)
-
-    combA = A * replaceind(c1, combinedind(c1), iA)
-    combB = B * replaceind(c2, combinedind(c2), iB)
-
-    #@show commoninds(combA, combB)
-
-    AB = combA * combB
-
-    return AB
-
-end
-
 """ Ugly chi^5 chunk builder for symmetric case """
 function tm_chunk(psi::MPS, i1::Int, i2::Int, prev_chunk::ITensor=ITensor(1); flip_fb::Bool, contract_from_right::Bool=false)
     tm = prev_chunk
@@ -454,7 +399,7 @@ function tm_chunk(psi::MPS, i1::Int, i2::Int, prev_chunk::ITensor=ITensor(1); fl
     for kk in rrange
         tm *= psi[kk]
         if flip_fb
-            tm = ptr_contract(tm, psi2[kk], ss[kk], ss[kk])  # or: ptranspose_contract()
+            tm = ptranspose_contract(tm, psi2[kk], ss[kk], ss[kk])  # or: ptranspose_contract()
         else
             tm *= psi2[kk]
         end
@@ -474,7 +419,7 @@ function ptr_chunk(psi::MPS, n1::Int, n2::Int)
     ss = siteinds(psi)
 
     for kk = n1:n2
-        chunk *= trace_cind(psi[kk], ss[kk])
+        chunk *= trace_combinedind(psi[kk], ss[kk])
     end
 
     @assert ndims(chunk) < 3 "?? $(inds(chunk))"
@@ -676,4 +621,56 @@ function compute_rho2s(psi::MPS, length_intervals::Int)
 
 end
 
+function compute_sn_cut(psi::MPS, n::Int; cut::Int=div(length(psi),2), cutoff=1e-10, maxdim=maxlinkdim(psi))
+    ss = siteinds(psi)
 
+    for kk = length(psi):-1:cut
+        psi[kk] = trace_combinedind(psi[kk], ss[kk])
+    end
+
+    psi = ITenUtils.contract_dangling!(psi)
+
+    orthogonalize!(psi,1)
+
+    @show length(psi)
+
+    oo = reopen_inds!(psi, different_fwback_inds=false)
+
+    oo = oo/ITenUtils.trace_mpo(oo)
+
+    @show siteinds(oo)
+    @show linkinds(oo)
+
+    rho2 = copy(oo)
+    for kk = 2:n
+        @show kk
+        rho2 = apply(oo, rho2; cutoff,maxdim)
+    end
+
+    ITenUtils.trace_mpo(rho2)
+end
+
+
+function t4mid_slice(psi::MPS)
+    NN = length(psi)
+    cut = div(NN,2)
+
+
+    ll = linkinds(psi)
+    phi = prime(linkinds,psi)
+
+    for ii = 1:dim(ll[cut])
+        for jj = 1:dim(ll[cut])
+                
+            lenv = ITensors.OneITensor()
+            for kk = 1:4
+                lenv *= psi[kk]
+                lenv *= phi[kk]
+            end
+
+        end
+
+    end
+
+    return 
+end

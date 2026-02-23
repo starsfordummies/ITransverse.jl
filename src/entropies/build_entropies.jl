@@ -65,23 +65,3 @@ function renyi_entropies(spectra::Vector{<:AbstractVector};
 
     return allents
 end
-
-
-#= 
-function vn_entanglement_entropy(spectrum)
-    sum(-spectrum.*log.(spectrum))
-end
-
-
-""" Given input a sum(eigenvalues^alpha), returns renyi log(sum())/1-alpha """
-function renyi(spectrum, alpha=2)
-    return log.(sum(spectrum.^alpha))./(1-alpha)
-end
-    
-
-
-""" Given input a sum(eigenvalues^alpha), returns tsallis (sum()-1)/1-alpha """
-function tsallis(spectrum, alpha=2)
-    return (sum(spectrum.^alpha) .-1)./(1-alpha)
-end
-=#

@@ -148,6 +148,8 @@ function open_ind(a::ITensor, comb_ind::Index, i1::Index, i2::Index)
     return a * dag(c)
 end
 
+
+""" Reopen inds of a folded MPS using the input combiner `combs`, returns an MPO """
 function reopen_inds!(WWm::MPS, combs)
     for (ii, c) in enumerate(combs)
         #iinds = uniqueinds(inds(c), combinedind(c))

@@ -139,6 +139,17 @@ function random_unitary_svd(linds::Tuple, rind::Index)
     return u 
 end
 
+function haar_isometry(linds, rinds)
+
+    Ldim = prod(dim.(linds))
+    Rdim = prod(dim.(rinds))
+
+    M = haar_isometry(Ldim, Rdim)
+
+    return ITensor(M, linds..., rinds...)
+
+end
+
 
 """ hacky way to extract physical indices from an ITensor, hoping that we've been hintful enough.
 - if the ITensor has only 1 dim, that's the physical dim
@@ -204,8 +215,42 @@ function random_iso(i1::Index, i2::Index)
     return u,s,v
 end
 
+""" Extends ITensors' contract() to compute the product of two tensors along given indices
+Basically a shorthand for t1 * replaceind(t2, i2 => i1) 
+"""
 function ITensors.contract(t1::ITensor, t2::ITensor, i1::Index, i2::Index)
     @assert hasind(t1, i1)
     @assert hasind(t2, i2)
     return t1 * replaceind(t2, i2 => i1)
+end
+
+
+""" Contracts two ITensors over combined indices iA, iB: reopens them, 
+partial transposes the legs of one and contracts the two  """
+function ptranspose_contract(A::ITensor, B::ITensor, iA::Index, iB::Index)
+
+    @assert hasind(A, iA)
+    @assert hasind(B, iB)
+   
+    dA = dim(iA)
+    sqdA = isqrt(dA)
+
+    @assert hasind(A, iA)
+
+    temp_i1 = Index(sqdA)
+    temp_i2 = Index(sqdA)
+
+
+    c1 = combiner(temp_i1, temp_i2)
+    c2 = combiner(temp_i2, temp_i1)
+
+    combA = A * replaceind(c1, combinedind(c1), iA)
+    combB = B * replaceind(c2, combinedind(c2), iB)
+
+    #@show commoninds(combA, combB)
+
+    AB = combA * combB
+
+    return AB
+
 end

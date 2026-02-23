@@ -105,6 +105,28 @@ function random_unitary_svd(d::Int)
     return u 
 end
 
+"""
+    haar_isometry(d_out::Int, d_in::Int)
+
+Generate a Haar-random isometry of size (d_out, d_in),
+i.e., a complex matrix V such that V'*V = I_{d_in}.
+"""
+function haar_isometry(d_out::Int, d_in::Int)
+    @assert d_out ≥ d_in "Output dimension must be ≥ input dimension"
+
+    # Step 1: complex Ginibre matrix
+    G = randn(ComplexF64, d_out, d_in)
+
+    # Step 2: thin QR decomposition
+    Q, R = qr(G)  # Q: d_out × d_in, column-orthonormal
+
+    # Step 3: correct phases of diagonal of R
+    diagR = diag(R)
+    ph = diagR ./ abs.(diagR)
+    Q = Q * Diagonal(ph)
+
+    return Matrix(Q)  # convert from Q type to plain Array
+end
 
 
 """ If we're SVD-ing a rank-2 ITensor, we can do it allocating much less memory and without needing to specify indices"""

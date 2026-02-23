@@ -1,5 +1,6 @@
 import ITensorMPS: replace_siteinds!, replace_siteinds
 
+""" Builds a product MPS """ 
 function pMPS(ss::Vector{<:Index}, site_tensor::AbstractVector{<:Number})
     psi = MPS(ss)
     for j in eachindex(psi)
@@ -170,15 +171,7 @@ function normalize_for_overlap!(psi::AbstractMPS, phi::AbstractMPS)
 
 end
 
-
-# function ITensorMPS.replace_siteinds!(M::MPO, sites)
-#     for j in eachindex(M)
-#       sj = siteind(M, j)
-#       M[j] = replaceinds(M[j], (sj,sj') => (sites[j],sites[j]'))
-#     end
-#     return M
-#   end
-
+""" Returns a copy of the input MPO `W` with new siteinds specified """
 function ITensorMPS.replace_siteinds(W::MPO, new_in_sites, new_out_sites=dag(new_in_sites)')
   replace_siteinds!(copy(W), new_in_sites, new_out_sites)
 end
@@ -220,6 +213,7 @@ end
 """ Given a list of tensors in the form [vL, p, p', vR], builds an MPO.
 Note that the index order sanity is left to the user!  """
 function mpo_from_arrays(array_list, ss = siteinds(size(array_list[1],2), length(array_list)))
+    @warn "Assuming [vL, p, p', vR] ordering for MPO tensors! " 
     @assert length(array_list) > 2
     @assert length(ss) == length(array_list)
     @assert size(array_list[2], 1) ==  size(array_list[2], 4) 
@@ -319,8 +313,6 @@ function check_mps_sanity(psi::MPS)
     return good
 end
 
-# i1 = Index(3,"a")
-# i2 = Index(4,"b")
 """ Experimental predictable combiner - returns a combiner whose combinedind id is the sum of the ids of the
 two indices I'm joining, hoping that nothing bad goes on - Should ensure that each time we pcombine two equal indices,
 we get the same combinedind  """
@@ -332,10 +324,8 @@ function pcombiner(i1::Index, i2::Index; kwargs...)
     return cc
 end
 
-# ck = combiner(i1,i2)
 
-
-""" This just daggers all the inds of an MPS/MPO, no conjugation is made """
+""" Daggers inplace all the *inds* of an MPS/MPO, no conjugation is made """
 function daginds!(psi::AbstractMPS)
     for T in psi 
         ITensors.setinds!(T, dag(inds(T)))
@@ -399,6 +389,7 @@ end
 
 allsiteinds(A::AbstractMPS) = vcat(siteinds(A)...)
 
+""" Returns the trace of the MPO between its `in` and `out` indices """
 function trace_mpo(w::MPO)
     sw = siteinds(w)
 
@@ -410,6 +401,7 @@ function trace_mpo(w::MPO)
     return scalar(ttrace)
 end
 
+""" Computes trace(MPO^2) with the MPO seen as matrix in its `in` vs `out` indices """
 function trace_mpo_squared(rho::MPO)
     trace = ITensors.OneITensor()
     rho2 = swapprime(sim(linkinds,rho), 0,1)
@@ -422,6 +414,7 @@ function trace_mpo_squared(rho::MPO)
     return scalar(trace)
 end
 
+""" Computes trace(mpoA*mpoB) with the MPOs seen as matrices in their `in` vs `out` indices """
 function trace_mpo_ab(mpoA::MPO, mpoB::MPO, flip_b_sites::Bool=false)
     @assert siteinds(mpoA) == siteinds(mpoB) "Siteinds should match for now"
     trace = ITensors.OneITensor()
@@ -438,3 +431,6 @@ function trace_mpo_ab(mpoA::MPO, mpoB::MPO, flip_b_sites::Bool=false)
     return scalar(trace)
 end
 
+
+# function random_mps_haaruni(ss::Vector{<:Index})
+#     for kk = 
