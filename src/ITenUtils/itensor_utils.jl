@@ -161,14 +161,7 @@ function phys_ind(A::ITensor)
     physind = if ndims(A) == 1
         ind(A,1)
     else
-        if !isempty(inds(A,"phys"))
-            inds(A,"phys")[1]
-        elseif !isempty(inds(A,"Site"))
-            inds(A,"Site")[1]
-        else
-            @error "Not sure what to do here, please label physical index in tensor"
-            nothing
-        end
+       only(inds(A, "Site"))
     end
 
     return physind
