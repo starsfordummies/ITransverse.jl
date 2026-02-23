@@ -1,5 +1,3 @@
-
-
 """ Given an eigenvalue λ, builds the corresponding contribution to the entropy, 
 either -λlog(λ) if α=1 or λ^α otherwise."""
 function salpha(λ::Number, alpha::Number)

@@ -174,11 +174,10 @@ function vectorized_identity(ind::Index)
     return ITensor(vec(Matrix{Float64}(I, d, d)), ind)
 end
 
+""" just unwraps t.tensor.storage.data - No checks are made! """
 function itensor_to_vector(t::ITensor)
-    #r = order(t)
-    #@assert r == 1 | r == 2 
     # Just unwrap it 
-    return t.tensor.storage.data 
+    return storage(t).data 
 end
 
 # Core conversion: Vector → ITensor
@@ -187,7 +186,13 @@ to_itensor(x::AbstractVector, name::String="v") = ITensor(complex(x), Index(leng
 
 # ITensor retagging/reindexing
 to_itensor(x::ITensor, idx::Index) = replaceind(x, only(inds(x)), idx)
-to_itensor(x::ITensor, name::String) = settags(x, name)
+function to_itensor(x::ITensor, name::String)
+    if length(inds(x)) == 1 
+        return settags(x, name) 
+    else
+        return replacetags(x, "Site" => name) 
+    end
+end
 
 """ This is maybe not too fast but should be general and generalizable enough.
 Given an operator as string, like "X" or "Sp", builds it for the input physical site and returns an Array with its (vectorized) elements.  """
