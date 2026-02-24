@@ -1,13 +1,5 @@
 using ITensors.TagSets: commontags
 
-struct TruncatedMPS{T<:Number}
-    psi::MPS 
-    SV::Matrix{T}
-end
-
-TruncatedMPS(psi::MPS; SV=zeros(Float64, 1,1)) = TruncatedMPS(psi, SV)
-
-
 """ Custom truncate! that returns SV spectra at each bipartition as a matrix (Nlinks x maxdim) """
 function ttruncate!(
         M::AbstractMPS;
@@ -35,7 +27,7 @@ function ttruncate!(
         setrightlim!(M, j)
         callback(; link = (j => j - 1), truncation_error = spec.truncerr)
 
-        s_vec = Array(storage(S).data)
+        s_vec = Array(storage(S).data)/sum(S)
         n_s = min(length(s_vec), maxdim)
             
         # Safe CPU operation
@@ -57,9 +49,14 @@ it contracts
 
 ``` --(p)--[O]--(p')-(p)--psi =  -(p)--Opsi ```
 """
-function tapplys(alg, O::MPO, psi::AbstractMPS; kwargs...)
+function tapplys_old(alg, O::MPO, psi::AbstractMPS; kwargs...)
     tpsi, sv = tcontract(alg, O, prime(siteinds,psi); kwargs...)
     return replaceprime(tpsi, 2 => 0), sv
+end
+
+function tapplys(alg, O::MPO, psi::AbstractMPS; kwargs...)
+    tpsi, sv = tcontract(alg, swapprime(O, 1=>0, "Site"), psi; kwargs...)
+    return replaceprime(tpsi, 1 => 0), sv
 end
 
 tapply(a::AbstractMPS,b::AbstractMPS; alg="naive", kwargs...) = tapply(Algorithm(alg), a,b; kwargs...)
@@ -145,7 +142,6 @@ function tcontract(::Algorithm"densitymatrix",
     N = length(A)
     n = length(ψ)
 
-
     mindim = max(mindim, 1)
     requested_maxdim = maxdim
     ψ_out = typeof(ψ)(N)
@@ -219,6 +215,7 @@ function tcontract(::Algorithm"densitymatrix",
         Dvec = collect(D.tensor.storage.data)/sum(D)  
  
         S_all[j, 1:length(Dvec)] .= Dvec  
+        @show sum(Dvec)
     
     end
 

@@ -43,8 +43,8 @@ function powermethod_op(in_mps::MPS, in_mpo_1::MPO, in_mpo_O::MPO, pm_params::PM
 
     stepper, info_iterations, maxdims = init_pm(pm_params)
 
-    ll = deepcopy(in_mps)
-    rr = deepcopy(in_mps)
+    ll = copy(in_mps)
+    rr = copy(in_mps)
 
     p = Progress(itermax; desc="[PM|$(opt_method)] L=$(length(ll)), cutoff=$(cutoff), maxdim=$(last(maxdims)), normalize=$(normalization)", showspeed=true) 
 
@@ -88,8 +88,8 @@ function powermethod_op(in_mps::MPS, in_mpo_1::MPO, in_mpo_O::MPO, pm_params::PM
 
         elseif opt_method == "RDM"
         
-            ll, _ = tapplys(in_mpo_1, ll; cutoff, maxdim=maxdims[jj])
-            rr, SVs = tapply(in_mpo_1, rr; cutoff, maxdim=maxdims[jj])
+            ll, _ =  tapplys(in_mpo_1, ll; alg="densitymatrix", cutoff, maxdim=maxdims[jj])
+            rr, SVs = tapply(in_mpo_1, rr; alg="densitymatrix", cutoff, maxdim=maxdims[jj])
 
         elseif opt_method == "RDM_R"
    

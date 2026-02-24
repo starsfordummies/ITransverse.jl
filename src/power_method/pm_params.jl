@@ -129,6 +129,7 @@ function pm_itercheck!(
     psi::MPS,
     Smat::Matrix)
     
+    #@show sum(Smat[10,:])
 
     ds = stepper.icurr == 0 ? Inf : max_diff(stepper.prev_s, Smat) 
     stepper.prev_s = Smat

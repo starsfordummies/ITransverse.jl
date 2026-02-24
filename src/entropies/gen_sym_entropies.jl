@@ -424,7 +424,7 @@ function gen_renyi2_sym_openfwonly(psi::MPS, cut::Int)
     psip2 = prime(linkinds, psi, 2)
     psip3 = prime(linkinds, psi, 3)
 
-    lenv = ITensors.OneITensor()
+    lenv = ITensor(1)
     for kk = 1:cut-1
         lenv *= psi[kk]
         lenv *= psip[kk]
@@ -432,7 +432,7 @@ function gen_renyi2_sym_openfwonly(psi::MPS, cut::Int)
 
     i1,i2,i3,i4 = Index.([2,2,2,2])
 
-    renv = ITensors.OneITensor()
+    renv = ITensor(1)
     for kk = reverse(cut:LL)
         renv *= reopen_ind(psi[kk], ss[kk], i4, i1)
         renv *= reopen_ind(psip[kk], ss[kk], i2, i1)
