@@ -182,3 +182,90 @@ end
 function folded_left_tMPS_in_murg(T::MPO)
     return folded_right_tMPS_in_murg(T)
 end
+
+
+""" Builds folded tMPO. Of the `ts` timesites, the first `b.tp.nbeta` ones are imaginary time ones.
+ Accepted kwargs: fold_op(default=Identity op.), verbose(=false), init_beta_only(=true) """ 
+function folded_tMPO_open_edges(b::FoldtMPOBlocks, ts::Vector{<:Index}; init_beta_only::Bool=true, verbose::Bool=false)
+
+    (; tp, WWc, WWc_im, rot_inds) = b
+
+    #match indices for real-imag so it's easier to work with them 
+    replaceinds!(WWc_im, inds(WWc_im), inds(WWc))
+
+    Ntot = length(ts)
+    nbeta = tp.nbeta 
+
+    @assert nbeta <= length(ts)
+
+    (b1, b2) = if init_beta_only 
+        nbeta, Ntot
+    else # beta at the beginning and at the end
+        @assert iseven(nbeta)
+        beta_half = div(nbeta,2)
+        beta_half, Ntot - beta_half 
+    end
+
+    if verbose
+        @info "Building folded tMPO for (im+real) $(b1)-$(b2)-$(Ntot)) sites "
+    end
+
+    oo = MPO(Ntot)
+
+    virtual_ind_size = dim(rot_inds[:R])
+
+    # two tlinks will be contracted at the end
+    tlinks = [Index(virtual_ind_size,"Link,time_fold,l=$(ii-1)") for ii in 1:length(ts)+1]
+
+    WWinds =  (rot_inds[:P], rot_inds[:Ps], rot_inds[:L], rot_inds[:R] )
+
+    for ii in eachindex(oo)
+        newinds = (ts[ii],        ts[ii]',       tlinks[ii],   tlinks[ii+1])
+        if ii > b1 && ii <= b2
+            oo[ii] = replaceinds(WWc, WWinds, newinds)
+        else
+            #@warn "Filling imag beta tensor O[$(ii)]"
+            oo[ii] = replaceinds(WWc_im, WWinds, newinds)
+        end
+    end
+
+    return oo, tlinks[1], tlinks[end]
+
+end
+
+
+""" Builds folded tMPO. Of the `ts` timesites, the first `b.tp.nbeta` ones are imaginary time ones.
+ Accepted kwargs: fold_op(default=Identity op.), verbose(=false), init_beta_only(=true) """ 
+function folded_tMPO_n(b::FoldtMPOBlocks, ts::Vector{<:Index}; fold_op=nothing, init_beta_only::Bool=true, verbose::Bool=false, rho0=b.rho0)
+
+
+    oo, bl_ind, tr_ind = folded_tMPO_open_edges(b,ts; init_beta_only, verbose)
+
+
+    fold_op = something(fold_op, vectorized_identity(Index(dim(tr_ind), "Site")))
+
+    if ndims(rho0) == 1
+        oo[1] = contract(oo[1], rho0, bl_ind, only(inds(rho0)))
+    else
+        @show inds(rho0)
+        pushfirst!(oo.data, replaceind(rho0, only(inds(rho0, "Site")) => bl_ind)) 
+    end
+
+    if ndims(fold_op) == 1
+
+        dttype = NDTensors.unwrap_array_type(oo[end])
+        fold_op = adapt(dttype, fold_op)
+        oo[end] = contract(oo[end], fold_op, tr_ind, only(inds(fold_op)))
+    else
+        push!(oo.data, replaceind(fold_op, only(inds(fold_op, "Site")) => tr_ind))
+    end
+
+
+    if verbose
+        @info "fold_op = $(vector(fold_op))"
+    end
+
+
+    return oo
+
+end

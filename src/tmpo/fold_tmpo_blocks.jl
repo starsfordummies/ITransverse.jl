@@ -71,13 +71,13 @@ function FoldtMPOBlocks(x::Union{tMPOParams, MPO}; init_state=nothing, build_ima
         if isnothing(init_state)
             init_state = x.bl
         end
-        tp = tMPOParams(x; bl=to_itensor(init_state, "bl"))
+        tp = tMPOParams(x; bl=to_itensor(init_state, "Site"))
     else # x isa MPO 
 
         if isnothing(init_state)
             @error "Need to specify initial state if we don't pass tp"
         else
-            init_state = to_itensor(init_state, "bl")
+            init_state = to_itensor(init_state, "Site")
         end
         # If the input is an MPO, we don't build anyting else, just put placeholders in tp 
         build_imag = false
@@ -101,6 +101,7 @@ function FoldtMPOBlocks(x::Union{tMPOParams, MPO}; init_state=nothing, build_ima
 
     init_state = tp.bl
 
+    @show inds(init_state)
     iP = phys_ind(init_state)
     physdim_init = dim(iP)
     @assert ndims(init_state) == 1 || ndims(init_state) == 3
@@ -112,9 +113,9 @@ function FoldtMPOBlocks(x::Union{tMPOParams, MPO}; init_state=nothing, build_ima
 
     # Folding logic
     if physdim_init == dim(P)
-        rho0 = init_state * delta(iP, Index(dim(P),"Link,time,rho0"))
+        rho0 = init_state * delta(iP, Index(dim(P),"Site,rho0"))
         if !isempty(lrinds)
-            iP_rho0 = Index(dim(rho0,1),"rho0,time,Site")
+            iP_rho0 = Index(dim(rho0,1),"Link,rho0")
             rho0 = replaceinds(rho0, lrinds, (iP_rho0, iP_rho0'))
         end
     elseif physdim_init == isqrt(dim(P))
@@ -126,10 +127,10 @@ function FoldtMPOBlocks(x::Union{tMPOParams, MPO}; init_state=nothing, build_ima
             rho0 *= ciileft
             ciiright = combiner(lrinds[2], lrinds[2]')
             rho0 *= ciiright
-            iP_rho0 = Index(dim(combinedind(ciileft)),"rho0,time,Site")
+            iP_rho0 = Index(dim(combinedind(ciileft)),"Link,rho0")
             rho0 = replaceinds(rho0, (combinedind(ciileft), combinedind(ciiright)), (iP_rho0, iP_rho0'))
         end
-        rho0 *= delta(combinedind(comb_phys), Index(dim(P), "Link,time,rho0"))
+        rho0 *= delta(combinedind(comb_phys), Index(dim(P), "Site,rho0"))
     else
         @error "Dimension of init_state is $(physdim_init) vs linkdim $(dim(P))"
     end
