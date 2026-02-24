@@ -38,7 +38,7 @@ function FoldITensor(a::Array; ind_fw=Index(size(a,1), "fw"), ind_back=Index(siz
 
     ft = if ndims(a) == 1 
         ia = Index(size(a,1))
-        open_ind(ITensor(a, ia), ia, ind_fw, ind_back)
+        reopen_ind(ITensor(a, ia), ia, ind_fw, ind_back)
     elseif ndims(a) == 2
         # by default, first ind is fw, second is back 
         ITensor(a, ind_fw, ind_back)
@@ -142,7 +142,7 @@ function combine_and_fold(W1::AbstractMPS, W2::AbstractMPS; dag_W2::Bool=false,
 end
 
 
-function open_ind(a::ITensor, comb_ind::Index, i1::Index, i2::Index)
+function reopen_ind(a::ITensor, comb_ind::Index, i1::Index, i2::Index)
     c = combiner(i1,i2)
     replaceind!(c, combinedind(c), comb_ind)
     return a * dag(c)
