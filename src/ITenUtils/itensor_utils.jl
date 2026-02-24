@@ -252,3 +252,7 @@ function ptranspose_contract(A::ITensor, B::ITensor, iA::Index, iB::Index)
     return AB
 
 end
+
+function ITensors.sim(a::ITensor)
+    replaceinds(a, inds(a) => sim.(inds(a)))
+end
