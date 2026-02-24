@@ -407,6 +407,47 @@ function gen_renyi2_sym_interval_manual(psi::MPS, iA::Int, fA::Int)
     t2 *= renv''
     
     t2 = scalar(t2)
+
+    return -log(t2)
 end
 
+
+""" For a folded tMPS, this is a cut at the end of the chain (middle of the TN)
+but partial-tracing over all backward legs, leaving only the fw legs open in the RTM.
+Memory cost here is chi^4, algorithm ~chi^5 at least """ 
+function gen_renyi2_sym_openfwonly(psi::MPS, cut::Int)
+
+    LL = length(psi)
+    ss = siteinds(psi)
+
+    psip = prime(linkinds, psi)
+    psip2 = prime(linkinds, psi, 2)
+    psip3 = prime(linkinds, psi, 3)
+
+    lenv = ITensors.OneITensor()
+    for kk = 1:cut-1
+        lenv *= psi[kk]
+        lenv *= psip[kk]
+    end
+
+    i1,i2,i3,i4 = Index.([2,2,2,2])
+
+    renv = ITensors.OneITensor()
+    for kk = reverse(cut:LL)
+        renv *= reopen_ind(psi[kk], ss[kk], i4, i1)
+        renv *= reopen_ind(psip[kk], ss[kk], i2, i1)
+        renv *= reopen_ind(psip2[kk], ss[kk], i2, i3)
+        renv *= reopen_ind(psip3[kk], ss[kk], i4, i3)
+
+        @assert ndims(renv) < 5
+    end
+
+
+    t2 = lenv * renv
+    t2 *= lenv''
+    
+    t2 = scalar(t2)
+
+    return -log(t2)
+end
 
