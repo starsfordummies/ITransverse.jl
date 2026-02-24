@@ -205,7 +205,8 @@ end
 
 
 
-""" Symmetric truncate for MPS optimizing RTM |psi^*><psi| """
+""" Generalized canonical form to diagonalize symmetric RTM |psi^*><psi| 
+bringing gen. orthogonality center in `ortho_center` """
 function gen_canonical(in_psi::MPS, ortho_center::Int; cutoff::Float64=1e-13)
 
     mpslen = length(in_psi)
@@ -216,9 +217,9 @@ function gen_canonical(in_psi::MPS, ortho_center::Int; cutoff::Float64=1e-13)
 
     # first bring to LEFT standard canonical form. 
     # Shouldn't matter if we are not truncating ... 
-    # psi_ortho = orthogonalize(in_psi, mpslen)
+    psi_ortho = orthogonalize(in_psi, mpslen)
 
-    psi_ortho = copy(in_psi)
+    #psi_ortho = copy(in_psi)
 
     XUinv= ITensors.OneITensor()
     right_env = ITensors.OneITensor()
