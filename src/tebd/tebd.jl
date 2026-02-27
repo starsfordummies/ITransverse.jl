@@ -50,10 +50,10 @@ function tebd(psi0::MPS, tp::tMPOParams, Nt::Int, truncp::TruncParams)
 
     dt = 0.1
 
-    eH = tp.expH_func(siteinds(psi0), tp.mp, tp.dt)
-    eH = adapt(mapreduce(NDTensors.unwrap_array_type, promote_type, psi0), eH)
+    eH = build_Ut(siteinds(psi0), tp.expH_func, tp.mp; dt=tp.dt, build_imag=false)
+    #eH = adapt(mapreduce(NDTensors.unwrap_array_type, promote_type, psi0), eH)
 
-    psi_t = deepcopy(psi0)
+    psi_t = copy(psi0)
 
     LL = length(psi0)
 
