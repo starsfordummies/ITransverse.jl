@@ -82,7 +82,7 @@ function rho4_fwback(psi::MPS, cut::Int; alg="zipup", cutoff=1e-12, maxdim=maxli
         psi 
     end
 
-    psi = reopen_inds(psit;  different_fwback_inds=false)
+    psit = reopen_inds(psit;  different_fwback_inds=false)
 
     psit2 = contract(psit, psit'; alg, cutoff, maxdim)
     psit2 = join_inds(psit2)
