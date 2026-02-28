@@ -187,6 +187,34 @@ reopen_inds(folded_psi::MPS; kwargs...) = reopen_inds!(copy(folded_psi); kwargs.
 
 
 
+""" Join inds of a folded MPS using the input combiner `combs`, returns an MPO """
+function join_inds!(WWm::MPO, combs)
+    for (ii, c) in enumerate(combs)
+        #iinds = uniqueinds(inds(c), combinedind(c))
+        WWm[ii] *= c
+    end
+    return MPS(WWm.data)
+end
+
+
+""" Join inds of an MPO, transforming it into an MPS """
+function join_inds!(op::MPO)
+
+    ss = siteinds(op)
+
+    for i in eachindex(op)
+        op[i] *= combiner(ss[i])
+    end
+
+    return MPS(op.data)
+end
+
+join_inds(op::MPO, combs) = join_inds!(copy(op), combs)
+join_inds(op::MPO; kwargs...) = join_inds!(copy(op); kwargs...)
+
+
+
+
 """ Traces over combined indices of ITensors. On a vectorized DM it should basically give the norm of the state"""
 function trace_mps_inds(WWm::MPS, combs)
     #WWmc = deepcopy(WWm)
