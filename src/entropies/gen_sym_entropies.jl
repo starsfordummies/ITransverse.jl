@@ -47,14 +47,7 @@ function generalized_vn_entropy_symmetric(psiL::MPS; bring_left_gen::Bool=true, 
             end
         end
 
-        # gen_ent_cut = ComplexF64(0.)
-        # for n=1:dim(eigss, 1)
-        #     p = eigss[n,n]        # I don't think we need the ^2 here 
-        #     gen_ent_cut -= p * log(p)
-        #     #println("[$ii]temp = $(gen_ent_cut) | sum = $(sum(eigss))")
-        # end
         gen_ent_cut = -sum(p -> p * log(p), eigss)
-
 
         gen_ents[ii-1] = gen_ent_cut
     
@@ -293,16 +286,14 @@ function gensvd_renyi_entropies(psi::MPS, phi::MPS; which_ents=[0.5,1,2], normal
 
     end
 
-    gen_svd_ents = renyi_entropies(svds_rdm; which_ents, normalize_eigs=false)
+    return renyi_entropies(svds_rdm; which_ents, normalize_eigs=false)
 
-    return gen_svd_ents
-    
 end
 
 
 """ Computes the generalized SVD entropies: Given input MPS |phi> and <psi|, < diagonalizes the RTM |phi><psi| 
 and builds alpha-order Renyi entropies as specified by `which_ents` (alpha=1 ie. VN is always computed). Returns a dict """
-function gensvd_renyi_entropies(psi::MPS; which_ents=[0.5,1,2], normalize_eigs::Bool=true)
+function gensvd_sym_renyi_entropies(psi::MPS; which_ents=[0.5,1,2], normalize_eigs::Bool=true)
  
     mpslen = length(psi)
     elt = eltype(psi[1])
@@ -427,4 +418,3 @@ function gen_renyi2_sym_openfwonly(psi::MPS, cut::Int)
 
     return -log(t2)
 end
-

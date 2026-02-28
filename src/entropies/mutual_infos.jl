@@ -390,12 +390,15 @@ end
 
 
 
-""" Ugly chi^5 chunk builder for symmetric case """
+""" TM chunk builder for symmetric case. If the chunk is in the middle of the MPS, it has 4 open legs
+so expensive to store. Allows to start from a `prev_chunk` ITensor. 
+If `flip_fb=true`, it unfolds and partial transposes before contracting physical legs,
+so contracts fw leg with backward legs (useful for building rho2 with `psi` seen as fw-vs-back TM) """
 function tm_chunk(psi::MPS, i1::Int, i2::Int, prev_chunk::ITensor=ITensor(1); flip_fb::Bool, contract_from_right::Bool=false)
     tm = prev_chunk
     ss = siteinds(psi)
     psi2 = prime(linkinds, psi)
-    rrange = contract_from_right ? (i2:-1:i1) : (i1:i2) 
+    rrange = contract_from_right ? reverse(i1:i2) : (i1:i2) 
     for kk in rrange
         tm *= psi[kk]
         if flip_fb
@@ -413,7 +416,7 @@ end
 
 
 
-""" Ugly chi^5 chunk builder for symmetric case """
+""" Takes an input MPS and returns a chunk of it partial-traced over its folded indices between `n1` and `n2` """
 function ptr_chunk(psi::MPS, n1::Int, n2::Int)
     chunk = ITensor(1)
     ss = siteinds(psi)
@@ -534,8 +537,57 @@ end
 
 
 
+""" Given input a folded `psi`, we reopen its legs to view it as a fw-back density matrix `rho`,
+then compute its purity tr_A(rho^2) for a bipartition A=1:cut, B=cut+1:N """
+function rho2_fwback(psi::MPS, cut::Int)
 
-function rho2_left(psi::MPS, iA::Int, fA::Int, iB::Int, fB::Int)
+    LL = length(psi)
+
+    # Normalization: tr(rho) = 1 
+    tr_rho = scalar(ptr_chunk(psi, 1, LL))
+
+    # tr_B
+    blockB = ptr_chunk(psi, cut+1, LL)
+  
+    rho = tm_chunk(psi, 1, cut; flip_fb=true)
+    
+    rho *= blockB 
+    rho *= prime(blockB)
+
+    return scalar(rho)/(tr_rho^2)
+
+end
+
+
+""" Given input a folded `psi`, we reopen its legs to view it as a fw-back density matrix `rho`,
+then compute its purity tr_A(rho^4) for a bipartition A=1:cut, B=cut+1:N """
+function rho4_fwback(psi::MPS, cut::Int; cutoff=1e-12, maxdim=maxlinkdim(psi))
+
+    LL = length(psi)
+
+    # Normalization: tr(rho) = 1 
+    tr_rho = scalar(ptr_chunk(psi, 1, LL))
+
+    # tr_B
+    blockB = ptr_chunk(psi, cut+1, LL)
+
+    psit = reopen_inds(psi;  different_fwback_inds=false)
+    psit[cut] *= blockB
+    psit = MPO(psit[1:cut]) 
+
+    psit2 = contract(psit, psit'; maxdim)
+    psit2 = join_inds(psit2)
+
+    rho = tm_chunk(psit2, 1, cut; flip_fb=true)
+    
+    return scalar(rho)/(tr_rho^4)
+
+end
+
+
+""" Given input a folded `psi`, we reopen its legs to view it as a fw-back density matrix `rho`,
+then compute its purity tr(rho^2) for a segment """
+function rho2_fwback_segment(psi::MPS, iA::Int, fA::Int, iB::Int, fB::Int)
 
     LL = length(psi)
 
@@ -592,6 +644,7 @@ function rho2_left(psi::MPS, iA::Int, fA::Int, iB::Int, fB::Int)
 
     return rhoA, rhoB, rhoAB
 end
+
 
 
 function compute_rho2s(psi::MPS, length_intervals::Int)
