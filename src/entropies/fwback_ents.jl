@@ -236,3 +236,41 @@ function t4mid_slice(psi::MPS)
 
     return 
 end
+
+
+
+function trrho_lr(psi::MPS, iA::Int, fA::Int, iB::Int=length(psi)+1, fB::Int=length(psi)+1)
+
+    LL = length(psi)
+    ss = siteinds(psi)
+
+    psip = prime(linkinds, psi)
+
+    trrho = ITensor(1.)
+
+    for kk = 1:iA-1
+        trrho *= psi[kk] 
+        trrho *= psip[kk]
+    end
+    for kk = iA:fA 
+        trrho *= trace_combinedind(psi[kk], ss[kk])
+        trrho *= trace_combinedind(psip[kk], ss[kk])
+    end
+    for kk = fA+1:iB-1
+        trrho *= psi[kk] 
+        trrho *= psip[kk]
+    end
+
+    if iB <= LL
+        for kk = iB:fB
+            trrho *= trace_combinedind(psi[kk], ss[kk]) 
+            trrho *= trace_combinedind(psip[kk], ss[kk])
+        end
+        for kk = fB+1:LL
+            trrho *= psi[kk] 
+            trrho *= psip[kk]
+        end
+    end
+    
+    return scalar(trrho)
+end
