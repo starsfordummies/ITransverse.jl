@@ -64,7 +64,7 @@ end
 
 """ Given input a folded `psi`, we reopen its legs to view it as a fw-back density matrix `rho`,
 then compute its purity tr_A(rho^4) for a bipartition A=1:cut, B=cut+1:N """
-function rho4_fwback(psi::MPS, cut::Int; alg="densitymatrix", cutoff=1e-12, maxdim=maxlinkdim(psi))
+function rho4_fwback(psi::MPS, cut::Int; alg="zipup", cutoff=1e-12, maxdim=maxlinkdim(psi))
 
     LL = length(psi)
 
