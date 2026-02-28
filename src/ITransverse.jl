@@ -51,6 +51,7 @@ include("entropies/diagonalize_sym_rtm.jl")
 include("entropies/compute_rho2.jl")
 
 include("entropies/mutual_infos.jl")
+include("entropies/fwback_ents.jl")
 
 export vn_entanglement_entropy, 
     renyi_entropies,
