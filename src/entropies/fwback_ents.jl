@@ -64,7 +64,7 @@ end
 
 """ Given input a folded `psi`, we reopen its legs to view it as a fw-back density matrix `rho`,
 then compute its purity tr_A(rho^4) for a bipartition A=1:cut, B=cut+1:N """
-function rho4_fwback(psi::MPS, cut::Int; alg="zipup", cutoff=1e-12, maxdim=maxlinkdim(psi))
+function rho4_fwback_apply(psi::MPS, cut::Int; alg="zipup", cutoff=1e-12, maxdim=maxlinkdim(psi))
 
     LL = length(psi)
 
@@ -90,6 +90,42 @@ function rho4_fwback(psi::MPS, cut::Int; alg="zipup", cutoff=1e-12, maxdim=maxli
     rho = tm_chunk(psit2, 1, cut; flip_fb=true)
     
     return scalar(rho)/(tr_rho^4)
+
+end
+
+
+""" Given input a folded `psi`, we reopen its legs to view it as a fw-back density matrix `rho`,
+then compute its purity tr_A(rho^4) for a bipartition A=1:cut, B=cut+1:N 
+has chi^4 cost for storage """
+function rho4_fwback(psi::MPS, cut::Int; alg="zipup", cutoff=1e-12, maxdim=maxlinkdim(psi))
+
+    LL = length(psi)
+
+    # Normalization: tr(rho) = 1 
+    tr_rho = scalar(ptr_chunk(psi, 1, LL))
+
+    psit = if cut < LL
+        # tr_B
+        blockB = ptr_chunk(psi, cut+1, LL, contract_from_right=true)
+
+        psimats = psi[1:cut]
+        psimats[end] *= blockB
+        MPS(psimats)
+    else
+        psi 
+    end
+
+    psit = reopen_inds(psit;  different_fwback_inds=false)
+
+    rho4 = ITensor(1)
+    for kk = 1:length(psit)
+        rho4 *= psit[kk]
+        rho4 *= psit[kk]'
+        rho4 *= psit[kk]''
+        rho4 *= replaceprime(psit[kk]''', 4 =>0)
+    end
+
+    return scalar(rho4)/(tr_rho^4)
 
 end
 
