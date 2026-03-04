@@ -222,37 +222,6 @@ function ITensors.contract(t1::ITensor, t2::ITensor, i1::Index, i2::Index)
     return t1 * replaceind(t2, i2 => i1)
 end
 
-
-""" Contracts two ITensors over combined indices iA, iB: reopens them, 
-partial transposes the legs of one and contracts the two  """
-function ptranspose_contract(A::ITensor, B::ITensor, iA::Index, iB::Index)
-
-    @assert hasind(A, iA)
-    @assert hasind(B, iB)
-   
-    dA = dim(iA)
-    sqdA = isqrt(dA)
-
-    @assert hasind(A, iA)
-
-    temp_i1 = Index(sqdA)
-    temp_i2 = Index(sqdA)
-
-
-    c1 = combiner(temp_i1, temp_i2)
-    c2 = combiner(temp_i2, temp_i1)
-
-    combA = A * replaceind(c1, combinedind(c1), iA)
-    combB = B * replaceind(c2, combinedind(c2), iB)
-
-    #@show commoninds(combA, combB)
-
-    AB = combA * combB
-
-    return AB
-
-end
-
 function ITensors.sim(a::ITensor)
     replaceinds(a, inds(a) => sim.(inds(a)))
 end
