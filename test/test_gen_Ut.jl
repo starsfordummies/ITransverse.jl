@@ -16,7 +16,7 @@ function Ising_MPO(sites::Vector{<:Index},JXX::Real,hz::Real,gx::Real)
 end
 
 
-function buildExpHTFI( 
+function build_Hising_exponential_int( 
   sites::Vector{<:Index};
   J::Real = 1.0,
   λ::Real = 0.5,
@@ -77,7 +77,7 @@ function buildExpHTFI(
   return H
 end
 
-function buildExpHTFI_LRflipped( 
+function build_Hising_exponential_int_LRflipped( 
   sites::Vector{<:Index};
   J::Real = 1.0,
   λ::Real = 0.5,
@@ -216,7 +216,7 @@ end
     ############
     # TDVP
 
-    H_ising = buildExpHTFI(ss;J=JXX,λ=0.0,hz,gx)
+    H_ising = build_Hising_exponential_int(ss;J=JXX,λ=0.0,hz,gx)
 
     psi_tdvp = tdvp(
         H_ising,
@@ -229,7 +229,7 @@ end
         outputlevel=1,
     )
 
-    H_ising_LRflipped = buildExpHTFI_LRflipped(ss;J=JXX,λ=0.0,hz,gx)
+    H_ising_LRflipped = build_Hising_exponential_int_LRflipped(ss;J=JXX,λ=0.0,hz,gx)
 
     psi_tdvp_LRflipped = tdvp(
         H_ising_LRflipped,

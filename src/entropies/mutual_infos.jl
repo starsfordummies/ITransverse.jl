@@ -1,238 +1,93 @@
-""" Takes as input two folded tMPS (left-right) and computes Renyi2 mutual info
+""" Partial traces the input `psi` seen as a fw-back density matrix
+in the intervals iA:fA and iB:fB """
+function trrho_fwback(psi::MPS, iA::Int, fA::Int, iB::Int=length(psi)+1, fB::Int=length(psi)+1)
 
-joining legs
+    LL = length(psi)
+    ss = siteinds(psi)
 
-For rhoA 
-A: fL1-bL2, bL1-fL2, fR1-bR2, bR1-fR2
-B:  fL1-fR1, bL1-bR1 (same for 2)
+    psip = prime(linkinds, psi)
 
-For rhoB it's the other way around B<->A
-"""
-function renyi2_mutual_folded_bipartition_rhoLrhoR(psiL::MPS, psiR::MPS; normalize::String="trrho", swap_prod::Bool=false)
+    trrho = ITensor(1.)
 
-    @assert length(psiL) == length(psiR)
+    for kk = 1:iA-1
+        trrho *= psi[kk] 
+        trrho *= psip[kk]
+    end
+    for kk = iA:fA 
+        trrho *= trace_combinedind(psi[kk], ss[kk])
+        trrho *= trace_combinedind(psip[kk], ss[kk])
+    end
+    for kk = fA+1:iB-1
+        trrho *= psi[kk] 
+        trrho *= psip[kk]
+    end
 
-    psiR = sim(linkinds, psiR)
-
-    if normalize == "trrho"
-        # Trace over rho, ie. connect all Lf with Lb and Rf with Rb
-        trrhoL = ITensor(1)
-        trrhoR = ITensor(1)
-
-        for kk in eachindex(psiL)
-            trrhoL *= trace_combinedind(psiL[kk], siteind(psiL,kk)) 
-            trrhoR *= trace_combinedind(psiR[kk], siteind(psiR,kk)) 
+    if iB <= LL
+        for kk = iB:fB
+            trrho *= trace_combinedind(psi[kk], ss[kk]) 
+            trrho *= trace_combinedind(psip[kk], ss[kk])
         end
-
-        psiL = psiL/scalar(trrhoL)
-        psiR = psiR/scalar(trrhoR)
-
-
-    else
-        @warn "Invalid/no normalization? $(normalize)"
+        for kk = fB+1:LL
+            trrho *= psi[kk] 
+            trrho *= psip[kk]
+        end
     end
     
-    mutualsA = []
-    mutualsB = []
-
-    @showprogress for cut =  0:length(psiL) 
-
-        # rho_A = Tr_B (rho_AB)
-
-        ALRblock = ITensor(1)
-        for kk = 1:cut
-            ALRblock *= psiL[kk] 
-            if swap_prod 
-                ALRblock = ptranspose_contract(ALRblock, psiR[kk], siteind(psiR,kk), siteind(psiR,kk))  # or: ptranspose_contract()
-            else
-                ALRblock *= psiR[kk]  
-            end
-            @assert ndims(ALRblock) <= 2  "[A $(kk) inds? $(inds(ALRblock))"
-        end
-
-        BLblock = ITensor(1)
-        BRblock = ITensor(1)
-        for kk = reverse(cut+1:length(psiL))
-            BLblock *= trace_combinedind(psiL[kk], siteind(psiL,kk)) 
-            BRblock *= trace_combinedind(psiR[kk], siteind(psiR,kk)) 
-            @assert ndims(BLblock) <= 1  "[B $(kk) inds? $(inds(BLblock))"
-            @assert ndims(BRblock) <= 1  "[B $(kk) inds? $(inds(BRblock))"
-        end
-       
-        SA = ALRblock * BLblock
-        SA = SA * BRblock
-
-        SA = scalar(SA)
-
-        push!(mutualsA, SA)
-
-        #
-        # The other way around for SB 
-        #
-
-        ALblock = ITensor(1)
-        ARblock = ITensor(1)
-
-        for kk = 1:cut
-            ALblock *= trace_combinedind(psiL[kk], siteind(psiL,kk)) 
-            ARblock *= trace_combinedind(psiR[kk], siteind(psiR,kk)) 
-            @assert ndims(ALblock) <= 1  "[A $(kk) inds? $(inds(ALblock))"
-            @assert ndims(ARblock) <= 1  "[A $(kk) inds? $(inds(ARblock))"
-
-        end
-
-        BLRblock = ITensor(1)
-        for kk = reverse(cut+1:length(psiL))
-            BLRblock *= psiL[kk] 
-            if swap_prod 
-                BLRblock = ptranspose_contract(BLRblock, psiR[kk], siteind(psiR,kk), siteind(psiR,kk))  # or: ptranspose_contract()
-            else
-                BLRblock *= psiR[kk]  
-            end
-            @assert ndims(BLRblock) <= 2  "[A $(kk) inds? $(inds(BLRblock))"
-        end
-
-       
-        SB = BLRblock * ALblock
-        SB = SB*ARblock
-       
-        SB = scalar(SB)
-
-        push!(mutualsB, SB)
-
-    end
-
-    @assert mutualsA[1] ≈ mutualsB[end]
-    @assert mutualsA[end] ≈ mutualsB[1]
-
-    return -log.(mutualsA), -log.(mutualsB), -log.(mutualsA[end])
+    return scalar(trrho)
 end
-
-
- 
-
-""" Takes as input two folded tMPS (left-right) and computes Renyi2 mutual info
-
-joining legs
-
-For rhoA 
-A: fL1-bL2, bL1-fL2, fR1-bR2, bR1-fR2
-B:  fL1-fR1, bL1-bR1 (same for 2)
-
-For rhoB it's the other way around B<->A
-"""
-function renyi2_mutual_folded_bipartition_LR(psiL::MPS, psiR::MPS; normalize::String="trrho")
-
-    @assert length(psiL) == length(psiR)
-    @assert siteinds(psiL) == siteinds(psiR)
-
-    psiR = sim(linkinds, psiR)
-
-    if normalize == "trrho"
-        # Trace over rho, ie. connect all Lf with Lb and Rf with Rb
-        trrhoL = ITensor(1)
-        trrhoR = ITensor(1)
-
-        for kk in eachindex(psiL)
-            trrhoL *= trace_combinedind(psiL[kk], siteind(psiL,kk)) 
-            trrhoR *= trace_combinedind(psiR[kk], siteind(psiR,kk)) 
-        end
-
-        psiL = psiL/scalar(trrhoL)
-        psiR = psiR/scalar(trrhoR)
-
-
-    elseif normalize == "trtau"
-        trtau = ITensor(1)
-        for kk in eachindex(psiL)
-            trtau *= psiL[kk] 
-            trtau *= psiR[kk]
-        end
-
-        psiL = psiL / sqrt(scalar(trtau))
-        psiR = psiR / sqrt(scalar(trtau))
-
-    else
-        @warn "Invalid/no normalization? $(normalize)"
-    end
-    
-    mutualsA = []
-    mutualsB = []
-
-    @showprogress for cut =  0:length(psiL) 
-
-        # rho_A = Tr_B (rho_AB)
-
-        Ablock = ITensor(1)
-        for kk = 1:cut
-            Ablock *= psiL[kk] 
-            Ablock *= psiR[kk]
-            @assert ndims(Ablock) <= 2  "[A $(kk) inds? $(inds(Ablock))"
-        end
-
-        Bblock = ITensor(1)
-        for kk = reverse(cut+1:length(psiL))
-            Bblock *= psiL[kk] 
-            Bblock *= prime(linkinds, psiR)[kk]
-            @assert ndims(Bblock) <= 2  "[B $(kk) inds? $(inds(Bblock))"
-        end
-       
-        SA = Ablock * Bblock
-        @assert ndims(SA) <= 2
-        SA *= prime(Ablock)
-        @assert ndims(SA) <= 2
-        SA *= swapprime(Bblock, 1=>0)
-
-        SA = scalar(SA)
-
-        push!(mutualsA, SA)
-
-        #
-        # The other way around for SB 
-        #
-
-        ALRblock = ITensor(1)
-        for kk = 1:cut
-            ALRblock *= WL[kk] 
-            ALRblock *= WR[kk]
-            @assert ndims(ALRblock) <= 2  "[A $(kk) inds? $(inds(ALRblock))"
-        end
-
-        BLblock = ITensor(1)
-        BRblock = ITensor(1)
-        for kk = reverse(cut+1:length(WL))
-            BLblock *= WL[kk] 
-            BLblock *= prime(replaceinds(WL[kk], siteinds(WL,kk) => reverse(siteinds(WL,kk))), 2, "L")
-            BRblock *= WR[kk] 
-            BRblock *= prime(replaceinds(WR[kk], siteinds(WR,kk) => reverse(siteinds(WR,kk))), 2, "R")
-            @assert ndims(BLblock) <= 2  "[B $(kk) inds? $(inds(BLblock))"
-            @assert ndims(BRblock) <= 2  "[B $(kk) inds? $(inds(BRblock))"
-        end
-
-       
-        SB = BLblock * ALRblock
-        @assert ndims(SB) <= 2
-        SB *= BRblock
-        @assert ndims(SB) <= 2
-        SB *= ALRblock''
-
-        SB = scalar(SB)
-
-        push!(mutualsB, SB)
-
-    end
-
-    @assert mutualsA[1] ≈ mutualsB[end]
-    return mutualsA, mutualsB
-end
-
-
-
-
 
 
 """ Computes left-right RDM purities for symmetric case L=R """
-function rho2_lr(psi::MPS, iA::Int, fA::Int, iB::Int, fB::Int)
+function mutuals_fwback_segment(psi::MPS, iA::Int, fA::Int, iB::Int, fB::Int)
+
+    LL = length(psi)
+    ss = siteinds(psi)
+
+    trrho = scalar(ptr_chunk(psi, 1, LL))
+
+    psip = prime(linkinds,psi)
+
+    left_block = ptr_chunk(psi, 1, iA-1) 
+    rhoAB = left_block * left_block'
+    for kk = iA:fA
+        rhoAB *= psi[kk]
+        rhoAB = ptranspose_contract(rhoAB, psip[kk], ss[kk])
+    end
+
+    center_right_block = ptr_chunk(psi, fA+1, LL; contract_from_right=true)
+    rhoA = rhoAB * center_right_block
+    rhoA = rhoA * center_right_block'
+
+    center_block = ptr_chunk(psi, fA+1, iB-1)
+    rhoAB *= center_block
+    rhoAB *= center_block'
+  
+    for kk = iB:fB
+        rhoAB *= psi[kk]
+        rhoAB = ptranspose_contract(rhoAB, psip[kk], ss[kk])
+    end
+    right_block = ptr_chunk(psi, fB+1, LL; contract_from_right=true)
+
+    rhoAB *= right_block
+    rhoAB *= right_block'
+
+    rhoB = right_block * right_block'
+     for kk = reverse(iB:fB)
+        rhoB *= psi[kk]
+        rhoB = ptranspose_contract(rhoB, psip[kk], ss[kk])
+    end
+    left_center_block = ptr_chunk(psi, 1, iB-1)
+
+    rhoB *= left_center_block
+    rhoB *= left_center_block'
+
+
+    return scalar(rhoAB)/trrho^2, scalar(rhoA)/trrho^2, scalar(rhoB)/trrho^2
+end
+
+
+""" Computes left-right RDM purities for symmetric case L=R """
+function mutuals_lr_TODO_segment(psi::MPS, iA::Int, fA::Int, iB::Int, fB::Int)
 
 
     blockL = tm_chunk(psi::MPS, 1, iA-1; flip_fb=false)

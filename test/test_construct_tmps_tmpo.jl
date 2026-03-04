@@ -2,7 +2,7 @@ using ITensors, ITensorMPS, ITransverse
 using Test
 
 
-function buildExpHTFI( 
+function build_Hising_exponential_int( 
   sites::Vector{<:Index};
   J::Real = 1.0,
   λ::Real = 0.5,
@@ -155,7 +155,7 @@ fill_bulk_symmetric(sites, dt, Jxx, hz, gx) = expH_ising_murg(sites, Jxx*dt, hz*
     ### Compare with tdvp should give the same 
     s_tdvp = iszero(gx) ? siteinds("S=1/2", 4, conserve_szparity=true) : siteinds("S=1/2", 4, conserve_szparity=false)
 
-    H_ising = buildExpHTFI(s_tdvp;J=Jxx,λ,hz,gx)
+    H_ising = build_Hising_exponential_int(s_tdvp;J=Jxx,λ,hz,gx)
 
     ψ0_tdvp = MPS(s_tdvp,"Up")
 
