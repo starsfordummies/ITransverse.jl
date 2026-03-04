@@ -29,6 +29,7 @@ function ptr_chunk(psi::MPS, n1::Int, n2::Int; contract_from_right::Bool=false)
     ss = siteinds(psi)
 
     chunk = ITensor(1)
+
     rrange = contract_from_right ? reverse(n1:n2) : n1:n2
     for kk in rrange
         chunk *= trace_combinedind(psi[kk], ss[kk])
@@ -129,6 +130,38 @@ function rho4_fwback(psi::MPS, cut::Int; alg="zipup", cutoff=1e-12, maxdim=maxli
 
 end
 
+function rho4_fwback_alt(psi::MPS, cut::Int; alg="densitymatrix", cutoff=1e-12, maxdim=maxlinkdim(psi))
+
+    LL = length(psi)
+
+    # Normalization: tr(rho) = 1 
+    tr_rho = scalar(ptr_chunk(psi, 1, LL))
+
+    psit = if cut < LL
+        # tr_B
+        blockB = ptr_chunk(psi, cut+1, LL, contract_from_right=true)
+
+        psimats = psi[1:cut]
+        psimats[end] *= blockB
+        MPS(psimats)
+    else
+        psi 
+    end
+
+    psit = reopen_inds(psit;  different_fwback_inds=false)
+
+    rho4 = ITensor(1)
+    for kk = 1:length(psit)
+        rho4 *= psit[kk]
+        rho4 *= psit[kk]'
+        rho4 *= psit[kk]''
+        rho4 *= replaceprime(psit[kk]''', 4 =>0)
+    end
+
+    return scalar(rho4)/(tr_rho^4)
+
+end
+
 
 """ Given input a folded `psi`, we reopen its legs to view it as a fw-back density matrix `rho`,
 then compute its purity tr(rho^2) for a segment """
@@ -192,32 +225,6 @@ end
 
 
 
-function compute_rho2s(psi::MPS, length_intervals::Int)
-    LL = length(psi)
-    mid = div(LL+1,2)
-
-
-    rhos_lr = []
-    rhos_left = []
-    for distance=0:div(LL-2*length_intervals,2)-1
-        iA = mid-distance-length_intervals
-        fA = mid-distance
-        iB = mid+distance+1
-        fB = mid+distance+length_intervals
-
-        @info "computing for [$(iA)-$(fA)]-[$(iB)-$(fB)]"
-        #r2s_LR = rho2_lr(psi::MPS, iA, fA, iB, fB)
-
-        r2s_left = rho2_left(psi::MPS, iA, fA, iB, fB)
-
-
-        #push!(rhos_lr, r2s_LR)
-        push!(rhos_left, r2s_left)
-    end
-
-    return rhos_lr, rhos_left
-
-end
 
 function compute_sn_cut(psi::MPS, n::Int; cut::Int=div(length(psi),2), cutoff=1e-10, maxdim=maxlinkdim(psi))
     ss = siteinds(psi)
@@ -274,39 +281,3 @@ function t4mid_slice(psi::MPS)
 end
 
 
-
-function trrho_lr(psi::MPS, iA::Int, fA::Int, iB::Int=length(psi)+1, fB::Int=length(psi)+1)
-
-    LL = length(psi)
-    ss = siteinds(psi)
-
-    psip = prime(linkinds, psi)
-
-    trrho = ITensor(1.)
-
-    for kk = 1:iA-1
-        trrho *= psi[kk] 
-        trrho *= psip[kk]
-    end
-    for kk = iA:fA 
-        trrho *= trace_combinedind(psi[kk], ss[kk])
-        trrho *= trace_combinedind(psip[kk], ss[kk])
-    end
-    for kk = fA+1:iB-1
-        trrho *= psi[kk] 
-        trrho *= psip[kk]
-    end
-
-    if iB <= LL
-        for kk = iB:fB
-            trrho *= trace_combinedind(psi[kk], ss[kk]) 
-            trrho *= trace_combinedind(psip[kk], ss[kk])
-        end
-        for kk = fB+1:LL
-            trrho *= psi[kk] 
-            trrho *= psip[kk]
-        end
-    end
-    
-    return scalar(trrho)
-end

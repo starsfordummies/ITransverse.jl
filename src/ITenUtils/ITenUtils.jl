@@ -55,8 +55,6 @@ export sqrt
 
 export mergedicts!, mergedicts, dictfromlist
 
-export TruncatedMPS
-
 #from utils.jl
 export pMPS,
     overlap_noconj, 

@@ -215,7 +215,7 @@ function tcontract(::Algorithm"densitymatrix",
         Dvec = collect(D.tensor.storage.data)/sum(D)  
  
         S_all[j, 1:length(Dvec)] .= Dvec  
-        @show sum(Dvec)
+        #@show sum(Dvec)
     
     end
 
