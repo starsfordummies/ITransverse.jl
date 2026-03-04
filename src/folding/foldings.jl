@@ -266,7 +266,7 @@ function trace_combinedind(A::ITensor, iA::Index)
 end
 
 
-function ptranspose_contract(A::ITensor, B::ITensor, iA::Index, iB::Index)
+function ptranspose_contract(A::ITensor, B::ITensor, iA::Index, iB::Index=iA)
 
     @assert hasind(A, iA)
     @assert hasind(B, iB)
@@ -274,22 +274,60 @@ function ptranspose_contract(A::ITensor, B::ITensor, iA::Index, iB::Index)
     dA = dim(iA)
     sqdA = isqrt(dA)
 
-    @assert hasind(A, iA)
-
     temp_i1 = Index(sqdA)
     temp_i2 = Index(sqdA)
-
 
     c1 = combiner(temp_i1, temp_i2)
     c2 = combiner(temp_i2, temp_i1)
 
-    combA = A * replaceind(c1, combinedind(c1), iA)
-    combB = B * replaceind(c2, combinedind(c2), iB)
+    # combA = A * replaceind(c1, combinedind(c1), iA)
+    # combB = B * replaceind(c2, combinedind(c2), iB)
 
-    #@show commoninds(combA, combB)
+    # AB = combA * combB
 
-    AB = combA * combB
+    AB = (A * replaceind(c1, combinedind(c1), iA)) * (B * replaceind(c2, combinedind(c2), iB))
 
     return AB
 
+end
+
+""" GPT version which should allocate a bit less (TODO need to test ) """
+function ptranspose_contract_alt(A::ITensor, B::ITensor, iA::Index, iB::Index=iA)
+    @assert hasind(A, iA)
+    @assert hasind(B, iB)
+    @assert dim(iA) == dim(iB)
+
+    sqdA = isqrt(dim(iA))
+
+    # Partition indices
+    shared = filter(i -> hasind(B, i) && i != iA, inds(A))  # normal contraction indices
+    free_A = filter(i -> !hasind(B, i) && i != iA, inds(A)) # free indices on A
+    free_B = filter(i -> !hasind(A, i) && i != iB, inds(B)) # free indices on B
+
+    # Permute: (free_A..., shared..., iA) and (free_B..., shared..., iB)
+    A′ = permute(A, free_A..., shared..., iA)
+    B′ = permute(B, free_B..., shared..., iB)
+
+    # Compute flat dimensions
+    dA   = prod(dim, free_A; init=1)
+    dB   = prod(dim, free_B; init=1)
+    dsh  = prod(dim, shared; init=1)
+
+    # Reshape to (free_A, shared, sqdA, sqdA) and (free_B, shared, sqdA, sqdA)
+    a = reshape(array(A′), dA, dsh, sqdA, sqdA)  # [α, s, i, j]
+    b = reshape(array(B′), dB, dsh, sqdA, sqdA)  # [β, s, i, j]
+
+    # Contract:
+    #   result[α, β] = sum_{s,i,j} a[α, s, i, j] * b[β, s, j, i]
+    # Partial transpose on b: swap i,j -> permute to (dB, dsh, sqdA, sqdA) with (1,2,4,3)
+    b_pt = PermutedDimsArray(b, (1, 2, 4, 3))           # lazy, no alloc: b[β, s, j, i]
+
+    # Flatten shared+i+j into one dim for batched matmul
+    a_mat = reshape(a,    dA, dsh * sqdA^2)              # [α, s·i·j]
+    b_mat = reshape(b_pt, dB, dsh * sqdA^2)              # [β, s·j·i] = [β, s·i·j] after pt
+
+    result = a_mat * b_mat'                              # [α, β]
+
+    # Wrap result back into ITensor with free indices
+    return ITensor(result, free_A..., free_B...)
 end
