@@ -388,6 +388,8 @@ function gen_renyi2_sym_openfwonly(psi::MPS, cut::Int)
     LL = length(psi)
     ss = siteinds(psi)
 
+    normalization = overlap_noconj(psi,psi)
+
     psip = prime(linkinds, psi)
     psip2 = prime(linkinds, psi, 2)
     psip3 = prime(linkinds, psi, 3)
@@ -414,7 +416,7 @@ function gen_renyi2_sym_openfwonly(psi::MPS, cut::Int)
     t2 = lenv * renv
     t2 *= lenv''
     
-    t2 = scalar(t2)
+    t2 = scalar(t2)/normalization^2
 
     return -log(t2)
 end
