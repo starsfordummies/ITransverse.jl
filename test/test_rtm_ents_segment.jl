@@ -35,12 +35,12 @@ S2_diag = renyi_entropies(F.D.tensor.storage.data, which_ents=[2])["S2"][1]
 end
 
 
-@testset "Generalized entropies (symmetric) for segment: contract vs orthogonalize&diagonalize" begin
+@testset "Generalized entropies (symmetric) for segment: check that SA = SB" begin
     
 LL = 10
 
 ss = siteinds("S=1/2", LL)
-psi = random_mps(ss, linkdims=19)
+psi = random_mps(ComplexF64, ss, linkdims=19)
 
 psi = psi/sqrt(overlap_noconj(psi,psi))
 
@@ -87,6 +87,6 @@ end
 
 FB = ITransverse.ITenUtils.symm_oeig(rho, inds(rho, plev=1); cutoff=1e-13)
 
-diag(FA.D) ≈ diag(FB.D)
+@test diag(FA.D) ≈ diag(FB.D)
 
 end

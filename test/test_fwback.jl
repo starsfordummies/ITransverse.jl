@@ -135,3 +135,54 @@ for TT = 10:10:30
 end
 
 end
+
+
+#= 
+
+## Entropies 
+
+JXX = 1.0
+hz = 0.7
+gx = 0.0
+#H= JXX - 2.0 * 0.525 Z + 2 * 0.25 X
+
+
+# init_state = plus_state
+init_state = up_state
+
+mp = IsingParams(JXX, hz, gx)
+
+
+tp = tMPOParams(0.1,  expH_ising_symm_svd, mp, 0, init_state)
+TT = 40 
+psi, b = ising_fwb(tp,2*TT)
+vn1 = vn_entanglement_entropy(psi)
+chi1 = maxlinkdim(psi)
+
+tp = tMPOParams(0.05,  expH_ising_symm_svd, mp, 0, init_state)
+TT = 80 
+psi, b = ising_fwb(tp,2*TT)
+vn2 = vn_entanglement_entropy(psi)
+chi2 = maxlinkdim(psi)
+
+tp = tMPOParams(0.02,  expH_ising_symm_svd, mp, 0, init_state)
+TT = 200
+psi, b = ising_fwb(tp,2*TT)
+vn3 = vn_entanglement_entropy(psi)
+chi3 = maxlinkdim(psi)
+
+maximum(vn1)
+maximum(vn2)
+maximum(vn3)
+##### Folded 
+
+using Plots
+
+ll,rr, ds2_pm, bf = ffolded(tp, TT)
+
+ll = replace_siteinds(ll, siteinds(rr))
+mpo_Z = folded_tMPO(bf, siteinds(rr); fold_op=vZ)
+
+ev_fold = expval_LR(ll, mpo_Z, rr)/overlap_noconj(ll,rr)
+
+=# 
