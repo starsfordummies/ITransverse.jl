@@ -1,15 +1,16 @@
-""" Given an eigenvalue λ, builds the corresponding contribution to the entropy, 
-either -λlog(λ) if α=1 or λ^α otherwise."""
-function salpha(λ::Number, alpha::Number)
-    Sλ = 0.0
-    if alpha ≈ 1
-        Sλ= - λ * log(λ)
-    else
-        Sλ = λ^alpha
-    end
-    return Sλ
-end
+# """ Given an eigenvalue λ, builds the corresponding contribution to the entropy, 
+# either -λlog(λ) if α=1 or λ^α otherwise."""
+# function salpha(λ::Number, alpha::Number)
+#     Sλ = 0.0
+#     if alpha ≈ 1
+#         Sλ= - λ * log(λ)
+#     else
+#         Sλ = λ^alpha
+#     end
+#     return Sλ
+# end
 
+#= Old 
 function salpha(eigs::Vector{<:Number}, alpha::Number)
      Sλ = 0.0
      if alpha ≈ 1
@@ -25,6 +26,25 @@ function salpha(eigs::Vector{<:Number}, alpha::Number)
     end
 
     return Sλ
+end
+
+function salpha(eigs::Vector{<:Number}, alpha::Number)
+    if alpha ≈ 1
+        return -sum(λ -> λ * log(λ), eigs)
+    else
+        return log(sum(λ -> λ^alpha, eigs)) / (1 - alpha)
+    end
+end
+
+=#
+
+""" Given a vector of eigenvalues, computes the renyi `alpha` entropy from it (in a supposedly efficient way) """
+function salpha(eigs::AbstractVector{<:Number}, alpha::Number)
+    if alpha ≈ 1
+        return -mapreduce(λ -> λ * log(λ), +, eigs)
+    else
+        return log(mapreduce(λ -> λ^alpha, +, eigs)) / (1 - alpha)
+    end
 end
 
 #

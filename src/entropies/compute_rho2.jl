@@ -2,7 +2,7 @@
 computes tr(τₜ^2) the trace of the reduced transition matrices |phi><psi| at the various cuts,
  by contracting left and right MPS (see also below). 
  The normalization must be given via `normalization_factor` """
-function rtm2_contracted(psi::MPS, phi::MPS; normalize_factor::Number=1.0)
+function rtm2_contracted_old(psi::MPS, phi::MPS; normalize_factor::Number=1.0)
     r2s = []
     @showprogress dt=30 for jj in eachindex(psi)[1:end-1]
         push!(r2s, rtm2_contracted(psi, phi, jj; normalize_factor))
@@ -11,8 +11,40 @@ function rtm2_contracted(psi::MPS, phi::MPS; normalize_factor::Number=1.0)
     return r2s
 end
 
+function rtm2_contracted(psi::MPS, phi::MPS; normalize_factor::Number=1.0, match_siteinds::Bool=true)
+    LL = length(psi)
+    inv_norm2 = 1.0 / normalize_factor^2
 
+    psi = noprime(psi)
+    phi = noprime(phi)
+    phi = sim(linkinds, phi)
 
+    if match_siteinds
+        match_siteinds!(psi, phi)
+    end
+
+    # Cache left environments
+    lenvs = fill(ITensor(1), LL+1)
+    for jj in 1:LL
+        lenvs[jj+1] = (lenvs[jj] * psi[jj]) * phi[jj]
+    end
+
+    # Cache right environments
+    renvs = fill(ITensor(1), LL+1)
+    for jj in reverse(1:LL)
+        renvs[jj] = (renvs[jj+1] * psi[jj]) * phi[jj]
+    end
+
+    # Now compute tr(rho^2) at each cut using cached envs
+    rho2s = Vector{eltype(renvs[1])}(undef, LL+1)
+    for jj in 1:LL+1
+        tr_rho2 = lenvs[jj] * prime(renvs[jj], linkinds(psi,jj-1))
+        tr_rho2 *= swapprime(tr_rho2, 1 => 0)
+        rho2s[jj] = scalar(tr_rho2) * inv_norm2
+    end
+
+    return rho2s
+end
 
 
 """ At a given cut, we can compute tr(τₜ^2) as the contraction
@@ -225,5 +257,5 @@ function gen_renyi2(psi::MPS, phi::MPS; normalization="overlap")
    
     trace_tau2 = rtm2_contracted(psi, phi)
     
-    r2 = [ -log.(trt2) for trt2 in trace_tau2]
+    return [ -log.(trt2) for trt2 in trace_tau2]
 end

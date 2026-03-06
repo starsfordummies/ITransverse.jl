@@ -1,5 +1,6 @@
 using Test
 
+using LinearAlgebra
 using ITensors, ITensorMPS
 using ITransverse 
 using ITransverse: diagonalize_rtm_right_gen_sym
@@ -96,7 +97,7 @@ end
     s = siteinds(4, 20)
     
     psi = random_mps(ComplexF64, s, linkdims=40)
-    psic = deepcopy(psi)
+    psic = copy(psi)
 
     eigs_r = diagonalize_rtm_right_gen_sym(psi; bring_right_gen=true)
     eigs_l = diagonalize_rtm_symmetric(psi; bring_left_gen=true)
@@ -105,10 +106,10 @@ end
     
     psin = psi/sqrt(overlap_noconj(psi,psi))
     r2_cut = log.(rtm2_contracted(psin, psin))/(1-2.)
-    
+
     @test psi[7] == psic[7]
 
-    @test all_ents["S2.0"] ≈ r2_cut
+    @test all_ents["S2.0"] ≈ r2_cut[2:end-1]
     
 end
     
