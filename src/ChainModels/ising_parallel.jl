@@ -34,7 +34,7 @@ end
 Convention H = -( JXX + gzZ + λxX ) 
 - For exp(-iHdt) dt must be either included already in the parameters
 """
-function expH_ising_murg(sites::Vector{<:Index}, JXX::Number, gz::Number, λx::Number)
+function expH_ising_murg(sites::Vector{<:Index}, Jdt::Number, gzdt::Number, λxdt::Number)
     """ Symmetric version of Murg exp(-iHising t) """
 
 
@@ -42,15 +42,15 @@ function expH_ising_murg(sites::Vector{<:Index}, JXX::Number, gz::Number, λx::N
     # I should have already taken into account both the - sign in exp(-iHt) 
     # and the overall minus in Ising H= -(JXX+Z)
 
-    Uxx = expXX_murg(sites, JXX)
+    Uxx = expXX_murg(sites, Jdt)
 
-    Ux = MPO([op(s, "Rx", θ=-2*λx) for s in sites])
-    Uz2 = MPO([op(s, "Rz", θ=-gz) for s in sites])
+    Ux = MPO([op(s, "Rx", θ=-2*λxdt) for s in sites])
+    Uz2 = MPO([op(s, "Rz", θ=-gzdt) for s in sites])
 
 
     # Multiply in order:  exp(iZ/2)*exp(iX)*exp(iXX)*exp(iZ/2)
     
-    U_t = iszero(λx) ? Uz2 : applyn(Ux, Uz2) 
+    U_t = iszero(λxdt) ? Uz2 : applyn(Ux, Uz2) 
     U_t = applyn(Uxx, U_t) 
     U_t = applyn(Uz2, U_t) 
 

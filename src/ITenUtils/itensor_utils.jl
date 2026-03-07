@@ -61,41 +61,38 @@ function pinvten(a::ITensor, check::Bool=true)
 end
 
 
-function symmetrize(a::ITensor; tol=1e-6)
 
-    if ndims(a) != 2
-        @error("Not a matrix")
-    end
-    if size(a,1) != size(a,2)
-        @error "Not square matrix! Size is $(size(a))"
+function symmetrize(a::ITensor; tol=1e-6, check=true)
+    i, j = inds(a)
+    
+    if dim(i) != dim(j)
+        error("Not a square matrix! Dimensions are $(dim(i)) × $(dim(j))")
     end
 
-    return (a + swapinds(a, inds(a)...))/2
+    a_T = swapinds(a, (i,), (j,))
+
+    if check
+        asym = norm(a - a_T) / norm(a)
+        asym > tol && @error("ITensor is not symmetric: relative asymmetry $asym > tol=$tol")
+    end
+
+    return (a + a_T) / 2
 end
 
-""" Computes norm difference of tensor vs itself with two indices (i,j) swapped"""
+"""Computes norm difference of tensor vs itself with two indices (i,j) swapped"""
 function normdiff_under_swap(T::ITensor, i::Index, j::Index)
-    iinds = inds(T)
-    i1, i2 = findfirst(==(i), iinds), findfirst(==(j), iinds)
-    perm = collect(1:length(iinds))
-    perm[i1], perm[i2] = perm[i2], perm[i1]
-    return norm(permute(T, iinds).tensor - permute(T, iinds[perm]).tensor) 
+    return norm(T - swapinds(T, (i,), (j,)))
 end
 
-""" Checks if ITensor T is symmetric under swap of indices (i,j) (up to atol) """
+"""Checks if ITensor T is symmetric under swap of indices (i,j) (up to atol)"""
 function check_symmetry_swap(T::ITensor, i::Index, j::Index; atol=1e-12, verbose::Bool=true)
-    norm_difference = normdiff_under_swap(T, i, j)
-    if norm_difference < atol
-        if verbose
-            @info("Tensor Symmetric $i <-> $j")
-        end
-        return true 
-    else
-        if verbose
-            @warn "Tensor *Not* Symmetric $i <-> $j, normdiff = $(norm_difference)"
-        end
-        return false
+    norm_diff = normdiff_under_swap(T, i, j)
+    is_sym = norm_diff < atol
+    if verbose
+        is_sym ? @info("Tensor symmetric $i <-> $j") :
+                 @warn("Tensor *not* symmetric $i <-> $j, normdiff = $norm_diff")
     end
+    return is_sym
 end
 
 """checks whether an MPO tensor is symmetric - if we don't specify indices, try to guess from labels """

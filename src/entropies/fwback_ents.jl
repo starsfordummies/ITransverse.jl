@@ -86,7 +86,7 @@ function rho4_fwback_apply(psi::MPS, cut::Int; alg="zipup", cutoff=1e-12, maxdim
     psit = reopen_inds(psit;  different_fwback_inds=false)
 
     psit2 = contract(psit, psit'; alg, cutoff, maxdim)
-    psit2 = join_inds(psit2)
+    psit2 = vectorize_mpo(psit2) # join_inds(psit2)
 
     rho = tm_chunk(psit2, 1, cut; flip_fb=true)
     

@@ -48,8 +48,6 @@ include("ext_functions.jl")
 
 include("size_estimate.jl")
 
-include("vectorize_mpo.jl")
-
 
 export sqrt
 
@@ -91,7 +89,6 @@ export symmetrize,
     itensor_to_vector,
     to_itensor,
     vectorized_op,
-    vectorize_mpo,
     trace_mpo, trace_mpo_squared,
     max_diff
 
