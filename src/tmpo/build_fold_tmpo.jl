@@ -27,7 +27,7 @@ and contract with  the initial state `init_state` on the *left* and the operator
 
 """ Builds folded tMPO. Of the `ts` timesites, the first `b.tp.nbeta` ones are imaginary time ones.
  Accepted kwargs: fold_op(default=Identity op.), verbose(=false), init_beta_only(=true) """ 
-function folded_tMPO(b::FoldtMPOBlocks, ts::Vector{<:Index}; fold_op=nothing, init_beta_only::Bool=true, verbose::Bool=false, rho0=b.rho0)
+function folded_tMPO_old(b::FoldtMPOBlocks, ts::Vector{<:Index}; fold_op=nothing, init_beta_only::Bool=true, verbose::Bool=false, rho0=b.rho0)
 
     (; tp, WWc, WWc_im, rot_inds) = b
 
@@ -234,9 +234,10 @@ function folded_tMPO_open_edges(b::FoldtMPOBlocks, ts::Vector{<:Index}; init_bet
 end
 
 
+#= old 
 """ Builds folded tMPO. Of the `ts` timesites, the first `b.tp.nbeta` ones are imaginary time ones.
  Accepted kwargs: fold_op(default=Identity op.), verbose(=false), init_beta_only(=true) """ 
-function folded_tMPO_n(b::FoldtMPOBlocks, ts::Vector{<:Index}; fold_op=nothing, init_beta_only::Bool=true, verbose::Bool=false, rho0=b.rho0)
+function folded_tMPO_o1(b::FoldtMPOBlocks, ts::Vector{<:Index}; fold_op=nothing, init_beta_only::Bool=true, verbose::Bool=false, rho0=b.rho0)
 
 
     oo, bl_ind, tr_ind = folded_tMPO_open_edges(b,ts; init_beta_only, verbose)
@@ -268,4 +269,52 @@ function folded_tMPO_n(b::FoldtMPOBlocks, ts::Vector{<:Index}; fold_op=nothing, 
 
     return oo
 
+end
+=#
+
+"""Convert input to ITensor mapped onto target index, or return identity if nothing."""
+function _to_itensor_or_identity(op, target_ind::Index)
+    op === nothing && return vectorized_identity(Index(dim(target_ind), "Site"))
+    op isa ITensor  && return op
+    # Array branch: adapt to correct storage type and wrap
+    return ITensor(op, Index(dim(target_ind), "Site"))
+end
+
+"""Attach a (possibly vector/matrix) operator to the boundary of an MPS."""
+function _attach_boundary_op!(oo::MPO, op::ITensor, bond_ind::Index)
+    if ndims(op) == 1
+        dttype = NDTensors.unwrap_array_type(oo[end])
+        oo[end] = contract(oo[end], adapt(dttype, op), bond_ind, only(inds(op)))
+    else
+        push!(oo.data, replaceind(op, only(inds(op, "Site")) => bond_ind))
+    end
+end
+
+"""Attach initial state rho0 to the left boundary of an MPS."""
+function _attach_rho0!(oo::MPO, rho0::ITensor, bond_ind::Index)
+    if ndims(rho0) == 1
+        oo[1] = contract(oo[1], rho0, bond_ind, only(inds(rho0)))
+    else
+        pushfirst!(oo.data, replaceind(rho0, only(inds(rho0, "Site")) => bond_ind))
+    end
+end
+
+""" Builds folded tMPO. Of the `ts` timesites, the first `b.tp.nbeta` ones are imaginary time ones.
+ Accepted kwargs: fold_op (default=Identity, accepts Array or ITensor), verbose(=false), init_beta_only(=true) """ 
+function folded_tMPO(b::FoldtMPOBlocks, ts::Vector{<:Index};
+                     fold_op=nothing,
+                     init_beta_only::Bool=true,
+                     verbose::Bool=false,
+                     rho0=b.rho0)
+
+    oo, bl_ind, tr_ind = folded_tMPO_open_edges(b, ts; init_beta_only, verbose)
+
+    fold_op_tensor = _to_itensor_or_identity(fold_op, tr_ind)
+
+    _attach_rho0!(oo, rho0, bl_ind)
+    _attach_boundary_op!(oo, fold_op_tensor, tr_ind)
+
+    verbose && @info "fold_op = $(vector(fold_op_tensor))"
+
+    return oo
 end

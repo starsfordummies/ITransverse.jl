@@ -122,5 +122,5 @@ end
     r2_contract = gen_renyi2(psi, psi)
     r2sym = gensym_renyi_entropies(psi)["S2.0"]
 
-    @test isapprox(r2_contract, r2sym)
+    @test isapprox(r2_contract[2:end-1], r2sym)
 end

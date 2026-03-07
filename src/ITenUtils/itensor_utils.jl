@@ -182,6 +182,7 @@ to_itensor(x::AbstractVector, idx::Index) = ITensor(complex(x), idx)
 to_itensor(x::AbstractVector, name::String="v") = ITensor(complex(x), Index(length(x), name))
 
 # ITensor retagging/reindexing
+to_itensor(x::ITensor) = x
 to_itensor(x::ITensor, idx::Index) = replaceind(x, only(inds(x)), idx)
 function to_itensor(x::ITensor, name::String)
     if length(inds(x)) == 1 

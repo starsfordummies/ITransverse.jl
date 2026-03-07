@@ -190,8 +190,8 @@ function generalized_svd_vn_entropy(psi::MPS, phi::MPS)
 end
 
 
-""" Computes the symmetric generalized entropies: Given an input MPS |psi>, diagonalizes the RTMs |psi><psi*| 
-and builds alpha-order Renyi entropies as specified by `which_ents` (alpha=1 ie. VN is always computed). Returns a dict """
+""" Given an input MPS `psi`, computes the symmetric generalized entropies by diagonalizing RTM
+and builds alpha-order Renyi entropies as specified by `which_ents`. Returns a dict """
 function gensym_renyi_entropies(psiL::MPS; which_ents=[0.5,1,2], bring_left_gen::Bool=true, normalize_eigs::Bool=true)
  
     if bring_left_gen

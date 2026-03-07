@@ -16,6 +16,11 @@ function fw_tMPO(tp::tMPOParams, time_sites::Vector{<:Index}; kwargs...)
     fw_tMPO(b, time_sites; kwargs...)
 end
 
+function fw_tMPO_old(b::FwtMPOBlocks, time_sites::Vector{<:Index}; tr, kwargs...)
+    ww = fw_tMPO_opentr(b, time_sites; kwargs...)
+    fw_tMPO(ww, tr)
+end
+
 
 
 """ Forward tMPO with open top (=right, after rotation) leg, so we can plug anything afterwards """
@@ -80,11 +85,6 @@ function fw_tMPO(ww::MPO, tr)
     return ww
 end
 
-
-function fw_tMPO(b::FwtMPOBlocks, time_sites::Vector{<:Index}; tr, kwargs...)
-    ww = fw_tMPO_opentr(b, time_sites; kwargs...)
-    fw_tMPO(ww, tr)
-end
 
 
 
@@ -230,7 +230,9 @@ function fw_tMPO_open_edges(b::FwtMPOBlocks, time_sites::Vector{<:Index}; init_b
 end
 
 
-function fw_tMPO_n(b::FwtMPOBlocks, time_sites::Vector{<:Index};  bl::ITensor = b.tp.bl, tr::ITensor = b.tp.bl, init_beta_only::Bool=false)
+function fw_tMPO(b::FwtMPOBlocks, time_sites::Vector{<:Index};  bl::ITensor = b.tp.bl, tr = b.tp.bl, init_beta_only::Bool=false)
+
+    tr = to_itensor(tr)
     oo, bl_ind, tr_ind = fw_tMPO_open_edges(b, time_sites; init_beta_only)
     if ndims(bl) == 1
         oo[1] = contract(oo[1], bl, bl_ind, only(inds(bl)))

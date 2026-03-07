@@ -32,7 +32,7 @@ end
 - `nback` steps of backwards time evolution
 - `nbetaf` steps of imaginary time evolution
 """
-function fwback_tMPO(b::FwtMPOBlocks, time_sites::Vector{<:Index}, nbetai::Int, nfw::Int, nback::Int, nbetaf::Int; 
+function fwback_tMPO_old(b::FwtMPOBlocks, time_sites::Vector{<:Index}, nbetai::Int, nfw::Int, nback::Int, nbetaf::Int; 
     mid_op = [1,0,0,1], t_op::Int=nbetai+nfw, bl::ITensor = b.tp.bl, tr = b.tp.bl)
 
     @info "Building fwback with $(nbetai)-$(nfw)-$(nback)-$(nbetaf) - operator at $(nbetai+nfw)"
@@ -150,7 +150,7 @@ end
 
 
 
-function fwback_tMPO_n(b::FwtMPOBlocks, time_sites::Vector{<:Index}, nbetai::Int, nfw::Int, nback::Int, nbetaf::Int; 
+function fwback_tMPO(b::FwtMPOBlocks, time_sites::Vector{<:Index}, nbetai::Int, nfw::Int, nback::Int, nbetaf::Int; 
     bl::ITensor = b.tp.bl, tr = b.tp.bl, kwargs...)
     oo, bl_ind, tr_ind = fwback_tMPO_open_edges(b, time_sites, nbetai, nfw, nback, nbetaf; kwargs...)
 
