@@ -195,44 +195,6 @@ end
 
 
 
-""" Floquet Ising exp(-iJXX - iλX)exp(-igZ) """
-function expH_ising_floquet(sites::Vector{<:Index}, JXX::Number, gz::Number, λx::Number)
-
-    Uxx = expXX_murg(sites, -JXX)
-
-    # Recall Ra(theta) = exp(-i sigma_a(theta/2))
-    Ux = MPO([op(s, "Rx", θ=2*λx) for s in sites])
-    Uz = MPO([op(s, "Rz", θ=2*gz) for s in sites])
-
-    # Multiply in order:  exp(iZ/2)*exp(iX)*exp(iXX)*exp(iZ/2)
-    
-    U_t = iszero(λx) ? Uxx : applyn(Ux, Uxx) 
-    U_t = iszero(gz) ? U_t : applyn(Uz, U_t) 
-
-    return U_t
-
-end
-
-""" Floquet Ising exp(-iJZZ - iλZ)exp(-igX) """
-function expHZZ_ising_floquet(sites::Vector{<:Index}, JXX::Number, gperp::Number, λpar::Number)
-
-    Uzz = expXX_murg(sites, -JXX; make_expZZ=true)
-
-    # Recall Ra(theta) = exp(-i sigma_a(theta/2))
-    Ux = MPO([op(s, "Rx", θ=2*gperp) for s in sites])
-    Uz = MPO([op(s, "Rz", θ=2*λpar) for s in sites])
-
-    # Multiply in order:  exp(iZ/2)*exp(iX)*exp(iXX)*exp(iZ/2)
-    
-    U_t = iszero(λpar) ? Uzz : applyn(Uz, Uzz) 
-    U_t = iszero(gperp) ? U_t : applyn(Ux, U_t) 
-
-    return U_t
-
-end
-
-
-
 
 """ Convention XX+Z only for now """
 function epsilon_brick_ising(mp::IsingParams)
