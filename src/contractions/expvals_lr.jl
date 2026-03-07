@@ -158,7 +158,7 @@ function compute_expvals(ll::AbstractMPS, rr::AbstractMPS, op_list::Vector{Strin
 
     for op in op_list
         if op == "eps_ising"  # do this separately
-            ϵ_op = ITransverse.ChainModels.epsilon_brick_ising(b.tp.mp)
+            ϵ_op = ITransverse.epsilon_brick_ising(b.tp.mp)
             allevs[op] = expval_LR_ops(ll, rr, ϵ_op, b)/ev_L11R
         elseif op == "XX" 
             allevs[op] = expval_LR(ll, rr, [0,1,1,0], [0,1,1,0], b)/ev_L11R

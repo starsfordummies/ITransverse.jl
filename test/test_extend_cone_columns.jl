@@ -31,7 +31,7 @@ using ITransverse: build_cols_cone, contract_cols, extend_cone!
 
     mp = IsingParams(JXX, hz, gx)
     #tp = tMPOParams(dt, expH_ising_murg, mp, nbeta, init_state, Id)
-    tp = tMPOParams(dt, ITransverse.ChainModels.expH_ising_symm_svd, mp, nbeta, init_state)
+    tp = tMPOParams(dt, ITransverse.expH_ising_symm_svd, mp, nbeta, init_state)
 
     b = FoldtMPOBlocks(tp)
     c0 = init_cone(b, Nt)

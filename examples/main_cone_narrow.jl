@@ -35,7 +35,7 @@ function main_cone()
 
     mp = IsingParams(JXX, hz, gx)
     #tp = tMPOParams(dt, expH_ising_murg, mp, nbeta, init_state, Id)
-    tp = tMPOParams(dt, ITransverse.ChainModels.expH_ising_symm_svd, mp, nbeta, init_state)
+    tp = tMPOParams(dt, expH_ising_symm_svd, mp, nbeta, init_state)
 
     b = FoldtMPOBlocks(tp)
     c0 = ITransverse.init_cone(b)

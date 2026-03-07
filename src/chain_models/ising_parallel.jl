@@ -1,7 +1,8 @@
 ############ Transverse field Ising ##############
-###### Our convention is usually H = -JXX - gZ - hX 
-######## Hamiltonian ########
+###### Our convention is H = -JXX - gZ - hX 
 
+
+######## Hamiltonian ########
 
 """ Builds Ising Hamiltonian MPO  H = -Jtwo*XX - gperp*Z - hpar*X """ 
 function H_ising(sites::Vector{<:Index}, Jtwo::Real, gperp::Real, hpar::Real)
@@ -26,17 +27,18 @@ function H_ising(sites::Vector{<:Index}, Jtwo::Real, gperp::Real, hpar::Real)
 end
 
 
-
 ######## Time evolution operator exp(-iHt)  ########
-
 
 """ Symmetric prescription a la Murg for exp(-i*H*dt) Ising transverse+parallel
 Convention H = -( JXX + gzZ + λxX ) 
 - For exp(-iHdt) dt must be either included already in the parameters
 """
-function expH_ising_murg(sites::Vector{<:Index}, Jdt::Number, gzdt::Number, λxdt::Number)
+function expH_ising_murg(sites::Vector{<:Index}, Jtwo::Number, gperp::Number, λpar::Number; dt::Number)
     """ Symmetric version of Murg exp(-iHising t) """
 
+    Jdt = Jtwo * dt
+    gperpdt = gperp * dt
+    λpardt = λpar * dt
 
     # For real dt this does REAL time evolution 
     # I should have already taken into account both the - sign in exp(-iHt) 
@@ -44,13 +46,12 @@ function expH_ising_murg(sites::Vector{<:Index}, Jdt::Number, gzdt::Number, λxd
 
     Uxx = expXX_murg(sites, Jdt)
 
-    Ux = MPO([op(s, "Rx", θ=-2*λxdt) for s in sites])
-    Uz2 = MPO([op(s, "Rz", θ=-gzdt) for s in sites])
-
+    Ux = MPO([op(s, "Rx", θ=-2*λpardt) for s in sites])
+    Uz2 = MPO([op(s, "Rz", θ=-gperpdt) for s in sites])
 
     # Multiply in order:  exp(iZ/2)*exp(iX)*exp(iXX)*exp(iZ/2)
     
-    U_t = iszero(λxdt) ? Uz2 : applyn(Ux, Uz2) 
+    U_t = iszero(λpardt) ? Uz2 : applyn(Ux, Uz2) 
     U_t = applyn(Uxx, U_t) 
     U_t = applyn(Uz2, U_t) 
 
@@ -59,7 +60,7 @@ function expH_ising_murg(sites::Vector{<:Index}, Jdt::Number, gzdt::Number, λxd
 end
 
 
-""" Symmetric version (Murg) of Murg exp(+i Jdt*XX ) """
+""" Symmetric version (Murg) of exp(+iJdt*XX ) """
 function expXX_murg(sites::Vector{<:Index}, Jdt::Number; make_expZZ::Bool=false)
 
     # For real dt this does REAL time evolution 

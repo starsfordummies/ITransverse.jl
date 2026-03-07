@@ -16,8 +16,40 @@ import NDTensors: Algorithm, @Algorithm_str
 include("ITenUtils/ITenUtils.jl")
 using .ITenUtils
 
-include("ChainModels/ChainModels.jl")
-using .ChainModels
+include("chain_models/model_params.jl")
+export ModelParams, IsingParams, PottsParams, XXZParams, NoParams
+
+include("chain_models/generic.jl")
+
+include("chain_models/id_mpo.jl")
+include("chain_models/ising_parallel.jl")
+include("chain_models/potts.jl")
+include("chain_models/xxzmodel.jl")
+include("chain_models/random_mpo.jl")
+include("chain_models/exph_generic.jl")
+
+export up_state, down_state, plus_state
+export vX, vZ, vI
+
+
+# export  expH, expHim
+
+# from ising.jl
+export H_ising, 
+    expH_ising_murg,
+    expH_ising_symm_svd,
+    expH_ising_murg_4o
+
+#from potts.jl
+export H_potts_manual,
+    H_potts,
+    #expH_potts_2o,
+    expH_potts_murg,
+    expH_potts_symmetric_svd
+
+export build_H, build_Ut
+export timeEvo_MPO_2ndOrder, timeEvo_MPO_2ndOrder_LRflipped
+
 
 include("BenchData/BenchData.jl")
 using .BenchData
