@@ -13,7 +13,7 @@ function main_folded_pm()
 
     truncp = TruncParams(cutoff, maxdim)
 
-    pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM_LR", "norm")
+    pm_params = PMParams(;truncp, itermax, eps_converged, opt_method="RTM_LR", normalization="norm")
 
     sigX = ComplexF64[0,1,1,0]
 
@@ -27,7 +27,7 @@ function main_folded_pm()
     space_sites = siteinds("S=1/2", 80)
     hisi = build_H(space_sites, H_ising, mp)
     p0 = random_mps(space_sites)
-    _, gs = dmrg(hisi, p0, nsweeps=6)
+    _, gs = dmrg(hisi, p0, nsweeps=3)
 
     tp = tMPOParams(tp; nbeta=0)
 
