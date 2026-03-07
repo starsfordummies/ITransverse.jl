@@ -186,6 +186,7 @@ reopen_inds(folded_psi::MPS, combs) = reopen_inds!(copy(folded_psi), combs)
 reopen_inds(folded_psi::MPS; kwargs...) = reopen_inds!(copy(folded_psi); kwargs...)
 
 
+#= Should be replaced by more predictable vectorize_mpo() 
 
 """ Join inds of a folded MPS using the input combiner `combs`, returns an MPO """
 function join_inds!(WWm::MPO, combs)
@@ -212,7 +213,7 @@ end
 join_inds(op::MPO, combs) = join_inds!(copy(op), combs)
 join_inds(op::MPO; kwargs...) = join_inds!(copy(op); kwargs...)
 
-
+=# 
 
 
 """ Traces over combined indices of ITensors. On a vectorized DM it should basically give the norm of the state"""

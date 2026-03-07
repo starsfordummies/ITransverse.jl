@@ -337,16 +337,6 @@ function daginds(psi::AbstractMPS)
     daginds!(copy(psi))
 end
 
-""" Returns an MPS with the (folded) MPO for a local operator `local_op` at `site_op` """
-function vectorized_local_op(ss::Vector{<:Index}; local_op::String="Id", site_op=div(length(ss)+1,2))
-
-    local_ops = [op("Id", s) for s in ss]
-    local_ops[site_op] = op(local_op, ss[site_op])
-
-    o_local_ops = MPO(local_ops)
-
-    vo_local_ops, combiners = vectorize_mpo(o_local_ops)
-end
 
 """ ED for *short* MPOs taken as one big matrix """ 
 function diagonalize_mpo(w::MPO)

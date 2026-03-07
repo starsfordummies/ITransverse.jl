@@ -117,6 +117,7 @@ export
     folded_tMPO_in
 
 include("folding/foldings.jl")
+include("folding/vectorize_mpo.jl")
 
 
 include("columns_envs/columns.jl")

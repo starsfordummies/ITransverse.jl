@@ -101,7 +101,7 @@ time_sites_fold = addtags(siteinds(rotated_phys^2, Nsteps; conserve_qns=false), 
 
 init_state = [1,0,0] # rand(ComplexF64, 3)
 
-b= FwtMPOBlocks(tp_xxz)
+b = FwtMPOBlocks(tp_xxz)
 
 mpo = fw_tMPO(b, time_sites; tr = [1,0,0])
 

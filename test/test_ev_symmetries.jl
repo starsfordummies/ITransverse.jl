@@ -19,8 +19,8 @@ sites = siteinds("S=1/2", Lx; conserve_qns=false)
 Ut =  build_Ut(sites, expH_ising_murg,  mp; dt=0.1)
 Ut2 = build_Ut(sites, expH_ising_murg,  mp; dt=0.1)
 
-Utvec, _ = ITransverse.ITenUtils.vectorize_mpo(Ut)
-Ut2vec, _ = ITransverse.ITenUtils.vectorize_mpo(Ut2)
+Utvec, _ = ITransverse.vectorize_mpo(Ut)
+Ut2vec, _ = ITransverse.vectorize_mpo(Ut2)
 
 @test fidelity(Utvec, Ut2vec) ≈ 1
 
@@ -49,7 +49,7 @@ UUt_sym = ITransverse.folded_UUt(Ut_sym)
 
 rho0 = outer(psi0,dag(psi0)')
 
-rho0v, combis = ITransverse.ITenUtils.vectorize_mpo(rho0)
+rho0v, combis = ITransverse.vectorize_mpo(rho0)
 rhoT = deepcopy(rho0v)
 
 rhoT = replace_siteinds(rhoT, firstsiteinds(UUt_sym))
@@ -63,7 +63,7 @@ local_ops[div(length(rhoT)+1,2)] = op("Z", siteind(psi0, div(length(psi0)+1,2)))
 
 o_local_ops = MPO(local_ops)
 
-vo_local_ops, _ = ITransverse.ITenUtils.vectorize_mpo(o_local_ops)
+vo_local_ops, _ = ITransverse.vectorize_mpo(o_local_ops)
 
 vo_local_ops = replace_siteinds(vo_local_ops, siteinds(rhoT))
 
@@ -83,7 +83,7 @@ ss3 = siteinds("S=1/2", 3; conserve_szparity=true)
 
 psi0 = MPS(ss3, "Up")
 rho0 = outer(psi0,dag(psi0)')
-rho0v, combis = ITransverse.ITenUtils.vectorize_mpo(rho0)
+rho0v, combis = ITransverse.vectorize_mpo(rho0)
 
 
 Ut_sym = build_Ut(ss3, expH_ising_murg, mp; dt=0.1)
@@ -96,7 +96,7 @@ local_ops = [op("I", s) for s in siteinds(psi0)]
 
 o_local_ops = MPO(local_ops)
 o_local_ops = MPO(siteinds(psi0), "Id")
-vo_local_ops, _ = ITransverse.ITenUtils.vectorize_mpo(o_local_ops)
+vo_local_ops, _ = ITransverse.vectorize_mpo(o_local_ops)
 
 
 rho0v = replace_siteinds(rho0v, firstsiteinds(UUt_sym))
@@ -115,7 +115,7 @@ psiL, Tc, psiR = ITransverse.construct_tMPS_tMPO(rho0v, fill(UUt_sym, Nt), vo_lo
 # Now the local operator 
 local_ops_Z = [op("Z", s) for s in siteinds(psi0)]
 o_local_ops_Z = MPO(local_ops_Z)
-vo_local_ops_Z, _ = ITransverse.ITenUtils.vectorize_mpo(o_local_ops_Z)
+vo_local_ops_Z, _ = ITransverse.vectorize_mpo(o_local_ops_Z)
 
 _, Tc_Z, _ = ITransverse.construct_tMPS_tMPO(rho0v, fill(UUt_sym, Nt), vo_local_ops_Z)
 
