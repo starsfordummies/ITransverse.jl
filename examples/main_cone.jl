@@ -54,7 +54,7 @@ function main_cone()
         )
     )
 
-    psi, psiR, cp = run_cone(c0, b, cone_params, cp, Nsteps)
+    psi, psiR, checkpt = run_cone(c0, b, cone_params, cp, Nsteps)
 
     return  psi, psiR, checkpt
 
