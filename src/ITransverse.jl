@@ -18,8 +18,7 @@ using .ITenUtils
 
 include("chain_models/model_params.jl")
 export ModelParams, IsingParams, PottsParams, XXZParams, NoParams
-
-include("chain_models/generic.jl")
+include("chain_models/helpers.jl")
 
 include("chain_models/id_mpo.jl")
 include("chain_models/ising_parallel.jl")

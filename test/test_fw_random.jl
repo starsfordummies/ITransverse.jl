@@ -63,7 +63,7 @@ Nsteps =  Ntime_steps
 
 time_sites = addtags(siteinds(4, Nsteps; conserve_qns=false), "time")
 
-random_eh = ITransverse.ChainModels.expH_random()
+random_eh = ITransverse.expH_random()
 
 init_state = normalize(rand(2))
 #init_statef = kron((init_state),conj(init_state))
