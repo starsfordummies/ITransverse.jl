@@ -102,10 +102,8 @@ end
 
 
 function expH_ising_symm_svd(s::Vector{<:Index}, Jtwo::Number, hperp::Number, λpar::Number; dt::Number)
-    Jtwodt = Jtwo * dt 
-    hperpdt = hperp * dt
-    λpardt = λpar * dt
-    w = expH_ising_symm_svd_3site(Jtwodt, hperpdt, λpardt)
+
+    w = expH_ising_symm_svd_3site(Jtwo, hperp, λpar; dt)
     wmpo = if length(s) == 3
         replace_siteinds(w, s)
     else
