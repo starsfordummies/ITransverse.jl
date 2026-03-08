@@ -188,7 +188,8 @@ function to_itensor(x::ITensor, name::String)
     if length(inds(x)) == 1 
         return settags(x, name) 
     else
-        return replacetags(x, "Site" => name) 
+        return settags(x, name, only(inds(x, "Site")))
+        #replacetags(x, "Site" => name) 
     end
 end
 

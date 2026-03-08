@@ -91,7 +91,7 @@ foldpsi, cP2, cPs2 = ITransverse.combine_and_fold(fwpsi, fwpsi; fold_op = [1 0 ;
 Nsites = 8
 # XXZ non-symmetric anywhere 
 
-tp = tMPOParams(0.1,  ITransverse.ChainModels.expH_XXZ_2o, XXZParams(1.0, 0.8), 0, [1,0])
+tp = tMPOParams(0.1,  ITransverse.expH_XXZ_2o, XXZParams(1.0, 0.8), 0, [1,0])
 tp = tMPOParams(0.1,  expH_potts_murg, PottsParams(1.0, 0.8), 0, [1,0,0])
 
 b_fw = FwtMPOBlocks(tp)

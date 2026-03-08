@@ -1,7 +1,8 @@
 ############ Transverse field Ising ##############
-###### Our convention is usually H = -JXX - gZ - hX 
-######## Hamiltonian ########
+###### Our convention is H = -JXX - gZ - hX 
 
+
+######## Hamiltonian ########
 
 """ Builds Ising Hamiltonian MPO  H = -Jtwo*XX - gperp*Z - hpar*X """ 
 function H_ising(sites::Vector{<:Index}, Jtwo::Real, gperp::Real, hpar::Real)
@@ -26,31 +27,25 @@ function H_ising(sites::Vector{<:Index}, Jtwo::Real, gperp::Real, hpar::Real)
 end
 
 
-
 ######## Time evolution operator exp(-iHt)  ########
-
 
 """ Symmetric prescription a la Murg for exp(-i*H*dt) Ising transverse+parallel
 Convention H = -( JXX + gzZ + λxX ) 
-- For exp(-iHdt) dt must be either included already in the parameters
 """
-function expH_ising_murg(sites::Vector{<:Index}, Jdt::Number, gzdt::Number, λxdt::Number)
-    """ Symmetric version of Murg exp(-iHising t) """
-
+function expH_ising_murg(sites::Vector{<:Index}, Jtwo::Number, gperp::Number, λpar::Number; dt::Number)
 
     # For real dt this does REAL time evolution 
     # I should have already taken into account both the - sign in exp(-iHt) 
     # and the overall minus in Ising H= -(JXX+Z)
 
-    Uxx = expXX_murg(sites, Jdt)
+    Uxx = expXX_murg(sites, Jtwo; dt)
 
-    Ux = MPO([op(s, "Rx", θ=-2*λxdt) for s in sites])
-    Uz2 = MPO([op(s, "Rz", θ=-gzdt) for s in sites])
-
+    Ux = MPO([op(s, "Rx", θ=-2*λpar*dt) for s in sites])
+    Uz2 = MPO([op(s, "Rz", θ=-gperp*dt) for s in sites])
 
     # Multiply in order:  exp(iZ/2)*exp(iX)*exp(iXX)*exp(iZ/2)
     
-    U_t = iszero(λxdt) ? Uz2 : applyn(Ux, Uz2) 
+    U_t = iszero(λpar) ? Uz2 : applyn(Ux, Uz2) 
     U_t = applyn(Uxx, U_t) 
     U_t = applyn(Uz2, U_t) 
 
@@ -59,12 +54,10 @@ function expH_ising_murg(sites::Vector{<:Index}, Jdt::Number, gzdt::Number, λxd
 end
 
 
-""" Symmetric version (Murg) of Murg exp(+i Jdt*XX ) """
-function expXX_murg(sites::Vector{<:Index}, Jdt::Number; make_expZZ::Bool=false)
+""" Symmetric version (Murg) of exp(+iJtwo*dt*XX ) """
+function expXX_murg(sites::Vector{<:Index}, Jtwo::Number; dt::Number, make_expZZ::Bool=false)
 
-    # For real dt this does REAL time evolution 
-    # I should have already taken into account both the - sign in exp(-iHt) 
-    # and the overall minus in Ising H= -(JXX+Z)
+    Jdt = Jtwo * dt
 
     N = length(sites)
     U_XX = MPO(N)
@@ -108,8 +101,9 @@ end
 
 
 
-function expH_ising_symm_svd(s::Vector{<:Index}, Jtwodt::Number, hperpdt::Number, λpardt::Number)
-    w = expH_ising_symm_svd_3site(Jtwodt, hperpdt, λpardt)
+function expH_ising_symm_svd(s::Vector{<:Index}, Jtwo::Number, hperp::Number, λpar::Number; dt::Number)
+
+    w = expH_ising_symm_svd_3site(Jtwo, hperp, λpar; dt)
     wmpo = if length(s) == 3
         replace_siteinds(w, s)
     else
@@ -118,9 +112,8 @@ function expH_ising_symm_svd(s::Vector{<:Index}, Jtwodt::Number, hperpdt::Number
     return wmpo
 end
 
-
 """ Builds core MPO tensors for 3 sites """ 
-function expH_ising_symm_svd_3site(Jtwodt::Number, hperpdt::Number, λpardt::Number)
+function expH_ising_symm_svd_3site(Jtwo::Number, hperp::Number, λpar::Number; dt::Number)
 
     s = siteinds("S=1/2", 3)
 
@@ -128,17 +121,18 @@ function expH_ising_symm_svd_3site(Jtwodt::Number, hperpdt::Number, λpardt::Num
     X2 = op(s, "X", 2)
     X3 = op(s, "X", 3)
 
-    e12 = exp(im*X1*X2*Jtwodt)
-    e23 = exp(im*X2*X3*Jtwodt)
+    eps = im*dt
+    e12 = exp(eps*X1*X2*Jtwo)
+    e23 = exp(eps*X2*X3*Jtwo)
 
-    fac_z = hperpdt*0.5
-    eZ1 = exp(im*fac_z*op(s,"Z",1))
-    eZ2 = exp(im*fac_z*op(s,"Z",2))
-    eZ3 = exp(im*fac_z*op(s,"Z",3))
+    fac_z = hperp*0.5*eps
+    eZ1 = exp(fac_z*op(s,"Z",1))
+    eZ2 = exp(fac_z*op(s,"Z",2))
+    eZ3 = exp(fac_z*op(s,"Z",3))
 
-    eX1 = exp(im*λpardt*op(s,"X",1))
-    eX2 = exp(im*λpardt*op(s,"X",2))
-    eX3 = exp(im*λpardt*op(s,"X",3))
+    eX1 = exp(eps*λpar*op(s,"X",1))
+    eX2 = exp(eps*λpar*op(s,"X",2))
+    eX3 = exp(eps*λpar*op(s,"X",3))
 
     l1, r2 = ITenUtils.symm_factorization(e12, inds(X1), cutoff=1e-14)
     l2, r3 = ITenUtils.symm_factorization(e23, inds(X2), cutoff=1e-14)
@@ -175,10 +169,14 @@ Convention H = -( JXX + gzZ + λxX )
 
 function expH_ising_murg_4o(
     sites::Vector{<:Index},
-    Jtwodt::Number,
-    gperpdt::Number,
-    λpardt::Number)
+    Jtwo::Number,
+    gperp::Number,
+    λpar::Number; 
+    dt::Number)
 
+    Jtwodt = Jtwo * dt 
+    gperpdt = gperp * dt
+    λpardt = λpar * dt
     tfac = 2^(1/3)
     dt1 = 1/(2-tfac)
     dt2 = -tfac/(2-tfac)

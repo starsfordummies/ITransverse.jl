@@ -1,4 +1,3 @@
-
 ITensors.op(::OpName"Σ",::SiteType"S=1") =
 [exp(2*im*pi/3)     0        0 
  0           exp(4*im*pi/3)  0 
@@ -198,7 +197,7 @@ end
 
 
 
-
+########## U(t) builders ###########
 
 
 """
@@ -206,7 +205,10 @@ Builds exp(Hpotts) with the expression a la Murg (sin/cos alike).
 dt should be already included in the parameters! 
 Bond dimension is 3
 """
-function expH_potts_murg(sites, J::Number, fpotts::Number)
+function expH_potts_murg(sites, Jtwo::Number, fpott::Number; dt::Number)
+
+    Jtwodt = Jtwo * dt
+    fdt = fpott * dt
 
     fsumI_a(x) = (2*exp(-x) + exp(2*x))/3.
     fsumΣ_a(x) = (-exp(-x) + exp(2*x))/3.
@@ -223,7 +225,7 @@ function expH_potts_murg(sites, J::Number, fpotts::Number)
     # for imag time evol we should have ϵ = -i dt
     # but we have an overall -J sign in the ham, so we should take 
 
-    ϵ = J * 1.0im 
+    ϵ = Jtwodt * 1.0im 
 
     #fI = fsumI(ϵ, 20)
     #fΣ = fsumΣ(ϵ, 20)
@@ -278,10 +280,10 @@ function expH_potts_murg(sites, J::Number, fpotts::Number)
 
         # Mutiply by f-tau part
 
-        if abs(fpotts) > 1e-10
+        if abs(fdt) > 1e-10
 
             ttdag = op(sites, "τplusτdag",  n)
-            expT = exp(ϵ * ttdag * fpotts/2)
+            expT = exp(ϵ * ttdag * fdt/2)
 
             U_t[n] = prime(U_t[n]) * expT
             U_t[n] = noprime(U_t[n] * prime(expT), 2)
@@ -393,11 +395,13 @@ should be symmetric (p<->p') and (L<->R)
 Bond dimension is 3. 
 dt should be already included in the parameters! 
 """
-function expH_potts_symmetric_svd(in_space_sites, J::Real, fpotts::Real)
+function expH_potts_symmetric_svd(in_space_sites, Jtwo::Number, fpott::Number; dt::Number)
 
     # ASSERT NEED SYMMETRY p<->p' OR WE SHOuLD BE MORE CAREFUL
 
-    ϵ = J * 1.0im 
+    Jdt = Jtwo * dt
+    fdt = fpott * dt
+    ϵ = Jdt * 1.0im 
 
     N = length(in_space_sites)
 
@@ -447,11 +451,11 @@ function expH_potts_symmetric_svd(in_space_sites, J::Real, fpotts::Real)
 
     U_t[N] = uT_open
 
-    if fpotts > 1e-10
+    if fdt > 1e-10
         for n = 1:N
 
             ttdag = op(in_space_sites, "τplusτdag",  n)
-            expT = exp(ϵ * ttdag * fpotts/2)
+            expT = exp(ϵ * ttdag * fdt/2)
 
             U_t[n] = prime(U_t[n], "Site") * expT
             U_t[n] = noprime(U_t[n] * prime(expT, "Site"), 2)
@@ -463,28 +467,3 @@ function expH_potts_symmetric_svd(in_space_sites, J::Real, fpotts::Real)
     return U_t
 
 end
-
-
-#= 
-# Boilerplate
-
- function H_potts(sites_potts, mp::PottsParams)
-    H_potts(sites_potts, mp.JSS, mp.ftau)
- end
-
-
-function expH_potts_murg(sites, mp::PottsParams, dt::Number)
-    expH_potts_murg(sites, mp.JSS, mp.ftau, dt)
-end
-
-function expH_potts_symmetric_svd(in_space_sites, mp::PottsParams, dt::Number) 
-    expH_potts_symmetric_svd(in_space_sites, mp.JSS, mp.ftau, dt)
-end
-
-function expH_potts_symmetric_svd(mp::PottsParams, dt::Number) 
-    space_sites = siteinds("S=1", 3; conserve_qns = false)
-    expH_potts_symmetric_svd(space_sites, mp.JSS, mp.ftau, dt)
-end
-
-
-=# 
