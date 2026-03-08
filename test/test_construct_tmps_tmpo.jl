@@ -85,7 +85,7 @@ end
 #  return tp1.expH_func(sites, tp1.mp, dt)
 # end
 
-fill_bulk_symmetric(sites, dt, Jxx, hz, gx) = expH_ising_murg(sites, Jxx*dt, hz*dt, gx*dt)
+fill_bulk_symmetric(sites, dt, Jxx, hz, gx) = expH_ising_murg(sites, Jxx, hz, gx; dt)
 
 
 
