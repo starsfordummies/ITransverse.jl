@@ -14,7 +14,6 @@ function build_Ut(sites::Vector{<:Index}, fUt::Function,  mp::ModelParams; dt::N
     fUt(sites, expanded_params...; dt)
 end
 
-
 function build_Ut(fUt::Function, mp::ModelParams; dt::Number, build_imag::Bool=false)
     ss = [sim(mp.phys_site) for _ in 1:3]
     build_Ut(ss, fUt, mp; dt, build_imag)

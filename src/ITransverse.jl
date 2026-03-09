@@ -11,7 +11,7 @@ using Statistics: mean, std
 
 using ITensors: OneITensor
 
-import NDTensors: Algorithm, @Algorithm_str
+import NDTensors: @Algorithm_str # Algorithm, 
 
 include("ITenUtils/ITenUtils.jl")
 using .ITenUtils

@@ -2,7 +2,7 @@
 H = -( J(XX+YY+ Δ*ZZ) + 2*hZ ) 
 specify JXX, ΔZZ and hZ as input params 
 """
-function H_XXZ(sites, JXY::Real, ΔZZ::Real)
+function H_XXZ(sites, JXY::Real, ΔZZ::Real, hz::Real)
 
     # Input operator terms which define a Hamiltonian
     N = length(sites)
@@ -15,6 +15,13 @@ function H_XXZ(sites, JXY::Real, ΔZZ::Real)
             os += -JXY*ΔZZ, "Sz", j, "Sz", j + 1
         end
     end
+
+    if abs(hz) > 1e-10
+        for j in 1:N
+            os += -2*hz, "Z", j
+        end
+    end
+
 
     # Convert these terms to MPO
     return MPO(os, sites)
@@ -141,13 +148,13 @@ function expH_XXZ_svd(
 
     for n = 1:N-1 # TODO CHECK THIS
     
-        Xi = op(in_space_sites, "X", n)
-        Yi = op(in_space_sites, "Y", n)
-        Zi = op(in_space_sites, "Z", n)
+        Xi = op(in_space_sites, "Sx", n)
+        Yi = op(in_space_sites, "Sy", n)
+        Zi = op(in_space_sites, "Sz", n)
     
-        Xj = op(in_space_sites, "X", n+1)
-        Yj = op(in_space_sites, "Y", n+1)
-        Zj = op(in_space_sites, "Z", n+1)
+        Xj = op(in_space_sites, "Sx", n+1)
+        Yj = op(in_space_sites, "Sy", n+1)
+        Zj = op(in_space_sites, "Sz", n+1)
     
     
         e1 = exp(ϵ*(Xi * Xj + Yi * Yj + Δ * Zi * Zj))
