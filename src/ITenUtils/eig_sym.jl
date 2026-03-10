@@ -71,7 +71,10 @@ function symm_oeig(M::AbstractMatrix; maxdim=nothing, cutoff=nothing, use_absolu
     if norm(Z - diagz) < 1e-10
         isq_z = diagz^-0.5
     else
-        isq_z = Z^(-0.5)
+      @warn "not diag"
+        # isq_z_1 = Z^(-0.5)  # Old version giving GPU headaches, do it manually instead:
+        Fz = eigen(Z)
+        isq_z = (Fz.vectors * Diagonal(Fz.values .^ -0.5)) / Fz.vectors 
     end
     O = vecs*isq_z
 
