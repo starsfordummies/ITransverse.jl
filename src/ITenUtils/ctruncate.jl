@@ -109,6 +109,15 @@ function ctruncate!(
     use_absolute_cutoff=default_use_absolute_cutoff(P),
     use_relative_cutoff=default_use_relative_cutoff(P),
 )
+
+    mindim = replace_nothing(mindim, 1)
+    maxdim = replace_nothing(maxdim, length(P))
+    #cutoff = replace_nothing(cutoff, typemin(eltype(P)))
+    cutoff = replace_nothing(cutoff, 0.)
+
+    use_absolute_cutoff = replace_nothing(use_absolute_cutoff, default_use_absolute_cutoff(P))
+    use_relative_cutoff = replace_nothing(use_relative_cutoff, default_use_relative_cutoff(P))
+
     origm = length(P)
     absP  = abs.(Array(P))   
 
