@@ -11,7 +11,6 @@ function build_LR(left_mps::MPS, mpos_bulk::Vector, right_mps::MPS; cutoff=1e-12
     R = right_mps
     @showprogress for mpo in reverse(mpos_bulk[Nhalf+1:end])
         R = apply(mpo, R; cutoff, maxdim)
-
     end
 
     return L, R
@@ -23,7 +22,7 @@ then computes their overlap """
 function contract_tn_transverse(left_edge::MPS, MPO_list::Vector{MPO}, right_edge::MPS; kwargs...)
 
     ll, rr = build_LR(left_edge, MPO_list, right_edge; kwargs...)
-    overlap_noconj(ll,rr)
+    overlap_noconj(ll,rr), max(maxlinkdim(ll), maxlinkdim(rr))
 end
 
 """ Traditional contraction scheme: applies all N rows of rows_mpo to bottom_mps and computes <top_mps|evolved bottom mps>, 
@@ -33,11 +32,12 @@ function contract_tn_tetris(bottom_mps::MPS, rows_mpo::Vector{MPO}, top_mps::MPS
     cutoff = 1e-10
     maxdim = 512
 
-    overlap = bottom_mps
+    bottom_evolved = bottom_mps
     for mm in rows_mpo 
-        overlap = apply(mm, overlap; cutoff, maxdim)
+        bottom_evolved = apply(mm, bottom_evolved; cutoff, maxdim)
     end
-    overlap = inner(top_mps, overlap)
+
+    return inner(top_mps, bottom_evolved),  maxlinkdim(bottom_evolved)
 end
 
 

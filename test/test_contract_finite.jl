@@ -14,13 +14,14 @@ psi_f = normalize(apply(oo2, psi))
 mpo_rows = [oo1,oo2,oo2,oo3]
 
 
-tetris = ITransverse.contract_tn_tetris(psi_i, mpo_rows, psi_f)
+tetris, chi_tetris = ITransverse.contract_tn_tetris(psi_i, mpo_rows, psi_f)
 
 left, cols, right = ITransverse.construct_tMPS_tMPO_finite(psi_i, mpo_rows, psi_f)
 
-transverse = ITransverse.contract_tn_transverse(left, cols, right)
+transverse, chi_transverse  = ITransverse.contract_tn_transverse(left, cols, right)
 
 @test isapprox(tetris, transverse, rtol=1e-4)
+@show chi_tetris, chi_transverse
 
 
 # TODO with QN 

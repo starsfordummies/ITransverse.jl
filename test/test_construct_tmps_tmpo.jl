@@ -200,7 +200,7 @@ oo3 = random_mpo(ss) + random_mpo(ss)
 
 Uts = [oo1, oo2, oo3, oo2, oo3]
 
-contraction1 = ITransverse.contract_tn_tetris(psi_i, Uts, psi_f)
+contraction1, _ = ITransverse.contract_tn_tetris(psi_i, Uts, psi_f)
 
 psiL, Tc, psiR = ITransverse.construct_tMPS_tMPO(psi_i, Uts, psi_f)
 
@@ -225,7 +225,7 @@ oo3 = random_mpo(ss) + random_mpo(ss)
 
 Uts = [oo1, oo2, oo3, oo2, oo3]
 
-contraction1 = ITransverse.contract_tn_tetris(psi_i, Uts, psi_f)
+contraction1, _  = ITransverse.contract_tn_tetris(psi_i, Uts, psi_f)
 
 psiL, Tc, psiR = ITransverse.construct_tMPS_tMPO_finite(psi_i, Uts, psi_f)
 

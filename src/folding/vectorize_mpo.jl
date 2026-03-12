@@ -1,3 +1,5 @@
+import .ITenUtils: fidelity 
+
 """
 Vectorize an MPO by folding each (p, p') pair into a single site index.
  We assume standard (p,p') labelling and try to join indices as (phys, phys')
@@ -32,4 +34,10 @@ function vectorized_local_op(ss::Vector{<:Index}; local_op::String="Id", site_op
     o_local_ops = MPO(local_ops)
 
     vo_local_ops, combiners = vectorize_mpo(o_local_ops)
+end
+
+function ITenUtils.fidelity(psi::MPO, phi::MPO; match_inds::Bool=true)
+    o1, _ = vectorize_mpo(psi)
+    o2, _ = vectorize_mpo(phi)
+    fidelity(o1, o2; match_inds)
 end
