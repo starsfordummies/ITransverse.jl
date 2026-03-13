@@ -424,3 +424,35 @@ end
 
 # function random_mps_haaruni(ss::Vector{<:Index})
 #     for kk = 
+
+function pad_bonddim(psi::MPS, chi::Int)
+    psi = orthogonalize(psi, 1)
+    N = length(siteinds(psi))
+    
+    new_links = [Index(chi, "Link,l=$n") for n in 1:N-1]
+    psi_new = MPS(N)
+
+    for ii in 1:N
+        s = siteinds(psi)[ii]
+        old_l = ii > 1 ? linkind(psi, ii-1) : nothing
+        old_r = ii < N ? linkind(psi, ii)   : nothing
+        new_l = ii > 1 ? new_links[ii-1]    : nothing
+        new_r = ii < N ? new_links[ii]       : nothing
+
+        # build index list for new tensor
+        new_inds = filter(!isnothing, [new_l, s, new_r])
+        T = ITensor(eltype(psi[ii]), new_inds...)
+
+        # embed via combiners
+        old_inds = filter(!isnothing, [old_l, s, old_r])
+        for cart in CartesianIndices(Tuple(dim(i) for i in old_inds))
+            vals = Tuple(cart)
+            old_idx = [old_inds[k] => vals[k] for k in eachindex(old_inds)]
+            new_idx = [new_inds[k] => vals[k] for k in eachindex(old_inds)]
+            T[new_idx...] = psi[ii][old_idx...]
+        end
+
+        psi_new[ii] = T
+    end
+    return psi_new
+end
