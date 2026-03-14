@@ -231,9 +231,11 @@ function gen_canonical(in_psi::MPS, ortho_center::Int; cutoff::Float64=1e-13)
         right_env *= replaceind(Ai', sits_prime[ii] => sits[ii])
 
         @assert order(right_env) == 2
-        F = symm_oeig(right_env, ind(right_env,1); cutoff, maxdim)
+        #@show tags(ind(right_env,1))
+        F = symm_oeig(right_env, ind(right_env,1); cutoff, maxdim, tags=tags(ind(right_env,1)))
         U = F.V
         S = F.D
+        #@show inds(U)
 
         sqS = S.^(0.5)
         isqS = sqS.^(-1)
@@ -262,7 +264,7 @@ function gen_canonical(in_psi::MPS, ortho_center::Int; cutoff::Float64=1e-13)
         left_env *= replaceind(Ai', sits_prime[ii] => sits[ii])
 
         @assert order(left_env) == 2
-        F = symm_oeig(left_env, ind(left_env,1); cutoff, maxdim)
+        F = symm_oeig(left_env, ind(left_env,1); cutoff, maxdim, tags=tags(ind(left_env,1)))
         U = F.V
         S = F.D
 
@@ -282,7 +284,7 @@ function gen_canonical(in_psi::MPS, ortho_center::Int; cutoff::Float64=1e-13)
     psi_ortho[ortho_center] = XUinv * psi_ortho[ortho_center]
 
 
-    return psi_ortho
+    return noprime(linkinds, psi_ortho)
 
 end
 
