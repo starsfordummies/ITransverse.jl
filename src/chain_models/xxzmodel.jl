@@ -1,11 +1,11 @@
-""" Builds with autompo H XXZ Hamiltonian, convention 
+""" Convention 
 H = -( J(XX+YY+ Δ*ZZ) + 2*hZ ) 
 specify JXX, ΔZZ and hZ as input params 
 """
-function H_XXZ(sites, JXY::Real, ΔZZ::Real, hz::Real)
+
+function os_H_XXZ(N::Int, JXY::Real, ΔZZ::Real, hz::Real)
 
     # Input operator terms which define a Hamiltonian
-    N = length(sites)
     os = OpSum()
 
     for j in 1:(N - 1)
@@ -18,12 +18,15 @@ function H_XXZ(sites, JXY::Real, ΔZZ::Real, hz::Real)
 
     if abs(hz) > 1e-10
         for j in 1:N
-            os += -2*hz, "Z", j
+            os += -2*hz, "Sz", j
         end
     end
 
+    return os
+end
 
-    # Convert these terms to MPO
+function H_XXZ(sites, JXY::Real, ΔZZ::Real, hz::Real)
+    os = os_H_XXZ(length(sites), JXY, ΔZZ, hz)
     return MPO(os, sites)
 end
 
@@ -200,7 +203,3 @@ function expH_XXZ_svd(
 
 end
 
-
-function expH_XXZ_2o(sites, J_XY, J_ZZ, hz; dt) 
-     timeEvo_MPO_2ndOrder(sites, fill("Id", 3), zeros(3), ["S+", "S-", "Sz"], [0.5*J_XY, 0.5*J_XY, J_ZZ], ["S-", "S+", "Sz"], ones(3), "Sz", hz, dt)
-end
