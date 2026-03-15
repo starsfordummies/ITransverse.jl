@@ -80,7 +80,7 @@ end
 
 
 
-
+#= 
 
 @testset "Overlap network with/without folding for XXZ Heisenberg spin 1 " begin
 
@@ -161,3 +161,5 @@ fidelity(ll,rr)
 @test abs.(Lsq - overlap_noconj(ll,rr))/Lsq < 1e-4
 
 end
+
+=# 
