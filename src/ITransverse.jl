@@ -25,7 +25,7 @@ include("chain_models/ising_parallel.jl")
 include("chain_models/potts.jl")
 include("chain_models/xxzmodel.jl")
 include("chain_models/random_mpo.jl")
-include("chain_models/exph_generic.jl")
+include("chain_models/floq_ising.jl")
 
 export up_state, down_state, plus_state
 export vX, vZ, vI
@@ -47,7 +47,7 @@ export H_potts_manual,
     expH_potts_symmetric_svd
 
 export build_H, build_Ut
-export timeEvo_MPO_2ndOrder, timeEvo_MPO_2ndOrder_LRflipped
+#export timeEvo_MPO_2ndOrder, timeEvo_MPO_2ndOrder_LRflipped
 
 
 include("BenchData/BenchData.jl")
@@ -111,8 +111,6 @@ export H_ising,
     expH_random_symm_svd_1o
 
 export build_H, build_Ut
-
-export timeEvo_MPO_2ndOrder, timeEvo_MPO_2ndOrder_LRflipped
 
 include("tmpo/construct-tMPO-tMPS.jl")
 export construct_tMPS_tMPO
