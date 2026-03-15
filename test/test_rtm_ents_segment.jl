@@ -1,8 +1,33 @@
 using Test
 
 using ITensors, ITensorMPS
-using ITransverse 
+using ITransverse, ProgressMeter
 
+function compute_ents_segments(psi::MPS, cut_range)
+
+    iB = cut_range[end]
+
+    renyis = []
+
+    @showprogress for iA in cut_range[1:end-1]
+
+        psig = ITransverse.gen_canonical(psi, iA+1)
+
+        psigp = prime(linkinds, psig)
+        rhoc = ITensor(1)
+        for kk = iA:iB
+            rhoc *= psig[kk]
+            rhoc *= psigp[kk]
+        end
+
+        F = ITransverse.ITenUtils.symm_oeig(rhoc, (linkind(psig,iA-1), linkind(psig,iB)); cutoff=1e-13)
+        renyis_diag = renyi_entropies(F.D.tensor.storage.data, which_ents=[0.5,1,2,4])
+
+        push!(renyis, renyis_diag)
+    end
+
+    return renyis
+end
 
 @testset "Generalized entropies (symmetric) for segment: contract vs orthogonalize&diagonalize" begin
     
@@ -18,7 +43,7 @@ rho2_manual = ITransverse.gen_renyi2_sym_interval_manual(psi, iA,iB)
 
 S2_manual = (rho2_manual)
 
-psig = ITransverse.gen_canonical(psi, iA+2)
+psig = ITransverse.gen_canonical(psi, iA+1)
 
 psigp = prime(linkinds, psig)
 rhoc = ITensor(1)
