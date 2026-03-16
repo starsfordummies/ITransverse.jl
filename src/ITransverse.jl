@@ -64,6 +64,7 @@ export pMPS,
 include("truncation_sweeps/trunc_params.jl")
 include("truncation_sweeps/sweeps.jl")
 include("truncation_sweeps/sweeps_sym.jl")
+include("truncation_sweeps/gen_orthogonalize.jl")
 include("truncation_sweeps/gen_form_checks.jl")
 
 # from pparams
