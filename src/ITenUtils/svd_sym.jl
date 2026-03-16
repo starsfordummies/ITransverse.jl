@@ -131,8 +131,8 @@ end
 
 
 """ New version trying to avoid having to go through trunc_svd.. """
-function symm_svd(a::ITensor, linds; cutoff=nothing, maxdim=nothing)
-    rinds = uniqueinds(a, linds)
+function symm_svd(a::ITensor, linds, rinds = uniqueinds(a, linds) ; cutoff=nothing, maxdim=nothing)
+   
 
     cL = combiner(linds)
     cR = combiner(rinds)
