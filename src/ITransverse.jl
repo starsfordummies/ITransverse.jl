@@ -59,6 +59,7 @@ export pMPS,
     isid,
     mergedicts!,
     fidelity, logfidelity,
+    gen_fidelity,
     normalize_for_overlap!
 
 include("truncation_sweeps/trunc_params.jl")

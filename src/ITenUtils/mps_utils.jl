@@ -280,7 +280,15 @@ function fidelity(psi::MPS, phi::MPS; match_inds::Bool=true)
     if match_inds 
         phi = replace_siteinds(phi, siteinds(psi))
     end
-    return sqrt(abs2(inner(psi,phi))/norm(psi)^2/norm(phi)^2) 
+    return sqrt(abs2(inner(psi,phi)))/norm(psi)/norm(phi)
+end
+
+
+function gen_fidelity(psi::MPS, phi::MPS; match_inds::Bool=true)
+    if match_inds 
+        phi = replace_siteinds(phi, siteinds(psi))
+    end
+    return overlap_noconj(psi,phi)/norm(psi)/norm(phi)
 end
 
 """ Returns log10-fidelity *per site* of two MPS """

@@ -67,6 +67,7 @@ export pMPS,
     phys_ind,
     gaugefix_left,
     fidelity,
+    gen_fidelity,
     logfidelity,
     normalize_for_overlap!,
     allsiteinds
