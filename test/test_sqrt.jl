@@ -10,7 +10,7 @@ using Test
 
     a = random_itensor(ComplexF64, iL, iR)
     a /= norm(a)
-    a = symmetrize(a)
+    a = symmetrize(a; check=false)
 
     iTemp = sim(iR)
 

@@ -4,7 +4,7 @@
 function truncate_sweep(psi::MPS, phi::MPS;
         cutoff::Real  = 1e-13,
         maxdim::Int   = max(maxlinkdim(psi), maxlinkdim(phi)),
-        direction::Symbol = :right,
+        direction::Symbol = :right
     )
 
     mpslen = length(psi)

@@ -29,8 +29,9 @@ init_state = plus_state
 
 cutoff = 1e-12
 maxdim = 200
+direction = :right
 
-truncp = TruncParams(cutoff, maxdim)
+truncp = (;cutoff, maxdim, direction)
 
 Nsteps = 30
 
@@ -48,7 +49,6 @@ state = tdvp(
   )
 
 c0 = init_cone(b, 10; full=false)
-
 
 cp = DoCheckpoint(
     "cp_cone.jld2";

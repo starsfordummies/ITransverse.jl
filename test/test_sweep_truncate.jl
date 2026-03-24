@@ -20,7 +20,7 @@ sites = siteinds("S=1/2", 60)
 
     # this is a hacky way to give an overlap ~ 1/sqrt(2)
     psi = normalize(add(psi, psi; maxdim, mindim))
-    phi = normalize(add(dag(psi); psi, maxdim, mindim))
+    phi = normalize(add(dag(psi), psi; maxdim, mindim))
 
     @test linkdims(psi) == linkdims(phi)
 
