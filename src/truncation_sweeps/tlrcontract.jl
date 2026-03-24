@@ -139,7 +139,7 @@ function tlrcontract_old(
     ψR_out[1] = R
     ψL_out[1] = L
 
-    return ψR_out, ψL_out, S_all 
+    return ψL_out, ψR_out, S_all 
 end
 
 

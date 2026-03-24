@@ -1,8 +1,8 @@
 using ITensors, ITensorMPS, ITransverse
 using Test
 
-ss = siteinds("S=1/2", 40)
-ss2 = siteinds("S=1/2", 47)
+ss = siteinds("S=1/2", 12)
+ss2 = siteinds("S=1/2", 16)
 ss2[1:length(ss)] = ss
 ss
 ss2
@@ -23,8 +23,10 @@ OR = applyn(AR, ψR; truncate=false)
 cutoff = 1e-10
 maxdim=120
 
-llt, rrt, sst = ITransverse.truncate_sweep(LO, OR; cutoff, maxdim, direction="right")
-llt2, rrt2, sst2 = ITransverse.truncate_rsweep_new(LO, OR; cutoff, maxdim)
+llt, rrt, sst = ITransverse.truncate_sweep(LO, OR; cutoff, maxdim, direction=:right)
+llt_left, rrt_left, sst_left = ITransverse.truncate_sweep(LO, OR; cutoff, maxdim, direction=:left)
+
+llt2, rrt2, sst2 = ITransverse.truncate_rsweep_rtm(LO, OR; cutoff, maxdim)
 
 ll, rr, ss = ITransverse.tlrcontract_old(ψL, AL, AR, ψR; cutoff, maxdim)
  abs( gen_fidelity(llt,rrt) - gen_fidelity(ll,rr))/abs(gen_fidelity(llt,rrt))
@@ -43,7 +45,7 @@ fidelity(llc, llt)
 fidelity(rrc, rrt)
 
 fidelity(rr, rrc)
-fidelity(rr, llt)
+fidelity(rr, rrt)
 
 maxlinkdim(ll)
 maxlinkdim(llt)
@@ -56,4 +58,4 @@ rrc
 
 @btime ITransverse.tlrcontract(ψL, AL, AR, ψR; cutoff, maxdim);
 
-@btime ITransverse.tlrcontract_cone(ψL, AL, AR, ψR; cutoff, maxdim);
+@btime ITransverse.tlrcontract_old(ψL, AL, AR, ψR; cutoff, maxdim);
