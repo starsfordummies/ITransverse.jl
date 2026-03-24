@@ -1,9 +1,14 @@
+""" Queen of all boilerplate """
 function build_Ut(sites::Vector{<:Index}, fUt::Function, par1::Number, par2::Number, par3::Number=0; dt::Number, build_imag::Bool=false)
     if build_imag
         dt = -im*dt
     end
     expanded_params = (par1,par2,par3)
     fUt(sites, expanded_params...; dt)
+end
+
+function build_Ut(sites::Vector{<:Index}, tp::tMPOParams; build_imag=false)
+        build_Ut(sites, tp.expH_func, tp.mp; dt=tp.dt, build_imag) 
 end
 
 function build_Ut(sites::Vector{<:Index}, fUt::Function,  mp::ModelParams; dt::Number, build_imag::Bool=false)

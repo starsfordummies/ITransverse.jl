@@ -72,11 +72,11 @@ end
 
 
 """ Basic TEBD to compute the half-chain expectation value of <Z> at a given time """
-function tebd_z(Nt::Int, tp::tMPOParams; N::Int = 2*Nt+4, truncp=TruncParams())
+function tebd_z(Nt::Int, tp::tMPOParams; N::Int = 2*Nt+4, kwargs...)
 
 
     ss = siteinds("S=1/2", N)
-    eH = tp.expH_func(ss, tp.mp, tp.dt)
+    eH = build_Ut(ss, tp)
 
     #initial state
     psi0 = pMPS(ss, tp.bl.tensor.storage)
@@ -87,7 +87,7 @@ function tebd_z(Nt::Int, tp::tMPOParams; N::Int = 2*Nt+4, truncp=TruncParams())
     evs = []
     for nt = 1:Nt
         # println("timestep N°=$(nt)\ttime=$(t)")
-        psi_t = apply(eH, psi_t; maxdim = truncp.maxdim, cutoff = truncp.cutoff, normalize = true)
+        psi_t = apply(eH, psi_t; normalize = true, kwargs...)
         push!(evs,expect(psi_t, "Z")[div(LL,2)])
     end
     
