@@ -285,7 +285,15 @@ end
 
 
 #### NEW LR apply 
-function tlrapply(psiL::MPS, OL::MPO, OR::MPO, psiR::MPS; kwargs...)
+function tlrapply(::Algorithm"RTM", psiL::MPS, OL::MPO, OR::MPO, psiR::MPS; kwargs...)
     tpsiL, tpsiR, sv = tlrcontract(psiL, OL, OR, psiR; kwargs...)
     return replaceprime(tpsiL,  2 => 0), replaceprime(tpsiR,  1 => 0), sv
+end
+
+
+
+function tlrapply(::Algorithm"naiveRTM", psiL::MPS, OL::MPO, OR::MPO, psiR::MPS; kwargs...)
+            OpsiR = applyn(OR, psiR; truncate=false)
+            psiLO = applyns(OL, psiL; truncate=false)  
+            truncate_sweep(psiLO, OpsiR; kwargs...)
 end

@@ -18,13 +18,13 @@ function main_cone()
     optimize_op = vZ
     init_state = up_state
 
-    cutoff = 1e-8
-    maxdim = 128
-    direction = "right"
+    cutoff = 1e-10
+    maxdim = 256
+    direction = :right
 
-    truncp = TruncParams(cutoff, maxdim, direction)
+    truncp = (;cutoff, maxdim, direction)
 
-    Nsteps = 50
+    Nsteps = 80
 
     #time_sites = siteinds("S=3/2", 1)
 
@@ -36,7 +36,7 @@ function main_cone()
 
     #@info length(c0)
 
-    cone_params = ConeParams(;truncp, opt_method="RTM_LRn", optimize_op)
+    cone_params = ConeParams(;truncp, opt_method="RTM_R", optimize_op)
 
     cp = DoCheckpoint(
         "cp_cone.jld2";

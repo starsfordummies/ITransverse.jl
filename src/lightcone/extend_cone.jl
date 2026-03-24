@@ -14,13 +14,10 @@ function extend_tmps_cone(ll::MPS, op_L::Vector{<:Number}, op_R::Vector{<:Number
     # We can extend by more than one timestep if the cone is narrow
     n_ext = length(ts) - length(ll)
 
-    tmpo = folded_tMPO_ext(b, ts; LR=:right, fold_op=op_R, n_ext)
-    psi_R = applyn(tmpo, rr)
+    tmpoR = folded_tMPO_ext(b, ts; LR=:right, fold_op=op_R, n_ext)
+    tmpoL = folded_tMPO_ext(b, ts; LR=:left, fold_op=op_L, n_ext) 
 
-    tmpo = folded_tMPO_ext(b, ts; LR=:left, fold_op=op_L, n_ext) 
-    psi_L = applyns(tmpo, ll)
-
-    ll, rr, ents = truncate_sweep(psi_L,psi_R; kwargs...)
+    ll, rr, ents = tlrapply(ITensors.Algorithm("naiveRTM"), ll, tmpoL, tmpoR, rr; kwargs...)
     
     return ll, rr, ents
 
@@ -57,7 +54,7 @@ function extend_tmps_cone_new(ll::MPS, op_L::Vector{<:Number}, op_R::Vector{<:Nu
     tmpoL = folded_tMPO_ext(b, ts; LR=:left, fold_op=op_L, n_ext) 
     tmpoR = folded_tMPO_ext(b, ts; LR=:right, fold_op=op_R, n_ext)
    
-    ll, rr, ents = tlrapply(ll, tmpoL, tmpoR, rr; kwargs...)
+    ll, rr, ents = tlrapply(ITensors.Algorithm("RTM"), ll, tmpoL, tmpoR, rr; kwargs...)
     
     #@show overlap_noconj(ll,rr)
     return ll, rr, ents

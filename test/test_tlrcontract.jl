@@ -59,3 +59,33 @@ rrc
 # @btime ITransverse.tlrcontract(ψL, AL, AR, ψR; cutoff, maxdim);
 
 # @btime ITransverse.tlrcontract_old(ψL, AL, AR, ψR; cutoff, maxdim);
+
+ss = siteinds("S=1/2", 40)
+
+ψL = random_mps(ComplexF64, ss, linkdims=100) 
+ψR = random_mps(ComplexF64, ss, linkdims=120) 
+
+AL = random_mpo(ss) + im*random_mpo(ss)
+AR = random_mpo(ss) + im*random_mpo(ss)
+
+
+cutoff = 1e-10
+maxdim=256
+direction = :right 
+truncp = (; cutoff, maxdim, direction)
+left, right, s = ITransverse.tlrapply(ITensors.Algorithm("RTM"), ψL, AL, AR, ψR; truncp...)
+leftn, rightn, sn = ITransverse.tlrapply(ITensors.Algorithm("naiveRTM"), ψL, AL, AR, ψR;)
+
+fidelity(left,leftn)
+fidelity(right,rightn)
+
+gen_fidelity(left, right)
+gen_fidelity(leftn, rightn)
+
+LO = applyns(AL, ψL; truncate=false)
+OR = applyn(AR, ψR; truncate=false)
+
+gen_fidelity(LO, OR)
+
+#@btime ITransverse.tlrapply(ITensors.Algorithm("RTM"), ψL, AL, AR, ψR; truncp...);
+#@btime ITransverse.tlrapply(ITensors.Algorithm("naiveRTM"), ψL, AL, AR, ψR; truncp...);
