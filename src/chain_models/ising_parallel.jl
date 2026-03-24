@@ -174,15 +174,12 @@ function expH_ising_murg_4o(
     λpar::Number; 
     dt::Number)
 
-    Jtwodt = Jtwo * dt 
-    gperpdt = gperp * dt
-    λpardt = λpar * dt
     tfac = 2^(1/3)
     dt1 = 1/(2-tfac)
     dt2 = -tfac/(2-tfac)
 
-    U1 = expH_ising_murg(sites, Jtwodt*dt1, gperpdt*dt1, λpardt*dt1)
-    U2 = expH_ising_murg(sites, Jtwodt*dt2, gperpdt*dt2, λpardt*dt2)
+    U1 = expH_ising_murg(sites, Jtwo, gperp, λpar; dt = dt*dt1)
+    U2 = expH_ising_murg(sites, Jtwo, gperp, λpar; dt = dt*dt2)
 
     U4 = applyn(U2, U1)
     U4 = applyn(U1, U4)
