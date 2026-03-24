@@ -286,5 +286,5 @@ end
 #### NEW LR apply 
 function tlrapply(psiL::MPS, OL::MPO, OR::MPO, psiR::MPS; kwargs...)
     tpsiL, tpsiR, sv = tlrcontract(psiL, OL, OR, psiR; kwargs...)
-    return replaceprime(tpsiL,  1 => 0), replaceprime(tpsiR,  1 => 0), sv
+    return replaceprime(tpsiL,  2 => 0), replaceprime(tpsiR,  1 => 0), sv
 end
