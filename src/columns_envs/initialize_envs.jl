@@ -24,11 +24,6 @@ function initialize_envs_rdm(cc::Columns, trunc_params; verbose::Bool=false)
 
         update_env!(left_envs, jj+1, ll)
 
-        # ll = orthogonalize(ll, length(ll))
-        # left_envs.norms[jj+1] = norm(ll)
-        # ll = normalize(ll)
-        # left_envs[jj+1] = ll
-
         next!(p; showvalues = [(:Info,"[RDM Init envs][$(jj)][χ=$(maxlinkdim(ll))]")])
 
     end
@@ -39,15 +34,10 @@ function initialize_envs_rdm(cc::Columns, trunc_params; verbose::Bool=false)
             @info "Building R[$(jj-1)] = E[$(jj)]*R[$(jj)]"
         end
         #@show length(rr), length(mpo_R)
-        rr = apply(Algorithm"naive",cc[jj], right_envs[jj]; truncate=true, cutoff, maxdim=maxdim)
+        rr = applyn(cc[jj], right_envs[jj]; truncate=true, cutoff, maxdim=maxdim)
         #@show rr
 
         update_env!(right_envs, jj-1, rr)
-
-        # rr = orthogonalize(rr, length(rr))
-        # right_envs.norms[jj-1] = norm(rr)
-        # rr = normalize(rr)
-        # right_envs[jj-1] = rr 
 
         next!(p; showvalues = [(:Info,"[RDM Init envs][$(jj)][χ=$(maxlinkdim(rr))]")])
 
