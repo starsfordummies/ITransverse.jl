@@ -1,6 +1,5 @@
 """ Sweep rebuilding adjacent L-R environments using RTM  """
-function sweep_rebuild_envs_rtm!(left_envs::Environments, right_envs::Environments, cc::Columns, 
-    truncp::TruncParams; verbose::Bool=false)
+function sweep_rebuild_envs_rtm!(left_envs::Environments, right_envs::Environments, cc::Columns, truncp)
 
     NN = length(cc)
     @assert length(left_envs) == length(right_envs) == NN-1
@@ -10,42 +9,25 @@ function sweep_rebuild_envs_rtm!(left_envs::Environments, right_envs::Environmen
     for jj in 2:NN-1
 
         ll = applyns(cc[jj], left_envs[jj-1]; truncate=false)
-        ll, _, _ = truncate_sweep(ll, right_envs[jj], truncp)
+        ll, _, _ = truncate_sweep(ll, right_envs[jj]; truncp...) # direction = :right
 
         update_env!(left_envs, jj, ll)
-        # ll = orthogonalize(ll, length(ll))
-        # left_envs.norms[jj] = norm(ll)
-        # ll = normalize(ll)
-        # left_envs[jj] = ll
 
-        if verbose
-            @info "updating L[$(jj-1)]E[$(jj)] = L[$(jj)] with R[$(jj)]"
-        end
+        @debug "updating L[$(jj-1)]E[$(jj)] = L[$(jj)] with R[$(jj)]"
+        
     end
 
     update_env!(right_envs, NN-1, cc[NN])
 
-    # rr =  cc[NN] 
-    # right_envs.norms[NN-1] = norm(rr)
-    # rr = normalize(rr)
-    # right_envs[NN-1] = rr
-  
     # Update Right envs using {left_envs},  R[jj-1] = E[jj] * R[jj]  
     for jj in NN-1:-1:2
 
         rr = applyn(cc[jj], right_envs[jj])
-        _, rr, _ = truncate_rsweep(left_envs[jj-1], rr, truncp, fast=true)
+        _, rr, _ = truncate_sweep(left_envs[jj-1], rr; truncp...) # direction = :right
 
         update_env!(right_envs, jj-1, rr)
 
-        # orthogonalize!(rr,length(rr))
-        # right_envs.norms[jj-1] = norm(rr)
-        # normalize!(rr)
-        # right_envs[jj-1] = rr 
-
-        if verbose
-            @info "updating E[$(jj)]R[$(jj)] = R[$(jj-1)] with L[$(jj-1)]"
-        end
+        @debug "updating E[$(jj)]R[$(jj)] = R[$(jj-1)] with L[$(jj-1)]"
 
     end
 
@@ -57,8 +39,7 @@ end
 """ Sweep rebuilding adjacent L-R environments using RTM. 
 Attempt at letting bond dimension grow if necessary: instead of eg. taking Li, build Li+1 and update 
     with Ri+1, we take Li and Ri+2, build Li+1 and Ri+i and truncate over those. """
-function sweep_rebuild_envs_rtm_twocol!(left_envs::Environments, right_envs::Environments, cc::Columns, 
-    truncp::TruncParams; verbose::Bool=false)
+function sweep_rebuild_envs_rtm_twocol!(left_envs::Environments, right_envs::Environments, cc::Columns, truncp)
 
     NN = length(cc)
     @assert length(left_envs) == length(right_envs) == NN-1
@@ -72,22 +53,17 @@ function sweep_rebuild_envs_rtm_twocol!(left_envs::Environments, right_envs::Env
 
         ll = applyns(cc[jj], left_envs[jj-1]; truncate=false)
         rr = applyn(cc[jj+1], right_envs[jj+1])
-        ll, _, _ = truncate_rsweep(ll, rr, truncp; fast=true)
+        ll, _, _ = truncate_sweep(ll, rr; truncp...) # direction = right
 
         update_env!(left_envs, jj, ll)
-        # ll = orthogonalize(ll, length(ll))
-        # left_envs.norms[jj] = norm(ll)
-        # ll = normalize(ll)
-        # left_envs[jj] = ll
-
-        if verbose
-            @info "updating L[$(jj-1)]E[$(jj)] = L[$(jj)] with R[$(jj)]"
-        end
+    
+        @debug "updating L[$(jj-1)]E[$(jj)] = L[$(jj)] with R[$(jj)]"
+   
     end
 
     # Last one 
     ll = applyns(cc[NN-1], left_envs[NN-2]; truncate=false)
-    ll, _, _ = truncate_rsweep(ll, right_envs[NN-1], truncp; fast=true)
+    ll, _, _ = truncate_sweep(ll, right_envs[NN-1]; truncp)
 
     update_env!(left_envs, NN-1, ll)
 
@@ -99,19 +75,16 @@ function sweep_rebuild_envs_rtm_twocol!(left_envs::Environments, right_envs::Env
 
         rr = applyn(cc[jj], right_envs[jj])
         ll = applyns(cc[jj-1], left_envs[jj-2])
-        _, rr, _ = truncate_rsweep(ll, rr, truncp, fast=true)
+        _, rr, _ = truncate_sweep(ll, rr; truncp...)
 
         update_env!(right_envs, jj-1, rr)
 
-        if verbose
-            @info "updating E[$(jj)]R[$(jj)] = R[$(jj-1)] with L[$(jj-1)] = L[$(jj-2)]E[$(jj-1)]"
-        end
+        @debug "updating E[$(jj)]R[$(jj)] = R[$(jj-1)] with L[$(jj-1)] = L[$(jj-2)]E[$(jj-1)]"
     end
 
     rr = applyn(cc[2], right_envs[2])
-    _, rr, _ = truncate_rsweep(left_envs[1], rr, truncp, fast=true)
+    _, rr, _ = truncate_sweep(left_envs[1], rr; truncp...)
     update_env!(right_envs, 1, rr)
-
 
     return max(maxlinkdim(left_envs),maxlinkdim(right_envs))
 
