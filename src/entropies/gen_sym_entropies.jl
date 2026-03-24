@@ -184,8 +184,8 @@ end
 
 """ We can compute the "SVD" VN entropy by just doing a right (generalized) sweep """
 function generalized_svd_vn_entropy(psi::MPS, phi::MPS)
-    truncp = TruncParams(1e-12, maxlinkdim(psi)+maxlinkdim(phi))
-    _, _, svs = truncate_rsweep(psi, phi, truncp)
+    truncp = (cutoff=1e-12, maxdim=maxlinkdim(psi)+maxlinkdim(phi), direction=:right)
+    _, _, svs = truncate_sweep(psi, phi; truncp...)
     return vn_from_matrix(svs)
 end
 

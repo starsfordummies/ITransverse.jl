@@ -1,11 +1,5 @@
 """ Truncate sweeps based on RTM """
 
-""" 
-Left truncation sweep using SVD of RTM
-"""
-function truncate_lsweep(psi::MPS, phi::MPS, truncp::TruncParams)
-    truncate_sweep(psi, phi; cutoff=truncp.cutoff, maxdim=truncp.maxdim)
-end
 
 function truncate_sweep(psi::MPS, phi::MPS;
         cutoff::Real  = 1e-13,
@@ -75,7 +69,7 @@ end
 
 ####### NEW SWEEPS 
 
-
+# TODO direction 
 function truncate_rsweep_rtm!(psi::MPS, phi::MPS; cutoff::Float64, maxdim::Int)
 
     @assert siteinds(psi) == siteinds(phi)

@@ -21,8 +21,9 @@ init_state = plus_state
 
 cutoff = 1e-20
 maxdim = 200
+direction = :right
 
-truncp = TruncParams(cutoff, maxdim)
+truncp = (; cutoff, maxdim, direction)
 
 Nsteps = 30
 
@@ -58,6 +59,12 @@ ex_rtm_lr = cp.obs_hist[:X][end]
 
 @test abs(ex_rtm_lr - ex_rdm) < 0.001
 
+cone_params = ConeParams(;truncp, opt_method="RTM_LRn", optimize_op)
+psi, psiR, cp = run_cone(c0, b, cone_params, cp, Nsteps)
+ex_rtm_lrn = cp.obs_hist[:X][end]
+
+@test abs(ex_rtm_lrn - ex_rdm) < 0.001
+
 cone_params = ConeParams(;truncp, opt_method="RTM_R", optimize_op)
 psi, psiR, cp = run_cone(c0, b, cone_params, cp, Nsteps)
 ex_rtm_r = cp.obs_hist[:X][end]
@@ -69,5 +76,5 @@ psi, psiR, cp = run_cone(c0, b, cone_params, cp, Nsteps)
 ex_rtm_rw = cp.obs_hist[:X][end]
 @test abs(ex_rtm_rw - ex_rtm_r) < 0.001
 
-@show ex_rdm, ex_rtm_r, ex_rtm_lr, ex_rtm_rw
+@show ex_rdm, ex_rtm_r, ex_rtm_lr, ex_rtm_lrn, ex_rtm_rw
 end
