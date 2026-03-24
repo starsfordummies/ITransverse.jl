@@ -67,19 +67,17 @@ end
 
 
 """ Truncate sweep based on Singular value decomposition of RTM |psi><phi| 
-If `fast=true`, it only truncates bonds without bringing the two MPS to generalized canonical form (no multiplication by inverses of SV)
 
-Returns
-
+Returns updated 
 1) updated `psi`
 2) updated `phi` 
-3) SVD generalized entropies 
+3) Singular values along bipartitions matrix
 """
 function truncate_rsweep(psi::MPS, phi::MPS, truncp::TruncParams; fast::Bool=false)
     truncate_rsweep(psi, phi; cutoff=truncp.cutoff, maxdim=truncp.maxdim, fast)
 end
 
-function truncate_rsweep(psi::MPS, phi::MPS; cutoff::Real=1e-12, maxdim::Int=max(maxlinkdim(psi),maxlinkdim(phi)), fast::Bool=false)
+function truncate_rsweep(psi::MPS, phi::MPS; cutoff::Real=1e-13, maxdim::Int=max(maxlinkdim(psi),maxlinkdim(phi)))
 
     mpslen = length(psi)
 
@@ -102,7 +100,7 @@ function truncate_rsweep(psi::MPS, phi::MPS; cutoff::Real=1e-12, maxdim::Int=max
 
         @assert order(right_env) == 2
 
-        U,S,Vdag = svd(right_env, ind(right_env,1); cutoff, maxdim)
+        U,S,Vdag = svd(right_env, ind(right_env,1); cutoff, maxdim, lefttags=tags(linkind(psi, ii-1)),righttags=tags(linkind(phi, ii-1)))
         norm_factor = sum(S)
 
         XU = dag(U)
@@ -111,21 +109,12 @@ function truncate_rsweep(psi::MPS, phi::MPS; cutoff::Real=1e-12, maxdim::Int=max
         XV = dag(Vdag) 
         XVinv = Vdag
 
-        if fast 
-            right_env /= norm_factor
-        else
-            sqS = sqrt.(S)
-            isqS = sqS.^(-1)
-            XU = XU * isqS
-            XUinv = sqS * XUinv
-            XV = XV * isqS
-            XVinv = sqS * XVinv
-        end
-
+        # TODO do we need this 
+        right_env /= norm_factor
+     
         right_env *= XU
         right_env *= XV
 
-        # Set updated matrices
         psi_ortho[ii] = Ai * XU  
         phi_ortho[ii] = Bi * XV
 
@@ -134,11 +123,8 @@ function truncate_rsweep(psi::MPS, phi::MPS; cutoff::Real=1e-12, maxdim::Int=max
 
     end
 
-    # the final two
     psi_ortho[1] = XUinv * psi_ortho[1]
     phi_ortho[1] = XVinv * phi_ortho[1]
-
-    #gen_overlap = scalar(tocpu((right_env * ( phi_ortho[1] *  psi_ortho[1] ) )))
 
     return psi_ortho, phi_ortho, SV_all
 
@@ -235,7 +221,7 @@ end
 ####### NEW SWEEPS 
 
 
-function truncate_rsweep_new!(psi::MPS, phi::MPS; cutoff::Float64, maxdim::Int)
+function truncate_rsweep_rtm!(psi::MPS, phi::MPS; cutoff::Float64, maxdim::Int)
 
     @assert siteinds(psi) == siteinds(phi)
     ss = siteinds(psi)
@@ -314,4 +300,4 @@ function truncate_rsweep_new!(psi::MPS, phi::MPS; cutoff::Float64, maxdim::Int)
 
 end
 
-truncate_rsweep_new(psi, phi; kwargs...) = truncate_rsweep_new!(copy(psi), copy(phi); kwargs...) 
+truncate_rsweep_rtm(psi, phi; kwargs...) = truncate_rsweep_rtm!(copy(psi), copy(phi); kwargs...) 
