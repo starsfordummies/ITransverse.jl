@@ -228,3 +228,90 @@ function truncate_rsweep!(psi::MPS, phi::MPS; cutoff::Real=1e-12, maxdim=nothing
     return ents_sites
 
 end
+
+
+
+
+####### NEW SWEEPS 
+
+
+function truncate_rsweep_new!(psi::MPS, phi::MPS; cutoff::Float64, maxdim::Int)
+
+    @assert siteinds(psi) == siteinds(phi)
+    ss = siteinds(psi)
+    N = length(ss)
+
+    SV_all = zeros(Float64, N-1, maxdim)
+
+    psiL = psi 
+    psiR = prime(linkinds, phi)
+
+
+    left_env = ITensors.OneITensor()
+
+    #elt = method == "SVD" ? Float64 : ComplexF64
+    #SV_all = zeros(elt, mpslen-1, maxdim)
+
+    Lenvs = Vector{ITensor}(undef, N-1)
+    # Build left environments 
+    for ii = 1:N-1 
+        left_env *= psiL[ii]
+        left_env *= psiR[ii]
+        Lenvs[ii] = left_env
+    end
+
+
+    psiR = phi'
+
+    workL = psiL[N]
+    workR = psiR[N]
+
+    rho = workL * Lenvs[N-1]
+    rho *= workR
+
+    F = svd(rho, ss[N]; cutoff, maxdim)
+
+    workL *= dag(F.U)
+    workR *= dag(F.V)
+
+    Svec = collect(F.S.tensor.storage.data)/sum(F.S)  
+
+    SV_all[N-1, 1:length(Svec)] .= Svec  
+
+    psi[N] = F.U
+    phi[N] = F.V
+
+    for jj = reverse(2:N-1)
+
+        workL *= psiL[jj]
+        workR *= psiR[jj]
+
+        rho = workL * Lenvs[jj-1]
+        rho *= workR
+
+        @assert ndims(rho) == 4 
+
+        F = svd(rho, (ss[jj], F.u); cutoff, maxdim)
+        S = F.S
+        workL *= dag(F.U)
+        workR *= dag(F.V)
+
+        psi[jj] = F.U
+        phi[jj] = F.V
+
+        Svec = collect(S.tensor.storage.data)/sum(S)  
+
+        SV_all[jj-1, 1:length(Svec)] .= Svec  
+    end
+
+    psi[1] = psi[1] * workL # or work  
+
+    @show inds(phi[1])
+    @show inds(workR)
+    phi[1] = phi[1] * noprime(workR) # TODO primes
+
+    return psi, phi, SV_all
+
+end
+
+truncate_rsweep_new(psi, phi; kwargs...) = truncate_rsweep_new!(copy(psi), copy(phi); kwargs...) 

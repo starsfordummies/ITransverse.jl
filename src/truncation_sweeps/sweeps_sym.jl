@@ -139,7 +139,10 @@ end
 truncate_sweep_sym_rtm(psi; kwargs...) = truncate_sweep_sym_rtm!(copy(psi); kwargs...) 
 
 
+## Compat for now 
 
+truncate_lsweep_sym(in_psi::MPS; kwargs...) = truncate_sweep_sym(in_psi; direction=:left, kwargs...) 
+truncate_rsweep_sym(in_psi::MPS; kwargs...) = truncate_sweep_sym(in_psi; direction=:right, kwargs...) 
 
 
 function ITenUtils.tcontract(::Algorithm"RTMsym", A::MPO, ψ::MPS; preserve_tags_mps::Bool=false, kwargs...)
