@@ -157,6 +157,7 @@ function tlrcontract(
         maxdim::Int = max(maxlinkdim(AL) * maxlinkdim(ψL), maxlinkdim(AR) * maxlinkdim(ψR)),
         mindim::Int = 1,
         preserve_tags::Bool = false,
+        direction = :right, # TODO no left yet 
         kwargs...,
     )
 

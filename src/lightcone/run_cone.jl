@@ -28,10 +28,10 @@ function run_cone(psi::MPS,
 
     time_dim = dim(b.WWc,1)
 
-    if truncp.direction == "right"
-        sweep_str = "psi0 << Op"
-    elseif  truncp.direction == "left"
-        sweep_str = "psi0 >> Op"
+    if truncp.direction == :right
+        sweep_str = "ψ0<=Op"
+    elseif  truncp.direction == :left
+        sweep_str = "ψ0=>Op"
     else
         sweep_str = "???"
     end
@@ -54,25 +54,22 @@ function run_cone(psi::MPS,
             if opt_method == "RTM_LR"
                 # if we're worried about symmetry Left-Right, evolve separately L and R 
                 rrwork = copy(rr)
-                _,rr, ents = extend_tmps_cone(ll, optimize_op, Id, rrwork, ts, b, truncp)
-                ll,_, ents = extend_tmps_cone(ll, Id, optimize_op, rrwork, ts, b, truncp)
+                _,rr, ents = extend_tmps_cone(ll, optimize_op, Id, rrwork, ts, b; truncp...)
+                ll,_, ents = extend_tmps_cone(ll, Id, optimize_op, rrwork, ts, b; truncp...)
             elseif opt_method == "RTM_LRn"
                 rrwork = copy(rr)
-                _,rr, ents = extend_tmps_cone_new(ll, optimize_op, Id, rrwork, ts, b, truncp)
-                ll,_, ents = extend_tmps_cone_new(ll, Id, optimize_op, rrwork, ts, b, truncp)
+                _,rr, ents = extend_tmps_cone_new(ll, optimize_op, Id, rrwork, ts, b; truncp...)
+                ll,_, ents = extend_tmps_cone_new(ll, Id, optimize_op, rrwork, ts, b; truncp...)
             elseif opt_method == "RTM_R"
-                _,rr, ents = extend_tmps_cone(ll, optimize_op, Id, rr, ts, b, truncp)
+                _,rr, ents = extend_tmps_cone(ll, optimize_op, Id, rr, ts, b; truncp...)
                 ll = rr
             elseif opt_method == "RTM_L1O1R"
-                _,rr, ents = extend_tmps_cone(ll, optimize_op, rr, ts, b, truncp)
-                ll = rr
-            elseif opt_method == "RTM_SKEW"
-                _,rr, ents = extend_tmps_skew(ll, optimize_op, rr, ts, b, truncp)
+                _,rr, ents = extend_tmps_cone(ll, optimize_op, rr, ts, b; truncp...)
                 ll = rr
             elseif opt_method == "RDM" # TODO Non-symmetric case with RDM ?
                 tmpo = folded_tMPO_ext(b, ts; LR=:right, n_ext=vwidth)
                 #rr = applyn(tmpo,rr; truncate=true, cutoff=truncp.cutoff, maxdim=truncp.maxdim)
-                rr, _ = ITransverse.tapply(tmpo,rr; alg="densitymatrix", cutoff=truncp.cutoff, maxdim=truncp.maxdim)
+                rr, _ = ITransverse.tapply(tmpo,rr; alg="densitymatrix", truncp...)
                 ll = rr
             else
                 error("no valid update method specified ($(opt_method))")

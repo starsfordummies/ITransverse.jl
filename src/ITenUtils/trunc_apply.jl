@@ -134,6 +134,7 @@ function tcontract(::Algorithm"densitymatrix",
         cutoff = 1.0e-13,
         maxdim = maxlinkdim(A) * maxlinkdim(ψ),
         mindim = 1,
+        direction = :right,  # TODO not implemented yet 
         kwargs...,
     )
 

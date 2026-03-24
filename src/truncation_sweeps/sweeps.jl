@@ -63,7 +63,7 @@ function truncate_sweep(psi::MPS, phi::MPS;
     end
 
     last_site = sweep_end + sweep_step  # :right → 1, :left → mpslen
-    @show last_site 
+    #@show last_site 
     psi_ortho[last_site] = XUinv * psi_ortho[last_site]
     phi_ortho[last_site] = XVinv * phi_ortho[last_site]
 

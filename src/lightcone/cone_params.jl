@@ -1,12 +1,12 @@
-struct ConeParams{T<:Number}
-    truncp::TruncParams
+struct ConeParams{T<:Number, TP}
+    truncp::TP
     opt_method::String
     optimize_op::Vector{T}
     vwidth::Int 
 end
 
 """ Defaults for everything except truncp """
-function ConeParams(; truncp::TruncParams,
+function ConeParams(; truncp,
     opt_method::String = "RDM",
     optimize_op::Vector{<:Number} = [1,0,0,1],
     vwidth::Int=1) 
