@@ -7,18 +7,10 @@ function sweep_rebuild_envs_rtm!(left_envs::Environments, right_envs::Environmen
 
     update_env!(left_envs, 1, cc[1])
 
-    # ll = cc[1]
-    # left_envs.norms[1] = norm(ll)
-    # ll = normalize(ll)
-    # left_envs[1] = ll
-
-    # Update Left envs using current {right_envs} as input
-    #  L[jj] = L[jj-1] * E[jj]
-
     for jj in 2:NN-1
 
         ll = applyns(cc[jj], left_envs[jj-1]; truncate=false)
-        ll, _, _ = truncate_rsweep(ll, right_envs[jj], truncp; fast=true)
+        ll, _, _ = truncate_sweep(ll, right_envs[jj], truncp)
 
         update_env!(left_envs, jj, ll)
         # ll = orthogonalize(ll, length(ll))

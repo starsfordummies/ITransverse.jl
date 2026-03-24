@@ -54,7 +54,7 @@ cp = DoCheckpoint(
     "cp_cone.jld2";
     params=tp,
     save_at=0,
-    observables = (
+    f_obs = (
         Z = s -> expval_LR(s.L, s.R, [1,0,0,-1], s.b),
     ),
     latest_savers = (
@@ -67,7 +67,7 @@ cp = DoCheckpoint(
 cone_params = ConeParams(;truncp, opt_method="RDM", optimize_op)
 
 psi, psiR, cp = run_cone(c0, b, cone_params, cp, Nsteps)
-ez = cp.history[:Z][end-10:end]
+ez = cp.obs_hist[:Z][end-10:end]
 #@test abs(ex_rtm_lr - ex_rtm_r) < 0.001
 #@show expvals["Z"]
 

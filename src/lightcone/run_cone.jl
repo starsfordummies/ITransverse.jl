@@ -53,9 +53,13 @@ function run_cone(psi::MPS,
 
             if opt_method == "RTM_LR"
                 # if we're worried about symmetry Left-Right, evolve separately L and R 
-                rrwork = deepcopy(rr)
+                rrwork = copy(rr)
                 _,rr, ents = extend_tmps_cone(ll, optimize_op, Id, rrwork, ts, b, truncp)
                 ll,_, ents = extend_tmps_cone(ll, Id, optimize_op, rrwork, ts, b, truncp)
+            elseif opt_method == "RTM_LRn"
+                rrwork = copy(rr)
+                _,rr, ents = extend_tmps_cone_new(ll, optimize_op, Id, rrwork, ts, b, truncp)
+                ll,_, ents = extend_tmps_cone_new(ll, Id, optimize_op, rrwork, ts, b, truncp)
             elseif opt_method == "RTM_R"
                 _,rr, ents = extend_tmps_cone(ll, optimize_op, Id, rr, ts, b, truncp)
                 ll = rr

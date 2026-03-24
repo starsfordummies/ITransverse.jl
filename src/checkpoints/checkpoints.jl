@@ -1,9 +1,9 @@
-""" Build list of steps at which we should checkpoint """
+""" Horrible boilerplate code building a list of steps at which we should checkpoint """
 function which_cps(checkpoints)
     # Checkpoints logic, let's try and be flexible 
     checkpoints = if isa(checkpoints, Integer)
         if checkpoints > 0 
-            collect(50:checkpoints:20000)         
+            collect(50:checkpoints:10000)         
         else
             Int[]
         end
@@ -22,12 +22,12 @@ end
 
 
 mutable struct DoCheckpoint{TParams, TObs, TLatestFns}
-    filename::String
-    save_at::Vector{Int}
+    filename::String  # output CP file 
+    save_at::Vector{Int} # at which step we save
     params::TParams
     steps::Vector{Int}
-    observables::TObs
-    history::Dict{Symbol, Vector}
+    f_obs::TObs
+    obs_hist::Dict{Symbol, Vector}
     latest_savers::TLatestFns
     latest::Union{Nothing,NamedTuple}
 end
@@ -37,13 +37,13 @@ end
 function DoCheckpoint(filename;
                       params,
                       save_at=Int[],
-                      observables=NamedTuple(),
+                      f_obs=NamedTuple(),
                       latest_savers=NamedTuple())
 
-    history = Dict{Symbol, Vector}()
-    @info "CP: Initializing observables $(keys(observables))"
-    for name in keys(observables)
-        history[name] = Any[]
+    obs_hist = Dict{Symbol, Vector}()
+    @info "CP: Initializing observables $(keys(f_obs))"
+    for name in keys(f_obs)
+        obs_hist[name] = Any[]
     end
 
     DoCheckpoint(
@@ -51,8 +51,8 @@ function DoCheckpoint(filename;
         which_cps(save_at),
         params,
         Int[],
-        observables,
-        history,
+        f_obs,
+        obs_hist,
         latest_savers,
         nothing  # empty snapshot
     )
@@ -63,8 +63,8 @@ function (cp::DoCheckpoint)(state, step::Int)
     push!(cp.steps, step)
 
     # history observables
-    for (name, obs) in pairs(cp.observables)
-        push!(cp.history[name], obs(state))
+    for (name, obs) in pairs(cp.f_obs)
+        push!(cp.obs_hist[name], obs(state))
     end
 
     # build latest snapshot
@@ -76,13 +76,13 @@ function (cp::DoCheckpoint)(state, step::Int)
     # TODO CONVERT to CPU the state 
     if step in cp.save_at
 
-        for (k,v) in pairs(cp.history)
+        for (k,v) in pairs(cp.obs_hist)
             cp.history[k] = collect(promote(v...))
         end
         @info "Step $(step): Saving CP $(cp.filename)..." 
         save(cp.filename,
              "steps", cp.steps,
-             "observables", cp.history,
+             "observables", cp.obs_hist,
              "latest", cp.latest)
     end
 end
