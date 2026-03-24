@@ -3,6 +3,62 @@ using LinearAlgebra
 using ITransverse.ITenUtils
 using Test
 
+
+""" Older version for checks """
+function symm_svd_ref(a::ITensor, linds, rinds = uniqueinds(a, linds) ; kwargs...)
+   
+
+    cL = combiner(linds)
+    cR = combiner(rinds)
+
+    ac = a * cL * cR
+
+    @assert ndims(ac) == 2 "check your inds? $(inds(ac))"
+
+    iL = combinedind(cL)
+    iR = combinedind(cR)
+
+    ac = symmetrize(ac)
+
+    # u * s * vd ≈ a 
+    u,s,vd, spec = svd(ac, iL; kwargs...)
+   
+    index_u = commonind(u,s)
+    index_v = commonind(vd,s)
+
+    #@show matrix(u)
+    #@show matrix(vd)
+    #@show u * s * vd ≈ ac
+
+    z = noprime(dag(u) * (vd' * delta(iL, iR')))
+
+    #@show inds(z)
+    # Z could still be block-diagonal. 
+    # What is the safest way to invert it ? With SVD it doens't work so well,
+    # maybe with eigenvalue decomp since it's symmetric? 
+    # zvals, zvecs = eigen(z, index_u, index_v)
+    # @info zvecs * zvals * dag(zvecs)' ≈ z
+    # sq_z = zvecs * sqrt.(zvals) * dag(zvecs)
+
+    # Best way is probably still to rely on Schur decomposition from Julia's matrix utils !? 
+    sq_z = sqrt(z) # ITensor(sqrt(matrix(z)), inds(z))
+
+    # TODO for GPU aware code : check if z is diagonal -> do on GPU
+    # otherwise, bring back to CPU, do it here and bring back to GPU
+
+    #@show matrix(z)
+    #@show matrix(sq_z)
+
+    u *= sq_z 
+    uT = u * delta(iL, iR) 
+
+    u *= delta(index_u, index_v)
+    u *= dag(cL)
+    uT *= dag(cR)
+  
+    return ITensors.TruncSVD(u,s,uT, spec, index_u, index_v)
+end
+
 @testset "symmetric SVD" begin
 m1 = rand(ComplexF64, 8, 13)
 
@@ -63,7 +119,7 @@ u,s,uT = symm_svd(ts1, is1)
 @test u * s * uT ≈ ts1
 
 
-u2,s2,uT2 = ITransverse.ITenUtils.symm_svd_n1(ts1, is1)
+u2,s2,uT2 = symm_svd_ref(ts1, is1)
 
 @test u2 * s2 * uT2 ≈ ts1
 

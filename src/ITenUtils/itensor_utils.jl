@@ -1,6 +1,6 @@
 import LinearAlgebra: isdiag
 
-""" Builds a random symmetric ITensor of size `(n,n)`
+""" Builds a random complex symmetric (not hermitian) ITensor of size `(n,n)`
 """
 function randsymITensor(n::Int) :: ITensor
     a = rand(ComplexF64,n,n)
