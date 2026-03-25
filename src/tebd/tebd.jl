@@ -85,10 +85,15 @@ function tebd_z(Nt::Int, tp::tMPOParams; N::Int = 2*Nt+4, kwargs...)
     LL = length(ss)
 
     evs = []
+
+    p = Progress(Nt; dt=20, showspeed=true)
+
     for nt = 1:Nt
         # println("timestep N°=$(nt)\ttime=$(t)")
         psi_t = apply(eH, psi_t; normalize = true, kwargs...)
-        push!(evs,expect(psi_t, "Z")[div(LL,2)])
+        zeta = expect(psi_t, "Z")[div(LL,2)]
+        push!(evs, zeta)
+        next!(p; showvalues = [(:Info,"chi=$(maxlinkdim(psi_t))), <Z>=$(zeta)")])
     end
     
     return evs

@@ -43,7 +43,7 @@ function main_cone()
         params=tp,
         save_at=10,
         f_obs = (
-            SVN = s -> vn_entanglement_entropy(s.R),
+            entropy = s -> vn_entanglement_entropy(s.R),
             overlap = s -> overlap_noconj(s.L, s.R),
             ZX = s -> compute_expvals(s.L, s.R, ["Z","X"], s.b)
         ),

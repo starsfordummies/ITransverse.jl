@@ -25,6 +25,7 @@ function contract_tn_transverse(left_edge::MPS, MPO_list::Vector{MPO}, right_edg
     overlap_noconj(ll,rr), max(maxlinkdim(ll), maxlinkdim(rr))
 end
 
+
 """ Traditional contraction scheme: applies all N rows of rows_mpo to bottom_mps and computes <top_mps|evolved bottom mps>, 
 so the order of rows is from bottom to top """
 function contract_tn_tetris(bottom_mps::MPS, rows_mpo::Vector{MPO}, top_mps::MPS; cutoff::Float64=1e-10, maxdim::Int=512)
@@ -36,18 +37,3 @@ function contract_tn_tetris(bottom_mps::MPS, rows_mpo::Vector{MPO}, top_mps::MPS
 
     return inner(top_mps, bottom_evolved),  maxlinkdim(bottom_evolved)
 end
-
-
-""" One simple step of power method, just applies in_mpo to rr using RDM and computes its VN entropy"""
-function pm_step(in_mpo::MPO, rr::MPS, truncp::TruncParams)
-    cutoff = truncp.cutoff
-    maxdim = truncp.maxdim
-
-    rr = apply(in_mpo, rr; cutoff, maxdim)
-    sjj = vn_entanglement_entropy(rr)
-
-    return rr, sjj
-
-end
-
-
