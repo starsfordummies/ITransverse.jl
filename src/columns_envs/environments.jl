@@ -79,8 +79,11 @@ function ITensorMPS.maxlinkdim(a::Environments)
     return maximum(maxlinkdim.(a.envs))::Int
 end
 
-function update_env!(ee::Environments, jj::Int, psi::MPS)
-        orthogonalize!(psi,length(psi))
+""" if you pass kwarg ortho_psi=0, it does not orthogonalize the MPS """
+function update_env!(ee::Environments, jj::Int, psi::MPS; ortho_psi::Int=length(psi))
+        if ortho_psi > 0   
+            orthogonalize!(psi,ortho_psi)
+        end
         ee.norms[jj] = norm(psi)
         ee.envs[jj] = normalize(psi)
 end
@@ -112,7 +115,7 @@ function overlap_envs(left_envs::Environments, right_envs::Environments)
     NN = length(left_envs.envs)
 
     overlaps = ComplexF64[]
-    overlaps = zeros(eltype(left_envs[1]), NN-1)
+    overlaps = zeros(promote_itensor_eltype(left_envs[1]), NN-1)
 
     for ov_site in 1:NN-1
         overlap = overlap_noconj(left_envs[ov_site], right_envs[ov_site])
@@ -127,7 +130,7 @@ function overlap_envs(left_envs::Environments, right_envs::Environments)
     end
 
     @debug overlaps
-    
+
     return mean(overlaps) ::ComplexF64, std(overlaps) ::Float64
 
 end

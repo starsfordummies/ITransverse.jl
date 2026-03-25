@@ -1,23 +1,23 @@
 """ Sweep rebuilding adjacent L-R environments using RTM  """
-function sweep_rebuild_envs_rtm!(left_envs::Environments, right_envs::Environments, cc::Columns, truncp)
+function sweep_rebuild_envs_rtm!(left_envs::Environments, right_envs::Environments, cc::Columns, truncp; kwargs...)
 
     NN = length(cc)
     @assert length(left_envs) == length(right_envs) == NN-1
 
-    update_env!(left_envs, 1, cc[1])
+    update_env!(left_envs, 1, cc[1]; kwargs...)
 
     for jj in 2:NN-1
 
         ll = applyns(cc[jj], left_envs[jj-1]; truncate=false)
         ll, _, _ = truncate_sweep(ll, right_envs[jj]; truncp...) # direction = :right
 
-        update_env!(left_envs, jj, ll)
+        update_env!(left_envs, jj, ll; kwargs...)
 
         @debug "updating L[$(jj-1)]E[$(jj)] = L[$(jj)] with R[$(jj)]"
         
     end
 
-    update_env!(right_envs, NN-1, cc[NN])
+    update_env!(right_envs, NN-1, cc[NN]; kwargs...)
 
     # Update Right envs using {left_envs},  R[jj-1] = E[jj] * R[jj]  
     for jj in NN-1:-1:2
@@ -25,7 +25,7 @@ function sweep_rebuild_envs_rtm!(left_envs::Environments, right_envs::Environmen
         rr = applyn(cc[jj], right_envs[jj])
         _, rr, _ = truncate_sweep(left_envs[jj-1], rr; truncp...) # direction = :right
 
-        update_env!(right_envs, jj-1, rr)
+        update_env!(right_envs, jj-1, rr; kwargs...)
 
         @debug "updating E[$(jj)]R[$(jj)] = R[$(jj-1)] with L[$(jj-1)]"
 
@@ -39,12 +39,12 @@ end
 """ Sweep rebuilding adjacent L-R environments using RTM. 
 Attempt at letting bond dimension grow if necessary: instead of eg. taking Li, build Li+1 and update 
     with Ri+1, we take Li and Ri+2, build Li+1 and Ri+i and truncate over those. """
-function sweep_rebuild_envs_rtm_twocol!(left_envs::Environments, right_envs::Environments, cc::Columns, truncp)
+function sweep_rebuild_envs_rtm_twocol!(left_envs::Environments, right_envs::Environments, cc::Columns, truncp; kwargs...)
 
     NN = length(cc)
     @assert length(left_envs) == length(right_envs) == NN-1
 
-    update_env!(left_envs, 1, cc[1])
+    update_env!(left_envs, 1, cc[1]; kwargs...)
 
     # Update Left envs using current {right_envs} as input
     #  L[jj] = L[jj-1] * E[jj]
@@ -55,7 +55,7 @@ function sweep_rebuild_envs_rtm_twocol!(left_envs::Environments, right_envs::Env
         rr = applyn(cc[jj+1], right_envs[jj+1])
         ll, _, _ = truncate_sweep(ll, rr; truncp...) # direction = right
 
-        update_env!(left_envs, jj, ll)
+        update_env!(left_envs, jj, ll; kwargs...)
     
         @debug "updating L[$(jj-1)]E[$(jj)] = L[$(jj)] with R[$(jj)]"
    
@@ -65,10 +65,10 @@ function sweep_rebuild_envs_rtm_twocol!(left_envs::Environments, right_envs::Env
     ll = applyns(cc[NN-1], left_envs[NN-2]; truncate=false)
     ll, _, _ = truncate_sweep(ll, right_envs[NN-1]; truncp...)
 
-    update_env!(left_envs, NN-1, ll)
+    update_env!(left_envs, NN-1, ll; kwargs...)
 
 
-    update_env!(right_envs, NN-1, cc[NN])
+    update_env!(right_envs, NN-1, cc[NN]; kwargs...)
 
     # Update Right envs using {left_envs},  R[jj-1] = E[jj] * R[jj]  
     for jj in NN-1:-1:3 
@@ -77,14 +77,14 @@ function sweep_rebuild_envs_rtm_twocol!(left_envs::Environments, right_envs::Env
         ll = applyns(cc[jj-1], left_envs[jj-2])
         _, rr, _ = truncate_sweep(ll, rr; truncp...)
 
-        update_env!(right_envs, jj-1, rr)
+        update_env!(right_envs, jj-1, rr; kwargs...)
 
         @debug "updating E[$(jj)]R[$(jj)] = R[$(jj-1)] with L[$(jj-1)] = L[$(jj-2)]E[$(jj-1)]"
     end
 
     rr = applyn(cc[2], right_envs[2])
     _, rr, _ = truncate_sweep(left_envs[1], rr; truncp...)
-    update_env!(right_envs, 1, rr)
+    update_env!(right_envs, 1, rr; kwargs...)
 
     return max(maxlinkdim(left_envs),maxlinkdim(right_envs))
 

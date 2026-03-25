@@ -60,25 +60,33 @@ function Base.show(io::IO, ::MIME"text/plain", cc::Columns)
     npl0(x) = count(!isempty, siteinds(x, plev=0))
 
     LR = vcat("L", [  npl0(col) > npl1(col) ? "L" : npl1(col) == npl0(col) ? "C" : "R" for col in cc[2:end-1] ], "R")
-    print(io, "Columns L=$(length(cc))|$(length.(cc)) $(LR)")
+    println(io, "N=$(length(cc)) Columns (max length = $(maximum(length.(cc)))), plateau = $(findall(==("C"), LR))")
+    println(io, ["$(LR[ii])$(length(cc[ii]))" for ii = 1:length(LR)])
 end
+
+function ITensorMPS.siteinds(cc::Columns)
+    half = div(length(cc),2)+1
+    ts = firstsiteinds(cc[half])
+end
+
+get_plateau(cc::Columns) = findall(==(0), diff(length.(cc)) )[2:end]
 
 """ Given a Columns struct, 
 performs the exact (up to maxdim) contraction from the edges towawrds the center, without using environments """
-function contract_cols(cc::Columns; maxdim=1024)
+function contract_cols(cc::Columns; cutoff=1e-12, maxdim=512)
 
     NN = length(cc)
 
     ll = cc[1]
  
     for jj = 2:div(NN,2)
-        ll = applyns(cc[jj], ll; truncate=true, maxdim)
+        ll = applyns(cc[jj], ll; truncate=true, cutoff, maxdim)
     end
 
     rr = cc[end]
 
     for jj = NN-1:-1:div(NN,2)+1
-        rr, _ = tapply(cc[jj], rr; alg="densitymatrix", maxdim)
+        rr, _ = tapply(cc[jj], rr; alg="densitymatrix", cutoff, maxdim)
     end
 
     overlap_noconj(ll,rr)
