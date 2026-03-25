@@ -39,8 +39,10 @@ function tlrcontract(::Algorithm"RTM",
     ψR_out = typeof(ψR)(N)
     ψL_out = typeof(ψL)(N)
 
-    AL  = swapprime(AL, 0 => 1, tags="Site")
-    ALp = replaceprime(AL, 1 => 2)
+    AL  = AL'
+    ALp = replaceprime(AL, 1 => 3, tags="Site")
+
+    ψL = ψL''
 
     # Step 1: build left environments up to site N-1
     E = Vector{ITensor}(undef, N-1)
@@ -61,6 +63,8 @@ function tlrcontract(::Algorithm"RTM",
         else
             prev * AR[j] * AL[j]
         end
+
+        @assert ndims(E[j]) < 5 
     end
 
     # Step 2: initialize R and L by contracting the excess tail of the longer MPO
@@ -89,6 +93,8 @@ function tlrcontract(::Algorithm"RTM",
         nL >= NL ? ψL[NL] * ALp[NL] : ALp[NL]
     end
 
+    # @assert ndims(L) < 4 "? $(inds(L))"
+
     r_renorm = nothing
     S_all = zeros(Float64, N-1, requested_maxdim)
 
@@ -103,7 +109,8 @@ function tlrcontract(::Algorithm"RTM",
         maxdim = min(dim(ciR), dim(ciL), requested_maxdim)
 
         rho = E[j] * L * R
-        @assert ndims(rho) < 5 "inds(rho) @site $j ? $(inds(rho))"
+        # @show inds(rho)
+        # @assert ndims(rho) < 5 "inds(rho) @site $j ? $(inds(rho))"
 
         tsR = if preserve_mps_tags
             linkR  = j < nR ? linkind(ψR, j) : nothing
@@ -128,8 +135,17 @@ function tlrcontract(::Algorithm"RTM",
         ψR_out[j+1] = U
         ψL_out[j+1] = V
 
+
+        # @show Ris
+        # @show inds(rho)
+        # @show inds(U)
+        # @show inds(V)
+
         R = hasψR ? dag(U) * R * ψR[j] * AR[j]  : dag(U) * R * AR[j]
         L = hasψL ? dag(V) * L * ψL[j] * ALp[j] : dag(V) * L * ALp[j]
+
+        # @show inds(R)
+        # @show inds(L)
 
         Svec = collect(S.tensor.storage.data) ./ sum(S)
         S_all[j, 1:length(Svec)] .= Svec
