@@ -57,7 +57,7 @@ cp = DoCheckpoint(
     f_obs = (
         Z = s -> expval_LR(s.L, s.R, [1,0,0,-1], s.b),
     ),
-    latest_savers = (
+    f_savestate = (
         L = s -> s.L,
         R = s -> s.R,
         b = s -> s.b

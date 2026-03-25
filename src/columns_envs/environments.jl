@@ -107,25 +107,27 @@ function overlap_mid(left_envs::Environments, right_envs::Environments)
 end
 
 """ Compute overlaps between envs at all sites and their (absolute) stdev """
-function overlap_envs(left_envs::Environments, right_envs::Environments; verbose::Bool=false)
+function overlap_envs(left_envs::Environments, right_envs::Environments)
   
     NN = length(left_envs.envs)
+
     overlaps = ComplexF64[]
-    for jj in 1:NN-1
-        overlap = overlap_noconj(left_envs[jj], right_envs[jj])
-        for kk = 1:jj
+    overlaps = zeros(eltype(left_envs[1]), NN-1)
+
+    for ov_site in 1:NN-1
+        overlap = overlap_noconj(left_envs[ov_site], right_envs[ov_site])
+        for kk = 1:ov_site
             overlap *= left_envs.norms[kk]
         end
-        for kk = jj:NN
+        for kk = ov_site:NN
             overlap *= right_envs.norms[kk]
         end
 
-        push!(overlaps, overlap)
+        overlaps[ov_site] =  overlap
     end
 
-    if verbose
-        @show overlaps
-    end
+    @debug overlaps
+    
     return mean(overlaps) ::ComplexF64, std(overlaps) ::Float64
 
 end

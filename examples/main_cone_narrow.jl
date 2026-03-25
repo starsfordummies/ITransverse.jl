@@ -57,7 +57,7 @@ function main_cone()
             overlap = s -> overlap_noconj(s.L, s.R),
             expvals = s -> compute_expvals(s.L, s.R, ["Z","X"], s.b)
         ),
-        latest_savers = (
+        f_savestate = (
             L = s -> s.L,
             R = s -> s.R,
             b = s -> s.b

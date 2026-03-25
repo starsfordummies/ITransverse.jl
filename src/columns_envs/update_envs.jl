@@ -63,7 +63,7 @@ function sweep_rebuild_envs_rtm_twocol!(left_envs::Environments, right_envs::Env
 
     # Last one 
     ll = applyns(cc[NN-1], left_envs[NN-2]; truncate=false)
-    ll, _, _ = truncate_sweep(ll, right_envs[NN-1]; truncp)
+    ll, _, _ = truncate_sweep(ll, right_envs[NN-1]; truncp...)
 
     update_env!(left_envs, NN-1, ll)
 
