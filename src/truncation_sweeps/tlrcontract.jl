@@ -3,7 +3,7 @@ Applies MPO to left-right and truncates on the RTM |AR R><L AL| \\
 Allows for different length MPS/MPO \\
 Returns LEFT, RIGHT, SV
 """
-function tlrcontract(
+function tlrcontract(::Algorithm"RTM",
         ψL::MPS,
         AL::MPO,
         AR::MPO,
@@ -142,21 +142,18 @@ function tlrcontract(
 end
 
 
-#### NEW LR apply 
-function tlrapply(::Algorithm"RTM", psiL::MPS, OL::MPO, OR::MPO, psiR::MPS; kwargs...)
-    tpsiL, tpsiR, sv = tlrcontract(psiL, OL, OR, psiR; kwargs...)
-    return replaceprime(tpsiL,  2 => 0), replaceprime(tpsiR,  1 => 0), sv
-end
-
-
-
-function tlrapply(::Algorithm"naiveRTM", psiL::MPS, OL::MPO, OR::MPO, psiR::MPS; kwargs...)
+function tlrcontract(::Algorithm"naiveRTM", psiL::MPS, OL::MPO, OR::MPO, psiR::MPS; kwargs...)
             OpsiR = applyn(OR, psiR; truncate=false)
             psiLO = applyns(OL, psiL; truncate=false)  
             truncate_sweep(psiLO, OpsiR; kwargs...)
 end
 
 
+#### NEW LR apply 
+function tlrapply(alg, psiL::MPS, OL::MPO, OR::MPO, psiR::MPS; kwargs...)
+    tpsiL, tpsiR, sv = tlrcontract(alg, psiL, OL, OR, psiR; kwargs...)
+    return noprime(tpsiL), noprime(tpsiR), sv
+end
 
 
 
@@ -168,7 +165,7 @@ end
 Applies MPO to the right and truncates on the RTM |AR R><L| by building it explicitly \\
 Returns LEFT, RIGHT, SV
 """
-function trcontract(
+function trcontract(::Algorithm"RTM",
         ψL::MPS,
         AR::MPO,
         ψR::MPS;
@@ -293,3 +290,35 @@ function trcontract(
 
     return ψL_out, ψR_out, S_all
 end
+
+function trcontract(::Algorithm"naiveRTM",
+        ψL::MPS,
+        AR::MPO,
+        ψR::MPS;
+        kwargs...)
+        
+    OpsiR = applyn(AR, ψR; truncate=false)
+    truncate_sweep(ψL, OpsiR; kwargs...)
+end
+
+
+""" 
+Applies MPO to the left and truncates on the RTM |R><L*AL| by building it explicitly \\
+Returns LEFT, RIGHT, SV
+"""
+#TODO check is it as simple as this ? 
+tlcontract(alg, ψL::MPS, AL::MPO, ψR::MPS; kwargs...) = trcontract(alg, ψR, swapprime(AL, 0=>1, "Site"), ψL; kwargs...)
+
+function tlapply(alg, ψL::MPS, A::MPO, ψR::MPS; kwargs...) 
+     tpsiL, tpsiR, sv = tlcontract(alg, ψL, A, ψR; kwargs...)
+     return noprime(tpsiL), noprime(tpsiR), sv
+end
+
+function trapply(alg, ψL::MPS, A::MPO, ψR::MPS; kwargs...) 
+     tpsiL, tpsiR, sv = trcontract(alg, ψL, A, ψR; kwargs...)
+     return noprime(tpsiL), noprime(tpsiR), sv
+end
+
+tlapply(ψL::MPS, A::MPO, ψR::MPS; alg="naiveRTM", kwargs...) = tlapply(Algorithm(alg), ψL, A, ψR; kwargs...)
+trapply(ψL::MPS, A::MPO, ψR::MPS; alg="naiveRTM", kwargs...) = trapply(Algorithm(alg), ψL, A, ψR; kwargs...)
+tlrapply(ψL::MPS, AL::MPO, AR::MPO, ψR::MPS; alg="naiveRTM", kwargs...) = tlrapply(Algorithm(alg), ψL, AL, AR, ψR; kwargs...)
