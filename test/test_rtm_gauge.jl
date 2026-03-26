@@ -1,5 +1,6 @@
 using ITensors, ITensorMPS
 
+@testset "RTM in ortho gauge " begin
 N = 50
 ss = siteinds("S=1/2", N)
 
@@ -25,4 +26,6 @@ end
 
 _, S2, _ = svd(tau_end, inds(tau_end,plev=0))
 
-@show storage(S/sum(S)) ≈ storage(S2/sum(S2))
+@test storage(S/sum(S)) ≈ storage(S2/sum(S2))
+
+end 

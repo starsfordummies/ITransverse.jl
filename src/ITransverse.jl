@@ -58,6 +58,7 @@ export H_potts_manual,
     expH_potts_murg,
     expH_potts_symmetric_svd
 
+export expH_random_symm_svd_1o
 
 export build_H, build_Ut
 #export timeEvo_MPO_2ndOrder, timeEvo_MPO_2ndOrder_LRflipped
