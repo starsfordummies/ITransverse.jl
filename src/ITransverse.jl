@@ -70,11 +70,12 @@ include("truncation_sweeps/gen_orthogonalize.jl")
 include("truncation_sweeps/gen_form_checks.jl")
 include("truncation_sweeps/tlrcontract.jl")
 
-# from pparams
 export TruncParams
 
 export truncate_sweep, truncate_sweep_rtm
 export truncate_lsweep_sym, truncate_rsweep_sym, truncate_sweep_sym
+
+export tlapply, trapply, tlrapply
 
 export gen_canonical_left, gen_canonical_right
 

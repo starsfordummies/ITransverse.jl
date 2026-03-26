@@ -323,7 +323,10 @@ Applies MPO to the left and truncates on the RTM |R><L*AL| by building it explic
 Returns LEFT, RIGHT, SV
 """
 #TODO check is it as simple as this ? 
-tlcontract(alg, ψL::MPS, AL::MPO, ψR::MPS; kwargs...) = trcontract(alg, ψR, swapprime(AL, 0=>1, "Site"), ψL; kwargs...)
+function tlcontract(alg, ψL::MPS, AL::MPO, ψR::MPS; kwargs...)
+    ψR, ψL, sv = trcontract(alg, ψR, swapprime(AL, 0=>1, "Site"), ψL; kwargs...)
+    return ψL, ψR, sv 
+end
 
 function tlapply(alg, ψL::MPS, A::MPO, ψR::MPS; kwargs...) 
      tpsiL, tpsiR, sv = tlcontract(alg, ψL, A, ψR; kwargs...)

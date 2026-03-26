@@ -5,7 +5,7 @@
 
  Ideally we initialize them once and the beginning and not touch them again.
 """
-struct Columns
+mutable struct Columns
     ledge::MPS
     cols::Vector{MPO}
     redge::MPS
