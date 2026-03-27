@@ -52,7 +52,7 @@ function (cp::DoCheckpoint)(state, step::Int)
     if step in cp.save_at
 
         for (k,v) in pairs(cp.obs_hist)
-            cp.history[k] = collect(promote(v...))
+            cp.obs_hist[k] = collect(promote(v...))
         end
         @info "Step $(step): Saving CP $(cp.filename)..." 
         save(cp.filename,

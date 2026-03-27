@@ -12,15 +12,16 @@ function sweep_rebuild_envs_rtm!(left_envs::Environments, right_envs::Environmen
     @debug "Setting L[1] = E[1])"
     update_env!(left_envs, 1, cc[1]; kwargs...)
 
-    @debug "updating R[$(NN-1)] = E[$(NN)])"
+    @debug "Setting R[$(NN-1)] = E[$(NN)])"
     update_env!(right_envs, NN-1, cc[NN]; kwargs...)
 
+    # If we want a buffer of un-truncated environments at the boundaries 
     for jj = 2:edge_buffer
         @debug "Setting L[$(jj)] = L[$(jj-1)]E[$(jj)])"
-        update_env!(left_envs, jj, applyns(cc[jj], left_envs[jj-1]); kwargs...)
+        update_env!(left_envs, jj, applyns(cc[jj], left_envs[jj-1]; truncate=false))
 
         @debug "Setting R[$(NN-jj)] = E[$(NN-jj+1)]R[$(NN-jj+1)]"
-        update_env!(left_envs, NN-jj, applyns(cc[NN-jj+1], left_envs[NN-jj+1]); kwargs...)
+        update_env!(right_envs, NN-jj, applyn(cc[NN-jj+1], right_envs[NN-jj+1]; truncate=false))
 
     end
 

@@ -53,7 +53,7 @@ function truncate_sweep_sym(in_psi::MPS; cutoff::Float64, maxdim::Int,
             XUinv = sqS * U
 
         else
-            @error "Valid methods are: SVD | EIG"
+            error("Valid methods are: SVD | EIG  (here method=$(method))")
         end
 
         psi[ii] = Ai * XU

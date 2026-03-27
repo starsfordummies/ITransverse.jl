@@ -97,10 +97,10 @@ function truncate_rsweep_rtm!(psi::MPS, phi::MPS; cutoff::Float64, maxdim::Int)
         Lenvs[ii] = left_env
     end
 
-    psiR = phi'
+    psiRp = phi'
 
     workL = psiL[N]
-    workR = psiR[N]
+    workR = psiRp[N]
 
     rho = workL * Lenvs[N-1]
     rho *= workR
@@ -120,7 +120,7 @@ function truncate_rsweep_rtm!(psi::MPS, phi::MPS; cutoff::Float64, maxdim::Int)
     for jj = reverse(2:N-1)
 
         workL *= psiL[jj]
-        workR *= psiR[jj]
+        workR *= psiRp[jj]
 
         rho = workL * Lenvs[jj-1]
         rho *= workR
@@ -142,9 +142,9 @@ function truncate_rsweep_rtm!(psi::MPS, phi::MPS; cutoff::Float64, maxdim::Int)
 
     psi[1] = psi[1] * workL # or work  
 
-    @show inds(phi[1])
-    @show inds(workR)
-    phi[1] = phi[1] * noprime(workR) # TODO primes
+    # @show inds(phi[1])
+    # @show inds(workR)
+    phi[1] = phi[1] * noprime(workR) 
 
     return psi, phi, SV_all
 
