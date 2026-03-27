@@ -159,11 +159,30 @@ end
 
 
 function tlrcontract(::Algorithm"naiveRTM", psiL::MPS, OL::MPO, OR::MPO, psiR::MPS; kwargs...)
-            OpsiR = applyn(OR, psiR; truncate=false)
-            psiLO = applyns(OL, psiL; truncate=false)  
-            truncate_sweep(psiLO, OpsiR; kwargs...)
+    OpsiR = applyn(OR, psiR; truncate=false)
+    psiLO = applyns(OL, psiL; truncate=false)  
+    truncate_sweep(psiLO, OpsiR; kwargs...)
 end
 
+
+function tlrcontract(::Algorithm"naive", psiL::MPS, OL::MPO, OR::MPO, psiR::MPS; kwargs...)
+    OpsiR, sv = tapply(Algorithm("naive"), OR, psiR; kwargs...)
+    psiLO, _ = tapplys(Algorithm("naive"), OL, psiL; kwargs...)
+    return psiLO, OpsiR, sv  
+end
+
+function tlrcontract(::Algorithm"densitymatrix", psiL::MPS, OL::MPO, OR::MPO, psiR::MPS; kwargs...)
+    OpsiR, sv = tapply(Algorithm("densitymatrix"), OR, psiR; kwargs...)
+    psiLO, _ = tapplys(Algorithm("densitymatrix"), OL, psiL; kwargs...)
+    return psiLO, OpsiR, sv  
+end
+
+function tlrcontract(::Algorithm"notrunc", psiL::MPS, OL::MPO, OR::MPO, psiR::MPS; kwargs...)
+    OpsiR = applyn(OR, psiR; truncate=false)
+    psiLO = applyns(OL, psiL; truncate=false)
+    sv = zeros(1,1)
+    return psiLO, OpsiR, sv  
+end
 
 #### NEW LR apply 
 function tlrapply(alg, psiL::MPS, OL::MPO, OR::MPO, psiR::MPS; kwargs...)
@@ -338,6 +357,6 @@ function trapply(alg, ψL::MPS, A::MPO, ψR::MPS; kwargs...)
      return noprime(tpsiL), noprime(tpsiR), sv
 end
 
-tlapply(ψL::MPS, A::MPO, ψR::MPS; alg="naiveRTM", kwargs...) = tlapply(Algorithm(alg), ψL, A, ψR; kwargs...)
-trapply(ψL::MPS, A::MPO, ψR::MPS; alg="naiveRTM", kwargs...) = trapply(Algorithm(alg), ψL, A, ψR; kwargs...)
-tlrapply(ψL::MPS, AL::MPO, AR::MPO, ψR::MPS; alg="naiveRTM", kwargs...) = tlrapply(Algorithm(alg), ψL, AL, AR, ψR; kwargs...)
+tlapply(ψL::MPS, A::MPO, ψR::MPS; alg=Algorithm(:naiveRTM), kwargs...) = tlapply(Algorithm(alg), ψL, A, ψR; kwargs...)
+trapply(ψL::MPS, A::MPO, ψR::MPS; alg=Algorithm(:naiveRTM), kwargs...) = trapply(Algorithm(alg), ψL, A, ψR; kwargs...)
+tlrapply(ψL::MPS, AL::MPO, AR::MPO, ψR::MPS; alg=Algorithm(:naiveRTM), kwargs...) = tlrapply(Algorithm(alg), ψL, AL, AR, ψR; kwargs...)
