@@ -165,15 +165,6 @@ function generalized_r2_entropy_symmetric(psiL::MPS; bring_left_gen::Bool=true, 
     
 end
 
-function vn_from_matrix(λ_matrix::Matrix{T}) where {T<:Real}
-    λ_safe = max.(λ_matrix, eps(T))
-    
-    # Compute -λ*log(λ) element-wise, zeroing out tiny eigenvalues
-    contrib = @. ifelse(λ_matrix > eps(T), -λ_matrix * log(λ_safe), 0.0)
-    
-    # Sum along columns (eigenvalues) for each row (bipartition)
-    return vec(sum(contrib, dims=2))
-end
 
 function generalized_svd_vn_entropy_symmetric(psi::MPS)
     _, svs = truncate_rsweep_sym(psi; cutoff=1e-12, maxdim=maxlinkdim(psi), method="SVD")
@@ -332,7 +323,6 @@ function gensvd_sym_renyi_entropies(psi::MPS; which_ents=[0.5,1,2], normalize_ei
     # Start from the *right* side and sweep towards the left 
     for ii in mpslen:-1:2
         Ai = XUinv * psi_ortho[ii]
-
 
         right_env *= Ai 
         right_env *= Ai'

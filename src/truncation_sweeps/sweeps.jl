@@ -9,12 +9,12 @@ function truncate_sweep(psi::MPS, phi::MPS;
         direction::Symbol = :right
     )
 
-    mpslen = length(psi)
+    N = length(psi)
 
     sweep_start, sweep_step, sweep_end, sv_offset = if direction == :right
-        mpslen, -1, 2, -1
+        N, -1, 2, -1
     elseif direction == :left
-        1, 1, mpslen-1, 0
+        1, 1, N-1, 0
     else
         error("direction must be :left or :right")
     end
@@ -24,7 +24,7 @@ function truncate_sweep(psi::MPS, phi::MPS;
 
     XUinv, XVinv, env = ITensors.OneITensor(), ITensors.OneITensor(), ITensors.OneITensor()
 
-    SV_all = zeros(Float64, mpslen-1, maxdim)
+    SV_all = zeros(Float64, N-1, maxdim)
 
     for ii in sweep_start:sweep_step:sweep_end
         Ai = XUinv * psi_ortho[ii]

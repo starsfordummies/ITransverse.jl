@@ -1,43 +1,3 @@
-# """ Given an eigenvalue λ, builds the corresponding contribution to the entropy, 
-# either -λlog(λ) if α=1 or λ^α otherwise."""
-# function salpha(λ::Number, alpha::Number)
-#     Sλ = 0.0
-#     if alpha ≈ 1
-#         Sλ= - λ * log(λ)
-#     else
-#         Sλ = λ^alpha
-#     end
-#     return Sλ
-# end
-
-#= Old 
-function salpha(eigs::Vector{<:Number}, alpha::Number)
-     Sλ = 0.0
-     if alpha ≈ 1
-        for λ in eigs
-            Sλ -= λ * log(λ)
-        end
-
-    else
-        for λ in eigs
-            Sλ += λ^alpha
-        end
-        Sλ = log(Sλ) / (1-alpha)
-    end
-
-    return Sλ
-end
-
-function salpha(eigs::Vector{<:Number}, alpha::Number)
-    if alpha ≈ 1
-        return -sum(λ -> λ * log(λ), eigs)
-    else
-        return log(sum(λ -> λ^alpha, eigs)) / (1 - alpha)
-    end
-end
-
-=#
-
 """ Given a vector of eigenvalues, computes the renyi `alpha` entropy from it (in a supposedly efficient way) """
 function salpha(eigs::AbstractVector{<:Number}, alpha::Number)
     if alpha ≈ 1
@@ -73,25 +33,18 @@ function renyi_entropies(spectra::AbstractVector{<:AbstractVector};
         end
     end
 
-    #= 
-    # Initialize result arrays
-    for alpha in which_ents
-        allents["S$(alpha)"] = el_type[]  # empty array for each entropy type
-    end
-    
-    for eigs in spectra
-        # Normalize if requested
-        if normalize_eigs
-            eigs = eigs / sum(eigs)
-        end
-
-        # Compute Renyi entropies for this spectrum
-        for alpha in which_ents
-            s = salpha(eigs, alpha)
-            push!(allents["S$(alpha)"], s)
-        end
-    end
-
-    =#
     return allents
+end
+
+
+""" From a matrix of (Nbonds x Nvalues), takes each row and computes the VN entropy from it """
+function vn_from_matrix(λ_matrix::AbstractMatrix{T}) where T
+    #@show T 
+    λ_safe = max.(λ_matrix, eps(T))
+    
+    # Compute -λ*log(λ) element-wise, zeroing out tiny eigenvalues
+    contrib = @. ifelse(λ_matrix > eps(T), -λ_matrix * log(λ_safe), zero(T))
+    
+    # Sum along columns (eigenvalues) for each row (bipartition)
+    return vec(sum(contrib, dims=2))
 end
