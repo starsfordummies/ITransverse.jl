@@ -8,7 +8,7 @@ import ITensorMPS: maxlinkdim
 
  That is, the starting are L_1 = <L|,  R_{N-1} = |R>
 
-    Eg. for N=6 we have
+Eg. for N=6 we have
 
     L1(-L2(-L3(-L4(-L5(
         T2  T3  T4  T5  
@@ -22,6 +22,7 @@ struct Environments{T}
     envs::Vector{T}
     norms::Vector{Float64}
 end
+
 
 """ The constructor fills the first (or last, depending on `LR`) element with the input MPS 
 and normalizes it (saving its norm in envs.norms) """
@@ -62,17 +63,20 @@ end
 Base.iterate(env::Environments, state=1) = state <= length(env.envs) ? (env.envs[state], state + 1) : nothing
 
 function Base.pop!(env::Environments) 
-     pop!(env.envs)
-     pop!(env.norms)
+     ee = pop!(env.envs)
+     nn = pop!(env.norms)
+     return ee*nn
 end
 function Base.popfirst!(env::Environments)
-     popfirst!(env.envs)
-     popfirst!(env.norms)
+     ee = popfirst!(env.envs)
+     nn = popfirst!(env.norms)
+     return ee*nn 
 end
 
 
 function Base.show(io::IO, ::MIME"text/plain", ee::Environments)
     print(io, "Environments L=$(length(ee.envs))|$(length.(ee.envs))")
+    print(io, "$(maxlinkdim.(ee.envs))")
 end
 
 function ITensorMPS.maxlinkdim(a::Environments)
@@ -111,6 +115,14 @@ end
 
 """ Compute overlaps between envs at all sites and their (absolute) stdev """
 function overlap_envs(left_envs::Environments, right_envs::Environments)
+    overlaps = overlaps_envs(left_envs, right_envs)
+    return mean(overlaps) ::ComplexF64, std(overlaps) ::Float64
+
+end
+
+
+""" Compute overlaps between envs at all sites and their (absolute) stdev """
+function overlaps_envs(left_envs::Environments, right_envs::Environments)
   
     NN = length(left_envs.envs)
 
@@ -129,10 +141,7 @@ function overlap_envs(left_envs::Environments, right_envs::Environments)
         overlaps[ov_site] =  overlap
     end
 
-    @debug overlaps
-
-    return mean(overlaps) ::ComplexF64, std(overlaps) ::Float64
-
+    return overlaps
 end
 
 

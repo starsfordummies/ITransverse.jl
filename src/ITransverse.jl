@@ -139,7 +139,7 @@ include("folding/vectorize_mpo.jl")
 include("columns_envs/columns.jl")
 include("columns_envs/environments.jl")
 include("columns_envs/initialize_envs.jl")
-include("columns_envs/update_envs.jl")
+include("columns_envs/sweeps_envs.jl")
 
 export Columns, Environments, 
     initialize_envs_rdm, 
