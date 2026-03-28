@@ -54,23 +54,27 @@ end
 """ Computes the overlap (ll,rr) between two MPS *without* conjugating either one.
 The "generalized norm" of an MPS should be sqrt(overlap_noconj(psi,psi)).
 """
-function overlap_noconj(ll::MPS, rr::MPS; reverse_qn_ll::Bool=false)
+function overlap_noconj(ll::MPS, rr::MPS, reverse_qn_ll::Bool=false; match_siteinds::Bool=false)
 
+    #T =  promote_type(promote_itensor_eltype(ll), promote_itensor_eltype(rr))
     if reverse_qn_ll 
-        return inner(conj(ll),rr) 
+        return inner(conj(ll),rr)
     else
 
-
-        if !ITensorMPS.hassameinds(siteinds, ll, rr)
-            @warn "L and R don't have the same physical indices, correcting "
+        # if !ITensorMPS.hassameinds(siteinds, ll, rr)
+        #     @warn "L and R don't have the same physical indices, correcting "
+        #     rr = replace_siteinds(rr, siteinds(ll))
+        # end
+        if match_siteinds
             rr = replace_siteinds(rr, siteinds(ll))
         end
 
         ll = sim(linkinds, ll)
 
-        overlap = ll[1] * rr[1]
-        for ii in eachindex(ll)[2:end]
+        overlap = ITensors.OneITensor()
+        for ii in eachindex(ll)
             overlap = (overlap * rr[ii]) * ll[ii]
+            @assert ndims(overlap) <= 2 "check your inds?"
         end
         
         return scalar(overlap) #:: ComplexF64
