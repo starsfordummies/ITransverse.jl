@@ -33,23 +33,12 @@ else
 end
 
 # TODO it seems that truncate!! can return complex truncerr for corner cases
-spec = 0
-try
-  spec = Spectrum(abs.(DM), abs(truncerr))
+spec = try
+  Spectrum(abs.(DM), abs(truncerr))
 catch e
   @error("not good, $e, $(abs.(DM)), $truncerr")
+  Spectrum(zeros(length(DM)), 0.0)
 end
-
-
-# TODO this doesn't work with inv() when there's truncation and VM is not square
-# we could try pinv() but is it as good ? 
-
-#M_rec = VM * Diagonal(DM) * inv(VM)
-
-# norm_err = norm(M_rec-M)/norm(M)
-# if norm_err > 1e-6
-#     @warn("EIG decomp maybe not accurate, norm error $norm_err")
-# end
 
 return Eigen(DM, VM), spec
 
@@ -59,7 +48,6 @@ function symm_oeig(M::AbstractMatrix; maxdim=nothing, cutoff=nothing, use_absolu
 
     M = symmetrize(M)
     F, spec = mytrunc_eig(M; maxdim, cutoff, use_absolute_cutoff, use_relative_cutoff)
-    #dump(F)
     vals = F.values
     vecs = F.vectors
 
@@ -78,22 +66,21 @@ function symm_oeig(M::AbstractMatrix; maxdim=nothing, cutoff=nothing, use_absolu
     end
     O = vecs*isq_z
 
-    M_rec = O * Diagonal(vals) * transpose(O)
+    # M_rec = O * Diagonal(vals) * transpose(O)
+    #norm_err = norm(M_rec-M)/norm(M)
 
-    norm_err = norm(M_rec-M)/norm(M)
-
-    if !isnothing(cutoff)
-        if norm_err > max(sqrt(cutoff), 1e-12)
-            @warn("Ortho/EIG decomp maybe not accurate, norm error $norm_err (cutoff = $cutoff) sqrt=$(sqrt(cutoff))")
-        else
-            @debug("Ortho/EIG decomp with norm error $(norm_err) < $(sqrt(cutoff)), [norm = $(norm(M))| normS = $(norm(vals))]")
-        end
-    else
-        @warn "No cutoff given"
-    end
+    # if !isnothing(cutoff)
+    #     if norm_err > max(sqrt(cutoff), 1e-12)
+    #         @warn("Ortho/EIG decomp maybe not accurate, norm error $norm_err (cutoff = $cutoff) sqrt=$(sqrt(cutoff))")
+    #     else
+    #         @debug("Ortho/EIG decomp with norm error $(norm_err) < $(sqrt(cutoff)), [norm = $(norm(M))| normS = $(norm(vals))]")
+    #     end
+    # else
+    #     @warn "No cutoff given"
+    # end
 
 
-    return Eigen(vals, O), spec, norm_err
+    return Eigen(vals, O), spec
 end
 
 
@@ -108,7 +95,7 @@ function symm_oeig(a::ITensor, linds; cutoff=nothing, maxdim=nothing, tags="eig_
     cR = combiner(rinds)
     am = matrix((a * cL) * cR)
 
-    F, spec, norm_err = symm_oeig(am; cutoff, maxdim)
+    F, spec = symm_oeig(am; cutoff, maxdim)
     D = F.values
     Om = F.vectors
 

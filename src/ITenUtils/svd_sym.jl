@@ -103,6 +103,7 @@ function symm_svd(M::Matrix; maxdim=nothing, cutoff=nothing, use_absolute_cutoff
     #sq_z should be symmetric
     uz = u * sq_z
 
+    #= 
     M_rec = uz * Diagonal(s) * transpose(uz)
 
     # hacky but 
@@ -119,11 +120,12 @@ function symm_svd(M::Matrix; maxdim=nothing, cutoff=nothing, use_absolute_cutoff
     else
         @debug("Symmetric SVD decomp with norm error $(norm_err) < $(sqrt(cutoff))")
     end
+    =#
 
     # here we should have m = u * S * uT
     # so Vd = uT  (?)
     # but then be careful, cause unpacking this will return u,s,conj(u) 
-    return SVD(uz, s, transpose(uz)), spec, norm_err
+    return SVD(uz, s, transpose(uz)), spec # , norm_err
 end
 
 

@@ -17,7 +17,7 @@ end
 function pMPS(N::Int, site_tensor::ITensor)
     ss = siteinds("S=1/2", N)
     @assert ndims(site_tensor) == 1
-    pMPS(ss, site_tensor.tensor.storage)
+    pMPS(ss, storage(site_tensor))
 end
 
 
@@ -40,13 +40,9 @@ end
 """ Computes the overlap (ll,rr) between two MPS *without* conjugating either one.
 If siteinds(ll) and siteinds(rr) do not match, it matches them before contracting.
 """
-function overlap_noconj_ite(ll::MPS, rr::MPS, approx_real::Bool=false)
+function overlap_noconj_ite(ll::MPS, rr::MPS)
     siteinds(ll) != siteinds(rr) ? rr = replace_siteinds(rr, siteinds(ll)) : nothing
     overlap = inner(dag(ll),rr) 
-    if approx_real && imag(overlap) < 1e-15
-        return real(overlap)
-    end
-    
     return overlap
     
 end
@@ -54,27 +50,25 @@ end
 """ Computes the overlap (ll,rr) between two MPS *without* conjugating either one.
 The "generalized norm" of an MPS should be sqrt(overlap_noconj(psi,psi)).
 """
-function overlap_noconj(ll::MPS, rr::MPS, reverse_qn_ll::Bool=false; match_siteinds::Bool=false)
+function overlap_noconj(ll::MPS, rr::MPS, reverse_qn_ll::Bool=false; fast::Bool=false)
 
     #T =  promote_type(promote_itensor_eltype(ll), promote_itensor_eltype(rr))
     if reverse_qn_ll 
         return inner(conj(ll),rr)
     else
 
-        # if !ITensorMPS.hassameinds(siteinds, ll, rr)
-        #     @warn "L and R don't have the same physical indices, correcting "
-        #     rr = replace_siteinds(rr, siteinds(ll))
-        # end
-        if match_siteinds
-            rr = replace_siteinds(rr, siteinds(ll))
+        if !fast 
+            rr = sim(linkinds,rr)
+            if !hassameinds(siteinds, ll, rr)
+                @warn "L and R don't have the same physical indices, correcting "
+                replace_siteinds!(rr, siteinds(ll))
+            end
         end
-
-        ll = sim(linkinds, ll)
 
         overlap = ITensors.OneITensor()
         for ii in eachindex(ll)
             overlap = (overlap * rr[ii]) * ll[ii]
-            @assert ndims(overlap) <= 2 "check your inds?"
+            #@assert ndims(overlap) <= 2 "check your inds?"
         end
         
         return scalar(overlap) #:: ComplexF64
@@ -226,14 +220,14 @@ function mpo_from_arrays(array_list, ss = siteinds(size(array_list[1],2), length
     L = length(array_list)
 
     linkdim = size(array_list[2], 1)
-    linkinds = [Index(linkdim, "Link,l=$(ii)") for ii = 1:L-1]
+    link_inds = [Index(linkdim, "Link,l=$(ii)") for ii = 1:L-1]
 
     mpo_tensors =  [ITensor() for _ in 1:L]
-    mpo_tensors[1] = ITensor(array_list[1], ss[1], ss[1]', linkinds[1])
+    mpo_tensors[1] = ITensor(array_list[1], ss[1], ss[1]', link_inds[1])
     for ii = 2:L-1
-        mpo_tensors[ii] = ITensor(array_list[ii], linkinds[ii-1],  ss[ii], ss[ii]', linkinds[ii])
+        mpo_tensors[ii] = ITensor(array_list[ii], link_inds[ii-1],  ss[ii], ss[ii]', link_inds[ii])
     end
-    mpo_tensors[end] = ITensor(array_list[end], linkinds[end], ss[end], ss[end]')
+    mpo_tensors[end] = ITensor(array_list[end], link_inds[end], ss[end], ss[end]')
 
     return MPO(mpo_tensors)
 end
@@ -303,7 +297,7 @@ function logfidelity(psi::MPS, phi::MPS; match_inds::Bool=true)
     return (log10(abs(inner(psi,phi))) -log10(norm(psi)) - log10(norm(phi))) / length(psi)
 end
 
-""" Measures infidelity 1 - |<psi|phi>|^2/(<psi|psi><phi|phi>) """
+""" Measures infidelity 1 - sqrt(|<psi|phi>|^2/(<psi|psi><phi|phi>)) """
 function infidelity(psi::MPS, phi::MPS)
     return 1. - fidelity(psi,phi)
 end
@@ -410,7 +404,7 @@ function trace_mpo_squared(rho::MPO)
     for jj in eachindex(rho)
         trace *= rho[jj]
         trace *= rho2[jj]
-        @show jj, inds(trace)
+        @debug jj, inds(trace)
     end
 
     return scalar(trace)
@@ -431,40 +425,4 @@ function trace_mpo_ab(mpoA::MPO, mpoB::MPO, flip_b_sites::Bool=false)
     end
 
     return scalar(trace)
-end
-
-
-# function random_mps_haaruni(ss::Vector{<:Index})
-#     for kk = 
-
-function pad_bonddim(psi::MPS, chi::Int)
-    psi = orthogonalize(psi, 1)
-    N = length(siteinds(psi))
-    
-    new_links = [Index(chi, "Link,l=$n") for n in 1:N-1]
-    psi_new = MPS(N)
-
-    for ii in 1:N
-        s = siteinds(psi)[ii]
-        old_l = ii > 1 ? linkind(psi, ii-1) : nothing
-        old_r = ii < N ? linkind(psi, ii)   : nothing
-        new_l = ii > 1 ? new_links[ii-1]    : nothing
-        new_r = ii < N ? new_links[ii]       : nothing
-
-        # build index list for new tensor
-        new_inds = filter(!isnothing, [new_l, s, new_r])
-        T = ITensor(eltype(psi[ii]), new_inds...)
-
-        # embed via combiners
-        old_inds = filter(!isnothing, [old_l, s, old_r])
-        for cart in CartesianIndices(Tuple(dim(i) for i in old_inds))
-            vals = Tuple(cart)
-            old_idx = [old_inds[k] => vals[k] for k in eachindex(old_inds)]
-            new_idx = [new_inds[k] => vals[k] for k in eachindex(old_inds)]
-            T[new_idx...] = psi[ii][old_idx...]
-        end
-
-        psi_new[ii] = T
-    end
-    return psi_new
 end
