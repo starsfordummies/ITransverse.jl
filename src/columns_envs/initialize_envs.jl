@@ -64,6 +64,7 @@ function initialize_envs_rdm(cc::Columns, trunc_params=(cutoff=1e-12, maxdim=16)
 
     end
 
+    finish!(p)
     return left_envs, right_envs
 
-    end
+end

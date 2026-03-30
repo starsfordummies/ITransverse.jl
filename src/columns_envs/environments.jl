@@ -56,21 +56,17 @@ Base.length(env::Environments) = length(env.envs)
 
 Base.getindex(a::Environments, i::Int) = a.envs[i]
 
-function Base.setindex!(a::Environments, v, i::Int)
-    a.envs[i] = v
-end
-
 Base.iterate(env::Environments, state=1) = state <= length(env.envs) ? (env.envs[state], state + 1) : nothing
 
 function Base.pop!(env::Environments) 
      ee = pop!(env.envs)
      nn = pop!(env.norms)
-     return ee*nn
+     return ee, nn
 end
 function Base.popfirst!(env::Environments)
      ee = popfirst!(env.envs)
      nn = popfirst!(env.norms)
-     return ee*nn 
+     return ee, nn 
 end
 
 
@@ -83,6 +79,10 @@ function ITensorMPS.maxlinkdim(a::Environments)
     return maximum(maxlinkdim.(a.envs))::Int
 end
 
+function _setindex_unsafe!(a::Environments, v, i::Int)
+    a.envs[i] = v
+end
+
 """ if you pass kwarg ortho_psi=0, it does not orthogonalize the MPS """
 function update_env!(ee::Environments, jj::Int, psi::MPS; ortho_psi::Int=length(psi))
         if ortho_psi > 0   
@@ -90,6 +90,10 @@ function update_env!(ee::Environments, jj::Int, psi::MPS; ortho_psi::Int=length(
         end
         ee.norms[jj] = norm(psi)
         ee.envs[jj] = normalize(psi)
+end
+
+function Base.setindex!(ee::Environments, psi::MPS, i::Int)
+    update_env!(ee, i, psi; ortho_psi=0)
 end
 
 
@@ -126,7 +130,6 @@ function overlaps_envs(left_envs::Environments, right_envs::Environments)
   
     NN = length(left_envs.envs)
 
-    overlaps = ComplexF64[]
     overlaps = zeros(promote_itensor_eltype(left_envs[1]), NN-1)
 
     for ov_site in 1:NN-1
@@ -148,12 +151,7 @@ end
 """ Compute mean Generalized SVD entropy for the input environment sets """
 function mean_gen_vn_ents(left_envs::Environments, right_envs::Environments)
     NN = length(left_envs.envs)
-    eents = []
-    for jj in 2:NN-1
-        SSVDGen = generalized_svd_vn_entropy(left_envs[jj], right_envs[jj])
-        push!(eents, SSVDGen)
-    end
-
+    eents = [generalized_svd_vn_entropy(left_envs[jj], right_envs[jj]) for jj in 2:NN-1]
     return mean(eents), std(eents) 
 
 end

@@ -16,12 +16,7 @@ function Columns(L::Int, ledge::MPS, col::MPO, redge::MPS)
     Columns(ledge, cols, redge)
 end
 
-Adapt.adapt_structure(to, cc::Columns) = Columns(
-    adapt(to, cc.ledge),
-    adapt(to, cc.cols), 
-    adapt(to, cc.redge)
-)
-
+Adapt.@adapt_structure Columns
 
 Base.size(cc::Columns) = length(cc.cols)
 Base.eachindex(cc::Columns) = eachindex(cc.cols)  # Forward to .cols 

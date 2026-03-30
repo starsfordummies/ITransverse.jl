@@ -180,7 +180,7 @@ function fwback_tMPS(
     end
         for ii = Nt+1:b2
         #@info "$(ii) re" 
-        tMPS[ii] = W * delta(iP, time_sites[ii])
+        tMPS[ii] = dag(W) * delta(iP, time_sites[ii])
     end
     for ii = b2+1:Ntot
         #@info "$(ii) im" 
