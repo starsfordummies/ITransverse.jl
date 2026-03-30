@@ -18,18 +18,19 @@ Eg. for N=6 we have
 
   The full contraction of the network is given by Li * Ri, for all i 
 """
+
 struct Environments{T}
     envs::Vector{T}
-    norms::Vector{Float64}
+    log_norms::Vector{Float64}
 end
 
 
 """ The constructor fills the first (or last, depending on `LR`) element with the input MPS 
-and normalizes it (saving its norm in envs.norms) """
+and normalizes it (saving its log(norm) in envs.log_norms) """
 function Environments(n::Int, boundary::MPS, LR::Symbol) 
 
     envs = Vector{MPS}(undef, n-1) 
-    norms = fill(1.0, n-1) 
+    log_norms = fill(0.0, n-1) 
 
     boundary = orthogonalize(boundary, length(boundary))
     norm_boundary = norm(boundary)
@@ -37,15 +38,15 @@ function Environments(n::Int, boundary::MPS, LR::Symbol)
 
     if LR == :L
         envs[1] = boundary
-        norms[1] = norm_boundary
+        log_norms[1] = log(norm_boundary)
     elseif LR == :R
         envs[end] = boundary 
-        norms[end] = norm_boundary
+        log_norms[end] = log(norm_boundary)
     else
         error("specify whether left or right env")
     end
 
-    return Environments(envs, norms)
+    return Environments(envs, log_norms)
 end
 
 Base.size(a::Environments) = length(a.envs)
@@ -60,12 +61,12 @@ Base.iterate(env::Environments, state=1) = state <= length(env.envs) ? (env.envs
 
 function Base.pop!(env::Environments) 
      ee = pop!(env.envs)
-     nn = pop!(env.norms)
+     nn = pop!(env.log_norms)
      return ee, nn
 end
 function Base.popfirst!(env::Environments)
      ee = popfirst!(env.envs)
-     nn = popfirst!(env.norms)
+     nn = popfirst!(env.log_norms)
      return ee, nn 
 end
 
@@ -88,7 +89,7 @@ function update_env!(ee::Environments, jj::Int, psi::MPS; ortho_psi::Int=length(
         if ortho_psi > 0   
             orthogonalize!(psi,ortho_psi)
         end
-        ee.norms[jj] = norm(psi)
+        ee.log_norms[jj] = log(norm(psi))
         ee.envs[jj] = normalize(psi)
 end
 
@@ -102,12 +103,7 @@ function overlap_at(left_envs::Environments, right_envs::Environments, jj::Int)
     NN = length(left_envs)
     overlap = overlap_noconj(left_envs[jj], right_envs[jj])
     #push!(overlaps_nofactors, overlap)
-    for kk = 1:jj 
-        overlap *= left_envs.norms[kk]
-    end
-    for kk = jj:NN
-        overlap *= right_envs.norms[kk] 
-    end
+    overlap *= exp(sum(left_envs.log_norms[1:jj]) + sum(right_envs.log_norms[jj:NN]))
 
     return overlap
 
@@ -130,21 +126,8 @@ function overlaps_envs(left_envs::Environments, right_envs::Environments)
   
     NN = length(left_envs.envs)
 
-    overlaps = zeros(promote_itensor_eltype(left_envs[1]), NN-1)
+    return [overlap_at(left_envs, right_envs, jj) for jj in 1:NN-1]
 
-    for ov_site in 1:NN-1
-        overlap = overlap_noconj(left_envs[ov_site], right_envs[ov_site])
-        for kk = 1:ov_site
-            overlap *= left_envs.norms[kk]
-        end
-        for kk = ov_site:NN
-            overlap *= right_envs.norms[kk]
-        end
-
-        overlaps[ov_site] =  overlap
-    end
-
-    return overlaps
 end
 
 
@@ -159,12 +142,8 @@ end
 """ Compute mean Generalized Renyi2  """
 function mean_gen_renyi2_ents(left_envs::Environments, right_envs::Environments)
     NN = length(left_envs.envs)
-    eents = []
-    for jj in 2:NN-1
-        S2Gen = gen_renyi2(left_envs[jj], right_envs[jj])
-        push!(eents, S2Gen)
-    end
+    S2gents = [gen_renyi2(left_envs[jj], right_envs[jj]) for jj in 2:NN-1]
 
-    return mean(eents), std(eents) 
+    return mean(S2gents), std(S2gents) 
 
 end

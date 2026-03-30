@@ -142,7 +142,7 @@ include("columns_envs/initialize_envs.jl")
 include("columns_envs/sweeps_envs.jl")
 
 export Columns, Environments, 
-    initialize_envs_rdm, 
+    initialize_envs, 
     sweep_rebuild_envs_rtm!, sweep_rebuild_envs_rtm_twocol!,
     overlap_envs
 

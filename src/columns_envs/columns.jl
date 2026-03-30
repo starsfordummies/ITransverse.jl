@@ -1,9 +1,7 @@
-""" Columns struct for a uniform system of length N: stores
+""" Columns struct for a system of length N: stores
  - a left MPS, 
- - a set of columns of length N (the first and last are unused/unintialized)
+ - a set of columns (the first and last are unused/unintialized)
  - a right MPS
-
- Ideally we initialize them once and the beginning and not touch them again.
 """
 mutable struct Columns
     ledge::MPS
@@ -65,6 +63,7 @@ function ITensorMPS.siteinds(cc::Columns)
 end
 
 get_plateau(cc::Columns) = findall(==(0), diff(length.(cc)) )[2:end]
+
 
 """ Given a Columns struct, 
 performs the exact (up to maxdim) contraction from the edges towawrds the center, without using environments """

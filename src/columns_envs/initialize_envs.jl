@@ -1,5 +1,6 @@
-""" Builds left and right envs from a Columns struct. Returns left_envs, right_envs """
-function initialize_envs_rdm(cc::Columns, trunc_params=(cutoff=1e-12, maxdim=16); edge_buffer::Int=1)
+""" Builds left and right envs from a Columns struct using simple RDM truncation. 
+Returns left_envs, right_envs """
+function initialize_envs(cc::Columns, trunc_params=(cutoff=1e-12, maxdim=16); edge_buffer::Int=1)
 
     NN = length(cc)
 
