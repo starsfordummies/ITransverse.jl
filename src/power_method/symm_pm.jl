@@ -38,11 +38,11 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams)
         psi_work, sv = if opt_method == "RDM"
             tapply(in_mpo, psi_work; alg="densitymatrix", cutoff=truncp.cutoff, maxdim=maxdims[jj])
         elseif opt_method == "RTM" || opt_method == "RTMRDM"
-            tapply(in_mpo, psi_work; alg="RTMsym", cutoff=truncp.cutoff, maxdim=maxdims[jj], method="SVD")
+            tapply(in_mpo, psi_work; alg="naiveRTMsym", cutoff=truncp.cutoff, maxdim=maxdims[jj], method="SVD")
         elseif opt_method == "RTM2" 
-            tapply(in_mpo, psi_work; alg="RTMsym2", cutoff=truncp.cutoff, maxdim=maxdims[jj])
+            tapply(in_mpo, psi_work; alg="RTMsym", cutoff=truncp.cutoff, maxdim=maxdims[jj])
         elseif opt_method == "RTM_EIG" # this can be less accurate
-            psi_work, sv = tapply(in_mpo, psi_work; alg="RTMsym", cutoff=truncp.cutoff, maxdim=maxdims[jj], method="EIG")
+            psi_work, sv = tapply(in_mpo, psi_work; alg="naiveRTMsym", cutoff=truncp.cutoff, maxdim=maxdims[jj], method="EIG")
         else
             error("Specify a valid opt_method: RDM|RTM|...")
         end

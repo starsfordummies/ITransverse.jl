@@ -33,24 +33,26 @@ function truncate_sweep_sym(in_psi::MPS; cutoff::Float64, maxdim::Int,
         env *= noprime(Ai', ss[ii]')
         @assert order(env) == 2 "unexpected env indices: $(inds(env))"
 
-        if method == "SVD"
+        Sn = if method == "SVD"
             F = symm_svd(env, ind(env, 1); cutoff, maxdim, lefttags="Link,l=$(ii+sv_offset)")
-            U, S = F.U, F.S
+    
+            XU    = dag(F.U)
+            XUinv = F.U
 
-            XU    = dag(U)
-            XUinv = U
-
-            env /= sum(S)
+            sS = sum(F.S)
+            env /= sS
+            Sn = diag(matrix(F.S))/sS
 
         elseif method == "EIG"
             F = symm_oeig(env, ind(env, 1); cutoff, maxdim)
-            U, S = F.V, F.D
-
-            sqS  = S .^ 0.5
+    
+            sqS  = F.D .^ -0.5
             isqS = sqS .^ -1
 
-            XU    = U * isqS
-            XUinv = sqS * U
+            XU    = F.V * isqS
+            XUinv = sqS * F.V
+
+            Sn = diag(matrix(F.D))/sum(F.D)
 
         else
             error("Valid methods are: SVD | EIG  (here method=$(method))")
@@ -62,8 +64,7 @@ function truncate_sweep_sym(in_psi::MPS; cutoff::Float64, maxdim::Int,
         env *= XU
         env *= XU'
 
-        Svec = collect(S.tensor.storage.data) ./ sum(S)
-        SV_all[ii + sv_offset, 1:length(Svec)] .= Svec
+        SV_all[ii + sv_offset, 1:length(Sn)] .= Sn
     end
 
     psi[last_site] = XUinv * psi[last_site]
@@ -72,7 +73,7 @@ function truncate_sweep_sym(in_psi::MPS; cutoff::Float64, maxdim::Int,
 end
 
 
-""" Truncate <psi*|psi> by explicitly building the symmetric RTM and computing its SVD decomposition"""
+""" Truncate <psi*|psi> by explicitly building the symmetric RTMs and computing their SVD decompositions"""
 function truncate_sweep_sym_rtm!(psi::MPS; direction::Symbol=:right, maxdim::Int, kwargs...)
 
     ss = siteinds(psi)
@@ -145,21 +146,21 @@ truncate_lsweep_sym(in_psi::MPS; kwargs...) = truncate_sweep_sym(in_psi; directi
 truncate_rsweep_sym(in_psi::MPS; kwargs...) = truncate_sweep_sym(in_psi; direction=:right, kwargs...) 
 
 
-function ITenUtils.tcontract(::Algorithm"RTMsym", A::MPO, ψ::MPS; preserve_tags_mps::Bool=false, kwargs...)
+function ITenUtils.tcontract(::Algorithm"naiveRTMsym", A::MPO, ψ::MPS; preserve_tags_mps::Bool=false, kwargs...)
     psi = apply(A, ψ; alg="naive", preserve_tags_mps, truncate=false)
     psi, svals = truncate_sweep_sym(psi; kwargs...)
 end
 
 
-function ITenUtils.tcontract(::Algorithm"RTMsym2", A::MPO, ψ::MPS; preserve_tags_mps::Bool=false, kwargs...)
+function ITenUtils.tcontract(::Algorithm"naiveRTMsymRTM", A::MPO, ψ::MPS; preserve_tags_mps::Bool=false, kwargs...)
     psi = apply(A, ψ; alg="naive", preserve_tags_mps, truncate=false)
     psi, svals = truncate_sweep_sym_rtm!(psi; kwargs...)
 end
 
 """ Contract MPO-MPS with algorithm densitymatrix, starting from the left. At the end we can chop/extend 
 if we work with light cone """
-function ITenUtils.tcontract(::Algorithm"RTMsym3",
-          A::MPO,
+function ITenUtils.tcontract(::Algorithm"RTMsym",
+        A::MPO,
         ψ::MPS;
         cutoff = 1.0e-13,
         maxdim = maxlinkdim(A) * maxlinkdim(ψ),
@@ -173,7 +174,6 @@ function ITenUtils.tcontract(::Algorithm"RTMsym3",
     n = length(ψ)
 
     mindim = max(mindim, 1)
-    requested_maxdim = maxdim
     ψ_out = typeof(ψ)(N)
 
     # In case A and ψ have the same link indices
@@ -181,7 +181,6 @@ function ITenUtils.tcontract(::Algorithm"RTMsym3",
 
     ψ_c = ψ''
     A_c = replaceprime(prime(A, 2), 3 => 1)
-    #A_c = replaceprime(simA_c, 3 => 1)
 
     # Store the right environment tensors
     E = Vector{ITensor}(undef, N)
@@ -197,10 +196,9 @@ function ITenUtils.tcontract(::Algorithm"RTMsym3",
     end
 
     L = ψ[1] * A[1]
-    #simL_c =  ψ_c[1] * simA_c[1]
     l_renorm = nothing
 
-    S_all = zeros(Float64, n-1, maxdim)
+    SV_all = zeros(Float64, n-1, maxdim)
 
     for j in 1:min(n-1,N-1)
 
@@ -208,19 +206,18 @@ function ITenUtils.tcontract(::Algorithm"RTMsym3",
         cip = commoninds(ψ[j], E[j + 1])
         ciA = commoninds(A[j], E[j + 1])
         prod_dims = dim(cip) * dim(ciA)
-        maxdim = min(prod_dims, requested_maxdim)
+        bond_maxdim = min(prod_dims, maxdim)
 
         s = siteinds(uniqueinds, A, ψ, j)
-        #s̃ = siteinds(uniqueinds, simA_c, ψ_c, j)
+
         rho = E[j + 1] * L * L''
         l = linkind(ψ, j)
         ts = isnothing(l) ? "" : tags(l)
         Lis = isnothing(l_renorm) ? IndexSet(s...) : IndexSet(s..., l_renorm)
-        #Ris = isnothing(r_renorm) ? IndexSet(s̃...) : IndexSet(s̃..., r_renorm)
 
-        @assert ndims(rho) < 5 " $j $(inds(rho))"
+        #@assert ndims(rho) < 5 " $j $(inds(rho))"
 
-        F = symm_svd(rho, Lis, Lis''; cutoff, maxdim, lefttags=ts, kwargs...)
+        F = symm_svd(rho, Lis, Lis''; cutoff, maxdim=bond_maxdim, lefttags=ts, kwargs...)
         D, U = F.S, F.U
 
         l_renorm = F.u
@@ -231,7 +228,7 @@ function ITenUtils.tcontract(::Algorithm"RTMsym3",
 
         Dvec = collect(D.tensor.storage.data)/sum(D)  
  
-        S_all[j, 1:length(Dvec)] .= Dvec  
+        SV_all[j, 1:length(Dvec)] .= Dvec  
     
     end
 
@@ -241,6 +238,5 @@ function ITenUtils.tcontract(::Algorithm"RTMsym3",
         ψ_out[j] = A[j]
     end
 
-    return ψ_out, S_all
+    return ψ_out, SV_all
 end
-
