@@ -64,7 +64,7 @@ function truncate_sweep_sym(in_psi::MPS; cutoff::Float64, maxdim::Int,
         env *= XU
         env *= XU'
 
-        SV_all[ii + sv_offset, 1:length(Sn)] .= Sn
+        SV_all[ii + sv_offset, 1:length(Sn)] .= Array(Sn)
     end
 
     psi[last_site] = XUinv * psi[last_site]
@@ -218,7 +218,7 @@ function ITenUtils.tcontract(::Algorithm"RTMsym",
         #@assert ndims(rho) < 5 " $j $(inds(rho))"
 
         F = symm_svd(rho, Lis, Lis''; cutoff, maxdim=bond_maxdim, lefttags=ts, kwargs...)
-        D, U = F.S, F.U
+        U = F.U
 
         l_renorm = F.u
 
@@ -226,9 +226,9 @@ function ITenUtils.tcontract(::Algorithm"RTMsym",
 
         L = L * dag(U) * ψ[j+1] * A[j+1]
 
-        Dvec = collect(D.tensor.storage.data)/sum(D)  
+        Dvec = diag(matrix(F.S))/sum(F.S)
  
-        SV_all[j, 1:length(Dvec)] .= Dvec  
+        SV_all[j, 1:length(Dvec)] .= Array(Dvec) 
     
     end
 
