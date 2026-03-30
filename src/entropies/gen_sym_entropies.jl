@@ -3,13 +3,13 @@ Generalized entropy for a *symmetric* environment (psiL,psiL)
     Assuming we're in LEFT GENERALIZED canonical form, by default bring the MPS to it
     By default, normalizes the eigenvalues of the symmetric RTM. 
 """
-function generalized_vn_entropy_symmetric(psiL::MPS; bring_left_gen::Bool=true, normalize_eigs::Bool=true)
+function generalized_vn_entropy_symmetric(psiL::MPS; bring_gen_can::Bool=true, normalize_eigs::Bool=true)
  
-    if bring_left_gen
-        psiL = gen_canonical_left(psiL)
-    end
-
     mpslen = length(psiL)
+
+    if bring_gen_can
+        psiL = gen_canonical(psiL, mpslen)
+    end
 
     overlap = overlap_noconj(psiL,psiL)
     if abs(1-overlap) > 1e-4 && !normalize_eigs
@@ -57,63 +57,15 @@ function generalized_vn_entropy_symmetric(psiL::MPS; bring_left_gen::Bool=true, 
     
 end
 
-function generalized_vn_entropy_symmetric(psiL::MPS, cut::Int; bring_left_gen::Bool=true, normalize_eigs::Bool=true)
- 
-    if bring_left_gen
-        psiL = gen_canonical_left(psiL)
-    end
+
+function generalized_r2_entropy_symmetric(psiL::MPS; bring_gen_can::Bool=true, normalize_eigs::Bool=true)
+
 
     mpslen = length(psiL)
-    #links = linkinds(psiL)
 
-    overlap = overlap_noconj(psiL,psiL)
-    if abs(1-overlap) > 1e-4 && !normalize_eigs
-        @warn" overlap not 1: $(overlap)"
+    if bring_gen_can
+        psiL = gen_canonical(psiL, mpslen)
     end
-    
-    psiR = prime(linkinds, psiL)
-
-
-    # Build right_env up to 'cut'
-    right_env = ITensors.OneITensor()
-
-    # Start from the *right* (operator side)
-    for ii = mpslen:-1:cut
-        right_env = psiL[ii] * right_env 
-        right_env = psiR[ii] * right_env
-    end
-
-    @assert order(right_env) == 2 
-    #println(left_env)
-    eigss = eigvals(right_env)
-    #gen_ent_cut = sum(eigss.*log.(eigss))
-    
-    if normalize_eigs
-        eigss = eigss/sum(eigss) 
-    else # If we don't normalize, warn if normalization is off
-        if abs(sum(eigss) - 1.) > 0.01
-            @warn "RTM not well normalized? Σeigs = 1-$(abs(sum(eigss) - 1.)) "
-        end
-    end
-
-    gen_ent_cut = ComplexF64(0.)
-    for n=1:dim(eigss, 1)
-        p = eigss[n,n]  
-        gen_ent_cut -= p * log(p)
-    end
-
-    return gen_ent_cut
-    
-end
-
-
-function generalized_r2_entropy_symmetric(psiL::MPS; bring_left_gen::Bool=true, normalize_eigs::Bool=true)
- 
-    if bring_left_gen
-        psiL = gen_canonical_left(psiL)
-    end
-
-    mpslen = length(psiL)
 
     overlap = overlap_noconj(psiL,psiL)
     if abs(1-overlap) > 1e-4 && !normalize_eigs
@@ -183,13 +135,13 @@ end
 
 """ Given an input MPS `psi`, computes the symmetric generalized entropies by diagonalizing RTM
 and builds alpha-order Renyi entropies as specified by `which_ents`. Returns a dict """
-function gensym_renyi_entropies(psiL::MPS; which_ents=[0.5,1,2], bring_left_gen::Bool=true, normalize_eigs::Bool=true)
+function gensym_renyi_entropies(psiL::MPS; which_ents=[0.5,1,2], bring_gen_can::Bool=true, normalize_eigs::Bool=true)
  
-    if bring_left_gen
-        psiL = gen_canonical_left(psiL)
-    end
-
     mpslen = length(psiL)
+
+    if bring_gen_can
+        psiL = gen_canonical(psiL, mpslen)
+    end
 
     overlap = overlap_noconj(psiL,psiL)
     if abs(1-overlap) > 1e-4 && !normalize_eigs

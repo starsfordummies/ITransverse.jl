@@ -17,11 +17,11 @@ function diagonalize_rtm_left_gen_sym(psiL::MPS, cut::Int; bring_left_gen::Bool=
     @assert cut > 1 
     @assert cut < length(psiL)
 
-    if bring_left_gen
-        psiL = gen_canonical_left(psiL)
-    end
-
     mpslen = length(psiL)
+
+    if bring_left_gen
+        psiL = gen_canonical(psiL,mpslen)
+    end
 
     overlap = overlap_noconj(psiL,psiL)
     if abs(1-overlap) > 1e-4
@@ -69,7 +69,7 @@ function diagonalize_rtm_right_gen_sym(psi::MPS; bring_right_gen::Bool=false, no
     psi_gauged = psi/normalize_factor
 
     if bring_right_gen
-        psi_gauged = gen_canonical_right(psi_gauged)
+        psi_gauged = gen_canonical(psi_gauged,1)
         psi_gauged[end] /= sqrt(overlap_noconj(psi_gauged, psi_gauged))
 
     end
@@ -113,12 +113,12 @@ end
 Returns a list of Nsites-1 vectors of eigenvalues """
 function diagonalize_rtm_symmetric(psiL::MPS; bring_left_gen::Bool=true, normalize_eigs::Bool=true, sort_by_largest::Bool=true, cutoff::Float64=1e-12)
  
-    if bring_left_gen
-        psiL = gen_canonical_left(psiL)
-    end
 
     mpslen = length(psiL)
-    #links = linkinds(psiL)
+    if bring_left_gen
+        psiL = gen_canonical(psiL, mpslen)
+    end
+
 
     overlap = overlap_noconj(psiL,psiL)
     if abs(1-overlap) > 1e-4 && !normalize_eigs

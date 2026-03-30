@@ -78,7 +78,7 @@ export truncate_lsweep_sym, truncate_rsweep_sym, truncate_sweep_sym
 
 export tlapply, trapply, tlrapply
 
-export gen_canonical_left, gen_canonical_right
+export gen_canonical
 
 include("entropies/build_entropies.jl")
 
