@@ -27,22 +27,29 @@ function sweep_rebuild_envs_rtm!(left_envs::Environments, right_envs::Environmen
         end
     end
 
+    max_left_entropies  = Vector{Float64}(undef, NN-1)
+    max_right_entropies = Vector{Float64}(undef, NN-1)
+
     for jj in edge_buffer+1:NN-1
 
         @debug "updating L[$(jj)] via overlap (L[$(jj-1)]E[$(jj)] | R[$(jj)])"
-        ll, _ = tlapply(left_envs[jj-1], cc[jj], right_envs[jj]; alg, truncp...)
+        ll, _, svs = tlapply(left_envs[jj-1], cc[jj], right_envs[jj]; alg, truncp...)
         update_env!(left_envs, jj, ll; kwargs...)
+        @show svs
+        max_left_entropies[jj] = maximum(vn_from_matrix(svs))
 
     end
 
     # Update Right envs using {left_envs},  R[jj-1] = E[jj] * R[jj]  
     for jj in NN-edge_buffer:-1:2
         @debug "updating R[$(jj-1)] via overlap (L[$(jj-1)]|E[$(jj)]R[$(jj)])"
-        _, rr = trapply(left_envs[jj-1], cc[jj], right_envs[jj]; alg, truncp...)
+        _, rr, svs = trapply(left_envs[jj-1], cc[jj], right_envs[jj]; alg, truncp...)
         update_env!(right_envs, jj-1, rr; kwargs...)
+        max_right_entropies[jj-1] = maximum(vn_from_matrix(svs))
+
     end
 
-    return maxlinkdim(left_envs), maxlinkdim(right_envs)
+    return maxlinkdim(left_envs), maxlinkdim(right_envs), max_left_entropies, max_right_entropies
 
 end
 
