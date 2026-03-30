@@ -49,6 +49,9 @@ function ising_loschmidt(tp::tMPOParams, Tstart::Int, Tend::Int, nbeta::Int; Tst
 
         #psi_trunc, ds2 = ITransverse.powermethod_both(start_mps, mpo, mpo, pm_params)
 
+        normalization = overlap_noconj(psi_trunc,psi_trunc)
+
+        psi_trunc = psi_trunc/sqrt(overlap_noconj(normalization))
 
         # Entropies 
         sgen = generalized_vn_entropy_symmetric(psi_trunc)
@@ -63,7 +66,7 @@ function ising_loschmidt(tp::tMPOParams, Tstart::Int, Tend::Int, nbeta::Int; Tst
         OL = apply(mpo, psi_trunc,  alg="naive", truncate=false)
         leading_sq = overlap_noconj(OL, OL)
 
-        normalization = overlap_noconj(psi_trunc,psi_trunc)
+     
         leading_eig, leading_sq, normalization
 
         push!(ll_murgs, psi_trunc)
