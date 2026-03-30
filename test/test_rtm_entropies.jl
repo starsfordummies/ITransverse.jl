@@ -50,7 +50,7 @@ end
     
     mpslen = length(psi)
     
-    psi_gauged = gen_canonical_right(psi)
+    psi_gauged = gen_canonical(psi,1)
     
     lenv= ITensors.OneITensor()
     s = siteinds(psi_gauged)
