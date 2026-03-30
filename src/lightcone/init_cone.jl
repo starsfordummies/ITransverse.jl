@@ -1,10 +1,7 @@
 """ Initializes the light cone folded and rotated temporal MPS |R> given `tMPOParams`
 builds a (length n) tMPS with (time_fold)  legs.
 Returns (psi[the light cone right MPS], b[the folded tMPO building blocks])"""
-# function init_cone(tp::tMPOParams, n::Int=10; full::Bool=true)
-#     b = FoldtMPOBlocks(tp)
-#     init_cone(b, n)
-# end
+
 
 function init_cone(b::FoldtMPOBlocks, n::Int=6; LR::Symbol=:right, full::Bool=true)
 

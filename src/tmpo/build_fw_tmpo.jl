@@ -24,13 +24,11 @@ end
 
 
 """ Forward tMPO with open top (=right, after rotation) leg, so we can plug anything afterwards """
-function fw_tMPO_opentr(b::FwtMPOBlocks, time_sites::Vector{<:Index};  bl::ITensor = b.tp.bl, init_beta_only::Bool=false)
+function fw_tMPO_opentr(b::FwtMPOBlocks, time_sites::Vector{<:Index};  bl::ITensor = b.tp.bl, nbeta=b.tp.nbeta, init_beta_only::Bool=false)
 
     Ntot = length(time_sites)
 
-    (; tp, Wc, Wc_im, rot_inds) = b
-    nbeta = tp.nbeta 
-
+    (; Wc, Wc_im, rot_inds) = b
 
     @assert nbeta <= Ntot
 
@@ -117,6 +115,7 @@ function fw_tMPS(
     b::FwtMPOBlocks,
     time_sites::Vector{<:Index};
     bl = b.tp.bl,
+    nbeta = b.tp.nbeta,
     tr,
     LR::Symbol = :right,
     init_beta_only::Bool=false
@@ -124,8 +123,6 @@ function fw_tMPS(
 
     bl = to_itensor(bl, "bl")
     tr = to_itensor(tr, "tr")
-    tp = b.tp
-    nbeta = tp.nbeta
 
     Ntot = length(time_sites)
 

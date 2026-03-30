@@ -1,53 +1,5 @@
-#= struct PMParams
-    truncp::TruncParams
-    itermin::Int
-    itermax::Int
-    eps_converged::Float64
-    increase_chi::Bool
-    opt_method::String
-    normalization::String
-    compute_fidelity::Bool
-    stuck_after::Int
-    quiet::Bool
-
-    PMParams(t::TruncParams, 
-        itermax::Int=1000, 
-        itermin::Int=1,
-        epsi::Float64=1e-6, 
-        ichi::Bool=false, 
-        opt::String="RDM", 
-        norm::String="norm", 
-        fide::Bool=true,
-        nstuck::Int=itermax,
-        quiet::Bool=false) = new(t,itermin,itermax,epsi,ichi,opt,norm,fide,nstuck,quiet)
-
-end
-
-function PMParams(; 
-    truncp=TruncParams(), 
-    itermin::Int=1,
-    itermax::Int=200,
-    eps_converged::Float64=1e-5, 
-    increase_chi::Bool=false,
-    opt_method::String="RTM_LR",
-    normalization::String="norm", 
-    compute_fidelity::Bool=true,
-    stuck_after::Int=itermax)
-    return PMParams(truncp, itermin, itermax, eps_converged, increase_chi, opt_method, normalization, compute_fidelity, stuck_after)
-end
-
-
-function PMParams(p::PMParams; truncp=p.truncp, itermin=p.itermin, itermax=p.itermax,
-    eps_converged=p.eps_converged, increase_chi=p.increase_chi, 
-    opt_method=p.opt_method, normalization=p.normalization, compute_fidelity=p.compute_fidelity,
-    stuck_after=p.stuck_after)
-    return PMParams(truncp, itermin, itermax, eps_converged, increase_chi, opt_method, normalization, compute_fidelity, stuck_after)
-end
-
-=#
-
-Base.@kwdef mutable struct PMParams
-    truncp::TruncParams = TruncParams()
+Base.@kwdef mutable struct PMParams{TP}
+    truncp::TP = (cutoff=1e-12, maxdim=256, direction=:right)
     itermin::Int = 20
     itermax::Int = 600
     eps_converged::Float64 = 1e-8

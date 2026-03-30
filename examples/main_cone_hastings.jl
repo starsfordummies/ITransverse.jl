@@ -42,12 +42,12 @@ function main_cone()
         "cp_cone.jld2";
         params=tp,
         save_at=10,
-        observables = (
-            SVN = s -> vn_entanglement_entropy(s.R),
+        f_obs = (
+            entropy = s -> vn_entanglement_entropy(s.R),
             overlap = s -> overlap_noconj(s.L, s.R),
             ZX = s -> compute_expvals(s.L, s.R, ["Z","X"], s.b)
         ),
-        latest_savers = (
+        f_savestate = (
             L = s -> s.L,
             R = s -> s.R,
             b = s -> s.b

@@ -10,7 +10,7 @@ Power method for *symmetric* case: takes as input a single MPS |L>,
     or compute the symmetric eigenvalue problem of the RTM   (`opt_method=RTM_EIG`)
     and truncate over the (complex, so be mindful..) eigenvalues of the RTM. 
 """
-function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams; fast::Bool=false)
+function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams)
 
     (; itermax, opt_method, truncp, normalization, compute_fidelity) = pm_params
 
@@ -38,9 +38,11 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams; fast::Bo
         psi_work, sv = if opt_method == "RDM"
             tapply(in_mpo, psi_work; alg="densitymatrix", cutoff=truncp.cutoff, maxdim=maxdims[jj])
         elseif opt_method == "RTM" || opt_method == "RTMRDM"
-            tapply(in_mpo, psi_work; alg="RTMsym", cutoff=truncp.cutoff, maxdim=maxdims[jj], method="SVD", fast)
+            tapply(in_mpo, psi_work; alg="naiveRTMsym", cutoff=truncp.cutoff, maxdim=maxdims[jj], method="SVD")
+        elseif opt_method == "RTM2" 
+            tapply(in_mpo, psi_work; alg="RTMsym", cutoff=truncp.cutoff, maxdim=maxdims[jj])
         elseif opt_method == "RTM_EIG" # this can be less accurate
-            psi_work, sv = tapply(in_mpo, psi_work; alg="RTMsym", cutoff=truncp.cutoff, maxdim=maxdims[jj], method="EIG", fast)
+            psi_work, sv = tapply(in_mpo, psi_work; alg="naiveRTMsym", cutoff=truncp.cutoff, maxdim=maxdims[jj], method="EIG")
         else
             error("Specify a valid opt_method: RDM|RTM|...")
         end

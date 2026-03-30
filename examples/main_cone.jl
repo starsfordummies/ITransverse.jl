@@ -8,8 +8,8 @@ using ITransverse: vX, vZ, vI, plus_state, up_state
 function main_cone()
 
     JXX = 1.0  
-    hz = -1.05
-    gx = 0.5 # 0.5
+    hz = 1.4
+    gx = 0.9 # 0.5
 
     dt = 0.1
 
@@ -18,13 +18,13 @@ function main_cone()
     optimize_op = vZ
     init_state = up_state
 
-    cutoff = 1e-8
-    maxdim = 128
-    direction = "right"
+    cutoff = 1e-10
+    maxdim = 256
+    direction = :right
 
-    truncp = TruncParams(cutoff, maxdim, direction)
+    truncp = (;cutoff, maxdim, direction)
 
-    Nsteps = 60
+    Nsteps = 80
 
     #time_sites = siteinds("S=3/2", 1)
 
@@ -36,18 +36,18 @@ function main_cone()
 
     #@info length(c0)
 
-    cone_params = ConeParams(;truncp, opt_method="RDM", optimize_op)
+    cone_params = ConeParams(;truncp, opt_method="RTM_R", optimize_op)
 
     cp = DoCheckpoint(
         "cp_cone.jld2";
         params=tp,
         save_at=0,
-        observables = (
+        f_obs = (
             SVN = s -> vn_entanglement_entropy(s.R),
             overlap = s -> overlap_noconj(s.L, s.R),
-            ZX = s -> compute_expvals(s.L, s.R, ["Z","X"], s.b)
+            expvals = s -> compute_expvals(s.L, s.R, ["Z","X"], s.b)
         ),
-        latest_savers = (
+        f_savestate = (
             L = s -> s.L,
             R = s -> s.R,
             b = s -> s.b

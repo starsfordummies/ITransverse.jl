@@ -1,5 +1,3 @@
-using LinearAlgebra
-
 using ITensors, ITensorMPS
 using ITransverse
 using Test
@@ -10,11 +8,12 @@ using Test
 
     cutoff = 1e-20
     maxdim = 120
+    direction = :right
     itermax = 100
     verbose=false
     eps_converged=1e-10
 
-    truncp = TruncParams(cutoff, maxdim)
+    truncp = (;cutoff, maxdim, direction)
 
     sigX = ComplexF64[0,1,1,0]
 

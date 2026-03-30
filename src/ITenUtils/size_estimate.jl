@@ -14,5 +14,3 @@ end
 function mem_req(psi::MPS)
     Base.summarysize(psi)/1024/1024/1024
 end
-
-mem_req(1_000, 100, 2)

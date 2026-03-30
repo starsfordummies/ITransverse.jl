@@ -7,13 +7,13 @@ using ITransverse: plus_state, up_state
 function ising_loschmidt(tp::tMPOParams, Tstart::Int, Tend::Int, nbeta::Int; Tstep::Int=1)
 
     cutoff = 1e-12
-    maxdim = 32
-    itermax = 80
+    maxdim = 128
+    itermax = 1000
     eps_converged = 1e-12
 
     truncp = TruncParams(cutoff, maxdim)
     #pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM", "overlap", true, stuck_after)
-    pm_params = PMParams(;truncp, itermax, eps_converged, opt_method="RTM", normalization="norm", stuck_after=200)
+    pm_params = PMParams(;truncp, itermax, eps_converged, opt_method="RTM2", normalization="overlap", stuck_after=200)
 
 
     ll_murgs = Vector{MPS}()
@@ -49,6 +49,9 @@ function ising_loschmidt(tp::tMPOParams, Tstart::Int, Tend::Int, nbeta::Int; Tst
 
         #psi_trunc, ds2 = ITransverse.powermethod_both(start_mps, mpo, mpo, pm_params)
 
+        normalization = overlap_noconj(psi_trunc,psi_trunc)
+
+        psi_trunc = psi_trunc/sqrt(overlap_noconj(normalization))
 
         # Entropies 
         sgen = generalized_vn_entropy_symmetric(psi_trunc)
@@ -63,7 +66,7 @@ function ising_loschmidt(tp::tMPOParams, Tstart::Int, Tend::Int, nbeta::Int; Tst
         OL = apply(mpo, psi_trunc,  alg="naive", truncate=false)
         leading_sq = overlap_noconj(OL, OL)
 
-        normalization = overlap_noconj(psi_trunc,psi_trunc)
+     
         leading_eig, leading_sq, normalization
 
         push!(ll_murgs, psi_trunc)
@@ -84,7 +87,7 @@ function ising_loschmidt(tp::tMPOParams, Tstart::Int, Tend::Int, nbeta::Int; Tst
 
     end
 
-    return ll_murgs, ds2s, leading_eigs, leading_eigsq, overlapsLR, entropies, maxents
+    return ll_murgs, (;ds2s, leading_eigs, leading_eigsq, overlapsLR, entropies, maxents)
 
 
 end
@@ -112,13 +115,13 @@ function main_losch()
 
     @info ("Initial state $(init_state)  => quench @ $(mp) ")
     
-    Tmin = 140
-    Tmax = 140
+    Tmin = 60
+    Tmax = 60
     Tstep = 1
 
 
     tp = tMPOParams(dt,  expH_ising_murg, mp, nbeta, init_state)
-    psis, ds2s, leading_eigs, leading_eigsq, overlapsLR, entropies, maxents = ising_loschmidt(tp, Tmin, Tmax, nbeta; Tstep)
+    psis, results = ising_loschmidt(tp, Tmin, Tmax, nbeta; Tstep)
 
     rr2s = []
     ir2s = []
@@ -134,10 +137,10 @@ function main_losch()
     #     push!(ir2s, maximum(imag(r2)))
     # end
 
-    return collect(Tmin:Tstep:Tmax), psis, rr2s, ir2s, entropies, r2s, ds2s
+    return collect(Tmin:Tstep:Tmax), psis, results
 
 
 end
 
 
-main_losch()
+times, psis, results = main_losch()

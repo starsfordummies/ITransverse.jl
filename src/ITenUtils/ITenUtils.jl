@@ -49,7 +49,7 @@ include("ext_functions.jl")
 include("size_estimate.jl")
 
 
-export sqrt
+# export sqrt
 
 export mergedicts!, mergedicts, dictfromlist
 

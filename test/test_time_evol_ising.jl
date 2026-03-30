@@ -29,8 +29,9 @@ init_state = plus_state
 
 cutoff = 1e-12
 maxdim = 200
+direction = :right
 
-truncp = TruncParams(cutoff, maxdim)
+truncp = (;cutoff, maxdim, direction)
 
 Nsteps = 30
 
@@ -49,15 +50,14 @@ state = tdvp(
 
 c0 = init_cone(b, 10; full=false)
 
-
 cp = DoCheckpoint(
     "cp_cone.jld2";
     params=tp,
     save_at=0,
-    observables = (
+    f_obs = (
         Z = s -> expval_LR(s.L, s.R, [1,0,0,-1], s.b),
     ),
-    latest_savers = (
+    f_savestate = (
         L = s -> s.L,
         R = s -> s.R,
         b = s -> s.b
@@ -67,7 +67,7 @@ cp = DoCheckpoint(
 cone_params = ConeParams(;truncp, opt_method="RDM", optimize_op)
 
 psi, psiR, cp = run_cone(c0, b, cone_params, cp, Nsteps)
-ez = cp.history[:Z][end-10:end]
+ez = cp.obs_hist[:Z][end-10:end]
 #@test abs(ex_rtm_lr - ex_rtm_r) < 0.001
 #@show expvals["Z"]
 
