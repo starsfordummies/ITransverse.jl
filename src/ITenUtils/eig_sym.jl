@@ -88,8 +88,7 @@ end
 
 
 """ When called on ITensors, `symm_oeig`` returns a single `TruncEigen` object""" 
-function symm_oeig(a::ITensor, linds; cutoff=nothing, maxdim=nothing, tags="eig_sym")
-    rinds = uniqueinds(a, linds)
+function symm_oeig(a::ITensor, linds, rinds = uniqueinds(a, linds) ; cutoff=nothing, maxdim=nothing, tags="eig_sym")
 
     cL = combiner(linds)
     cR = combiner(rinds)

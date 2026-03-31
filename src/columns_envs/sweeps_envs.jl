@@ -35,7 +35,7 @@ function sweep_rebuild_envs_rtm!(left_envs::Environments, right_envs::Environmen
         @debug "updating L[$(jj)] via overlap (L[$(jj-1)]E[$(jj)] | R[$(jj)])"
         ll, _, svs = tlapply(left_envs[jj-1], cc[jj], right_envs[jj]; alg, truncp...)
         update_env!(left_envs, jj, ll; kwargs...)
-        @debug "SVs = $(svs)"
+        @debug "SVs(chop) = $(svs[:,1:8])"
         max_left_entropies[jj] = maximum(vn_from_matrix(svs))
 
     end

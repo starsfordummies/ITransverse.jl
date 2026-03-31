@@ -26,11 +26,18 @@ s = siteinds(4, 20)
 ll = random_mps(ComplexF64, s, linkdims=40)
 
 @info "Checking whether eigenvalues computed in left and right gauges match"
-eigs_l = diagonalize_rtm_symmetric(ll; bring_left_gen=true)
+eigs_l = diagonalize_rtm_symmetric(ll; direction=:left, bring_gen_can=true)
 
 # eigs_r sweeps from left to right, eigs_l the other way around
-eigs_r = diagonalize_rtm_right_gen_sym(ll; bring_right_gen=true, normalize_factor=sqrt(overlap_noconj(ll,ll)))
+eigs_r = diagonalize_rtm_symmetric(ll; direction=:right, bring_gen_can=true)
 
+eigs_alt_l = ITransverse.diagonalize_rtm_symmetric_alt(ll; direction=:left)
+eigs_alt_r = ITransverse.diagonalize_rtm_symmetric_alt(ll; direction=:right)
+
+@test eigs_l[1,1][1:2] ≈ eigs_alt_l[1,1:2]
+
+
+@test eigs_r[end,1][1:2] ≈ eigs_alt_r[end,1:2]
 # @show eigs_l[5]
 # @show eigs_r[5]
 
@@ -99,8 +106,8 @@ end
     psi = random_mps(ComplexF64, s, linkdims=40)
     psic = copy(psi)
 
-    eigs_r = diagonalize_rtm_right_gen_sym(psi; bring_right_gen=true)
-    eigs_l = diagonalize_rtm_symmetric(psi; bring_left_gen=true)
+    eigs_r = diagonalize_rtm_symmetric(psi; direction=:right)
+    eigs_l = diagonalize_rtm_symmetric(psi; direction=:left)
 
     all_ents = renyi_entropies(eigs_r, which_ents=[2.0])
     

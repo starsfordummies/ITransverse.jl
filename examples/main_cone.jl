@@ -1,9 +1,7 @@
 using ITensors, ITensorMPS
-using ITransverse.ITenUtils
 #using Plots
 
 using ITransverse
-using ITransverse: vX, vZ, vI, plus_state, up_state
 
 function main_cone()
 

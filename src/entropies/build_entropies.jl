@@ -37,14 +37,10 @@ function renyi_entropies(spectra::AbstractVector{<:AbstractVector};
 end
 
 
-""" From a matrix of (Nbonds x Nvalues), takes each row and computes the VN entropy from it """
-function vn_from_matrix(λ_matrix::AbstractMatrix{T}) where T
-    #@show T 
-    λ_safe = max.(λ_matrix, eps(T))
-    
-    # Compute -λ*log(λ) element-wise, zeroing out tiny eigenvalues
-    contrib = @. ifelse(λ_matrix > eps(T), -λ_matrix * log(λ_safe), zero(T))
-    
-    # Sum along columns (eigenvalues) for each row (bipartition)
+""" From a matrix of (Nbonds x Nvalues), takes each row and computes the VN entropy from it.
+Entries with abs(λ) ≤ ε are excluded from the sum (no log called on them).
+Supports complex λ, in which case the returned entropies are also complex. """
+function vn_from_matrix(λ_matrix::AbstractMatrix{T}; ε::Real = 1e-14) where T
+    contrib = @. ifelse(abs(λ_matrix) > ε, -λ_matrix * log(λ_matrix), zero(T))
     return vec(sum(contrib, dims=2))
 end

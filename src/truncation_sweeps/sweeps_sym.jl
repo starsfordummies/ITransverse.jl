@@ -41,7 +41,7 @@ function truncate_sweep_sym(in_psi::MPS; cutoff::Float64, maxdim::Int,
 
             sS = sum(F.S)
             env /= sS
-            Sn = diag(matrix(F.S))/sS
+            Sn = Array(storage(F.S).data)/sS
 
         elseif method == "EIG"
             F = symm_oeig(env, ind(env, 1); cutoff, maxdim)
@@ -52,7 +52,7 @@ function truncate_sweep_sym(in_psi::MPS; cutoff::Float64, maxdim::Int,
             XU    = F.V * isqS
             XUinv = sqS * F.V
 
-            Sn = diag(matrix(F.D))/sum(F.D)
+            Sn = Array(storage(F.D).data)/sum(F.D)
 
         else
             error("Valid methods are: SVD | EIG  (here method=$(method))")
@@ -111,7 +111,7 @@ function truncate_sweep_sym_rtm!(psi::MPS; direction::Symbol=:right, maxdim::Int
     F = symm_svd(rho, ss[last_site], ss[last_site]'; maxdim, kwargs...)
     work *= dag(F.U)
 
-    Svec = collect(F.S.tensor.storage.data) ./ sum(F.S)
+    Svec = Array(storage(F.S).data) ./ sum(F.S)
     SV_all[last_site + sv_offset, 1:length(Svec)] .= Svec  # :right → bond 1, :left → bond N-1
     #@show "filling $(last_site+sv_offset)"
     psi[last_site] = F.U
@@ -127,7 +127,7 @@ function truncate_sweep_sym_rtm!(psi::MPS; direction::Symbol=:right, maxdim::Int
         work *= dag(F.U)
         psi[jj] = F.U
 
-        Svec = collect(F.S.tensor.storage.data) ./ sum(F.S)
+        Svec = Array(storage(F.S).data) ./ sum(F.S)
         #@show "filling SV[$(jj+sv_offset)]"
         SV_all[jj + sv_offset, 1:length(Svec)] .= Svec
     end
@@ -226,9 +226,9 @@ function ITenUtils.tcontract(::Algorithm"RTMsym",
 
         L = L * dag(U) * ψ[j+1] * A[j+1]
 
-        Dvec = diag(matrix(F.S))/sum(F.S)
+        Dvec = Array(storage(F.S).data)/sum(F.S)
  
-        SV_all[j, 1:length(Dvec)] .= Array(Dvec) 
+        SV_all[j, 1:length(Dvec)] .= Dvec
     
     end
 

@@ -124,10 +124,7 @@ end
 """ Returns a copy of psi normalized by a `factor` (spread out over all MPS tensors using log) """
 function normbyfactor(psi::AbstractMPS, factor::Number )
 
-    #elt = promote_type(eltype(factor), promote_itensor_eltype(psi)) # promote_itensor_eltype(psi)
-    #psic = adapt(elt, psi)
-
-    psic = deepcopy(psi)
+    psic = copy(psi)
     lf = log(factor)
     z = exp(lf/length(psi))
 
