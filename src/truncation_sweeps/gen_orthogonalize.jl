@@ -11,7 +11,7 @@ function _gen_canonical_sweep!(psi::MPS, sweep_range, sits, sits_prime; cutoff, 
         env *= replaceind(Ai', sits_prime[ii] => sits[ii])
 
         @assert order(env) == 2
-        F = symm_oeig(env, ind(env, 1); cutoff, maxdim, tags=tags(ind(env, 1)))
+        F = symm_oeig(env, ind(env, 1); cutoff, maxdim, lefttags=tags(ind(env, 1)))
         U, S = F.V, F.D
 
         XU    = U * S .^ -0.5
