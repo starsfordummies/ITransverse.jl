@@ -30,7 +30,7 @@ end
 ######## Time evolution operator exp(-iHt)  ########
 
 """ Symmetric prescription a la Murg for exp(-i*H*dt) Ising transverse+parallel
-Convention H = -( JXX + gzZ + λxX ) 
+Convention H = -( Jtwo*XX + gperp*Z + λpar*X ) 
 """
 function expH_ising_murg(sites::Vector{<:Index}, Jtwo::Number, gperp::Number, λpar::Number; dt::Number)
 
@@ -41,13 +41,13 @@ function expH_ising_murg(sites::Vector{<:Index}, Jtwo::Number, gperp::Number, λ
     Uxx = expXX_murg(sites, Jtwo; dt)
 
     Ux = MPO([op(s, "Rx", θ=-2*λpar*dt) for s in sites])
-    Uz2 = MPO([op(s, "Rz", θ=-gperp*dt) for s in sites])
+    Uzhalf = MPO([op(s, "Rz", θ=-gperp*dt) for s in sites])
 
     # Multiply in order:  exp(iZ/2)*exp(iX)*exp(iXX)*exp(iZ/2)
     
-    U_t = iszero(λpar) ? Uz2 : applyn(Ux, Uz2) 
+    U_t = iszero(λpar) ? Uzhalf : applyn(Ux, Uzhalf) 
     U_t = applyn(Uxx, U_t) 
-    U_t = applyn(Uz2, U_t) 
+    U_t = applyn(Uzhalf, U_t) 
 
     return U_t
 
@@ -163,11 +163,8 @@ end
 
 
 
-""" Fourth-order Trotter MPO for Murg exp(-i*H*dt) Ising 
-Convention H = -( JXX + gzZ + λxX )
-"""
-
-function expH_ising_murg_4o(
+""" Not sure what order is this anymore """ 
+function expH_ising_murg_xo(
     sites::Vector{<:Index},
     Jtwo::Number,
     gperp::Number,
@@ -181,8 +178,8 @@ function expH_ising_murg_4o(
     U1 = expH_ising_murg(sites, Jtwo, gperp, λpar; dt = dt*dt1)
     U2 = expH_ising_murg(sites, Jtwo, gperp, λpar; dt = dt*dt2)
 
-    U4 = applyn(U2, U1)
-    U4 = applyn(U1, U4)
+    U4 = applyn(U2, U1; truncate=false)
+    U4 = applyn(U1, U4; truncate=false)
 
     return U4
 end
