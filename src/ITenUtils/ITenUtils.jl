@@ -70,7 +70,8 @@ export pMPS,
     gen_fidelity,
     logfidelity,
     normalize_for_overlap!,
-    allsiteinds
+    allsiteinds,
+    tcontract
 
 
 # moreutils.jl

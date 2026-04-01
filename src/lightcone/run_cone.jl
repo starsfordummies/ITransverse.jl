@@ -38,7 +38,7 @@ function run_cone(psi::MPS,
 
     nsteps = nT_final - length(psi)
 
-    p = Progress(div(nsteps, vwidth); desc="[cone(v=$vwidth)|$(opt_method)] [$(sweep_str)] $cutoff=$(truncp.cutoff), maxdim=$(truncp.maxdim))", showspeed=true) 
+    p = Progress(div(nsteps, vwidth); desc="[cone(v=$vwidth)|$(opt_method)|$(truncp.alg)] [$(sweep_str)] cutoff=$(truncp.cutoff), maxdim=$(truncp.maxdim))", showspeed=true) 
 
     for nt = 1:nsteps
 
@@ -51,28 +51,33 @@ function run_cone(psi::MPS,
                 push!(ts, Index(time_dim, tags="Site,n=$(length(rr)+jj),time_fold"))
             end
 
-            if opt_method == "RTM_LR"
-                # if we're worried about symmetry Left-Right, evolve separately L and R 
-                rrwork = copy(rr)
-                _,rr, ents = extend_tmps_cone(ll, optimize_op, Id, rrwork, ts, b; truncp...)
-                ll,_, ents = extend_tmps_cone(ll, Id, optimize_op, rrwork, ts, b; truncp...)
-            elseif opt_method == "RTM_LRn"
-                rrwork = copy(rr)
-                _,rr, ents = extend_tmps_cone_new(ll, optimize_op, Id, rrwork, ts, b; truncp...)
-                ll,_, ents = extend_tmps_cone_new(ll, Id, optimize_op, rrwork, ts, b; truncp...)
-            elseif opt_method == "RTM_R"
-                _,rr, ents = extend_tmps_cone(ll, optimize_op, Id, rr, ts, b; truncp...)
-                ll = rr
-            elseif opt_method == "RTM_L1O1R"
-                _,rr, ents = extend_tmps_cone(ll, optimize_op, rr, ts, b; truncp...)
-                ll = rr
-            elseif opt_method == "RDM" # TODO Non-symmetric case with RDM ?
-                tmpo = folded_tMPO_ext(b, ts; LR=:right, n_ext=vwidth)
-                #rr = applyn(tmpo,rr; truncate=true, cutoff=truncp.cutoff, maxdim=truncp.maxdim)
-                rr, _ = ITransverse.tapply(tmpo,rr; alg="densitymatrix", truncp...)
-                ll = rr
-            else
-                error("no valid update method specified ($(opt_method))")
+            # We can extend by more than one timestep if the cone is narrow
+            n_ext = length(ts) - length(ll)
+
+            ll, rr, sv = if opt_method == :sym
+
+                tmpoL = folded_tMPO_ext(b, ts; LR=:left, fold_op=optimize_op, n_ext) 
+                tmpoR = folded_tMPO_ext(b, ts; LR=:right, fold_op=Id, n_ext)
+            
+                _, rr, sv = tlrapply(ll, tmpoL, tmpoR, rr; truncp...)
+
+                sim(linkinds, rr), rr, sv
+                
+            else # update both 
+
+                rrp = copy(rr)
+
+                tmpoL = folded_tMPO_ext(b, ts; LR=:left,  fold_op=optimize_op, n_ext) 
+                tmpoR = folded_tMPO_ext(b, ts; LR=:right, fold_op=Id,          n_ext)
+            
+                _, rr, _ = tlrapply(ll, tmpoL, tmpoR, rrp; truncp...)
+
+                tmpoL = folded_tMPO_ext(b, ts; LR=:left,  fold_op=Id,          n_ext) 
+                tmpoR = folded_tMPO_ext(b, ts; LR=:right, fold_op=optimize_op, n_ext)
+            
+                ll, _, sv = tlrapply(ll, tmpoL, tmpoR, rrp; truncp...)
+
+                ll, rr, sv
             end
 
 

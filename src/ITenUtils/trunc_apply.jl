@@ -301,23 +301,29 @@ end
 
 
 
-
-""" Contract MPO-MPS with algorithm densitymatrix, starting from the left. At the end we can chop/extend 
-if we work with light cone """
-function tcontract(::Algorithm"RTM",
+#= 
+""" Contract MPO-MPS by truncating over (symmetric) RTM |Opsi><Opsi|, starting from the left. """
+function tcontract(::Algorithm"RTMsym",
         A::MPO,
         ψ::MPS;
         cutoff = 1.0e-14,
         maxdim = maxlinkdim(A) * maxlinkdim(ψ),
         mindim = 1,
+        use_eig::Bool=false,
+        direction::Symbol=:right,
         kwargs...,
     )
+
+    eltype_S = use_eig ? ComplexF64 : Float64 
+
+    if direction != :right
+        @assert "Direction $(direction) Not implemented yet"
+    end
 
     @assert length(A) >= length(ψ)
 
     N = length(A)
     n = length(ψ)
-
 
     mindim = max(mindim, 1)
     requested_maxdim = maxdim
@@ -343,19 +349,13 @@ function tcontract(::Algorithm"RTM",
 
     end
 
-    # @show E
-
-
     L = ψ[1] * A[1]
     simL_c =  ψ_c[1] * simA_c[1]
-    l_renorm = nothing
-    r_renorm = nothing
+    renorm_idx = nothing
 
-    S_all = zeros(Float64, n-1, maxdim)
+    S_all = zeros(eltype_S, n-1, maxdim)
 
     for j in 1:min(n-1,N-1)
-
-        # @show j 
 
         # Determine smallest maxdim to use
         cip = commoninds(ψ[j], E[j + 1])
@@ -364,40 +364,35 @@ function tcontract(::Algorithm"RTM",
         maxdim = min(prod_dims, requested_maxdim)
 
         s = siteinds(uniqueinds, A, ψ, j)
-        s̃ = siteinds(uniqueinds, simA_c, ψ_c, j)
         rho = E[j + 1] * L * simL_c
         l = linkind(ψ, j)
         ts = isnothing(l) ? "" : tags(l)
-        Lis = isnothing(l_renorm) ? IndexSet(s...) : IndexSet(s..., l_renorm)
-        Ris = isnothing(r_renorm) ? IndexSet(s̃...) : IndexSet(s̃..., r_renorm)
+        Lis = isnothing(renorm_idx) ? IndexSet(s...) : IndexSet(s..., renorm_idx)
 
         @assert ndims(rho) < 5 " $j $(inds(rho))"
 
-        # F = eigen(rho, Lis, Ris; ishermitian = true, tags = ts, cutoff, maxdim, mindim, kwargs...)
-        # D, U, Ut = F.D, F.V, F.Vt
-        # l_renorm, r_renorm = F.l, F.r
-
-
-        # @show j
-
-        # @show inds(rho)
-        # @show Lis
-        F = symm_oeig(rho, Lis; cutoff, maxdim)
-        D, U, Ut = F.D, F.Vt, F.V
-        l_renorm, r_renorm = F.l, F.r
+        U, S, renorm_idx = if use_eig
+            F = symm_oeig(rho, Lis, Lis'; cutoff, maxdim)
+            F.V, F.D, F.l 
+        else
+            F = symm_svd(rho, Lis, Lis'; cutoff, maxdim)
+            F.U, F.S, F.u
+        end
+        #D, U, Ut = F.D, F.Vt, F.V
+        #l_renorm, r_renorm = F.l, F.r
 
         # @show inds(U)
         # @show inds(Ut)
         # @show l_renorm, r_renorm
 
-        ψ_out[j] = Ut
+        ψ_out[j] = U
 
-        L = L * (Ut) * ψ[j+1] * A[j+1]
+        L = L * (U) * ψ[j+1] * A[j+1]
         simL_c = simL_c * U* ψ_c[j+1] * simA_c[j+1]
 
-        Dvec = collect(D.tensor.storage.data)/sum(D)  
+        Svec = Array(storage(S).data)/sum(S) 
  
-        S_all[j, 1:length(Dvec)] .= Dvec  
+        S_all[j, 1:length(Svec)] .= Svec  
     
     end
 
@@ -417,3 +412,4 @@ function tcontract(::Algorithm"RTM",
 end
 
 
+=#

@@ -13,9 +13,11 @@ using ITransverse: vX, plus_state
   )
 
 
+  TMAX = 3 
+
 JXX = 1.0  
 hz = 0.7
-gx = 0.0
+gx = 0.4
 
 dt = 0.1
 
@@ -33,20 +35,25 @@ direction = :right
 
 truncp = (;cutoff, maxdim, direction)
 
-Nsteps = 30
+Nsteps = round(Int, TMAX/dt)
 
 mp = IsingParams(JXX, hz, gx)
-tp = tMPOParams(dt, expH_ising_symm_svd, mp, nbeta, init_state)
-b = FoldtMPOBlocks(tp)
 
-ss = siteinds("S=1/2", 80)
+ss = siteinds("S=1/2", 40)
+
+
 psi0 = productMPS(ss, "+")
 H = build_H(ss, H_ising, mp)
 
 
 state = tdvp(
-    H, -3.0im, psi0; time_step=-0.1im, cutoff=1e-12, (step_observer!)=obs, outputlevel=1
+    H, -TMAX*im, psi0; time_step=-dt*im, cutoff=1e-12, (step_observer!)=obs, outputlevel=1
   )
+
+
+# Bench: light cone 
+tp = tMPOParams(dt, expH_ising_symm_svd, mp, nbeta, init_state)
+b = FoldtMPOBlocks(tp)
 
 c0 = init_cone(b, 10; full=false)
 
@@ -56,6 +63,7 @@ cp = DoCheckpoint(
     save_at=0,
     f_obs = (
         Z = s -> expval_LR(s.L, s.R, [1,0,0,-1], s.b),
+        tt = s -> length(s.L)*tp.dt
     ),
     f_savestate = (
         L = s -> s.L,
@@ -64,12 +72,27 @@ cp = DoCheckpoint(
     )
 )
 
-cone_params = ConeParams(;truncp, opt_method="RDM", optimize_op)
+cone_params = ConeParams(;truncp, opt_method=:sym, optimize_op)
 
 psi, psiR, cp = run_cone(c0, b, cone_params, cp, Nsteps)
 ez = cp.obs_hist[:Z][end-10:end]
 #@test abs(ex_rtm_lr - ex_rtm_r) < 0.001
 #@show expvals["Z"]
 
+@show obs.Z 
+@show ez[end-10:end]
 @info norm(ez - obs.Z[end-10:end])
 @test norm(ez - obs.Z[end-10:end]) < 0.05
+
+
+
+# Fourth-order ising 
+tp = tMPOParams(dt, expH_ising_murg, mp, nbeta, init_state)
+Ut_4o = build_Ut(ss, tp, build_4o=true)
+
+z_tebd_4o = ITransverse.evolve(psi0, Ut_4o, Nsteps; cutoff=truncp.cutoff, maxdim=truncp.maxdim)
+
+
+@show z_tebd_4o[end-10:end]
+@info norm(z_tebd_4o[end-20:end] - obs.Z[end-20:end])
+@test norm(z_tebd_4o[end-20:end] - obs.Z[end-20:end]) < 1e-4

@@ -148,13 +148,13 @@ truncate_rsweep_sym(in_psi::MPS; kwargs...) = truncate_sweep_sym(in_psi; directi
 
 function ITenUtils.tcontract(::Algorithm"naiveRTMsym", A::MPO, ψ::MPS; preserve_tags_mps::Bool=false, kwargs...)
     psi = apply(A, ψ; alg="naive", preserve_tags_mps, truncate=false)
-    psi, svals = truncate_sweep_sym(psi; kwargs...)
+    truncate_sweep_sym(psi; kwargs...)
 end
 
 
 function ITenUtils.tcontract(::Algorithm"naiveRTMsymRTM", A::MPO, ψ::MPS; preserve_tags_mps::Bool=false, kwargs...)
     psi = apply(A, ψ; alg="naive", preserve_tags_mps, truncate=false)
-    psi, svals = truncate_sweep_sym_rtm!(psi; kwargs...)
+    truncate_sweep_sym_rtm!(psi; kwargs...)
 end
 
 """ Contract MPO-MPS with algorithm densitymatrix, starting from the left. At the end we can chop/extend 
@@ -165,8 +165,16 @@ function ITenUtils.tcontract(::Algorithm"RTMsym",
         cutoff = 1.0e-13,
         maxdim = maxlinkdim(A) * maxlinkdim(ψ),
         mindim = 1,
+        use_eig::Bool=false,
+        direction::Symbol=:right,
         kwargs...,
     )
+
+    eltype_S = use_eig ? ComplexF64 : Float64 
+
+    if direction != :right
+        error("Direction $(direction) not implemented yet")
+    end
 
     @assert length(A) >= length(ψ)
 
@@ -198,7 +206,7 @@ function ITenUtils.tcontract(::Algorithm"RTMsym",
     L = ψ[1] * A[1]
     l_renorm = nothing
 
-    SV_all = zeros(Float64, n-1, maxdim)
+    SV_all = zeros(eltype_S, n-1, maxdim)
 
     for j in 1:min(n-1,N-1)
 
@@ -217,18 +225,28 @@ function ITenUtils.tcontract(::Algorithm"RTMsym",
 
         #@assert ndims(rho) < 5 " $j $(inds(rho))"
 
+
+        U, S, l_renorm = if use_eig
+            F = symm_oeig(rho, Lis, Lis''; cutoff, maxdim=bond_maxdim, lefttags=ts, kwargs...)
+            F.V, F.D, F.l 
+        else
+            F = symm_svd(rho, Lis, Lis''; cutoff, maxdim=bond_maxdim, lefttags=ts, kwargs...)
+            F.U, F.S, F.u
+        end
+
+        #= 
         F = symm_svd(rho, Lis, Lis''; cutoff, maxdim=bond_maxdim, lefttags=ts, kwargs...)
         U = F.U
 
         l_renorm = F.u
-
+        =# 
         ψ_out[j] = U
 
         L = L * dag(U) * ψ[j+1] * A[j+1]
 
-        Dvec = Array(storage(F.S).data)/sum(F.S)
+        Svec = Array(storage(S).data)/sum(S)
  
-        SV_all[j, 1:length(Dvec)] .= Dvec
+        SV_all[j, 1:length(Svec)] .= Svec
     
     end
 

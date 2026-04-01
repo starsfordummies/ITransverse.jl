@@ -16,7 +16,7 @@ struct IsingParams{T <: Number} <: ModelParams
 end
 
 function IsingParams(Jtwo::Number, gperp::Number, hpar::Number)
-    T = promote_type(typeof(Jtwo), typeof(gperp), typeof(hpar))
+    T = promote_type(Float64, typeof(Jtwo), typeof(gperp), typeof(hpar))
     IsingParams{T}(T(Jtwo), T(gperp), T(hpar), Index(2, "S=1/2"))
 end
 
@@ -35,7 +35,7 @@ struct PottsParams{T <: Number} <: ModelParams
 end
 
 function  PottsParams(Jtwo::Number, ftau::Number)
-    T = promote_type(typeof(Jtwo), typeof(ftau))
+    T = promote_type(Float64, typeof(Jtwo), typeof(ftau))
     PottsParams{T}(T(Jtwo), T(ftau), Index(3, "S=1"))
 end
 
@@ -52,7 +52,7 @@ end
 
 # Default to Spin 1/2 Heisenberg ? 
 function XXZParams(J_XY::Number, J_ZZ::Number, hz::Number=0., phys_site = Index(2, "S=1/2"))
-    T = promote_type(typeof(J_XY), typeof(J_ZZ), typeof(hz))
+    T = promote_type(Float64, typeof(J_XY), typeof(J_ZZ), typeof(hz))
     XXZParams{T}(T(J_XY), T(J_ZZ), T(hz), phys_site)
 end
 

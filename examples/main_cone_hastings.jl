@@ -19,11 +19,10 @@ function main_cone()
 
     cutoff = 1e-10
     maxdim = 256
-    direction = "left"
 
     optimize_op = vI
     
-    truncp = TruncParams(cutoff, maxdim, direction)
+    truncp = (;cutoff, maxdim, direction=:left, alg=:naiveRTM)
 
     Nsteps = 16
 
@@ -35,7 +34,7 @@ function main_cone()
     b = FoldtMPOBlocks(tp)
     c0 = init_cone(b)
 
-    cone_params = ConeParams(;truncp, opt_method="RTM_R", optimize_op)
+    cone_params = ConeParams(;truncp, opt_method=:sym, optimize_op)
 
 
     cp = DoCheckpoint(

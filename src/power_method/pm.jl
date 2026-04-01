@@ -150,54 +150,44 @@ end
 
 
 """
-Power method *without* operator 
+Power method for a non-symmetric case (no extra operator)
+Starts with |ψ0>, 
+builds <L| = <ψ0|(in_mpo_L)^N->inf
+ (MPO inds are swapped so to apply it to the left)
+and  |R> = (in_mpo_R)^N|ψ0>
 
-    Starts with |in_mps>, builds <L| = <in_mps|in_mpo_L and |R> = in_mpo_R|in_mps>
-    and optimizes them iteratively. 
-    Note that at each step, there is a single optimization which returns a new set Lnew, Rnew
-    which are used as starting point for the next step. 
-
-    So this is only if we *don't* put in extra operators and the like. For that case, use `powermethod`
-
-Truncation params are in pm_params
 """
-function powermethod_both(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::PMParams)
+function powermethod_lr(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::PMParams)
 
-    (; opt_method, itermax, truncp, normalization, compute_fidelity) = pm_params
+    (; itermax, truncp, normalization, compute_fidelity) = pm_params
 
     stepper, info_iterations, maxdims = init_pm(pm_params)
 
-    ll = deepcopy(in_mps)
-    rr = deepcopy(in_mps)
+    ll, rr, sv = tlrapply(in_mps, in_mpo_L, in_mpo_R, in_mps; truncp...)
+   
+    llprev = copy(ll)
 
-    p = Progress(itermax; desc="L=$(length(ll)), cutoff=$(truncp.cutoff), χmax=$(last(maxdims)), normalize=$(normalization)", showspeed=true) 
+    p = Progress(itermax; desc="L=$(length(ll)), alg=$(truncp.alg), cutoff=$(truncp.cutoff), χmax=$(last(maxdims)), normalize=$(normalization)", showspeed=true) 
 
     for jj = 1:itermax
 
-        llprev = deepcopy(ll)
-
-        ll, rr, svs = if opt_method == "RDM"
-            ll, _  = tapplys(in_mpo_L, ll; cutoff=truncp.cutoff, maxdim=maxdims[jj])
-            rr, svs = tapply(in_mpo_R, rr; cutoff=truncp.cutoff, maxdim=maxdims[jj])
-
-            ll,rr,svs
-        else # RTM
-
-            OpsiL = applyns(in_mpo_L, ll)
-            OpsiR = applyn(in_mpo_R, rr)
-
-            truncate_sweep(OpsiL, OpsiR, truncp)
-
-        end
+        ll, rr, svs = tlrapply(ll, in_mpo_L, in_mpo_R, rr; truncp...)
 
         if normalization == "norm"
             ll = normalize(ll)
             rr = normalize(rr)
         elseif normalization == "overlap"
-            normalize_for_overlap!(ll,rr)
+            ov = overlap_noconj(ll,rr)
+            ll = ll/sqrt(ov)
+            rr = rr/sqrt(ov)
         end  # otherwise do nothing, norms can blow up 
 
-        fidelity_step = compute_fidelity ? logfidelity(ll, llprev) : NaN
+        fidelity_step = if compute_fidelity
+            logfidelity(ll, llprev)
+            llprev = copy(ll)
+        else
+            NaN
+        end
 
         next!(p; showvalues = [(:Info,"[$(jj)]  chi=$(maxlinkdim(rr)) | ds=$(last(info_iterations[:ds])) | <R|Rprev> = $(fidelity_step)" )])
         stop, reason = pm_itercheck!(stepper, info_iterations, rr, svs)

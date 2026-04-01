@@ -1,5 +1,3 @@
-
-
 """ Builds a folded tMPO extended by `n_ext` sites to the top (ie. end) with the tensor `b.WWl` or `b.WWr`,
 depending on whether `LR=:left` or `right`. The input time sites `ts` must be already of the (extended) length.
 

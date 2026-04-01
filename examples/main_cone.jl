@@ -6,8 +6,8 @@ using ITransverse
 function main_cone()
 
     JXX = 1.0  
-    hz = 1.4
-    gx = 0.9 # 0.5
+    hz = 0.7
+    gx = 0.0 # 0.5
 
     dt = 0.1
 
@@ -20,9 +20,9 @@ function main_cone()
     maxdim = 256
     direction = :right
 
-    truncp = (;cutoff, maxdim, direction)
+    truncp = (;cutoff, maxdim, direction, alg="RTM")
 
-    Nsteps = 80
+    Nsteps = 120
 
     #time_sites = siteinds("S=3/2", 1)
 
@@ -34,14 +34,15 @@ function main_cone()
 
     #@info length(c0)
 
-    cone_params = ConeParams(;truncp, opt_method="RTM_R", optimize_op)
+    cone_params = ConeParams(;truncp, opt_method=:sym, optimize_op)
 
     cp = DoCheckpoint(
         "cp_cone.jld2";
-        params=tp,
+        params=Dict("tparams" => tp, "cparams" => cone_params),
         save_at=0,
         f_obs = (
             SVN = s -> vn_entanglement_entropy(s.R),
+            S_SVD = s -> generalized_svd_vn_entropy(s.L, s.R),
             overlap = s -> overlap_noconj(s.L, s.R),
             expvals = s -> compute_expvals(s.L, s.R, ["Z","X"], s.b)
         ),

@@ -95,6 +95,7 @@ export vn_entanglement_entropy,
     gensym_renyi_entropies,
     diagonalize_rdm,
     generalized_vn_entropy_symmetric,
+    generalized_svd_vn_entropy,
     diagonalize_rtm_symmetric,
     gen_renyi2
 
@@ -162,7 +163,6 @@ export expval_LR, compute_expvals
 
 include("lightcone/cone_tmpo.jl")
 include("lightcone/cone_params.jl")
-include("lightcone/extend_cone.jl")
 include("lightcone/init_cone.jl")
 include("lightcone/run_cone.jl")
 

@@ -1,10 +1,10 @@
 Base.@kwdef mutable struct PMParams{TP}
-    truncp::TP = (cutoff=1e-12, maxdim=256, direction=:right)
+    truncp::TP = (cutoff=1e-12, maxdim=256, direction=:right, alg="densitymatrix")
     itermin::Int = 20
     itermax::Int = 600
+    maxdim::Int = 128
     eps_converged::Float64 = 1e-8
     increase_chi::Bool = true
-    opt_method::String = "RDM"
     normalization::String = "norm"
     compute_fidelity::Bool = true
     stuck_after::Int = itermax
@@ -26,8 +26,8 @@ end
 
 
 function make_chi_table(pm_params::PMParams; start_chi=20, step::Int=2)
-    (; increase_chi, truncp, itermax) = pm_params
-    make_chi_table(increase_chi, truncp.maxdim, itermax, start_chi, step)
+    (; increase_chi, maxdim, itermax) = pm_params
+    make_chi_table(increase_chi, maxdim, itermax, start_chi, step)
 
 end
 
@@ -53,8 +53,7 @@ function PMstep(pm_params::PMParams;
     stuck_after::Int=pm_params.stuck_after,
     itermin::Int=pm_params.itermin)
 
-    elt = pm_params.opt_method == "RTM_EIG" ? ComplexF64 : Float64
-    prev_s = zeros(elt, 2,2)
+    prev_s = zeros(2,2)
 
     PMstep(;prev_s, eps_converged, stuck_after, itermin)
 end
