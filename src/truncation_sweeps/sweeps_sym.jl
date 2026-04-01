@@ -173,7 +173,7 @@ function ITenUtils.tcontract(::Algorithm"RTMsym",
     eltype_S = use_eig ? ComplexF64 : Float64 
 
     if direction != :right
-        @assert "Direction $(direction) Not implemented yet"
+        error("Direction $(direction) not implemented yet")
     end
 
     @assert length(A) >= length(ψ)

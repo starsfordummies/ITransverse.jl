@@ -38,7 +38,7 @@ function run_cone(psi::MPS,
 
     nsteps = nT_final - length(psi)
 
-    p = Progress(div(nsteps, vwidth); desc="[cone(v=$vwidth)|$(opt_method)|$(truncp.alg)] [$(sweep_str)] $cutoff=$(truncp.cutoff), maxdim=$(truncp.maxdim))", showspeed=true) 
+    p = Progress(div(nsteps, vwidth); desc="[cone(v=$vwidth)|$(opt_method)|$(truncp.alg)] [$(sweep_str)] cutoff=$(truncp.cutoff), maxdim=$(truncp.maxdim))", showspeed=true) 
 
     for nt = 1:nsteps
 
