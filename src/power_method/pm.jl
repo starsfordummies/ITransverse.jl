@@ -163,11 +163,11 @@ function powermethod_lr(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::PM
 
     stepper, info_iterations, maxdims = init_pm(pm_params)
 
-    ll, rr, sv = tlrapply(in_mps, in_mpo_L, in_mpo_R, in_mps, alg="densitymatrix")
+    ll, rr, sv = tlrapply(in_mps, in_mpo_L, in_mpo_R, in_mps; truncp...)
    
     llprev = copy(ll)
 
-    p = Progress(itermax; desc="L=$(length(ll)), cutoff=$(truncp.cutoff), χmax=$(last(maxdims)), normalize=$(normalization)", showspeed=true) 
+    p = Progress(itermax; desc="L=$(length(ll)), alg=$(truncp.alg), cutoff=$(truncp.cutoff), χmax=$(last(maxdims)), normalize=$(normalization)", showspeed=true) 
 
     for jj = 1:itermax
 
@@ -183,8 +183,8 @@ function powermethod_lr(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::PM
         end  # otherwise do nothing, norms can blow up 
 
         fidelity_step = if compute_fidelity
-            llprev = copy(ll)
             logfidelity(ll, llprev)
+            llprev = copy(ll)
         else
             NaN
         end

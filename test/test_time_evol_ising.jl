@@ -72,7 +72,7 @@ cp = DoCheckpoint(
     )
 )
 
-cone_params = ConeParams(;truncp, opt_method="RDM", optimize_op)
+cone_params = ConeParams(;truncp, opt_method=:sym, optimize_op)
 
 psi, psiR, cp = run_cone(c0, b, cone_params, cp, Nsteps)
 ez = cp.obs_hist[:Z][end-10:end]

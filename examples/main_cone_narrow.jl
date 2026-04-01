@@ -20,12 +20,12 @@ function main_cone()
     init_state = up_state
 
     cutoff = 1e-10
-    maxdim = 512
-    direction = "left"
+    maxdim = 128
+    direction = :right
 
     optimize_op = vZ
     
-    truncp = TruncParams(cutoff, maxdim, direction)
+    truncp = (;cutoff, maxdim, direction, alg=:RTM)
 
     Nsteps = 20
 
@@ -45,7 +45,7 @@ function main_cone()
 
 
     #RTM_R
-    cone_params = ConeParams(;truncp, opt_method="RTM_SKEW", optimize_op, vwidth=n_ext)
+    cone_params = ConeParams(;truncp, opt_method=:sym, optimize_op, vwidth=n_ext)
 
 
     cp = DoCheckpoint(

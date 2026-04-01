@@ -162,8 +162,8 @@ end
 
 function expH_ising_murg_4o(sites::Vector{<:Index}, Jtwo::Number, gperp::Number, λpar::Number; dt::Number)
     p = 1.0/(4- 4^(1/3))
-    U1 = expH_ising_murg_4o(sites, Jtwo, gperp, λpar; dt=p*dt)
-    U2 = expH_ising_murg_4o(sites, Jtwo, gperp, λpar; dt=(1-4p)*dt)
+    U1 = expH_ising_murg(sites, Jtwo, gperp, λpar; dt=p*dt)
+    U2 = expH_ising_murg(sites, Jtwo, gperp, λpar; dt=(1-4p)*dt)
 
     UU1 = applyn(U1,U1)
     U4 = applyn(U2, UU1)
