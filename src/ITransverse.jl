@@ -162,7 +162,6 @@ export expval_LR, compute_expvals
 
 include("lightcone/cone_tmpo.jl")
 include("lightcone/cone_params.jl")
-include("lightcone/extend_cone.jl")
 include("lightcone/init_cone.jl")
 include("lightcone/run_cone.jl")
 

@@ -38,7 +38,7 @@ function run_cone(psi::MPS,
 
     nsteps = nT_final - length(psi)
 
-    p = Progress(div(nsteps, vwidth); desc="[cone(v=$vwidth)|$(opt_method)] [$(sweep_str)] $cutoff=$(truncp.cutoff), maxdim=$(truncp.maxdim))", showspeed=true) 
+    p = Progress(div(nsteps, vwidth); desc="[cone(v=$vwidth)|$(opt_method)|$(truncp.alg)] [$(sweep_str)] $cutoff=$(truncp.cutoff), maxdim=$(truncp.maxdim))", showspeed=true) 
 
     for nt = 1:nsteps
 
@@ -54,13 +54,14 @@ function run_cone(psi::MPS,
             # We can extend by more than one timestep if the cone is narrow
             n_ext = length(ts) - length(ll)
 
-            if opt_method == :sym
+            ll, rr, sv = if opt_method == :sym
 
                 tmpoL = folded_tMPO_ext(b, ts; LR=:left, fold_op=optimize_op, n_ext) 
                 tmpoR = folded_tMPO_ext(b, ts; LR=:right, fold_op=Id, n_ext)
             
                 _, rr, sv = tlrapply(ll, tmpoL, tmpoR, rr; truncp...)
-                ll = sim(linkinds, rr) 
+
+                sim(linkinds, rr), rr, sv
                 
             else # update both 
 
@@ -69,13 +70,14 @@ function run_cone(psi::MPS,
                 tmpoL = folded_tMPO_ext(b, ts; LR=:left,  fold_op=optimize_op, n_ext) 
                 tmpoR = folded_tMPO_ext(b, ts; LR=:right, fold_op=Id,          n_ext)
             
-                _, rr, sv = tlrapply(ll, tmpoL, tmpoR, rrp; truncp...)
+                _, rr, _ = tlrapply(ll, tmpoL, tmpoR, rrp; truncp...)
 
                 tmpoL = folded_tMPO_ext(b, ts; LR=:left,  fold_op=Id,          n_ext) 
                 tmpoR = folded_tMPO_ext(b, ts; LR=:right, fold_op=optimize_op, n_ext)
             
                 ll, _, sv = tlrapply(ll, tmpoL, tmpoR, rrp; truncp...)
 
+                ll, rr, sv
             end
 
 

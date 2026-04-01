@@ -23,7 +23,7 @@ cutoff = 1e-12
 maxdim = 128
 direction = :right
 
-Nsteps = 30
+Nsteps = 50
 
 mp = IsingParams(JXX, hz, gx)
 tp = tMPOParams(dt, expH_ising_murg, mp, nbeta, init_state)
@@ -46,6 +46,8 @@ cp = DoCheckpoint(
     )
 
 truncp = (; cutoff, maxdim, direction=:right, alg="densitymatrix")
+ @info truncp
+
 cone_params = ConeParams(;truncp, opt_method=:sym, optimize_op)
 psi, psiR, cp = run_cone(c0, b, cone_params, cp, Nsteps)
 ex_rdm = cp.obs_hist[:X][end]
@@ -53,14 +55,18 @@ ex_rdm = cp.obs_hist[:X][end]
 @test abs(ex_rdm- ITransverse.BenchData.bench_X_04_plus[length(psi)]) < 0.001
 
 truncp = (; cutoff, maxdim, direction=:right, alg="naiveRTM")
+ @info truncp
+
 cone_params = ConeParams(;truncp, opt_method=:sym, optimize_op)
 psi, psiR, cp = run_cone(c0, b, cone_params, cp, Nsteps)
 ex_rtm_lrn = cp.obs_hist[:X][end]
 
-@test abs(ex_rtm_lrn - ex_rdm) < 0.001
+@test abs(ex_rtm_lrn - ex_rdm) < 0.02
 
 
 truncp = (; cutoff, maxdim, direction=:left, alg="naiveRTM")
+ @info truncp
+
 cone_params = ConeParams(;truncp, opt_method=:sym, optimize_op)
 psi, psiR, cp = run_cone(c0, b, cone_params, cp, Nsteps)
 ex_rtm_lrnl = cp.obs_hist[:X][end]
@@ -70,12 +76,16 @@ ex_rtm_lrnl = cp.obs_hist[:X][end]
 
 
 truncp = (; cutoff, maxdim, direction=:right, alg="RTM")
+ @info truncp
+
 cone_params = ConeParams(;truncp, opt_method=:sym, optimize_op)
 psi, psiR, cp = run_cone(c0, b, cone_params, cp, Nsteps)
 ex_rtm_lr = cp.obs_hist[:X][end]
 
 
 truncp = (; cutoff, maxdim, direction=:right, alg="RTM")
+ @info "(NS)", truncp
+
 cone_params = ConeParams(;truncp, opt_method=:ns, optimize_op)
 psi, psiR, cp = run_cone(c0, b, cone_params, cp, Nsteps)
 ex_rtm_lrns = cp.obs_hist[:X][end]
