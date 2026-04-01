@@ -184,6 +184,13 @@ function tlrcontract(::Algorithm"notrunc", psiL::MPS, OL::MPO, OR::MPO, psiR::MP
     return psiLO, OpsiR, sv  
 end
 
+# Cheating but maybe useful if symmetric case: does not touch psiL, OL (assumed to be same as psiR, OR)
+function tlrcontract(::Algorithm"RTMsym", psiL::MPS, OL::MPO, OR::MPO, psiR::MPS; kwargs...)
+    OpsiR, sv = tcontract(Algorithm(:RTMsym), OR, psiR; kwargs...)
+    return OpsiR, OpsiR, sv  
+end
+
+
 #### NEW LR apply 
 function tlrapply(alg, psiL::MPS, OL::MPO, OR::MPO, psiR::MPS; kwargs...)
     tpsiL, tpsiR, sv = tlrcontract(alg, psiL, OL, OR, psiR; kwargs...)

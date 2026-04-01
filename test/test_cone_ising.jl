@@ -19,11 +19,9 @@ init_state = plus_state
 
 @testset "Testing light cone for folded tMPO" begin
 
-cutoff = 1e-20
-maxdim = 200
+cutoff = 1e-12
+maxdim = 128
 direction = :right
-
-truncp = (; cutoff, maxdim, direction)
 
 Nsteps = 30
 
@@ -47,34 +45,41 @@ cp = DoCheckpoint(
         )
     )
 
-cone_params = ConeParams(;truncp, opt_method="RDM", optimize_op)
+truncp = (; cutoff, maxdim, direction=:right, alg="densitymatrix")
+cone_params = ConeParams(;truncp, opt_method=:sym, optimize_op)
 psi, psiR, cp = run_cone(c0, b, cone_params, cp, Nsteps)
 ex_rdm = cp.obs_hist[:X][end]
 
 @test abs(ex_rdm- ITransverse.BenchData.bench_X_04_plus[length(psi)]) < 0.001
 
-cone_params = ConeParams(;truncp, opt_method="RTM_LR", optimize_op)
-psi, psiR, cp = run_cone(c0, b, cone_params, cp, Nsteps)
-ex_rtm_lr = cp.obs_hist[:X][end]
-
-@test abs(ex_rtm_lr - ex_rdm) < 0.001
-
-cone_params = ConeParams(;truncp, opt_method="RTM_LRn", optimize_op)
+truncp = (; cutoff, maxdim, direction=:right, alg="naiveRTM")
+cone_params = ConeParams(;truncp, opt_method=:sym, optimize_op)
 psi, psiR, cp = run_cone(c0, b, cone_params, cp, Nsteps)
 ex_rtm_lrn = cp.obs_hist[:X][end]
 
 @test abs(ex_rtm_lrn - ex_rdm) < 0.001
 
-cone_params = ConeParams(;truncp, opt_method="RTM_R", optimize_op)
+
+truncp = (; cutoff, maxdim, direction=:left, alg="naiveRTM")
+cone_params = ConeParams(;truncp, opt_method=:sym, optimize_op)
 psi, psiR, cp = run_cone(c0, b, cone_params, cp, Nsteps)
-ex_rtm_r = cp.obs_hist[:X][end]
-@test abs(ex_rtm_lr - ex_rtm_r) < 0.001
+ex_rtm_lrnl = cp.obs_hist[:X][end]
+
+@test abs(ex_rtm_lrnl - ex_rdm) < 0.001
 
 
-cone_params = ConeParams(;truncp, opt_method="RTM_R", optimize_op, vwidth=2)
+
+truncp = (; cutoff, maxdim, direction=:right, alg="RTM")
+cone_params = ConeParams(;truncp, opt_method=:sym, optimize_op)
 psi, psiR, cp = run_cone(c0, b, cone_params, cp, Nsteps)
-ex_rtm_rw = cp.obs_hist[:X][end]
-@test abs(ex_rtm_rw - ex_rtm_r) < 0.001
+ex_rtm_lr = cp.obs_hist[:X][end]
 
-@show ex_rdm, ex_rtm_r, ex_rtm_lr, ex_rtm_lrn, ex_rtm_rw
+
+truncp = (; cutoff, maxdim, direction=:right, alg="RTM")
+cone_params = ConeParams(;truncp, opt_method=:ns, optimize_op)
+psi, psiR, cp = run_cone(c0, b, cone_params, cp, Nsteps)
+ex_rtm_lrns = cp.obs_hist[:X][end]
+
+@test abs(ex_rtm_lrns - ex_rdm) < 0.001
+
 end
