@@ -31,7 +31,7 @@ function build_Ut(sites::Vector{<:Index}, tp::tMPOParams; dt::Number=tp.dt, buil
 end
 
 function build_Ut(fUt::Function, mp::ModelParams; kwargs...)
-    ss = [sim(mp.phys_site) for _ in 1:3]
+    ss = [addtags(sim(mp.phys_site),"Site") for _ in 1:3]
     build_Ut(ss, fUt, mp; kwargs...)
 end
 
