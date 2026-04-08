@@ -13,6 +13,6 @@ import ITransverse.ITenUtils: tocpu, togpu
 
 NDTensors.cu(x::tMPOParams) = tMPOParams(x; bl = NDTensors.cu(x.bl))
 
-ITransverse.ITenUtils.togpu(x) = NDTensors.cu(x)
+ITransverse.ITenUtils.togpu(x) = adapt(CuArray, x) #  NDTensors.cu(x)
 
 end

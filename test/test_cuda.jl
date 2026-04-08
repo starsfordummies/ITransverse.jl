@@ -12,8 +12,8 @@ if isnothing(CUDAext) || !(@isdefined(togpu))
 end
 
 try
-    using CUDA: CUDA as _CUDA
-    _CUDA.functional() || (println("No CUDA-capable GPU found, skipping"); return)
+    using CUDA: CUDA as CUDA
+    CUDA.functional() || (println("No CUDA-capable GPU found, skipping"); return)
 catch
     println("CUDA.jl not available, skipping"); return
 end
