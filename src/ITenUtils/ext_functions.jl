@@ -6,8 +6,7 @@
 # function plotri end
 
 
-function togpu end 
+function togpu end
 
-function tocpu(x)
-    return x
-end
+""" Move x to CPU. Uses NDTensors.cpu  """
+tocpu(x) = NDTensors.cpu(x)

@@ -13,24 +13,6 @@ import ITransverse.ITenUtils: tocpu, togpu
 
 NDTensors.cu(x::tMPOParams) = tMPOParams(x; bl = NDTensors.cu(x.bl))
 
-function ITransverse.ITenUtils.togpu(x) 
-    return NDTensors.cu(x)
-end
-
-function ITransverse.ITenUtils.tocpu(x::MPS)
-    dtype = mapreduce(NDTensors.unwrap_array_type, promote_type, x)
-    if dtype <: CuArray
-        return NDTensors.cpu(x)
-    end
-    return x
-end
-
-function ITransverse.ITenUtils.tocpu(x::ITensor)
-    dtype = promote_type(NDTensors.unwrap_array_type(x))
-    if dtype <: CuArray
-        return NDTensors.cpu(x)
-    end
-    return x
-end
+ITransverse.ITenUtils.togpu(x) = NDTensors.cu(x)
 
 end

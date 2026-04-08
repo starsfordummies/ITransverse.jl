@@ -1,32 +1,11 @@
 module ITransverseMetalExt
 
-using Metal
-using ITensors
-using ITensorMPS
-using NDTensors
+using Metal: MtlArray
 using ITensors.Adapt
 using ITransverse 
 
 import ITransverse.ITenUtils: tocpu, togpu
 
-function ITransverse.ITenUtils.togpu(x) 
-    return mtl(x)
-end
-
-function ITransverse.ITenUtils.tocpu(x::ITensorMPS.MPS)
-    dtype = mapreduce(NDTensors.unwrap_array_type, promote_type, x)
-    if dtype <: MtlArray
-        return NDTensors.cpu(x)
-    end
-    return x
-end
-
-function ITransverse.ITenUtils.tocpu(x::ITensor)
-    dtype = promote_type(NDTensors.unwrap_array_type(x))
-    if dtype <: MtlArray
-        return NDTensors.cpu(x)
-    end
-    return x
-end
+ITransverse.ITenUtils.togpu(x) = adapt(MtlArray, x)
 
 end
