@@ -89,7 +89,9 @@ function tcontract(::Algorithm"naive",
      ψ::AbstractMPS; 
      preserve_tags_mps::Bool=false, 
      cutoff::Float64=1e-14, 
-     maxdim::Int=maxlinkdim(A)*maxlinkdim(ψ))
+     maxdim::Int=maxlinkdim(A)*maxlinkdim(ψ),
+     direction=nothing #no effect here yet 
+     ) 
 
     # TODO Add offset for contraction to allow extension on both edges 
     @assert length(A) >= length(ψ)

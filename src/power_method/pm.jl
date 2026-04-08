@@ -1,110 +1,54 @@
 """
 Power method developed for the folding algorithm, takes as input TWO MPOs, 
     one meant to be with an additional operator (X), the other likely with an identity (1)
-
-Neither of the input MPOs needs to have the L-R indices swapped, we do it in here already.
-
-Depending on pm_params.opt_method, the update can work as follows
-
-- "RTM_LR": At each iteration we make *two* updates, first compute <L1|OR> and updates <Lnew|, 
-    then computes <LO|1R> and computes |Rnew>.
-
-- "RTM_R": for a *symmetric* tMPO we should be able to just update one of the two (say |R>), and the
- corresponding should just be the transpose. Note that this is *not* the same as performing a symmetric update
- of the form <R|R>, here we still update the overlap <LO|1R>
-
-- "RDM": the common truncation using temporal entanglement, ie. over the RDM (not RTM) of |R>. 
-   In practice this is done with the usual SVD truncations of R. In this case, the `in_mpo_O` input is unused.
-
-
-At each step of the PM we want to normalize back the tMPS, or in the long run we lose precision. 
-The most consistent way to do it is probably to enforce that the overlap <L|R> = 1 (pm_params.normalize="overlap"), but in practice normalizing individually
-<L|L> = <R|R> = 1 (pm_params.normalize="norm") seems to work as well. 
-
-Truncation params are in `pm_params.truncp`
-
-We return the (hopefully converged) |R> and <L| tMPS, 
-and some check quantities along the PM iterations in a dict info_iterations
-the ΔS^2 for the SV calculated,
-the norms <R|Rnew>,
-the difference <L|R> - <Lnew|Rnew> 
-
-We could also return the (optimized) LO and OR calculated, but if we converge those should be easily calculable afterwards
-by applying the relevant MPO to the resulting leading eigenvectors.
-
 """
+function powermethod_op(in_mps::MPS; mpo_id::MPO, mpo_op::MPO, pm_params::PMParams)
 
-
-
-function powermethod_op(in_mps::MPS, in_mpo_1::MPO, in_mpo_O::MPO, pm_params::PMParams)
-
-    (; opt_method, itermax, truncp, normalization, compute_fidelity) = pm_params
-    cutoff=truncp.cutoff
+    (; opt_method, itermax, maxdims, cutoffs, normalization, compute_fidelity) = pm_params
 
     stepper, info_iterations, maxdims = init_pm(pm_params)
 
     ll = copy(in_mps)
     rr = copy(in_mps)
 
-    p = Progress(itermax; desc="[PM|$(opt_method)] L=$(length(ll)), cutoff=$(cutoff), maxdim=$(last(maxdims)), normalize=$(normalization)", showspeed=true) 
+    p = Progress(itermax; desc="[PM|$(opt_method)] L=$(length(ll)), cutoff=$(last(cutoffs)), maxdim=$(last(maxdims)), normalize=$(normalization)", showspeed=true) 
 
     for jj = 1:itermax  
 
+        maxdim = get(maxdims, jj, maxdims[end])
+        cutoff = get(cutoffs, jj, cutoffs[end])
+        truncp = merge(pm_params.truncp, (;cutoff, maxdim))
+
         rr_prev = compute_fidelity ? copy(rr) : nothing
 
-        if opt_method == "RTM_LR"
-    
-            # optimize <LO|1R> -> new |R> 
-            OpsiR = applyn(in_mpo_1, rr)
-            OpsiL = applyns(in_mpo_O, ll)  
 
-            rr, _, SVs = truncate_sweep(OpsiR, OpsiL; cutoff, maxdim=maxdims[jj], direction=truncp.direction)
+        ll, rr, SVs = if opt_method == :sym
 
-            # optimize <L1|OR> -> new <L|  
-            #TODO: we could be using either the new rr here or the previous rr (in that case should define rr_work = rr before)
-            OpsiR = applyn(in_mpo_O, rr)
-            OpsiL = applyns(in_mpo_1, ll)  
+            rright, SVs = if truncp.alg == "densitymatrix" || truncp.alg == "naive"
+                tapply(mpo_id, rr; truncp...)
+            else
+                _, rright, SVs = tlrapply(ll, mpo_op, mpo_id, rr; truncp...)
+                rright, SVs
+            end
 
-            _, ll, _ = truncate_sweep(OpsiR, OpsiL; cutoff, maxdim=maxdims[jj], direction=truncp.direction)
+            sim(linkinds, rright), rright, SVs
 
-        elseif opt_method == "RTM_R"
+        else # not sym  
 
-            OpsiR = applyn(in_mpo_1, rr)
-            OpsiL = applyns(in_mpo_O, ll)  
+            #@info "non-symmetric"
 
-            rr, _, SVs = truncate_sweep(OpsiR, OpsiL; cutoff, maxdim=maxdims[jj], direction=truncp.direction)
-            ll = rr
+            ll, _, _   = tlrapply(ll, mpo_id, mpo_op, rr; truncp...)
+            _, rr, SVs = tlrapply(ll, mpo_op, mpo_id, rr; truncp...)
 
-        elseif opt_method == "RTM_R_twolayers" # expensive
+            ll, rr, SVs
 
-            OpsiR = applyn(in_mpo_1, rr)
-            OpsiR = applyn(in_mpo_1, OpsiR)
-
-            OpsiL = applyns(in_mpo_1, rr)  
-            OpsiL = applyns(in_mpo_O, OpsiL)  
-
-            rr, _, SVs = truncate_sweep(OpsiR, OpsiL; cutoff, maxdim=maxdims[jj], direction=truncp.direction)
-            ll = rr
-
-        elseif opt_method == "RDM"
-        
-            ll, _ =  tapplys(in_mpo_1, ll; alg="densitymatrix", cutoff, maxdim=maxdims[jj])
-            rr, SVs = tapply(in_mpo_1, rr; alg="densitymatrix", cutoff, maxdim=maxdims[jj])
-
-        elseif opt_method == "RDM_R"
-   
-            rr, SVs = tapply(in_mpo_1, rr; cutoff, maxdim=maxdims[jj])
-            ll = rr
-
-        else
-            @error "Wrong optimization method: $opt_method"
-        end
+        end # TODO: option for applying more than one col? 
 
 
         # Normalize after each step 
         if normalization == "norm"
-            ll = orthogonalize!(ll,1)
-            rr = orthogonalize!(rr,1)
+            #ll = orthogonalize!(ll,1)
+            #rr = orthogonalize!(rr,1)
 
             ll = normalize(ll)
             rr = normalize(rr)
@@ -115,11 +59,7 @@ function powermethod_op(in_mps::MPS, in_mpo_1::MPO, in_mpo_O::MPO, pm_params::PM
 
         logfidelityRRnew = compute_fidelity ? logfidelity(rr_prev,rr) : NaN
 
-
-        chimax = max(maxlinkdim(ll),maxlinkdim(rr))
-        push!(info_iterations[:chi], chimax)
-     
-       stop, reason = pm_itercheck!(stepper, info_iterations, rr, SVs)
+        stop, reason = pm_itercheck!(stepper, info_iterations, rr, SVs)
 
         # should we stop?
         if stop
@@ -138,7 +78,7 @@ function powermethod_op(in_mps::MPS, in_mpo_1::MPO, in_mpo_O::MPO, pm_params::PM
 
 
 
-        next!(p; showvalues = [(:Info,"[$(jj)][χ=$(maxlinkdim(ll))] ds2=$(last(info_iterations[:ds]))), logfidelity(<R|Rnew>)=$(logfidelityRRnew)" )])
+        next!(p; showvalues = [(:Info,"[$(jj)][χ=$(maxlinkdim(ll))] ds2=$(last(info_iterations[:ds])), logfidelity(<R|Rnew>)=$(logfidelityRRnew)" )])
 
     end
 
@@ -163,7 +103,7 @@ function powermethod_lr(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::PM
 
     stepper, info_iterations, maxdims = init_pm(pm_params)
 
-    ll, rr, sv = tlrapply(in_mps, in_mpo_L, in_mpo_R, in_mps; truncp...)
+    ll, rr, svs = tlrapply(in_mps, in_mpo_L, in_mpo_R, in_mps; truncp...)
    
     llprev = copy(ll)
 

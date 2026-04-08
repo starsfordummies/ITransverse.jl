@@ -20,8 +20,9 @@ function main_cone()
     cutoff = 1e-10
     maxdim = 256
     direction = :right
+    alg = "RTM"
 
-    truncp = (;cutoff, maxdim, direction, alg="RTM")
+    truncp = (;cutoff, maxdim, direction, alg)
 
     Nsteps = 30
 

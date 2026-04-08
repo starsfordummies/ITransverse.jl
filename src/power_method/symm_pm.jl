@@ -16,13 +16,6 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams)
 
     for jj = 1:itermax
 
-        # if opt_method == "RTMRDM" && jj == div(itermax,2)
-        #     #increase_chi = false
-        #     max_chi = maxlinkdim(psi_work)+4 # give it some room for adjustment
-        #     opt_method = "RDM"
-        #     @info "$(jj) - Changing method to RDM "
-        # end
-
         if compute_fidelity
             psi_prev = copy(psi_work)
         end

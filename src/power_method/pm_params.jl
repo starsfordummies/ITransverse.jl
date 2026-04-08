@@ -1,34 +1,15 @@
-Base.@kwdef mutable struct PMParams{TP}
+Base.@kwdef mutable struct PMParams{TP,TChis,TCutoffs}
     truncp::TP = (cutoff=1e-12, maxdim=256, direction=:right, alg="densitymatrix")
+    opt_method::Symbol = :sym  # either R or LR
     itermin::Int = 20
     itermax::Int = 600
-    maxdim::Int = 128
     eps_converged::Float64 = 1e-8
-    increase_chi::Bool = true
+    maxdims::TChis = 2:2:truncp.maxdim
+    cutoffs::TCutoffs = [truncp.cutoff]
     normalization::String = "norm"
     compute_fidelity::Bool = true
     stuck_after::Int = itermax
     quiet::Bool = false
-end
-
-function make_chi_table(increase_chi::Bool, maxdim::Int, itermax::Int, 
-                          start_chi::Int=20, step::Int=2)
-    if !increase_chi
-        return fill(maxdim, itermax)
-    end
-    
-    schedule = Vector{Int}(undef, itermax)
-    for i in 1:itermax
-        schedule[i] = min(start_chi + (i-1)*step, maxdim)
-    end
-    return schedule
-end
-
-
-function make_chi_table(pm_params::PMParams; start_chi=20, step::Int=2)
-    (; increase_chi, maxdim, itermax) = pm_params
-    make_chi_table(increase_chi, maxdim, itermax, start_chi, step)
-
 end
 
 
@@ -68,9 +49,8 @@ function init_pm(pm::PMParams)
         :fidelity => Float64[],
         :chi => Int[]
     )
-    chi_table = make_chi_table(pm)
 
-    return stepper, info_iterations, chi_table
+    return stepper, info_iterations, pm.maxdims
 end
 
 
