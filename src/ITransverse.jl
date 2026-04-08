@@ -149,7 +149,7 @@ export Columns, Environments,
 
 
 include("checkpoints/checkpoints.jl")
-export DoCheckpoint
+export DoCheckpoint, write_cp
 
 include("power_method/pm_params.jl")
 include("power_method/pm.jl")
@@ -166,7 +166,7 @@ include("lightcone/cone_params.jl")
 include("lightcone/init_cone.jl")
 include("lightcone/run_cone.jl")
 
-export ConeParams, folded_tMPO_ext, init_cone, run_cone
+export ConeParams, folded_tMPO_ext, init_cone, run_cone, resume_cone
 
 # include("lightcone/cone_envs/cone_columns.jl")
 # include("lightcone/cone_envs/extend_cone_envs.jl")
