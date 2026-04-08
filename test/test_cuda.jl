@@ -1,8 +1,15 @@
 using ITensors, ITensorMPS
 using ITransverse
 using Test
-
 using ITransverse: togpu, tocpu
+
+try
+    using CUDA: CUDA as CUDA
+    CUDA.functional() || (println("No CUDA-capable GPU found, skipping"); return)
+catch
+    println("CUDA.jl not available, skipping"); return
+end
+
 
 # Skip entire file gracefully if CUDA is not available / no GPU present
 CUDAext = Base.get_extension(ITransverse, :ITransverseCUDAExt)
@@ -11,12 +18,6 @@ if isnothing(CUDAext) || !(@isdefined(togpu))
     return
 end
 
-try
-    using CUDA: CUDA as CUDA
-    CUDA.functional() || (println("No CUDA-capable GPU found, skipping"); return)
-catch
-    println("CUDA.jl not available, skipping"); return
-end
 
 @testset "CUDA: adapt tMPOParams / block structs" begin
 

@@ -7,6 +7,4 @@
 
 
 function togpu end
-
-""" Move x to CPU. Uses NDTensors.cpu  """
-tocpu(x) = NDTensors.cpu(x)
+function tocpu end 
