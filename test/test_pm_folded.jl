@@ -34,7 +34,7 @@ function main_folded_pm(tp, Nt, pm_params)
 end
 
 
-Nt = 30 
+Nt = 20
 tp = ising_tp()
 
 itermax = 400
@@ -45,7 +45,7 @@ cutoff = 1e-12
 maxdim = 128
 
 ref = ITransverse.tebd_z(Nt, tp; N=2*Nt, cutoff=1e-12)[end]
-allevs = [] 
+allerrs = [] 
 allchis = []
 allpars = []
 for direction = [:right, :left]
@@ -59,7 +59,7 @@ for direction = [:right, :left]
             try
                 ev, chi = main_folded_pm(tp, Nt, pm_params)
 
-                push!(allevs, real(ev["Z"]) - ref)
+                push!(allerrs, real(ev["Z"]) - ref)
                 push!(allchis, chi)
                 push!(allpars, [direction, alg, opt_method, normalization])
             catch e 
@@ -71,5 +71,10 @@ for direction = [:right, :left]
     end
 end
 
-
+for (params, zerr, chi) in zip(allpars, allerrs, allchis)
+    @testset "$(allpars)" begin
+        @info chi
+        @test abs(zerr) < 1e-4
+    end
+end
 
