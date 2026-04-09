@@ -87,6 +87,7 @@ function main_losch()
     #H= JXX - 2.0 * 0.525 Z + 2 * 0.25 X
 
     dt = 0.1
+    dbeta = -im*dt 
 
     nbeta = 4
 
@@ -102,7 +103,7 @@ function main_losch()
     Tstep = 1
 
 
-    tp = tMPOParams(dt, im*dt, expH_ising_murg, mp, nbeta, init_state)
+    tp = tMPOParams(dt, dbeta, expH_ising_murg, mp, nbeta, init_state)
     psis, results = ising_loschmidt(tp, Tmin, Tmax, nbeta; Tstep)
 
     rr2s = []
