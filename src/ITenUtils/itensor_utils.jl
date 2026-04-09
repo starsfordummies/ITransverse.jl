@@ -104,25 +104,8 @@ end
 
 """checks whether an MPO tensor is symmetric, specifying the indices we want to check on"""
 function check_symmetry_itensor_mpo(T::ITensor, wL::Index, wR::Index, space_p1::Index, space_p::Index)
-
-    # check symmetry: p<->p' , wL <-> wR 
-    ddelta = norm(permute(T, (wL, space_p1, space_p, wR)).tensor - permute(T, (wL, space_p, space_p1, wR)).tensor)
-    if  ddelta < 1e-12
-        #alternatively:
-        #permute(Wc, (wL, space_p', space_p, wR)).tensor == permute(Wc, (wL, space_p, space_p', wR)).tensor
-        @info("Tensor Symmetric p <->p*")
-    else
-        @warn("Tensor *not* symmetric p<->p*,  normdiff=$ddelta")
-    end
-
-    ddelta = norm(permute(T, (wR, space_p, space_p1, wL)).tensor - permute(T, (wL, space_p, space_p1, wR)).tensor)
-    if  ddelta < 1e-12
-        #permute(Wc, (wR, space_p, space_p', wL)).tensor == permute(Wc, (wL, space_p, space_p', wR)).tensor
-        @info("Tensor Symmetric wL <->wR")
-    else
-        @warn("Tensor *not* symmetric wL<->wR, normdiff=$ddelta")
-    end
-
+    check_symmetry_swap(T, space_p1, space_p; atol=1e-12)
+    check_symmetry_swap(T, wL, wR; atol=1e-12)
 end
 
 
@@ -167,7 +150,7 @@ end
 """ Given an index, builds an ITensor containing vectorized identity of the appropriate size """
 function vectorized_identity(ind::Index)
     d = Int(sqrt(dim(ind)))
-    #@assert d^2 == len "Input length must be a perfect square"
+    @assert d^2 == dim(ind) "Index dimension must be a perfect square, got $(dim(ind))"
     return ITensor(vec(Matrix{Float64}(I, d, d)), ind)
 end
 
@@ -207,7 +190,7 @@ end
 
 function random_iso(i1::Index, i2::Index)
     @assert dim(i1) >= dim(i2)
-    m = random_itensor(i1, sim(i1))
+    m = random_itensor(i1, i2)
     u,s,v = svd(m, i1)
     return u,s,v
 end
@@ -222,5 +205,5 @@ function ITensors.contract(t1::ITensor, t2::ITensor, i1::Index, i2::Index)
 end
 
 function ITensors.sim(a::ITensor)
-    replaceinds(a, inds(a) => sim.(inds(a)))
+    replaceinds(a, inds(a), sim.(inds(a)))
 end

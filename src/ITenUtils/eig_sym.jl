@@ -88,7 +88,7 @@ end
 
 
 """ When called on ITensors, `symm_oeig`` returns a single `TruncEigen` object""" 
-function symm_oeig(a::ITensor, linds, rinds = uniqueinds(a, linds) ; cutoff=nothing, maxdim=nothing, tags="eig_sym")
+function symm_oeig(a::ITensor, linds, rinds = uniqueinds(a, linds) ; cutoff=nothing, maxdim=nothing, lefttags="eig_sym")
 
     cL = combiner(linds)
     cR = combiner(rinds)
@@ -98,7 +98,7 @@ function symm_oeig(a::ITensor, linds, rinds = uniqueinds(a, linds) ; cutoff=noth
     D = F.values
     Om = F.vectors
 
-    eigind = Index(size(F.values,1), tags)
+    eigind = Index(size(F.values,1), lefttags)
     D = diag_itensor(D, eigind, eigind')
     O = ITensor(Om, combinedind(cL), eigind) * dag(cL)
     Ot = ITensor(permutedims(Om,(2,1)), eigind', combinedind(cR)) * dag(cR)

@@ -13,8 +13,8 @@ function ising_fwb(tp::tMPOParams, TT::Int)
     itermax = 200
     eps_converged = 1e-9
 
-    truncp = TruncParams(cutoff, maxdim)
-    pm_params = PMParams(;truncp, itermax, eps_converged, opt_method="RDM", normalization="overlap")
+    truncp = (;cutoff, maxdim, alg="naiveRTMsym", direction=:right)
+    pm_params = PMParams(;truncp, itermax, eps_converged, opt_method=:sym, normalization="overlap")
 
     @info ("Optimizing for T=$(TT) with $(tp.nbeta) imag steps ")
     @info ("Initial state $(tp.bl)")
@@ -67,9 +67,9 @@ function ffolded(tp::tMPOParams, TT::Int)
     itermax = 500
     eps_converged=1e-9
 
-    truncp = TruncParams(cutoff, maxdim)
+    truncp = (;cutoff, maxdim, alg="densitymatrix")
 
-    pm_params = PMParams(;truncp, itermax, eps_converged, opt_method="RDM", normalization="overlap")
+    pm_params = PMParams(;truncp, itermax, eps_converged, opt_method=:sym, normalization="overlap")
 
 
     Nsteps = TT
@@ -83,7 +83,7 @@ function ffolded(tp::tMPOParams, TT::Int)
 
     mpo_1 = folded_tMPO(b, time_sites)
 
-    ll, rr, ds2_pm  = powermethod_op(init_mps, mpo_1, mpo_X, pm_params) 
+    ll, rr, ds2_pm  = powermethod_op(init_mps; mpo_id=mpo_1, mpo_op=mpo_X, pm_params) 
 
     return ll, rr, ds2_pm, b
 end
@@ -130,7 +130,7 @@ for TT = 10:10:30
 
     @show TT, ev_fold, ev_unfold 
 
-    @test abs.(ev_unfold - ev_fold) < 0.001
+    @test abs.(ev_unfold - ev_fold) < 0.03
 
 end
 

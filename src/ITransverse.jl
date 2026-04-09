@@ -95,6 +95,7 @@ export vn_entanglement_entropy,
     gensym_renyi_entropies,
     diagonalize_rdm,
     generalized_vn_entropy_symmetric,
+    generalized_svd_vn_entropy,
     diagonalize_rtm_symmetric,
     gen_renyi2
 
@@ -148,7 +149,7 @@ export Columns, Environments,
 
 
 include("checkpoints/checkpoints.jl")
-export DoCheckpoint
+export DoCheckpoint, write_cp
 
 include("power_method/pm_params.jl")
 include("power_method/pm.jl")
@@ -162,11 +163,10 @@ export expval_LR, compute_expvals
 
 include("lightcone/cone_tmpo.jl")
 include("lightcone/cone_params.jl")
-include("lightcone/extend_cone.jl")
 include("lightcone/init_cone.jl")
 include("lightcone/run_cone.jl")
 
-export ConeParams, folded_tMPO_ext, init_cone, run_cone
+export ConeParams, folded_tMPO_ext, init_cone, run_cone, resume_cone
 
 # include("lightcone/cone_envs/cone_columns.jl")
 # include("lightcone/cone_envs/extend_cone_envs.jl")
@@ -175,5 +175,9 @@ export ConeParams, folded_tMPO_ext, init_cone, run_cone
 include("tebd/tebd.jl")
 
 export tebd_ev
+
+
+function togpu end
+
 
 end #module ITransverse

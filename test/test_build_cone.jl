@@ -5,7 +5,7 @@ using ITransverse
 using ITransverse: init_cone
 
 @testset "Light cone initialization and tensors for Ising" begin
-tp = ising_tp()
+tp = ising_tp(init_state=plus_state)
 b = FoldtMPOBlocks(tp)
 evs_X = ComplexF64[]
 for nn = 1:6

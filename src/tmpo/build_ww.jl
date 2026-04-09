@@ -15,7 +15,6 @@ L--o--R   =>    p--o--p'
 """
 Builds *Folded* but **UN-ROTATED** tensors, just W * Wdag and joined indices 
 """
-
 function build_WW(eH::MPO)
 
     # Same indices for all tensors
@@ -35,12 +34,15 @@ function build_WW(eH::MPO)
     return WWl, WWc, WWr,  (space_link1, space_link2, space_phys, space_phys')
 end
 
-function build_WW(tp::tMPOParams)
-    @info "Building WW tensors using $(tp.expH_func), parameters $(tp.mp)"
-    eH = build_Ut(tp)
+function build_WW(tp::tMPOParams; build_imag::Bool=false, kwargs...)
+    @info "Building WW tensors using $(tp.expH_func), build_imag=$(build_imag), parameters $(tp.mp)"
+    dt = build_imag ? tp.dbeta : tp.dt
+    eH = build_Ut(tp; dt, kwargs...)
     build_WW(eH)
 end
     
+
+
 ### WWl - WWc - WWr 
 
 """ Builds folded unrotated left edge tensor of the network """ 
@@ -73,11 +75,6 @@ end
 """ Builds the bulk tensor for the *folded* time MPO
 Returns the *unrotated* combined indices as well: vL, vR, p, p' 
 """
-function build_WWc(tp::tMPOParams)
-    eH = build_Ut(tp)
-    build_WWc(eH)
-end
-
 function build_WWc(eH_space::MPO)
 
     Wc = eH_space[2]

@@ -1,4 +1,5 @@
 using ITensors, ITensorMPS
+using JLD2
 #using Plots
 
 using ITransverse
@@ -6,8 +7,8 @@ using ITransverse
 function main_cone()
 
     JXX = 1.0  
-    hz = 1.4
-    gx = 0.9 # 0.5
+    hz = 0.7
+    gx = 0.0 # 0.5
 
     dt = 0.1
 
@@ -19,10 +20,11 @@ function main_cone()
     cutoff = 1e-10
     maxdim = 256
     direction = :right
+    alg = "RTM"
 
-    truncp = (;cutoff, maxdim, direction)
+    truncp = (;cutoff, maxdim, direction, alg)
 
-    Nsteps = 80
+    Nsteps = 30
 
     #time_sites = siteinds("S=3/2", 1)
 
@@ -34,14 +36,14 @@ function main_cone()
 
     #@info length(c0)
 
-    cone_params = ConeParams(;truncp, opt_method="RTM_R", optimize_op)
+    cone_params = ConeParams(;truncp, opt_method=:sym, optimize_op)
 
     cp = DoCheckpoint(
         "cp_cone.jld2";
-        params=tp,
-        save_at=0,
+        params=Dict("tparams" => tp, "cparams" => cone_params),
         f_obs = (
             SVN = s -> vn_entanglement_entropy(s.R),
+            S_SVD = s -> generalized_svd_vn_entropy(s.L, s.R),
             overlap = s -> overlap_noconj(s.L, s.R),
             expvals = s -> compute_expvals(s.L, s.R, ["Z","X"], s.b)
         ),
@@ -58,4 +60,23 @@ function main_cone()
 
 end
 
-@time psi, psiR, checkpt = main_cone()
+psi, psiR, checkpt = main_cone()
+
+psi, psiR, checkpt = resume_cone(checkpt, 40)
+
+write_cp(checkpt, filename="temp_cp.jld2")
+
+        myf_obs = (
+            SVN = s -> vn_entanglement_entropy(s.R),
+            S_SVD = s -> generalized_svd_vn_entropy(s.L, s.R),
+            overlap = s -> overlap_noconj(s.L, s.R),
+            expvals = s -> compute_expvals(s.L, s.R, ["Z","X"], s.b)
+        )
+
+        myf_savestate = (
+            L = s -> s.L,
+            R = s -> s.R,
+            b = s -> s.b
+        )
+
+psi, psiR, checkpt = resume_cone("temp_cp.jld2", 50; f_obs=myf_obs, f_savestate=myf_savestate)

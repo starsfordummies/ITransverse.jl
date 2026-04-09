@@ -7,22 +7,20 @@ using ITransverse: vX, vZ, vI
 function main_folded_pm()
 
     tp = ising_tp()
-    tp =  tMPOParams(0.1, expH_ising_murg, IsingParams(1.0, 1.0, 0.0), 0, vI)
-
-    tp = tMPOParams(tp; nbeta=140)
-
 
     b = FoldtMPOBlocks(tp)
 
-    cutoff = 1e-12
-    maxdim = 128
-    itermax = 800
+    itermax = 500
     eps_converged=1e-9
 
-    truncp = TruncParams(cutoff, maxdim)
+    cutoff = 1e-12
+    maxdim = 128
+    direction = :right
+    alg = "densitymatrix"
 
-    #pm_params = PMParams(;truncp, itermax, eps_converged, opt_method="RTM_R", normalization="overlap")
-    pm_params = PMParams(;truncp, itermax, eps_converged, opt_method="RTM_R", normalization="norm")
+    truncp = (;cutoff, maxdim, direction, alg)
+
+    pm_params = PMParams(;truncp, itermax, eps_converged, opt_method=:sym, normalization="norm")
 
     evs = [] 
 
@@ -43,8 +41,10 @@ function main_folded_pm()
     init_mps = folded_right_tMPS(b, time_sites)
 
     mpo_1 = folded_tMPO(b, time_sites)
+    mpo_Z = folded_tMPO(b, time_sites; fold_op = vZ)
 
-    ll, rr, ds2_pm  = powermethod_op(init_mps, mpo_1, mpo_1, pm_params) 
+
+    ll, rr, ds2_pm  = powermethod_op(init_mps; mpo_id=mpo_1, mpo_op=mpo_Z, pm_params) 
 
     ev = compute_expvals(ll, rr, ["X","Z"], b)
     @show ev
