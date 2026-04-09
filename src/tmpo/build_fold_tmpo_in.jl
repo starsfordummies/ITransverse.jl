@@ -44,9 +44,9 @@ function fw_tMPO_in(b::FwtMPOBlocks, ts::Vector{<:Index}; init_tensor::ITensor, 
     init_tensor = init_tensor * delta(links_psi0[1], siteind(ww,1)')
     init_tensor = init_tensor * delta(links_psi0[2], siteind(ww,1))
 
-    @show ww[1][1,1,1]
+    #@show ww[1][1,1,1]
     ww.data[1] = init_tensor
-    @show ww[1][1,1,1]
+    #@show ww[1][1,1,1]
 
     return ww
 

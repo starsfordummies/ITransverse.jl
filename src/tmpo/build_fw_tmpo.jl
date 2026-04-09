@@ -16,11 +16,6 @@ function fw_tMPO(tp::tMPOParams, time_sites::Vector{<:Index}; kwargs...)
     fw_tMPO(b, time_sites; kwargs...)
 end
 
-function fw_tMPO_old(b::FwtMPOBlocks, time_sites::Vector{<:Index}; tr, kwargs...)
-    ww = fw_tMPO_opentr(b, time_sites; kwargs...)
-    fw_tMPO(ww, tr)
-end
-
 
 
 """ Forward tMPO with open top (=right, after rotation) leg, so we can plug anything afterwards """

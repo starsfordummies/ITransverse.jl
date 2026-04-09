@@ -49,11 +49,6 @@ it contracts
 
 ``` --(p)--[O]--(p')-(p)--psi =  -(p)--Opsi ```
 """
-function tapplys_old(alg, O::MPO, psi::AbstractMPS; kwargs...)
-    tpsi, sv = tcontract(alg, O, prime(siteinds,psi); kwargs...)
-    return replaceprime(tpsi, 2 => 0), sv
-end
-
 function tapplys(alg, O::MPO, psi::AbstractMPS; kwargs...)
     tpsi, sv = tcontract(alg, swapprime(O, 1=>0, "Site"), psi; kwargs...)
     return replaceprime(tpsi, 1 => 0), sv

@@ -290,11 +290,11 @@ function trcontract(::Algorithm"RTM",
         ciL = commoninds(L, E[j])
         maxdim = min(dim(ciR), dim(ciL), requested_maxdim)
 
-        @show inds(E[j])
-        @show inds(L)
-        @show inds(R)
+        #@show inds(E[j])
+        #@show inds(L)
+        #@show inds(R)
         rho = E[j] * L * R
-        @show inds(rho)
+        #@show inds(rho)
         @assert ndims(rho) < 5 "inds(rho) @site $j ? $(inds(rho))"
 
         tsR = if preserve_mps_tags
