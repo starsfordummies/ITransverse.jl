@@ -14,7 +14,7 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams; normaliz
     use_eig = get(truncp, :use_eig, false)
     use_eig_string = use_eig ? "EIG" : "SVD"
 
-    pm_info_string = "[Symmetric PM|$(truncp.alg)|$(use_eig_string)] L=$(length(in_mps)), cutoff=$(truncp.cutoff), χmax=$(maxdims[end]), normalize=$(normalization))"
+    pm_info_string = "[Symmetric PM|$(truncp.alg)|$(use_eig_string)] L=$(length(in_mps)), cutoff=$(cutoffs[end]), χmax=$(maxdims[end]), normalize=$(normalization))"
 
     p = Progress(itermax; desc=pm_info_string, showspeed=true) 
 

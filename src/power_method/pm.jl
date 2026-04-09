@@ -6,12 +6,16 @@ function powermethod_op(in_mps::MPS; mpo_id::MPO, mpo_op::MPO, pm_params::PMPara
 
     (; opt_method, itermax, maxdims, cutoffs, normalization, compute_fidelity) = pm_params
 
-    stepper, info_iterations, maxdims = init_pm(pm_params)
+    stepper, info_iterations = init_pm(pm_params)
 
     ll = copy(in_mps)
     rr = copy(in_mps)
 
-    p = Progress(itermax; desc="[PM|$(opt_method)] L=$(length(ll)), cutoff=$(last(cutoffs)), maxdim=$(last(maxdims)), normalize=$(normalization)", showspeed=true) 
+    sv_prev = zeros(Float64, 2,2)
+    pm_info_string = "[PM(OP)|$(pm_params.truncp.alg)|$(opt_method)] L=$(length(in_mps)), cutoff=$(last(cutoffs)), maxdim=$(last(maxdims)), normalize=$(normalization))"
+
+
+    p = Progress(itermax; desc=pm_info_string, showspeed=true) 
 
     for jj = 1:itermax  
 
@@ -60,26 +64,22 @@ function powermethod_op(in_mps::MPS; mpo_id::MPO, mpo_op::MPO, pm_params::PMPara
         logfidelityRRnew = compute_fidelity ? logfidelity(rr_prev,rr) : NaN
 
 
-        if jj == 1 
-            sv_prev = SVs 
-        else 
-            stop, reason = pm_itercheck!(stepper, info_iterations, rr, sv_prev, SVs)
+        stop, reason = pm_itercheck!(stepper, info_iterations, rr, sv_prev, SVs)
+        sv_prev = SVs
 
-            if stop
-                if reason == :converged
-                    @info "PM Converged after $jj steps | ds=$(last(info_iterations[:ds])) | chi=$(maxlinkdim(rr))"
-                elseif reason == :stuck
-                    @warn "PM Stuck after $(stepper.iters_without_improvement)/$(jj) steps | ds=$(last(info_iterations[:ds])) | chi=$(maxlinkdim(rr))"
-                end
-            
-                break
+        if stop
+            if reason == :converged
+                @info "PM Converged after $jj steps | ds=$(last(info_iterations[:ds])) | chi=$(maxlinkdim(rr))"
+            elseif reason == :stuck
+                @warn "PM Stuck after $(stepper.iters_without_improvement)/$(jj) steps | ds=$(last(info_iterations[:ds])) | chi=$(maxlinkdim(rr))"
             end
-
-            if jj == itermax
-                @warn "PM **not** converged after $(jj) steps | ds=$(last(info_iterations[:ds])) | chi=$(maxlinkdim(rr))"
-            end
+        
+            break
         end
 
+        if jj == itermax
+            @warn "PM **not** converged after $(jj) steps | ds=$(last(info_iterations[:ds])) | chi=$(maxlinkdim(rr))"
+        end
 
         next!(p; showvalues = [(:Info,"[$(jj)][χ=$(maxlinkdim(ll))] ds2=$(last(info_iterations[:ds])), logfidelity(<R|Rnew>)=$(logfidelityRRnew)" )])
 
@@ -102,15 +102,21 @@ and  |R> = (in_mpo_R)^N|ψ0>
 """
 function powermethod_lr(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::PMParams)
 
-    (; itermax, truncp, normalization, compute_fidelity) = pm_params
+    (; opt_method, itermax, cutoffs, maxdims, truncp, normalization, compute_fidelity) = pm_params
 
-    stepper, info_iterations, maxdims = init_pm(pm_params)
+    stepper, info_iterations = init_pm(pm_params)
 
     ll, rr, svs = tlrapply(in_mps, in_mpo_L, in_mpo_R, in_mps; truncp...)
    
     llprev = copy(ll)
 
-    p = Progress(itermax; desc="L=$(length(ll)), alg=$(truncp.alg), cutoff=$(truncp.cutoff), χmax=$(last(maxdims)), normalize=$(normalization)", showspeed=true) 
+    sv_prev = zeros(Float64, 2,2)
+    pm_info_string = "[PM LR|$(pm_params.truncp.alg)|$(opt_method)] L=$(length(in_mps)), cutoff=$(last(cutoffs)), maxdim=$(last(maxdims)), normalize=$(normalization))"
+
+    p = Progress(itermax; desc=pm_info_string, showspeed=true) 
+
+
+    p = Progress(itermax; desc=pm_info_string, showspeed=true) 
 
     for jj = 1:itermax
 
@@ -126,35 +132,33 @@ function powermethod_lr(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::PM
         end  # otherwise do nothing, norms can blow up 
 
         fidelity_step = if compute_fidelity
-            logfidelity(ll, llprev)
+            lfid = logfidelity(ll, llprev)
             llprev = copy(ll)
+            lfid 
         else
             NaN
         end
 
 
-        chi_max = maximum(maxlinkdim(ll),maxlinkdim(rr))
+        chi_max = max(maxlinkdim(ll),maxlinkdim(rr))
         
 
-        if jj == 1 
-            sv_prev = svs 
-        else 
-            stop, reason = pm_itercheck!(stepper, info_iterations, rr, sv_prev, svs)
+        stop, reason = pm_itercheck!(stepper, info_iterations, rr, sv_prev, svs)
+        sv_prev = svs
 
-            # should we stop?
-            if stop
-                if reason == :converged
-                    @info "PM Converged after $jj steps | ds=$(last(info_iterations[:ds])) | chi=$(chi_max))"
-                elseif reason == :stuck
-                    @warn "PM Stuck after $(stepper.iters_without_improvement)/$(jj) steps | ds=$(last(info_iterations[:ds])) | chi=$(chi_max))"
-                end
-            
-                break
+        # should we stop?
+        if stop
+            if reason == :converged
+                @info "PM Converged after $jj steps | ds=$(last(info_iterations[:ds])) | chi=$(chi_max))"
+            elseif reason == :stuck
+                @warn "PM Stuck after $(stepper.iters_without_improvement)/$(jj) steps | ds=$(last(info_iterations[:ds])) | chi=$(chi_max))"
             end
+        
+            break
+        end
 
-            if jj == itermax
-                @warn "PM **not** converged after $(jj) steps | ds=$(last(info_iterations[:ds])) | chi=$(chi_max))"
-            end
+        if jj == itermax
+            @warn "PM **not** converged after $(jj) steps | ds=$(last(info_iterations[:ds])) | chi=$(chi_max))"
         end
 
         next!(p; showvalues = [(:Info,"[$(jj)]  chi=$(chi_max) | ds=$(last(info_iterations[:ds])) | <R|Rprev> = $(fidelity_step)" )])

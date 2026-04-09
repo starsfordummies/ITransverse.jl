@@ -4,7 +4,7 @@ using Test
 
 @testset "Testing power method" begin
 
-    tp = ising_tp()
+    tp = ising_tp(init_state=plus_state)
 
     cutoff = 1e-20
     maxdim = 120
@@ -30,26 +30,26 @@ using Test
     mpo_1 = folded_tMPO(b, time_sites)
 
     pm_params = PMParams(;truncp, itermax, eps_converged, opt_method=:nosym, normalization="norm")
-    ll, rr, ds2_pm  = powermethod_op(init_mps, mpo_id=mpo_1, mpo_op=mpo_X, pm_params) 
+    ll, rr, ds2_pm  = powermethod_op(init_mps; mpo_id=mpo_1, mpo_op=mpo_X, pm_params) 
 
     ev = compute_expvals(ll, rr, ["X"], b)
     χ_LR = maxlinkdim(ll)
 
     pm_params = PMParams(;truncp, itermax, eps_converged, opt_method=:sym, normalization="norm")
-    ll, rr, ds2_pm  = powermethod_op(init_mps, mpo_id=mpo_1, mpo_op=mpo_X, pm_params) 
+    ll, rr, ds2_pm  = powermethod_op(init_mps; mpo_id=mpo_1, mpo_op=mpo_X, pm_params) 
 
     evsym = compute_expvals(ll, rr, ["X"], b)
     χ_R = maxlinkdim(ll)
 
     truncp = (;cutoff=sqrt(cutoff), maxdim, alg="densitymatrix")
     pm_params = PMParams(;truncp, itermax, eps_converged, opt_method=:nosym, normalization="norm")
-    ll, rr, ds2_pm  = powermethod_op(init_mps, mpo_id=mpo_1, mpo_op=mpo_X, pm_params) 
+    ll, rr, ds2_pm  = powermethod_op(init_mps; mpo_id=mpo_1, mpo_op=mpo_X, pm_params) 
     ev_rdm = compute_expvals(ll, rr, ["X"], b)
     χ_RDM = maxlinkdim(ll)
 
     truncp = (;cutoff=sqrt(cutoff), maxdim, alg="densitymatrix")
     pm_params = PMParams(;truncp, itermax, eps_converged, opt_method=:sym, normalization="norm")
-    ll, rr, ds2_pm  = powermethod_op(init_mps, mpo_id=mpo_1, mpo_op=mpo_X, pm_params) 
+    ll, rr, ds2_pm  = powermethod_op(init_mps; mpo_id=mpo_1, mpo_op=mpo_X, pm_params) 
     ev_sym_rdm = compute_expvals(ll, rr, ["X"], b)
     χ_sym_rdm = maxlinkdim(ll)
 

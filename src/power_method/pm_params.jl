@@ -37,6 +37,7 @@ function PMstep(pm_params::PMParams;
 end
 
 
+""" Returns PMstep stepper and Dict info_iterations """
 function init_pm(pm::PMParams)
 
     # Iteration History 

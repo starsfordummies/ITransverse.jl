@@ -29,8 +29,6 @@ r2s = []
 ts = 60 + tp.nbeta
 alltimes = ts.* tp.dt
 
-infos = Dict(:tp => tp, :pm_params => pm_params, :b => b, :times => alltimes)
-
 Nsteps = ts
 
 time_sites = siteinds(4, Nsteps)
