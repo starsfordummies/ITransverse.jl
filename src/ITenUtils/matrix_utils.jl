@@ -202,7 +202,7 @@ function max_diff(A::Matrix, B::Matrix; quick::Bool=true)
     aR, aC = size(A)
     bR, bC = size(B)
     
-    @assert aR == bR "aR=$(aR) != $(bR)=bR"
+    @assert aR == bR "Matrix sizes do not match: aR=$(aR) != $(bR)=bR"
     
     minC = min(aC, bC)
     

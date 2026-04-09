@@ -139,11 +139,11 @@ end
 
 """ Give as input Left and Right MPS, a list of operators to build and the FoldMPOBlocks.
 Returns a Dictionary with expectation values <L|O|R>/<L|1|R> """
-function compute_expvals(ll::AbstractMPS, rr::AbstractMPS, op_list::Vector{String}, b::FoldtMPOBlocks)
+function compute_expvals(ll::AbstractMPS, rr::AbstractMPS, op_list, b::FoldtMPOBlocks)
 
     # TODO truncate on apply MPO in expval_... 
 
-    if op_list[1] == "all"
+    if op_list == "all"
         op_list = ["X", "Z", "Pz", "Sp", "Sm", "XX", "ZZ", "eps_ising"]
     end
 
@@ -151,10 +151,10 @@ function compute_expvals(ll::AbstractMPS, rr::AbstractMPS, op_list::Vector{Strin
 
     #Normalization 
     idN = vectorized_identity(dim(b.rot_inds[:R]))
-    ev_L1R = expval_LR(ll, rr, (idN), b)
+    ev_L1R = expval_LR(ll, rr, idN, b)
 
     #two-col exp value is expensive, only compute if necessary
-    ev_L11R = haskey(op_list, "XX") || haskey(op_list, "ZZ") || haskey(op_list, "eps") ? expval_LR(ll, rr, (idN, idN), b) : 1.0
+    ev_L11R = haskey(op_list, "XX") || haskey(op_list, "ZZ") || haskey(op_list, "eps_ising") ? expval_LR(ll, rr, (idN, idN), b) : 1.0
 
     for op in op_list
         if op == "eps_ising"  # do this separately
@@ -175,31 +175,6 @@ function compute_expvals(ll::AbstractMPS, rr::AbstractMPS, op_list::Vector{Strin
     end
 
     return allevs
-end
-
-
-
-
-
-
-""" Build exp value <L|O|R> for a single vectorized operator `op`, given as a 1D array 
-   Does *NOT* normalize here by <L|1|R>, need to do it separately.
-   Slower version which uses ITensors' apply(), allows to truncate intermediate MPO """
-function expval_LR_apply_list(ll::MPS, rr::MPS, op_list::AbstractVector, b::FoldtMPOBlocks; maxdim=256)
-
-    time_sites = siteinds(rr)
-
-    psiOR = deepcopy(rr)
-    for op in op_list
-        tmpo = folded_tMPO(b, time_sites; fold_op=op)
-        psiOR = isnothing(maxdim) ? applyn(tmpo, psiOR) : apply(tmpo,psiOR; alg="naive", maxdim)
-    end
-
-    LOR = overlap_noconj(ll,psiOR)
-
-
-    return LOR
-
 end
 
 

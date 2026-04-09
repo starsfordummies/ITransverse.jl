@@ -1,7 +1,7 @@
-mutable struct DoCheckpoint{TParams, TFObs, TFState}
+mutable struct DoCheckpoint{TParams, TFObs, TFState, TSaveAt}
     filename::String  # output CP file 
-    save_at::Vector{Int} # at which step we save
-    params::TParams
+    save_at::TSaveAt  # any iterable of steps at which to save
+    params::TParams # any params one wishes to save 
     steps::Vector{Int}
     f_obs::TFObs
     obs_hist::Dict{Symbol, Vector}
@@ -25,7 +25,7 @@ function DoCheckpoint(filename;
 
     DoCheckpoint(
         filename,
-        which_cps(save_at),
+        save_at,
         params,
         Int[],
         f_obs,
@@ -35,9 +35,22 @@ function DoCheckpoint(filename;
     )
 end
 
+""" Write the current cp state to disk. """
+function write_cp(cp::DoCheckpoint; filename=cp.filename)
+    for (k, v) in pairs(cp.obs_hist)
+        cp.obs_hist[k] = collect(promote(v...))
+    end
+    @info "Saving CP $(cp.filename)..."
+    save(filename,
+         "params",      cp.params,
+         "steps",       cp.steps,
+         "save_at",     cp.save_at,
+         "observables", cp.obs_hist,
+         "latest",      cp.latest)
+end
+
 """ Saves checkpoint """
 function (cp::DoCheckpoint)(state, step::Int)
-    push!(cp.steps, step)
 
     # history observables
     for (name, obs) in pairs(cp.f_obs)
@@ -46,41 +59,12 @@ function (cp::DoCheckpoint)(state, step::Int)
 
     # build latest snapshot
     cp.latest = NamedTuple(
-        name => tocpu(f(state)) for (name, f) in pairs(cp.f_savestate)
+        name => adapt(Array, f(state)) for (name, f) in pairs(cp.f_savestate)
     )
 
+    push!(cp.steps, length(cp.latest.R))
+
     if step in cp.save_at
-
-        for (k,v) in pairs(cp.obs_hist)
-            cp.obs_hist[k] = collect(promote(v...))
-        end
-        @info "Step $(step): Saving CP $(cp.filename)..." 
-        save(cp.filename,
-             "steps", cp.steps,
-             "observables", cp.obs_hist,
-             "latest", cp.latest)
+        write_cp(cp)
     end
-end
-
-
-""" Horrible boilerplate code building a list of steps at which we should checkpoint """
-function which_cps(checkpoints)
-    # Checkpoints logic, let's try and be flexible 
-    checkpoints = if isa(checkpoints, Integer)
-        if checkpoints > 0 
-            collect(50:checkpoints:10000)         
-        else
-            Int[]
-        end
-    elseif isa(checkpoints, Tuple{Int})
-        checkpoints                              # tuple → keep as is
-    elseif isa(checkpoints, AbstractVector{Int})
-        collect(checkpoints) 
-    elseif isa(checkpoints, AbstractRange{Int})
-        collect(checkpoints)                    # range → tuple
-    else
-        throw(ArgumentError("Unsupported input type $(typeof(checkpoints))"))
-    end
-
-    return checkpoints
 end

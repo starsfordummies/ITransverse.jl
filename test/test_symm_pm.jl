@@ -22,8 +22,6 @@ function test_symmpm(Tstart::Int, Tend::Int, nbeta::Int; Tstep::Int=1)
     itermax = 800
     eps_converged = 1e-6
 
-    truncp = TruncParams(cutoff, maxdim)
-
     mp = IsingParams(JXX, hz, gx)
     tp = tMPOParams(dt, expH_ising_murg, mp, nbeta, init_state)
 
@@ -38,7 +36,7 @@ function test_symmpm(Tstart::Int, Tend::Int, nbeta::Int; Tstep::Int=1)
     @info ("Initial state $(init_state)  => quench @ J=$(JXX) , h=$(hz) ")
 
 
-    allpsis = Dict(:rdm => MPS[], :eig => MPS[], :svd => MPS[])
+    allpsis = Dict(:rdm => MPS[], :eig => MPS[], :svd => MPS[], :naivertm => MPS[], :naivertmeig => MPS[])
 
     for ts in allts
 
@@ -51,18 +49,34 @@ function test_symmpm(Tstart::Int, Tend::Int, nbeta::Int; Tstep::Int=1)
         start_mps = fw_tMPS(b, time_sites; LR=:right, tr=init_state)
 
 
-        pm_params = PMParams(;truncp, itermax, eps_converged, opt_method="RTM", normalization="norm")
-
+        truncp = (;cutoff, maxdim, alg="RTMsym")
+        pm_params = PMParams(;truncp, itermax, eps_converged, opt_method=:sym, normalization="norm")
         psi_trunc, ds2 = powermethod_sym(start_mps, mpo, pm_params)
         push!(allpsis[:svd], psi_trunc)
 
-        pm_params = PMParams(;truncp, itermax, eps_converged, opt_method="RTM_EIG", normalization="norm")
-
+        truncp = (;cutoff, maxdim, alg="RTMsym", use_eig=true)
+        pm_params = PMParams(;truncp, itermax, eps_converged, opt_method=:sym, normalization="norm")
         psi_trunc, ds2 = powermethod_sym(start_mps, mpo, pm_params)
-
         push!(allpsis[:eig], psi_trunc)
 
-        pm_params = PMParams(;truncp, itermax, eps_converged, opt_method="RDM", normalization="norm")
+
+        truncp = (;cutoff, maxdim, alg="naiveRTMsym", use_eig=false)
+
+        pm_params = PMParams(;truncp, itermax, eps_converged, opt_method=:sym, normalization="norm")
+        psi_trunc, ds2 = powermethod_sym(start_mps, mpo, pm_params)
+        push!(allpsis[:naivertm], psi_trunc)
+
+
+        truncp = (;cutoff, maxdim, alg="naiveRTMsym", use_eig=true)
+
+        pm_params = PMParams(;truncp, itermax, eps_converged, opt_method=:sym, normalization="norm")
+        psi_trunc, ds2 = powermethod_sym(start_mps, mpo, pm_params)
+        push!(allpsis[:naivertmeig], psi_trunc)
+
+
+        truncp = (;cutoff, maxdim, alg="densitymatrix")
+
+        pm_params = PMParams(;truncp, itermax, eps_converged, opt_method=:sym, normalization="norm")
         psi_trunc, ds2 = powermethod_sym(start_mps, mpo, pm_params)
         push!(allpsis[:rdm], psi_trunc)
 
@@ -91,6 +105,5 @@ end
 
 @test norm(allents[:eig]["S2.0"] - allents[:svd]["S2.0"] )/norm(allents[:eig]["S2.0"]) < 0.001
 @test norm(allents[:eig]["S2.0"] - allents[:rdm]["S2.0"] )/norm(allents[:eig]["S2.0"]) < 0.001
-
-@info "Difference EIG-SVD: $(allents[:eig]["S1.0"][20] - allents[:svd]["S1.0"][20])"
-@info "Difference EIG-RDM: $(allents[:eig]["S1.0"][20] - allents[:rdm]["S1.0"][20])"
+@test norm(allents[:naivertm]["S2.0"] - allents[:rdm]["S2.0"] )/norm(allents[:naivertm]["S2.0"]) < 0.001
+@test norm(allents[:naivertmeig]["S2.0"] - allents[:rdm]["S2.0"] )/norm(allents[:naivertmeig]["S2.0"]) < 0.001

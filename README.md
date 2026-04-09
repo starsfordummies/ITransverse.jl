@@ -240,7 +240,7 @@ we need to update including an operator, or the dominant tMPS end up being trivi
 
 #### Update without an operator
 
-For this, use `powermethod_both()` (see docs)
+For this, use `powermethod_lr()` (see docs)
 
 #### Symmetric power method
 

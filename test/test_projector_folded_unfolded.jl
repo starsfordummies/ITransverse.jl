@@ -2,52 +2,51 @@ using ITensors, ITensorMPS
 using ITransverse
 using Test
 
-using ITransverse: up_state
-
-
 @testset "Testing that folded+projector is the same as amplitude^2 using transverse contraction " begin
 
-tp = ising_tp()
-maxdim=100
-
-Ntime_steps = 30
 
 nbeta = 0
+Ntime_steps = 30
+
 Nsteps = nbeta + Ntime_steps + nbeta
 
 time_sites = addtags(siteinds("S=1/2", Nsteps; conserve_qns=false), "time")
 time_sites_fold = addtags(siteinds(4, Nsteps; conserve_qns=false), "time")
 
 
+mp = IsingParams(1, 0.7, 0)
+
 #init_state = up_state #  rand(ComplexF64, 2)
 init_state = rand(ComplexF64, 2)
 @show init_state
 
-mp = IsingParams(1, 0.7, 0)
+tp = tMPOParams(ising_tp(); nbeta, mp=mp, bl=init_state)
 
-tp = tMPOParams(tp; nbeta, mp=mp, bl=init_state)
-
-Nsteps = nbeta + Ntime_steps + nbeta
+maxdim=128
 
 b= FwtMPOBlocks(tp)
-
-
-b_fold = FoldtMPOBlocks(tp)
 
 mpo = fw_tMPO(b, time_sites; tr = ITensor(up_state, Index(2)))
 
 left_mps = ITransverse.fw_left_tMPS(b, time_sites; tr = up_state)
 right_mps = ITransverse.fw_right_tMPS(b, time_sites; tr = up_state)
 
+ov_unfolded = overlap_noconj(left_mps, right_mps)
+
+b_fold = FoldtMPOBlocks(tp)
+
 mpo_fold = folded_tMPO(b_fold, time_sites_fold, fold_op = [1,0,0,0])
 
 left_fold = folded_left_tMPS(b_fold, time_sites_fold, fold_op = [1,0,0,0])
 right_fold = folded_right_tMPS(b_fold, time_sites_fold, fold_op = [1,0,0,0])
 
- abs2.(overlap_noconj(left_mps, right_mps))
-  overlap_noconj(left_fold, right_fold)#< 1e-5
+ov_folded =  overlap_noconj(left_fold, right_fold)
+
+ abs2.(ov_unfolded) - ov_folded #< 1e-5
 
 @test abs( abs2.(overlap_noconj(left_mps, right_mps)) - overlap_noconj(left_fold, right_fold)) < 1e-5
+
+
 # Contract unfolded network 
 ll = left_mps
 rr = right_mps
@@ -79,6 +78,48 @@ overlap_noconj(ll,rr)
 end
 
 
+
+nbeta = 10
+Ntime_steps = 30
+
+Nsteps = nbeta + Ntime_steps + nbeta
+
+time_sites = addtags(siteinds("S=1/2", Nsteps; conserve_qns=false), "time")
+time_sites_fold = addtags(siteinds(4, Nsteps; conserve_qns=false), "time")
+
+
+mp = IsingParams(1, 0.7, 0)
+
+#init_state = up_state #  rand(ComplexF64, 2)
+init_state = rand(ComplexF64, 2)
+@show init_state
+
+tp = tMPOParams(ising_tp(); nbeta, mp=mp, bl=init_state)
+
+maxdim=128
+
+b= FwtMPOBlocks(tp)
+
+init_beta_only=true 
+mpo = fw_tMPO(b, time_sites; tr = ITensor(up_state, Index(2)), init_beta_only)
+
+left_mps = ITransverse.fw_left_tMPS(b, time_sites; tr = up_state, init_beta_only)
+right_mps = ITransverse.fw_right_tMPS(b, time_sites; tr = up_state, init_beta_only)
+
+ov_unfolded = overlap_noconj(left_mps, right_mps)
+
+b_fold = FoldtMPOBlocks(tp)
+
+mpo_fold = folded_tMPO(b_fold, time_sites_fold; fold_op = [1,0,0,0], init_beta_only)
+
+left_fold = folded_left_tMPS(b_fold, time_sites_fold; fold_op = [1,0,0,0], init_beta_only)
+right_fold = folded_right_tMPS(b_fold, time_sites_fold; fold_op = [1,0,0,0], init_beta_only)
+
+ov_folded =  overlap_noconj(left_fold, right_fold)
+
+ abs2.(ov_unfolded) - ov_folded #< 1e-5
+
+@test abs( abs2.(overlap_noconj(left_mps, right_mps)) - overlap_noconj(left_fold, right_fold)) < 1e-5
 
 #= 
 

@@ -3,12 +3,12 @@ Symmetric truncate for MPS optimizing the RTM |psi*><psi|.
 direction = :left  → sweeps 1→N
 direction = :right → sweeps N→1
 """
-function truncate_sweep_sym(in_psi::MPS; cutoff::Float64, maxdim::Int,
-                             method::String, direction::Symbol=:right)
+function truncate_sweep_sym(in_psi::MPS; 
+    cutoff::Float64, maxdim::Int, use_eig::Bool=false, direction::Symbol=:right)
 
     mpslen = length(in_psi)
-    elt = method == "SVD" ? Float64 : ComplexF64
-    SV_all = zeros(elt, mpslen-1, maxdim)
+    eltype_S = use_eig ? ComplexF64 : Float64 
+    SV_all = zeros(eltype_S, mpslen-1, maxdim)
 
     sweep_start, sweep_step, sweep_end, sv_offset = if direction == :right
         mpslen, -1, 2, -1
@@ -33,7 +33,7 @@ function truncate_sweep_sym(in_psi::MPS; cutoff::Float64, maxdim::Int,
         env *= noprime(Ai', ss[ii]')
         @assert order(env) == 2 "unexpected env indices: $(inds(env))"
 
-        Sn = if method == "SVD"
+        Sn = if !use_eig 
             F = symm_svd(env, ind(env, 1); cutoff, maxdim, lefttags="Link,l=$(ii+sv_offset)")
     
             XU    = dag(F.U)
@@ -43,7 +43,7 @@ function truncate_sweep_sym(in_psi::MPS; cutoff::Float64, maxdim::Int,
             env /= sS
             Sn = Array(storage(F.S).data)/sS
 
-        elseif method == "EIG"
+        else
             F = symm_oeig(env, ind(env, 1); cutoff, maxdim)
     
             sqS  = F.D .^ -0.5
@@ -54,8 +54,6 @@ function truncate_sweep_sym(in_psi::MPS; cutoff::Float64, maxdim::Int,
 
             Sn = Array(storage(F.D).data)/sum(F.D)
 
-        else
-            error("Valid methods are: SVD | EIG  (here method=$(method))")
         end
 
         psi[ii] = Ai * XU
@@ -76,6 +74,7 @@ end
 """ Truncate <psi*|psi> by explicitly building the symmetric RTMs and computing their SVD decompositions"""
 function truncate_sweep_sym_rtm!(psi::MPS; direction::Symbol=:right, maxdim::Int, kwargs...)
 
+    # TODO allow for eig here ? 
     ss = siteinds(psi)
     N = length(ss)
     psip = prime(linkinds, psi)
@@ -148,13 +147,13 @@ truncate_rsweep_sym(in_psi::MPS; kwargs...) = truncate_sweep_sym(in_psi; directi
 
 function ITenUtils.tcontract(::Algorithm"naiveRTMsym", A::MPO, ψ::MPS; preserve_tags_mps::Bool=false, kwargs...)
     psi = apply(A, ψ; alg="naive", preserve_tags_mps, truncate=false)
-    psi, svals = truncate_sweep_sym(psi; kwargs...)
+    truncate_sweep_sym(psi; kwargs...)
 end
 
 
 function ITenUtils.tcontract(::Algorithm"naiveRTMsymRTM", A::MPO, ψ::MPS; preserve_tags_mps::Bool=false, kwargs...)
     psi = apply(A, ψ; alg="naive", preserve_tags_mps, truncate=false)
-    psi, svals = truncate_sweep_sym_rtm!(psi; kwargs...)
+    truncate_sweep_sym_rtm!(psi; kwargs...)
 end
 
 """ Contract MPO-MPS with algorithm densitymatrix, starting from the left. At the end we can chop/extend 
@@ -165,8 +164,16 @@ function ITenUtils.tcontract(::Algorithm"RTMsym",
         cutoff = 1.0e-13,
         maxdim = maxlinkdim(A) * maxlinkdim(ψ),
         mindim = 1,
+        use_eig::Bool=false,
+        direction::Symbol=:right,
         kwargs...,
     )
+
+    eltype_S = use_eig ? ComplexF64 : Float64 
+
+    if direction != :right
+        error("Direction $(direction) not implemented yet")
+    end
 
     @assert length(A) >= length(ψ)
 
@@ -198,7 +205,7 @@ function ITenUtils.tcontract(::Algorithm"RTMsym",
     L = ψ[1] * A[1]
     l_renorm = nothing
 
-    SV_all = zeros(Float64, n-1, maxdim)
+    SV_all = zeros(eltype_S, n-1, maxdim)
 
     for j in 1:min(n-1,N-1)
 
@@ -217,18 +224,23 @@ function ITenUtils.tcontract(::Algorithm"RTMsym",
 
         #@assert ndims(rho) < 5 " $j $(inds(rho))"
 
-        F = symm_svd(rho, Lis, Lis''; cutoff, maxdim=bond_maxdim, lefttags=ts, kwargs...)
-        U = F.U
 
-        l_renorm = F.u
+        U, S, l_renorm, L  = if use_eig
+            F = symm_oeig(rho, Lis, Lis''; cutoff, maxdim=bond_maxdim, lefttags=ts, kwargs...)
+            F.V, F.D, F.l, L * F.V * ψ[j+1] * A[j+1]
+
+        else
+            F = symm_svd(rho, Lis, Lis''; cutoff, maxdim=bond_maxdim, lefttags=ts, kwargs...)
+            F.U, F.S, F.u, L * dag(F.U) * ψ[j+1] * A[j+1]
+
+        end
 
         ψ_out[j] = U
 
-        L = L * dag(U) * ψ[j+1] * A[j+1]
 
-        Dvec = Array(storage(F.S).data)/sum(F.S)
+        Svec = Array(storage(S).data)/sum(S)
  
-        SV_all[j, 1:length(Dvec)] .= Dvec
+        SV_all[j, 1:length(Svec)] .= Svec
     
     end
 

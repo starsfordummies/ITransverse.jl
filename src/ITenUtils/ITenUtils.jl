@@ -44,8 +44,6 @@ include("eig_sym.jl")
 
 include("sqrt_itensor.jl")
 
-include("ext_functions.jl")
-
 include("size_estimate.jl")
 
 
@@ -70,7 +68,8 @@ export pMPS,
     gen_fidelity,
     logfidelity,
     normalize_for_overlap!,
-    allsiteinds
+    allsiteinds,
+    tcontract
 
 
 # moreutils.jl
@@ -101,7 +100,5 @@ export
 
 export beta_lims
 
-export togpu
-export tocpu
 
 end

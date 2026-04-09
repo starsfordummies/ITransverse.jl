@@ -53,4 +53,3 @@ const minus_state = ComplexF64[1 / sqrt(2), -1 / sqrt(2)]
 const vX = ComplexF64[0,1,1,0]
 const vZ = ComplexF64[1,0,0,-1]
 const vI = ComplexF64[1,0,0,1]
-

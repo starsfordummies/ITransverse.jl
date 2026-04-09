@@ -20,7 +20,7 @@ end
 
 
 function generalized_svd_vn_entropy_symmetric(psi::MPS)
-    _, svs = truncate_rsweep_sym(psi; cutoff=1e-12, maxdim=maxlinkdim(psi), method="SVD")
+    _, svs = truncate_rsweep_sym(psi; cutoff=1e-12, maxdim=maxlinkdim(psi), use_eig=false)
     return vn_from_matrix(svs)
 end
 
