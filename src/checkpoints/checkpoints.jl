@@ -59,7 +59,7 @@ function (cp::DoCheckpoint)(state, step::Int)
 
     # build latest snapshot
     cp.latest = NamedTuple(
-        name => tocpu(f(state)) for (name, f) in pairs(cp.f_savestate)
+        name => adapt(Array, f(state)) for (name, f) in pairs(cp.f_savestate)
     )
 
     push!(cp.steps, length(cp.latest.R))

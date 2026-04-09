@@ -1,7 +1,7 @@
 using ITensors, ITensorMPS
 using ITransverse
 using Test
-using ITransverse: togpu, tocpu
+using ITransverse: togpu
 
 try
     using CUDA: CUDA as CUDA

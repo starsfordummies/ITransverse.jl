@@ -4,8 +4,8 @@ using Metal: MtlArray
 using ITensors.Adapt
 using ITransverse 
 
-import ITransverse.ITenUtils: tocpu, togpu
+import ITransverse: togpu
 
-ITransverse.ITenUtils.togpu(x) = adapt(MtlArray, x)
+ITransverse.togpu(x) = adapt(MtlArray, adapt(ComplexF32, x))
 
 end

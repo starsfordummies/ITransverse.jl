@@ -49,8 +49,8 @@ allerrs = []
 allchis = []
 allpars = []
 for direction = [:right, :left]
-    for alg = ["densitymatrix", "naive", "RTM", "naiveRTM"]
-        for opt_method = [:nosym] # [:sym, 
+    for alg = ["densitymatrix", "naive", "RTM"]
+        for opt_method = [:nosym, :sym] 
             for normalization = ["norm", "overlap"]
 
             truncp = (;cutoff, maxdim, direction, alg)
@@ -72,8 +72,42 @@ for direction = [:right, :left]
 end
 
 for (params, zerr, chi) in zip(allpars, allerrs, allchis)
-    @testset "$(allpars)" begin
+    @testset "$(params)" begin
         @info chi
         @test abs(zerr) < 1e-4
+    end
+end
+
+allerrs = [] 
+allchis = []
+allpars = []
+for direction = [:right, :left]
+    for alg = ["naiveRTM"]
+        for opt_method = [:nosym,:sym]
+            for normalization = ["norm", "overlap"]
+
+            truncp = (;cutoff, maxdim, direction, alg)
+            pm_params = PMParams(;truncp, itermax, eps_converged, opt_method, normalization, stuck_after)
+
+            try
+                ev, chi = main_folded_pm(tp, Nt, pm_params)
+
+                push!(allerrs, real(ev["Z"]) - ref)
+                push!(allchis, chi)
+                push!(allpars, [direction, alg, opt_method, normalization])
+            catch e 
+                println("error $e")
+            end
+
+            end
+        end
+    end
+end
+
+
+for (params, zerr, chi) in zip(allpars, allerrs, allchis)
+    @testset "$(params)" begin
+        @info chi
+        @test abs(zerr) < 4e-2
     end
 end

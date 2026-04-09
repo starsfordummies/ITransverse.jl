@@ -44,8 +44,6 @@ include("eig_sym.jl")
 
 include("sqrt_itensor.jl")
 
-include("ext_functions.jl")
-
 include("size_estimate.jl")
 
 
@@ -102,7 +100,5 @@ export
 
 export beta_lims
 
-export togpu
-export tocpu
 
 end

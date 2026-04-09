@@ -176,4 +176,8 @@ include("tebd/tebd.jl")
 
 export tebd_ev
 
+
+function togpu end
+
+
 end #module ITransverse

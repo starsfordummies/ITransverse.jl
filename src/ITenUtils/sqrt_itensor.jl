@@ -15,7 +15,7 @@ function Base.sqrt(a::ITensor, is::Tuple{<:Index, <:Index}=inds(a))
         sq_a = diag_itensor(sqrt.(array(diag(a))), is)
     else # Schur decomp for sqrt is not implemented on GPU so we need to do some back-forth..
         dmtype = promote_type(NDTensors.unwrap_array_type(a))
-        a = tocpu(a)
+        a = adapt(Array,a)
         sq_a = adapt(dmtype, ITensor(sqrt(matrix(a)), is))
     end
 
