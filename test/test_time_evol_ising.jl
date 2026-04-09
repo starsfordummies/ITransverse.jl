@@ -32,8 +32,9 @@ init_state = plus_state
 cutoff = 1e-12
 maxdim = 200
 direction = :right
+alg="densitymatrix"
 
-truncp = (;cutoff, maxdim, direction)
+truncp = (;cutoff, maxdim, direction, alg)
 
 Nsteps = round(Int, TMAX/dt)
 

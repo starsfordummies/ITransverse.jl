@@ -2,25 +2,38 @@
 Power method for *symmetric* case: takes as input a single MPS psi and an MPO O,
     applies the mpo and optimizes the overlap <psiO*|Opsi> 
 """
-function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams)
+function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams; normalize_psi0::Bool=false)
 
-    (; itermax, truncp, normalization, compute_fidelity) = pm_params
+    (; itermax, truncp, cutoffs, maxdims, normalization, compute_fidelity) = pm_params
 
-    stepper, info_iterations, maxdims = init_pm(pm_params)
+    stepper, info_iterations = init_pm(pm_params)
     
     # normalize initial boundary for stability
-    psi_work = normalize(in_mps)
+    psi_work = normalize_psi0 ? normalize(in_mps) : in_mps
 
-    p = Progress(itermax; desc="[Symmetric PM|$(truncp.alg)] L=$(length(in_mps)), cutoff=$(truncp.cutoff), χmax=$(maxdims[end]), normalize=$(normalization))", showspeed=true) 
+    use_eig = get(truncp, :use_eig, false)
+    use_eig_string = use_eig ? "EIG" : "SVD"
 
+    pm_info_string = "[Symmetric PM|$(truncp.alg)|$(use_eig_string)] L=$(length(in_mps)), cutoff=$(truncp.cutoff), χmax=$(maxdims[end]), normalize=$(normalization))"
+
+    p = Progress(itermax; desc=pm_info_string, showspeed=true) 
+
+    eltype_S = use_eig ? ComplexF64 : Float64 
+
+    sv_prev = zeros(eltype_S, 2,2)
 
     for jj = 1:itermax
+
+        maxdim = get(maxdims, jj, maxdims[end])
+        cutoff = get(cutoffs, jj, cutoffs[end])
+        truncp = merge(pm_params.truncp, (;cutoff, maxdim))
+
 
         if compute_fidelity
             psi_prev = copy(psi_work)
         end
 
-        psi_work, sv = tapply(in_mpo, psi_work; maxdim=maxdims[jj], truncp...)
+        psi_work, sv = tapply(in_mpo, psi_work; truncp...)
 
         if normalization == "norm"
             #orthogonalize!(psi_ortho,1)
@@ -38,7 +51,8 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams)
         end
 
 
-        stop, reason = pm_itercheck!(stepper, info_iterations, psi_work, sv)
+        stop, reason = pm_itercheck!(stepper, info_iterations, psi_work, sv_prev, sv)
+        sv_prev = sv 
 
         # should we stop?
         if stop
@@ -47,7 +61,7 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams)
             elseif reason == :stuck
                 @warn "PM Stuck after $(stepper.iters_without_improvement)/$(jj) steps | ds=$(last(info_iterations[:ds])) | chi=$(maxlinkdim(psi_work))"
             end
-          
+        
             break
         end
 
@@ -55,10 +69,7 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams)
             @warn "PM **not** converged after $(jj) steps | ds=$(last(info_iterations[:ds])) | chi=$(maxlinkdim(psi_work))"
         end
 
-
         next!(p; showvalues = [(:Info,"[$(jj)]  chi=$(maxlinkdim(psi_work)) | ds2=$(last(info_iterations[:ds])) | <R|Rprev> = $(fidelity)" )])
-
-            
 
     end
 

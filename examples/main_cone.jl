@@ -81,4 +81,3 @@ write_cp(checkpt, filename="temp_cp.jld2")
         )
 
 psi, psiR, checkpt = resume_cone("temp_cp.jld2", 50; f_obs=myf_obs, f_savestate=myf_savestate)
-

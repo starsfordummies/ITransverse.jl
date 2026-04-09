@@ -7,4 +7,4 @@
 
 
 function togpu end
-function tocpu end 
+tocpu(x) = x 

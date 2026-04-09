@@ -3,12 +3,12 @@ Symmetric truncate for MPS optimizing the RTM |psi*><psi|.
 direction = :left  → sweeps 1→N
 direction = :right → sweeps N→1
 """
-function truncate_sweep_sym(in_psi::MPS; cutoff::Float64, maxdim::Int,
-                             method::String, direction::Symbol=:right)
+function truncate_sweep_sym(in_psi::MPS; 
+    cutoff::Float64, maxdim::Int, use_eig::Bool=false, direction::Symbol=:right)
 
     mpslen = length(in_psi)
-    elt = method == "SVD" ? Float64 : ComplexF64
-    SV_all = zeros(elt, mpslen-1, maxdim)
+    eltype_S = use_eig ? ComplexF64 : Float64 
+    SV_all = zeros(eltype_S, mpslen-1, maxdim)
 
     sweep_start, sweep_step, sweep_end, sv_offset = if direction == :right
         mpslen, -1, 2, -1
@@ -33,7 +33,7 @@ function truncate_sweep_sym(in_psi::MPS; cutoff::Float64, maxdim::Int,
         env *= noprime(Ai', ss[ii]')
         @assert order(env) == 2 "unexpected env indices: $(inds(env))"
 
-        Sn = if method == "SVD"
+        Sn = if !use_eig 
             F = symm_svd(env, ind(env, 1); cutoff, maxdim, lefttags="Link,l=$(ii+sv_offset)")
     
             XU    = dag(F.U)
@@ -43,7 +43,7 @@ function truncate_sweep_sym(in_psi::MPS; cutoff::Float64, maxdim::Int,
             env /= sS
             Sn = Array(storage(F.S).data)/sS
 
-        elseif method == "EIG"
+        else
             F = symm_oeig(env, ind(env, 1); cutoff, maxdim)
     
             sqS  = F.D .^ -0.5
@@ -54,8 +54,6 @@ function truncate_sweep_sym(in_psi::MPS; cutoff::Float64, maxdim::Int,
 
             Sn = Array(storage(F.D).data)/sum(F.D)
 
-        else
-            error("Valid methods are: SVD | EIG  (here method=$(method))")
         end
 
         psi[ii] = Ai * XU
@@ -76,6 +74,7 @@ end
 """ Truncate <psi*|psi> by explicitly building the symmetric RTMs and computing their SVD decompositions"""
 function truncate_sweep_sym_rtm!(psi::MPS; direction::Symbol=:right, maxdim::Int, kwargs...)
 
+    # TODO allow for eig here ? 
     ss = siteinds(psi)
     N = length(ss)
     psip = prime(linkinds, psi)
@@ -226,23 +225,18 @@ function ITenUtils.tcontract(::Algorithm"RTMsym",
         #@assert ndims(rho) < 5 " $j $(inds(rho))"
 
 
-        U, S, l_renorm = if use_eig
+        U, S, l_renorm, L  = if use_eig
             F = symm_oeig(rho, Lis, Lis''; cutoff, maxdim=bond_maxdim, lefttags=ts, kwargs...)
-            F.V, F.D, F.l 
+            F.V, F.D, F.l, L * F.V * ψ[j+1] * A[j+1]
+
         else
             F = symm_svd(rho, Lis, Lis''; cutoff, maxdim=bond_maxdim, lefttags=ts, kwargs...)
-            F.U, F.S, F.u
+            F.U, F.S, F.u, L * dag(F.U) * ψ[j+1] * A[j+1]
+
         end
 
-        #= 
-        F = symm_svd(rho, Lis, Lis''; cutoff, maxdim=bond_maxdim, lefttags=ts, kwargs...)
-        U = F.U
-
-        l_renorm = F.u
-        =# 
         ψ_out[j] = U
 
-        L = L * dag(U) * ψ[j+1] * A[j+1]
 
         Svec = Array(storage(S).data)/sum(S)
  

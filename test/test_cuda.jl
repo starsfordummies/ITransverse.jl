@@ -15,9 +15,8 @@ end
 CUDAext = Base.get_extension(ITransverse, :ITransverseCUDAExt)
 if isnothing(CUDAext) || !(@isdefined(togpu))
     @warn "ITransverseCUDAExt not loaded — skipping CUDA tests"
-    return
-end
 
+else
 
 @testset "CUDA: adapt tMPOParams / block structs" begin
 
@@ -57,14 +56,16 @@ end
 
     init_mps   = folded_right_tMPS(b, time_sites)
     mpo_1      = folded_tMPO(b, time_sites)
+    mpo_op      = folded_tMPO(b, time_sites; fold_op=vZ)
 
-    truncp    = (; cutoff=1e-10, maxdim=32, direction=:right)
-    pm_params = PMParams(; truncp, itermax=50, eps_converged=1e-6, opt_method="RDM", normalization="norm")
 
-    ll, rr, _ = powermethod_op(init_mps, mpo_1, mpo_1, pm_params)
+    truncp    = (; cutoff=1e-10, maxdim=32, direction=:right, alg="RTM")
+    pm_params = PMParams(; truncp, itermax=50, eps_converged=1e-6, opt_method=:sym, normalization="norm")
+
+    ll, rr, _ = powermethod_op(init_mps; mpo_id=mpo_1, mpo_op=mpo_1, pm_params)
 
     @test NDTensors.unwrap_array_type(ll[1]) <: CUDA.CuArray
-    ev = compute_expvals(tocpu(ll), tocpu(rr), ["Z"], b)
+    ev = compute_expvals(ll, rr, ["Z"], b)
     @test abs(imag(ev["Z"])) < 1e-6
 end
 
@@ -88,3 +89,4 @@ end
 
 end
 
+end

@@ -15,10 +15,9 @@ end
 
 # Iteration step checker
 
-Base.@kwdef mutable struct PMstep{T <: Number}
+Base.@kwdef mutable struct PMstep
     icurr::Int = 0
     best_ds::Float64 = Inf
-    prev_s::Matrix{T}
     iters_without_improvement::Int = 0
 
     # Convergence criteria 
@@ -34,9 +33,7 @@ function PMstep(pm_params::PMParams;
     stuck_after::Int=pm_params.stuck_after,
     itermin::Int=pm_params.itermin)
 
-    prev_s = zeros(2,2)
-
-    PMstep(;prev_s, eps_converged, stuck_after, itermin)
+    PMstep(;eps_converged, stuck_after, itermin)
 end
 
 
@@ -50,7 +47,7 @@ function init_pm(pm::PMParams)
         :chi => Int[]
     )
 
-    return stepper, info_iterations, pm.maxdims
+    return stepper, info_iterations
 end
 
 
@@ -58,12 +55,12 @@ function pm_itercheck!(
     stepper::PMstep,
     info_iterations::Dict,
     psi::MPS,
+    prev_s::Matrix,
     Smat::Matrix)
     
     #@show sum(Smat[10,:])
 
-    ds = stepper.icurr == 0 ? Inf : max_diff(stepper.prev_s, Smat) 
-    stepper.prev_s = Smat
+    ds = stepper.icurr == 0 ? Inf : max_diff(prev_s, Smat) 
 
     chi = maxlinkdim(psi)
     

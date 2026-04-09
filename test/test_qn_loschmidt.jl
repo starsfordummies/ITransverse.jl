@@ -28,12 +28,12 @@ mpo= fw_tMPO(b, time_sites; tr = tp.bl)
 start_mps = fw_tMPS(b, time_sites; LR=:right, tr = tp.bl)
 
 
-truncp = TruncParams(mycutoff, maxdim)
+truncp = (;cutoff=mycutoff, maxdim, alg="RTMsym")
 
-pm_params = PMParams(;truncp, itermax, eps_converged, opt_method="RTM", normalization="norm")
+pm_params = PMParams(;truncp, itermax, eps_converged, opt_method=:sym, normalization="norm")
 psi_svd, ds2 = powermethod_sym(start_mps, mpo, pm_params)
 
-pm_params = PMParams(;truncp, itermax, eps_converged, opt_method="RDM", normalization="norm")
+pm_params = PMParams(;truncp, itermax, eps_converged, opt_method=:sym, normalization="norm")
 psi_rdm, ds2 = powermethod_sym(start_mps, mpo, pm_params)
 
 

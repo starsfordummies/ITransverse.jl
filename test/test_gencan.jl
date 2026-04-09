@@ -12,7 +12,7 @@ rr = ll + dag(ll)
 # TODO checks for symmetric forms 
 
 ll = random_mps(ComplexF64, s, linkdims=test_linkdim)
-llc = deepcopy(ll)
+llc = copy(ll)
 
 lln = gen_canonical(ll, 1)
 @test check_gencan_right(lln, lln)

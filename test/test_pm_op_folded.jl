@@ -13,7 +13,7 @@ using Test
     verbose=false
     eps_converged=1e-10
 
-    truncp = (;cutoff, maxdim, direction)
+    truncp = (;cutoff, maxdim, alg="RTM", direction)
 
     sigX = ComplexF64[0,1,1,0]
 
@@ -29,27 +29,27 @@ using Test
     mpo_X = folded_tMPO(b, time_sites; fold_op=sigX)
     mpo_1 = folded_tMPO(b, time_sites)
 
-    pm_params = PMParams(;truncp, itermax, eps_converged, opt_method="RTM_LR", normalization="norm")
-    ll, rr, ds2_pm  = powermethod_op(init_mps, mpo_1, mpo_X, pm_params) 
+    pm_params = PMParams(;truncp, itermax, eps_converged, opt_method=:nosym, normalization="norm")
+    ll, rr, ds2_pm  = powermethod_op(init_mps, mpo_id=mpo_1, mpo_op=mpo_X, pm_params) 
 
     ev = compute_expvals(ll, rr, ["X"], b)
     χ_LR = maxlinkdim(ll)
 
-    pm_params = PMParams(;truncp, itermax, eps_converged, opt_method="RTM_R", normalization="norm")
-    ll, rr, ds2_pm  = powermethod_op(init_mps, mpo_1, mpo_X, pm_params) 
+    pm_params = PMParams(;truncp, itermax, eps_converged, opt_method=:sym, normalization="norm")
+    ll, rr, ds2_pm  = powermethod_op(init_mps, mpo_id=mpo_1, mpo_op=mpo_X, pm_params) 
 
     evsym = compute_expvals(ll, rr, ["X"], b)
     χ_R = maxlinkdim(ll)
 
-    truncp = TruncParams(sqrt(cutoff), maxdim)
-    pm_params = PMParams(;truncp, itermax, eps_converged, opt_method="RDM", normalization="norm")
-    ll, rr, ds2_pm  = powermethod_op(init_mps, mpo_1, mpo_X, pm_params) 
+    truncp = (;cutoff=sqrt(cutoff), maxdim, alg="densitymatrix")
+    pm_params = PMParams(;truncp, itermax, eps_converged, opt_method=:nosym, normalization="norm")
+    ll, rr, ds2_pm  = powermethod_op(init_mps, mpo_id=mpo_1, mpo_op=mpo_X, pm_params) 
     ev_rdm = compute_expvals(ll, rr, ["X"], b)
     χ_RDM = maxlinkdim(ll)
 
-    truncp = TruncParams(sqrt(cutoff), maxdim)
-    pm_params = PMParams(;truncp, itermax, eps_converged, opt_method="RDM_R", normalization="norm")
-    ll, rr, ds2_pm  = powermethod_op(init_mps, mpo_1, mpo_X, pm_params) 
+    truncp = (;cutoff=sqrt(cutoff), maxdim, alg="densitymatrix")
+    pm_params = PMParams(;truncp, itermax, eps_converged, opt_method=:sym, normalization="norm")
+    ll, rr, ds2_pm  = powermethod_op(init_mps, mpo_id=mpo_1, mpo_op=mpo_X, pm_params) 
     ev_sym_rdm = compute_expvals(ll, rr, ["X"], b)
     χ_sym_rdm = maxlinkdim(ll)
 

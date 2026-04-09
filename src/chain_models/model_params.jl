@@ -50,7 +50,7 @@ struct XXZParams{T <: Number} <: ModelParams
     phys_site::Index{Int64}
 end
 
-# Default to Spin 1/2 Heisenberg ? 
+# Default to Spin 1/2 Heisenberg 
 function XXZParams(J_XY::Number, J_ZZ::Number, hz::Number=0., phys_site = Index(2, "S=1/2"))
     T = promote_type(Float64, typeof(J_XY), typeof(J_ZZ), typeof(hz))
     XXZParams{T}(T(J_XY), T(J_ZZ), T(hz), phys_site)
