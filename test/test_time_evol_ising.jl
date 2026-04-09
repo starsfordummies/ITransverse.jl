@@ -61,7 +61,6 @@ c0 = init_cone(b, 10; full=false)
 cp = DoCheckpoint(
     "cp_cone.jld2";
     params=tp,
-    save_at=0,
     f_obs = (
         Z = s -> expval_LR(s.L, s.R, [1,0,0,-1], s.b),
         tt = s -> length(s.L)*tp.dt

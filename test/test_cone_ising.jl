@@ -34,7 +34,6 @@ c0 = init_cone(b)
 cp = DoCheckpoint(
         "cp_cone.jld2";
         params=tp,
-        save_at=0,
         f_obs = (
             X = s -> expval_LR(s.L, s.R, [0,1,1,0], s.b),
         ),

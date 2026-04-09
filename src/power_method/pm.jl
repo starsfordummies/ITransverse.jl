@@ -114,10 +114,7 @@ function powermethod_lr(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::PM
     pm_info_string = "[PM LR|$(pm_params.truncp.alg)|$(opt_method)] L=$(length(in_mps)), cutoff=$(last(cutoffs)), maxdim=$(last(maxdims)), normalize=$(normalization))"
 
     p = Progress(itermax; desc=pm_info_string, showspeed=true) 
-
-
-    p = Progress(itermax; desc=pm_info_string, showspeed=true) 
-
+    
     for jj = 1:itermax
 
         ll, rr, svs = tlrapply(ll, in_mpo_L, in_mpo_R, rr; truncp...)

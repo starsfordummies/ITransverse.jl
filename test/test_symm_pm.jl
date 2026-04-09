@@ -105,9 +105,5 @@ end
 
 @test norm(allents[:eig]["S2.0"] - allents[:svd]["S2.0"] )/norm(allents[:eig]["S2.0"]) < 0.001
 @test norm(allents[:eig]["S2.0"] - allents[:rdm]["S2.0"] )/norm(allents[:eig]["S2.0"]) < 0.001
-
 @test norm(allents[:naivertm]["S2.0"] - allents[:rdm]["S2.0"] )/norm(allents[:naivertm]["S2.0"]) < 0.001
-@test norm(allents[:naivertm]["S2.0"] - allents[:rdm]["S2.0"] )/norm(allents[:naivertm]["S2.0"]) < 0.001
-
-@test norm(allents[:naivertmeig]["S2.0"] - allents[:rdm]["S2.0"] )/norm(allents[:naivertmeig]["S2.0"]) < 0.001
 @test norm(allents[:naivertmeig]["S2.0"] - allents[:rdm]["S2.0"] )/norm(allents[:naivertmeig]["S2.0"]) < 0.001

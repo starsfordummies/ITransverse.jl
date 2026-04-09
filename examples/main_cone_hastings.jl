@@ -40,7 +40,7 @@ function main_cone()
     cp = DoCheckpoint(
         "cp_cone.jld2";
         params=tp,
-        save_at=10,
+        save_at=20:100,
         f_obs = (
             entropy = s -> vn_entanglement_entropy(s.R),
             overlap = s -> overlap_noconj(s.L, s.R),
