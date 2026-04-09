@@ -2,7 +2,6 @@ using ITensors
 using ITensorMPS
 
 using ITransverse
-using ITransverse: vX, vZ, vI
 
 tp = ising_tp(init_state=[1,0,0,1]/2)
 

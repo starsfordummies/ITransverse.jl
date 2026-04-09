@@ -98,7 +98,11 @@ function folded_right_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index}; kwargs...)
     folded_tMPS(b,ts; LR=:right, kwargs...)
 end
 
-function folded_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index}; LR::Symbol=:right, kwargs...)
+function folded_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index}; LR::Symbol=:right, init_beta_only::Bool=true, kwargs...)
+
+    if !init_beta_only
+        error("init_beta on both sides not implemented yet")
+    end
     if LR == :left
         WW = b.WWl
         WW_im = b.WWl_im

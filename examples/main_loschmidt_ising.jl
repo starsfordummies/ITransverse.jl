@@ -7,14 +7,14 @@ using ITransverse: plus_state, up_state
 function ising_loschmidt(tp::tMPOParams, Tstart::Int, Tend::Int, nbeta::Int; Tstep::Int=1)
 
     alg = "RTMsym"
-    cutoff = 1e-12
-    maxdim = 128
-    itermax = 1000
+    cutoffs = [1e-12]
+    maxdims = 2:2:128
+    itermax = 3000
     eps_converged = 1e-9
 
     truncp = (;cutoff, maxdim, alg)
     #pm_params = PMParams(truncp, itermax, eps_converged, true, "RTM", "overlap", true, stuck_after)
-    pm_params = PMParams(;truncp, maxdim, itermax, eps_converged, normalization="overlap", stuck_after=200)
+    pm_params = PMParams(;truncp, cutoffs, maxdims, itermax, eps_converged, normalization="overlap", stuck_after=200)
 
 
     ll_murgs = Vector{MPS}()
@@ -86,7 +86,7 @@ function main_losch()
     gx = 0.0
     #H= JXX - 2.0 * 0.525 Z + 2 * 0.25 X
 
-    dt = 0.05
+    dt = 0.1
 
     nbeta = 4
 
@@ -97,12 +97,12 @@ function main_losch()
 
     @info ("Initial state $(init_state)  => quench @ $(mp) ")
     
-    Tmin = 120
-    Tmax = 120
+    Tmin = 60
+    Tmax = 60
     Tstep = 1
 
 
-    tp = tMPOParams(dt,  expH_ising_murg, mp, nbeta, init_state)
+    tp = tMPOParams(dt, im*dt, expH_ising_murg, mp, nbeta, init_state)
     psis, results = ising_loschmidt(tp, Tmin, Tmax, nbeta; Tstep)
 
     rr2s = []

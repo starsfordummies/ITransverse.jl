@@ -77,4 +77,3 @@ for (params, zerr, chi) in zip(allpars, allerrs, allchis)
         @test abs(zerr) < 1e-4
     end
 end
-

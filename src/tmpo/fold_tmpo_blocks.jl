@@ -36,7 +36,7 @@ end
 
 """ Builds FoldtMPOBlocks tensors making the rotated+folded tMPO (L,R,P,P') => (P',P,L,R)
 from either tMPOParameters or directly from an MPO of U=exp(iHt) defined on spatial links """
-function FoldtMPOBlocks(x::Union{tMPOParams, MPO}; init_state=nothing, build_imag::Bool=true, check_sym::Bool=true)
+function FoldtMPOBlocks(x::Union{tMPOParams, MPO}; init_state=nothing, check_sym::Bool=true)
 
     WWl, WWc, WWr, (link1, link2, P, Ps) = build_WW(x)
     time_P = Index(dim(link1), "Site,time")
@@ -64,44 +64,40 @@ function FoldtMPOBlocks(x::Union{tMPOParams, MPO}; init_state=nothing, build_ima
     WWr = replaceinds(WWr, unrotated_inds, rotated_inds)
 
   
-    tp = if x isa tMPOParams
-        # tMPOParams mode
-        # Build -im*dt version
-  
-        if isnothing(init_state)
-            init_state = x.bl
-        end
-        tp = tMPOParams(x; bl=to_itensor(init_state, "Site"))
-    else # x isa MPO 
+    tp, WWl_im, WWc_im, WWr_im = if x isa MPO 
 
         if isnothing(init_state)
-            @error "Need to specify initial state if we don't pass tp"
+            error("Need to specify initial state if we don't pass tp")
         else
             init_state = to_itensor(init_state, "Site")
         end
         # If the input is an MPO, we don't build anyting else, just put placeholders in tp 
-        build_imag = false
         phys_site = siteind(x,2)
         mp = NoParams(phys_site)
-        tp = tMPOParams(NaN, nothing, mp, 0, init_state)
-    end
+        tp = tMPOParams(NaN, NaN, nothing, mp, 0, init_state)
+        tp, WWl, WWc, WWr
 
+    else # x isa tMPOParams
 
-    WWl_im, WWc_im, WWr_im = WWl, WWc, WWr
+        if isnothing(init_state)
+            init_state = x.bl
+        end
 
-    if build_imag
-        tpim = tMPOParams(x; dt = -im*x.dt)
-        WWl_im, WWc_im, WWr_im, unrotated_inds = build_WW(tpim)
+        tp = tMPOParams(x; bl=to_itensor(init_state, "Site"))
+
+        
+        WWl_im, WWc_im, WWr_im, unrotated_inds = build_WW(tp; build_imag=true)
 
         WWl_im = replaceinds(WWl_im, unrotated_inds, rotated_inds)
         WWc_im = replaceinds(WWc_im, unrotated_inds, rotated_inds)
         WWr_im = replaceinds(WWr_im, unrotated_inds, rotated_inds)
 
+        tp, WWl_im, WWc_im, WWr_im
+
     end
 
     init_state = tp.bl
 
-    @show inds(init_state)
     iP = phys_ind(init_state)
     physdim_init = dim(iP)
     @assert ndims(init_state) == 1 || ndims(init_state) == 3
@@ -141,24 +137,13 @@ function FoldtMPOBlocks(x::Union{tMPOParams, MPO}; init_state=nothing, build_ima
 end
 
 
-function get_Ws(b::FoldtMPOBlocks; imag::Bool=false)
-    if !imag
-        b.WWl, b.WWc, b.WWr 
-    else
-        b.WWl_im, b.WWc_im, b.WWr_im
-    end
-end
+get_Ws(b::FoldtMPOBlocks; imag::Bool=false) = imag ? (b.WWl_im, b.WWc_im, b.WWr_im) : (b.WWl, b.WWc, b.WWr)
 
 
-function Adapt.adapt_structure(to, b::FoldtMPOBlocks)
-    FoldtMPOBlocks(
-        adapt(to, b.WWl),    adapt(to, b.WWc),    adapt(to, b.WWr),
-        adapt(to, b.WWl_im), adapt(to, b.WWc_im), adapt(to, b.WWr_im),
-        adapt(to, b.rho0),
-        adapt(to, b.tp),
-        b.rot_inds   
-    )
-end
+Adapt.adapt_structure(to, b::FoldtMPOBlocks) = FoldtMPOBlocks(b;
+    WWl=adapt(to, b.WWl),    WWc=adapt(to, b.WWc),    WWr=adapt(to, b.WWr),
+    WWl_im=adapt(to, b.WWl_im), WWc_im=adapt(to, b.WWc_im), WWr_im=adapt(to, b.WWr_im),
+    rho0=adapt(to, b.rho0), tp=adapt(to, b.tp))
 
 
 function Base.show(io::IO, b::FoldtMPOBlocks)

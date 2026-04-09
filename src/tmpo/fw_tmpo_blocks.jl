@@ -21,7 +21,7 @@ struct FwtMPOBlocks
 end
 
 
-function FwtMPOBlocks(tp::tMPOParams; build_imag::Bool=true, init_state=nothing)
+function FwtMPOBlocks(tp::tMPOParams; init_state=nothing)
     Wl, Wc, Wr, rot_inds = make_fwtmpoblocks(tp)
 
     if !isnothing(init_state)
@@ -29,19 +29,15 @@ function FwtMPOBlocks(tp::tMPOParams; build_imag::Bool=true, init_state=nothing)
         tp = tMPOParams(tp; bl=init_state)
     end
 
-    if build_imag
-        Wl_im, Wc_im, Wr_im, rot_inds_im = make_fwtmpoblocks(tp; build_imag=true)
-        iminds = (rot_inds_im[:L], rot_inds_im[:R], rot_inds_im[:P], rot_inds_im[:Ps])
-        inds =   (   rot_inds[:L],    rot_inds[:R],    rot_inds[:P],    rot_inds[:Ps])
+    Wl_im, Wc_im, Wr_im, rot_inds_im = make_fwtmpoblocks(tp; build_imag=true)
+    iminds = (rot_inds_im[:L], rot_inds_im[:R], rot_inds_im[:P], rot_inds_im[:Ps])
+    inds =   (   rot_inds[:L],    rot_inds[:R],    rot_inds[:P],    rot_inds[:Ps])
 
-        Wl_im = replaceinds(Wl_im, iminds, inds)
-        Wc_im = replaceinds(Wc_im, iminds, inds)
-        Wr_im = replaceinds(Wr_im, iminds, inds)
-        
-        return FwtMPOBlocks(Wl, Wc, Wr, Wl_im, Wc_im, Wr_im, tp, rot_inds)
-    else
-        return FwtMPOBlocks(Wl, Wc, Wr, Wl, Wc, Wr, tp, rot_inds)
-    end
+    Wl_im = replaceinds(Wl_im, iminds, inds)
+    Wc_im = replaceinds(Wc_im, iminds, inds)
+    Wr_im = replaceinds(Wr_im, iminds, inds)
+    
+    return FwtMPOBlocks(Wl, Wc, Wr, Wl_im, Wc_im, Wr_im, tp, rot_inds)
 
 end
 
@@ -58,7 +54,10 @@ function FwtMPOBlocks(b::FwtMPOBlocks;
     return FwtMPOBlocks(Wl, Wc, Wr, Wl_im, Wc_im, Wr_im, tp, rot_inds)
 end
 
-make_fwtmpoblocks(tp::tMPOParams; build_imag::Bool=false) = make_fwtmpoblocks(build_Ut(tp; build_imag))
+function make_fwtmpoblocks(tp::tMPOParams; build_imag::Bool=false)
+    dt = build_imag ? tp.dbeta : tp.dt 
+    make_fwtmpoblocks(build_Ut(tp; dt))
+end
 
 function make_fwtmpoblocks(eH::MPO; check_sym::Bool=true)
 
@@ -78,11 +77,8 @@ function make_fwtmpoblocks(eH::MPO; check_sym::Bool=true)
 
 
 
-    #time_P = Index(dim(iLink1),"Site,time")
     time_P = sim(iLink1, tags="Site,time")
-    #time_vL = Index(dim(icP),"Link,time")
     time_vL = sim(icP, tags="Link,time")
-    #time_vR = Index(dim(icP'),"Link,time")
     time_vR = sim(icP', tags="Link,time")
 
 
@@ -98,27 +94,15 @@ function make_fwtmpoblocks(eH::MPO; check_sym::Bool=true)
 end
 
 
-function get_Ws(b::FwtMPOBlocks; imag::Bool=false)
-    if !imag
-        b.Wl, b.Wc, b.Wr 
-    else
-        b.Wl_im, b.Wc_im, b.Wr_im
-    end
-end
+get_Ws(b::FwtMPOBlocks; imag::Bool=false) = imag ? (b.Wl_im, b.Wc_im, b.Wr_im) : (b.Wl, b.Wc, b.Wr)
 
 
 
 
-Adapt.adapt_structure(to, b::FwtMPOBlocks) = FwtMPOBlocks(
-    adapt(to, b.Wl), 
-    adapt(to, b.Wc), 
-    adapt(to, b.Wr),
-    adapt(to, b.Wl_im), 
-    adapt(to, b.Wc_im), 
-    adapt(to, b.Wr_im),
-    adapt(to, b.tp), 
-    b.rot_inds
-)
+Adapt.adapt_structure(to, b::FwtMPOBlocks) = FwtMPOBlocks(b;
+    Wl=adapt(to, b.Wl), Wc=adapt(to, b.Wc), Wr=adapt(to, b.Wr),
+    Wl_im=adapt(to, b.Wl_im), Wc_im=adapt(to, b.Wc_im), Wr_im=adapt(to, b.Wr_im),
+    tp=adapt(to, b.tp))
 
 
 function Base.show(io::IO, b::FwtMPOBlocks)

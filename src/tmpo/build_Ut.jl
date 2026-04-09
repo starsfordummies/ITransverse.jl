@@ -17,17 +17,12 @@ function _build_Ut(sites::Vector{<:Index},
     return Ut 
 end
 
-function build_Ut(sites::Vector{<:Index}, fUt::Function, mp::ModelParams; 
-    dt::Number, 
-    build_imag::Bool=false, build_4o::Bool=false)
-    if build_imag
-        dt = -im*dt
-    end
+function build_Ut(sites::Vector{<:Index}, fUt::Function, mp::ModelParams; dt::Number, build_4o::Bool=false)
     _build_Ut(sites, fUt, modelparams(mp)...; dt, build_4o)
 end
 
-function build_Ut(sites::Vector{<:Index}, tp::tMPOParams; dt::Number=tp.dt, build_imag::Bool=false, build_4o::Bool=false)
-    build_Ut(sites, tp.expH_func, tp.mp; dt, build_imag, build_4o)
+function build_Ut(sites::Vector{<:Index}, tp::tMPOParams; dt::Number=tp.dt, build_4o::Bool=false)
+    build_Ut(sites, tp.expH_func, tp.mp; dt, build_4o)
 end
 
 function build_Ut(fUt::Function, mp::ModelParams; kwargs...)
