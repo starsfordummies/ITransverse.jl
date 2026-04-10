@@ -39,8 +39,9 @@ function main_cone()
     cone_params = ConeParams(;truncp, opt_method=:sym, optimize_op)
 
     cp = DoCheckpoint(
-        "cp_cone.jld2";
+        "cp_cone_xx.jld2";
         params=Dict("tparams" => tp, "cparams" => cone_params),
+        save_at = [39,48],
         f_obs = (
             SVN = s -> vn_entanglement_entropy(s.R),
             S_SVD = s -> generalized_svd_vn_entropy(s.L, s.R),

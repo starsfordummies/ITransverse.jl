@@ -33,67 +33,64 @@ function run_cone(ll::MPS, rr::MPS,
         sweep_str = "???"
     end
 
-    nsteps = nT_final - length(ll)
+    start_length = length(rr)
+    @assert length(ll) == length(rr)
 
-    p = Progress(div(nsteps, vwidth); desc="[cone(v=$vwidth)|$(opt_method)|$(truncp.alg)] [$(sweep_str)] cutoff=$(truncp.cutoff), maxdim=$(truncp.maxdim))", showspeed=true) 
+    nsteps = div(nT_final - length(rr), vwidth)
 
-    for nt = 1:nsteps
+    info_str = "[cone(v=$vwidth)|$(opt_method)|$(truncp.alg)] [$(sweep_str)] cutoff=$(truncp.cutoff), maxdim=$(truncp.maxdim))"
+    p = Progress(nsteps; desc=info_str, showspeed=true) 
 
-        # Only extend the cone every vwidth timesteps
-        if nt % vwidth == 0
+    time_steps = (start_length + vwidth) : vwidth : nT_final
 
-            ts = siteinds(rr)
-            #Extend timesites by 1 
-            for jj = 1:vwidth
-                push!(ts, Index(time_dim, tags="Site,n=$(length(rr)+jj),time_fold"))
-            end
+    for nt in time_steps
 
-            # We can extend by more than one timestep if the cone is narrow
-            n_ext = length(ts) - length(ll)
+        ts = siteinds(rr)
+        n_ext = nt - length(rr)
+        append!(ts, [Index(time_dim, tags="Site,n=$(length(rr)+jj),time_fold") for jj in 1:n_ext])
 
-            ll, rr, sv = if opt_method == :sym
+        ll, rr, sv = if opt_method == :sym
 
-                tmpoL = folded_tMPO_ext(b, ts; LR=:left, fold_op=optimize_op, n_ext) 
-                tmpoR = folded_tMPO_ext(b, ts; LR=:right, fold_op=Id, n_ext)
+            tmpoL = folded_tMPO_ext(b, ts; LR=:left, fold_op=optimize_op, n_ext) 
+            tmpoR = folded_tMPO_ext(b, ts; LR=:right, fold_op=Id, n_ext)
+        
+            _, rr, sv = tlrapply(ll, tmpoL, tmpoR, rr; truncp...)
+
+            sim(linkinds, rr), rr, sv
             
-                _, rr, sv = tlrapply(ll, tmpoL, tmpoR, rr; truncp...)
+        else # update both 
 
-                sim(linkinds, rr), rr, sv
-                
-            else # update both 
+            rrp = copy(rr)
 
-                rrp = copy(rr)
+            tmpoL = folded_tMPO_ext(b, ts; LR=:left,  fold_op=optimize_op, n_ext) 
+            tmpoR = folded_tMPO_ext(b, ts; LR=:right, fold_op=Id,          n_ext)
+        
+            _, rr, _ = tlrapply(ll, tmpoL, tmpoR, rrp; truncp...)
 
-                tmpoL = folded_tMPO_ext(b, ts; LR=:left,  fold_op=optimize_op, n_ext) 
-                tmpoR = folded_tMPO_ext(b, ts; LR=:right, fold_op=Id,          n_ext)
-            
-                _, rr, _ = tlrapply(ll, tmpoL, tmpoR, rrp; truncp...)
+            tmpoL = folded_tMPO_ext(b, ts; LR=:left,  fold_op=Id,          n_ext) 
+            tmpoR = folded_tMPO_ext(b, ts; LR=:right, fold_op=optimize_op, n_ext)
+        
+            ll, _, sv = tlrapply(ll, tmpoL, tmpoR, rrp; truncp...)
 
-                tmpoL = folded_tMPO_ext(b, ts; LR=:left,  fold_op=Id,          n_ext) 
-                tmpoR = folded_tMPO_ext(b, ts; LR=:right, fold_op=optimize_op, n_ext)
-            
-                ll, _, sv = tlrapply(ll, tmpoL, tmpoR, rrp; truncp...)
-
-                ll, rr, sv
-            end
-
-
-            overlapLR = overlap_noconj(ll,rr)
-
-            # At each step we renormalize so that the overlap <L|R>=1 !
-            ll *= sqrt(1/overlapLR)
-            rr *= sqrt(1/overlapLR)
-
-            state = (L=ll, R=rr, b=b)
-            checkpoint(state, nt)
-
-
-            next!(p; showvalues = [(:Info,"[$(length(ll))] χ=$(maxlinkdim(ll)), (L|R) = $overlapLR " )])
-
+            ll, rr, sv
         end
+
+
+        overlapLR = overlap_noconj(ll,rr)
+
+        # At each step we renormalize so that the overlap <L|R>=1 !
+        ll *= sqrt(1/overlapLR)
+        rr *= sqrt(1/overlapLR)
+
+        state = (L=ll, R=rr, b=b)
+        checkpoint(state, nt)
+
+
+        next!(p; showvalues = [(:Info,"[$(length(ll))] χ=$(maxlinkdim(ll)), (L|R) = $overlapLR " )])
+
     end
 
-
+    write_cp(checkpoint; filename="OUTcone_final.jld2")
     return ll, rr, checkpoint
 end
 
@@ -129,7 +126,7 @@ function resume_cone(cp::DoCheckpoint, nT_final::Int;
         latest.L, latest.R, latest.b
     end
 
-    nT_start = isempty(cp.steps) ? length(ll) : last(cp.steps)
+    nT_start = length(ll) 
     @info "resume_cone: resuming from step $nT_start → $nT_final  (length(L)=$(length(ll)))"
 
     return run_cone(ll, rr, b, cone_pars, cp, nT_final)
@@ -159,10 +156,10 @@ function resume_cone(filename::String, nT_final::Int;
         save_at,
         f_obs,
         f_savestate,
+        steps,
+        obs_hist,
+        latest,
     )
-    cp.steps    = steps
-    cp.obs_hist = obs_hist
-    cp.latest   = latest
 
     return resume_cone(cp, nT_final; kwargs...)
 end
