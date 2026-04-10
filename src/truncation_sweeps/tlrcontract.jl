@@ -1,8 +1,3 @@
-""" 
-Applies MPO to left-right and truncates on the RTM |AR R><L AL| \\
-Allows for different length MPS/MPO \\
-Returns LEFT, RIGHT, SV
-"""
 function tlrcontract(::Algorithm"RTM",
         ψL::MPS,
         AL::MPO,
@@ -184,7 +179,7 @@ function tlrcontract(::Algorithm"notrunc", psiL::MPS, OL::MPO, OR::MPO, psiR::MP
     return psiLO, OpsiR, sv  
 end
 
-# Cheating but maybe useful if symmetric case: does not touch psiL, OL (assumed to be same as psiR, OR)
+# (Cheating but maybe useful if) symmetric case: does not touch psiL, OL (assumed to be same as psiR, OR)
 function tlrcontract(::Algorithm"RTMsym", psiL::MPS, OL::MPO, OR::MPO, psiR::MPS; kwargs...)
     OpsiR, sv = tcontract(Algorithm(:RTMsym), OR, psiR; kwargs...)
     return OpsiR, OpsiR, sv  
@@ -203,10 +198,7 @@ end
 
 
 
-""" 
-Applies MPO to the right and truncates on the RTM |AR R><L| by building it explicitly \\
-Returns LEFT, RIGHT, SV
-"""
+
 function trcontract(::Algorithm"RTM",
         ψL::MPS,
         AR::MPO,
@@ -343,9 +335,20 @@ function trcontract(::Algorithm"naiveRTM",
     truncate_sweep(ψL, OpsiR; kwargs...)
 end
 
+# Just for conveninence, does not touch left MPS, only acts on Right 
+function trcontract(::Algorithm"densitymatrix", psiL::MPS, AR::MPO, psiR::MPS; kwargs...)
+    OpsiR, sv = tapply(Algorithm("densitymatrix"), AR, psiR; kwargs...)
+    return psiL, OpsiR, sv  
+end
+function trcontract(::Algorithm"naive", psiL::MPS, AR::MPO, psiR::MPS; kwargs...)
+    OpsiR, sv = tapply(Algorithm("naive"), AR, psiR; kwargs...)
+    return psiL, OpsiR, sv  
+end
+
 
 """ 
-Applies MPO to the left and truncates on the RTM |R><L*AL| by building it explicitly \\
+Applies MPO to left-right and truncates on the RTM |AR R><L AL| \\
+Allows for different length MPS/MPO \\
 Returns LEFT, RIGHT, SV
 """
 #TODO check is it as simple as this ? 
@@ -354,11 +357,19 @@ function tlcontract(alg, ψL::MPS, AL::MPO, ψR::MPS; kwargs...)
     return ψL, ψR, sv 
 end
 
+""" 
+Applies MPO to the left and truncates on the RTM |R><L*AL| by building it explicitly \\
+Returns LEFT, RIGHT, SV
+"""
 function tlapply(alg, ψL::MPS, A::MPO, ψR::MPS; kwargs...) 
      tpsiL, tpsiR, sv = tlcontract(alg, ψL, A, ψR; kwargs...)
      return noprime(tpsiL), noprime(tpsiR), sv
 end
 
+""" 
+Applies MPO to the right and truncates on the RTM |AR*R><L| by building it explicitly \\
+Returns LEFT, RIGHT, SV
+"""
 function trapply(alg, ψL::MPS, A::MPO, ψR::MPS; kwargs...) 
      tpsiL, tpsiR, sv = trcontract(alg, ψL, A, ψR; kwargs...)
      return noprime(tpsiL), noprime(tpsiR), sv
