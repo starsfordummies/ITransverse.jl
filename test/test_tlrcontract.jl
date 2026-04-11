@@ -216,3 +216,15 @@ leftref, rightref, sref = ITransverse.tlrapply(ITensors.Algorithm("naiveRTM"), �
 
 @test (abs(gen_fidelity(left, right) - gen_fidelity(leftn, rightn)))/ abs(gen_fidelity(left, right)) < 0.1
 @test gen_fidelity(leftref, rightref) ≈ gen_fidelity(leftn, rightn) 
+
+
+cutoff = 1e-20
+maxdim=256
+truncp = (; cutoff, maxdim, direction)
+left, right, s = ITransverse.trapply(ITensors.Algorithm("RTM"), ψL, AR, ψR; truncp...)
+leftn, rightn, sn = ITransverse.trapply(ITensors.Algorithm("naiveRTM"), ψL, AR, ψR; direction=:right)
+leftref, rightref, sref = ITransverse.trapply(ITensors.Algorithm("densitymatrix"), ψL, AR, ψR; direction=:left)
+
+@test siteinds(right) == siteinds(rightn)
+@test siteinds(right) == siteinds(rightref)
+@test siteinds(leftref) == siteinds(rightref)

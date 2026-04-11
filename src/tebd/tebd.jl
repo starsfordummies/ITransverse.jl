@@ -1,23 +1,30 @@
 """ Basic TEBD to compute the half-chain expectation value of an operator at a given time,
 starts with product state |+> """
-function tebd_ev(Nx::Int, tp::tMPOParams, Nt::Int, ops::Vector{<:String}, truncp::TruncParams)
+function tebd_ev(Nx::Int, tp::tMPOParams, Nt::Int, ops::Vector{<:String}, truncp::TruncParams; psi0 = nothing)
 
     dt = 0.1
 
+    ss, psi0 = if isnothing(psi0) 
 
-    ss =  if  hastags(tp.mp.phys_site, "S=1/2")
-        siteinds("S=1/2", Nx)
-    elseif  hastags(tp.mp.phys_site, "S=1")
-        siteinds("S=1", Nx)
+        ss = if  hastags(tp.mp.phys_site, "S=1/2")
+            siteinds("S=1/2", Nx)
+        elseif  hastags(tp.mp.phys_site, "S=1")
+            siteinds("S=1", Nx)
+        else
+            error("No good site type ? ")
+        end
+
+        #initial state
+        psi0 = pMPS(ss, tp.bl.tensor.storage)
+
+        ss, psi0
+
     else
-        error("No good site type ? ")
+        siteinds(psi0), psi0
     end
-
 
     eH = tp.expH_func(ss, tp.mp, tp.dt)
 
-    #initial state
-    psi0 = pMPS(ss, tp.bl.tensor.storage)
     psi_t = deepcopy(psi0)
 
     eH = adapt(mapreduce(NDTensors.unwrap_array_type, promote_type, psi0), eH)

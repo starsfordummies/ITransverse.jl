@@ -137,16 +137,6 @@ include("folding/foldings.jl")
 include("folding/vectorize_mpo.jl")
 
 
-include("columns_envs/columns.jl")
-include("columns_envs/environments.jl")
-include("columns_envs/initialize_envs.jl")
-include("columns_envs/sweeps_envs.jl")
-
-export Columns, Environments, 
-    initialize_envs, 
-    sweep_rebuild_envs_rtm!, sweep_rebuild_envs_rtm_twocol!,
-    overlap_envs
-
 
 include("checkpoints/checkpoints.jl")
 export DoCheckpoint, write_cp

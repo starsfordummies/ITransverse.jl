@@ -135,7 +135,7 @@ function tcontract(::Algorithm"densitymatrix",
         kwargs...,
     )
 
-    @assert length(A) >= length(ψ)
+    @assert length(A) >= length(ψ)  "Error: length(MPO)=$(length(A)) < $(length(ψ)) = length(ψ) "
 
     N = length(A)
     n = length(ψ)

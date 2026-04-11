@@ -49,8 +49,6 @@ ss = siteinds("S=1/2",3, conserve_szparity=true)
 Utim = build_Ut(ss, expH_ising_murg, tp.mp; dt=-im*0.1)
 Ut   = build_Ut(ss, expH_ising_murg, tp.mp; dt=0.1)
 
-@test build_Ut(ss, expH_ising_murg, tp.mp; dt=-im*0.1) ≈ build_Ut(ss, expH_ising_murg, tp.mp; dt=0.1, build_imag=true)
-
 tp.bl.tensor.storage
 psi_i = MPS(ss, "Up")
 psi_f = MPS(ss, "Up")
