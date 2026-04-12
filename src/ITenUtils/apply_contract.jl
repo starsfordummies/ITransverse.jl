@@ -33,18 +33,34 @@ end
 
 
 
-""" If we have dangling tensors at the right edge of an MPS """
+""" If we have dangling tensors at the right edge of an MPS, contract them out and shorten the MPS """
 function contract_dangling!(psi::AbstractMPS)
-    changed = false
-    while length(psi) > 1 && ndims(psi[end]) == 1 && hascommoninds(psi[end], psi[end-1]) 
-        psi[end-1] = psi[end] * psi[end-1]
+
+    # Optionally: left side contraction too ? 
+    # Left side: setindex!(psi, ..., 2) lets ITensors handle the limit update for the
+    # modified tensor, but popfirst! shifts all absolute indices by -1, so we must
+    # decrement leftlim/rightlim explicitly after each pop to keep them consistent.
+
+    #@show ortho_lims(psi)
+    # while length(psi) > 1
+    #     t = psi[1]
+    #     (ndims(t) == 1 && hascommoninds(t, psi[2])) || break
+    #     psi[2] = t * psi[2]           # setindex! invalidates limits for site 2
+    #     popfirst!(psi.data)            # all indices shift by -1
+    #     ITensorMPS.setleftlim!(psi, max(0, ITensorMPS.leftlim(psi) - 1))
+    #     ITensorMPS.setrightlim!(psi, ITensorMPS.rightlim(psi) - 1)
+    # end
+    #@show ortho_lims(psi)
+
+    # Right side: pop! does not shift indices, so setindex!(psi, ..., end-1) is
+    # sufficient — the limit update is handled automatically by ITensors.
+    while length(psi) > 1
+        t = psi[end]
+        (ndims(t) == 1 && hascommoninds(t, psi[end-1])) || break
+        psi[end-1] = t * psi[end-1]   # setindex! invalidates limits for site end-1
         pop!(psi.data)
-        changed = true
     end
-    
-    if changed 
-        ITensorMPS.reset_ortho_lims!(psi) 
-    end
+    #@show ortho_lims(psi)
 
 end
 
