@@ -124,7 +124,7 @@ end
 
 
 """ Contract MPO-MPS with algorithm densitymatrix, starting from the left. At the end we can chop/extend 
-if we work with light cone """
+if we work with light cone. If `contract_dangling=true` we shrink dangling edges, if present  """
 function tcontract(::Algorithm"densitymatrix",
         A::MPO,
         ψ::MPS;
@@ -132,6 +132,7 @@ function tcontract(::Algorithm"densitymatrix",
         maxdim = maxlinkdim(A) * maxlinkdim(ψ),
         mindim = 1,
         direction = :right,  # TODO not implemented yet 
+        contract_dangling::Bool=true,
         kwargs...,
     )
 
@@ -228,6 +229,10 @@ function tcontract(::Algorithm"densitymatrix",
     #@info "Setting ortho lims $(n-1):$(N+1)"
     ITensorMPS.setleftlim!(ψ_out, n-1)
     ITensorMPS.setrightlim!(ψ_out, N+1)
+
+    if contract_dangling
+        contract_dangling!(ψ_out)
+    end
 
     return ψ_out, S_all
 end
