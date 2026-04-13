@@ -14,7 +14,7 @@ function contract_strings(N::Int, length_string::Int, ts::Int, nbeta::Int)
     cutoff = 1e-12
     maxdim = 128
   
-    truncp = TruncParams(cutoff, maxdim)
+    truncp = (;cutoff, maxdim)
 
     P_up = ComplexF64[1,0,0,0]
 

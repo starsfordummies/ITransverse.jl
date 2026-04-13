@@ -1,6 +1,6 @@
 """ Basic TEBD to compute the half-chain expectation value of an operator at a given time,
 starts with product state |+> """
-function tebd_ev(Nx::Int, tp::tMPOParams, Nt::Int, ops::Vector{<:String}, truncp::TruncParams; psi0 = nothing)
+function tebd_ev(Nx::Int, tp::tMPOParams, Nt::Int, ops::Vector{<:String}, truncp; psi0 = nothing)
 
     dt = 0.1
 
@@ -37,7 +37,7 @@ function tebd_ev(Nx::Int, tp::tMPOParams, Nt::Int, ops::Vector{<:String}, truncp
 
     for nt = 1:Nt
         # println("timestep N°=$(nt)\ttime=$(t)")
-        psi_t = apply(eH, psi_t; maxdim = truncp.maxdim, cutoff = truncp.cutoff, normalize = true)
+        psi_t = apply(eH, psi_t; normalize = true, truncp...)
         for op in keys(evs)
             push!(evs[op], expect(psi_t, op)[LL÷2])
         end
@@ -53,11 +53,11 @@ end
 
 
 """ Basic TEBD to just evolve psi0 for Nt steps """
-function tebd(psi0::MPS, tp::tMPOParams, Nt::Int, truncp::TruncParams)
+function tebd(psi0::MPS, tp::tMPOParams, Nt::Int, truncp)
 
     dt = 0.1
 
-    eH = build_Ut(siteinds(psi0), tp.expH_func, tp.mp; dt=tp.dt, build_imag=false)
+    eH = build_Ut(siteinds(psi0), tp; dt=tp.dt)
     #eH = adapt(mapreduce(NDTensors.unwrap_array_type, promote_type, psi0), eH)
 
     psi_t = copy(psi0)

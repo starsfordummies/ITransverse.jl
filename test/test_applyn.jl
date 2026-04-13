@@ -46,7 +46,7 @@ end
     @test maxlinkdim(psi) < 2^7
 
 
-    tp = TruncParams(1e-20, 24)
+    tp = (;cutoff=1e-20, maxidim=24)
 
     psi = random_mps(ss, linkdims=2)
 
@@ -75,7 +75,7 @@ end
     @test maxlinkdim(psi) < 2^7
 
 
-    tp = TruncParams(1e-20, 24)
+    tp = (;cutoff=1e-20, maxdim=24)
 
     psi = random_mps(ss, linkdims=2)
 

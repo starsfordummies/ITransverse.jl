@@ -87,7 +87,8 @@ function main_losch()
     #H= JXX - 2.0 * 0.525 Z + 2 * 0.25 X
 
     dt = 0.1
-    dbeta = -im*dt 
+    dbeta = -im*dt # normal imag time 
+    dbeta = im*dt # reversed sign beta imag time 
 
     nbeta = 4
 

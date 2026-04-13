@@ -11,9 +11,9 @@ function main_folded_pm()
     itermax = 100
     eps_converged=1e-6
 
-    truncp = TruncParams(cutoff, maxdim)
+    truncp = (;cutoff, maxdim, alg="naiveRTM")
 
-    pm_params = PMParams(;truncp, itermax, eps_converged, opt_method="RTM_LR", normalization="norm")
+    pm_params = PMParams(;truncp, itermax, eps_converged, opt_method=:nosym, normalization="norm")
 
     sigX = ComplexF64[0,1,1,0]
 

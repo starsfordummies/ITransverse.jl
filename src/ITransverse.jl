@@ -64,15 +64,13 @@ export build_H, build_Ut
 #export timeEvo_MPO_2ndOrder, timeEvo_MPO_2ndOrder_LRflipped
 
 
-include("truncation_sweeps/trunc_params.jl")
+#include("truncation_sweeps/trunc_params.jl")
 include("truncation_sweeps/sweeps.jl")
 include("truncation_sweeps/sweeps_sym.jl")
 include("truncation_sweeps/gen_orthogonalize.jl")
 include("truncation_sweeps/gen_form_checks.jl")
 include("truncation_sweeps/tlrcontract.jl")
 include("truncation_sweeps/rtm_tlrcontract.jl")
-
-export TruncParams
 
 export truncate_sweep, truncate_sweep_rtm
 export truncate_lsweep_sym, truncate_rsweep_sym, truncate_sweep_sym
