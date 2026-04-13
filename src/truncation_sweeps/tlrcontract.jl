@@ -1,3 +1,4 @@
+""" Builds LEFT environments and truncates RTM from the RIGHT """
 function tlrcontract(::Algorithm"RTM",
         ψL::MPS,
         AL::MPO,
@@ -22,7 +23,10 @@ function tlrcontract(::Algorithm"RTM",
     nR = length(ψR)
     NL = length(AL)
     NR = length(AR)
-    N  = min(NL, NR)  # output MPS length
+
+
+    # this may be incorrect if both MPOs are shrinking the MPS, but for light cone it shouldn't be an issue 
+    N  = min(NL, NR)  # output MPS length 
 
     @assert NL >= nL
     @assert NR >= nR

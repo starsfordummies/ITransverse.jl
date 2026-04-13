@@ -149,18 +149,15 @@ psiR_chop = applyn(oooL,psiR)
 
 ss = siteinds(4, 2)
 psiR = random_mps(ss, linkdims=20)
-psiR.llim
-psiR.rlim
+
 oooL = ITransverse.folded_tMPO_ext(b, ss; LR=:left, n_ext=1, fold_op=[1,0,0,1])
 
 kk = applyn(oooL,psiR)
 
 
 ITransverse.ITenUtils.contract_dangling!(kk)
-kk.llim
-kk.rlim
- orthogonalize(kk, length(kk))
- normalize(kk)
+orthogonalize(kk, length(kk))
+normalize(kk)
 
 
  #expvals

@@ -70,6 +70,7 @@ include("truncation_sweeps/sweeps_sym.jl")
 include("truncation_sweeps/gen_orthogonalize.jl")
 include("truncation_sweeps/gen_form_checks.jl")
 include("truncation_sweeps/tlrcontract.jl")
+include("truncation_sweeps/rtm_tlrcontract.jl")
 
 export TruncParams
 

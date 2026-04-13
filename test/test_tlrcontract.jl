@@ -193,6 +193,7 @@ llc, rrc, ssc = tlrapply(ψL, AL, AR, ψR; cutoff, maxdim)
 fidelity(rr, rrc)
 fidelity(rr, rrt)
 
+
 ss = siteinds("S=1/2", 40)
 
 ψL = random_mps(ComplexF64, ss, linkdims=100) 
@@ -207,6 +208,8 @@ maxdim=256
 direction = :right 
 truncp = (; cutoff, maxdim, direction)
 left, right, s = ITransverse.tlrapply(ITensors.Algorithm("RTM"), ψL, AL, AR, ψR; truncp...)
+leftll, rightrr, s = ITransverse.tlrapply(ITensors.Algorithm("RTM"), ψL, AL, AR, ψR; merge(truncp, (;direction=:left))...)
+
 leftn, rightn, sn = ITransverse.tlrapply(ITensors.Algorithm("naiveRTM"), ψL, AL, AR, ψR; direction=:left)
 leftref, rightref, sref = ITransverse.tlrapply(ITensors.Algorithm("naiveRTM"), ψL, AL, AR, ψR; direction=:left)
 
