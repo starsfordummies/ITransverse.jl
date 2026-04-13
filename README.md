@@ -211,7 +211,6 @@ Most notably we have
 
 - `ModelParams` for building the basic model Hamiltonians
 - `tMPOParams` for building the temporal MPOs (including the initial states and closing operators)
-- `TruncParams` which specify the cutoffs, max bond dimensions, as well as the truncation scheme when applicable
 - `PMParams` where we store also additional parameters required for the power methods
 - `ConeParams` where we store also additional parameters required for the light cone algorithms
 
