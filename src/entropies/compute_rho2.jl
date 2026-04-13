@@ -2,15 +2,6 @@
 computes tr(τₜ^2) the trace of the reduced transition matrices |phi><psi| at the various cuts,
  by contracting left and right MPS (see also below). 
  The normalization must be given via `normalization_factor` """
-function rtm2_contracted_old(psi::MPS, phi::MPS; normalize_factor::Number=1.0)
-    r2s = []
-    @showprogress dt=30 for jj in eachindex(psi)[1:end-1]
-        push!(r2s, rtm2_contracted(psi, phi, jj; normalize_factor))
-    end
-
-    return r2s
-end
-
 function rtm2_contracted(psi::MPS, phi::MPS; normalize_factor::Number=1.0, match_siteinds::Bool=true)
     LL = length(psi)
     inv_norm2 = 1.0 / normalize_factor^2

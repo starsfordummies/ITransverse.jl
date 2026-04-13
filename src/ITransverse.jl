@@ -165,6 +165,8 @@ include("tebd/tebd.jl")
 
 export tebd_ev
 
+# legacy functions 
+include("legacy/old_legacy.jl")
 
 function togpu end
 

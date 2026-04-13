@@ -3,10 +3,10 @@
 # AL  (= AL'):              site plevs 1,2 — used in environments (traces over ψL'')
 # ALp (= AL' with 1→3):    site plevs 2,3 — keeps plev-3 open as the output site index
 
-Base.get(psi::AbstractMPS, j::Integer, default=ITensors.OneITensor()) = 
+Base.get(psi::AbstractMPS, j::Integer, default=ITensor(1)) = 
     1 <= j <= length(psi) ? psi[j] : default
 
-function tlrcontract(::Algorithm"RTM2",
+function tlrcontract(::Algorithm"RTM",
         ψL::MPS,
         AL::MPO,
         AR::MPO,
