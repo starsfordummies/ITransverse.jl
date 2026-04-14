@@ -83,7 +83,7 @@ end
             #@info "RTM full size: $(size(rtm_full))"
             vals_full, _ = eigen(rtm_full, inds(rtm_full,plev=0), inds(rtm_full,plev=1))
     
-            @show jj 
+            #@show jj 
             @show vals 
             @test nonzero_match(vals, array(vals_full))
         end

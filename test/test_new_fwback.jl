@@ -32,7 +32,7 @@ b = FwtMPOBlocks(tp)
 ss = siteinds("S=1/2", 16)
 
 tmpo_new = fwback_tMPO(b, ss, 2, 6, 6, 2, mid_op = [1,0,0,-1], tr=b.tp.bl)
-tmpo_old = fwback_tMPO_old(b, ss, 2, 6, 6, 2, mid_op = [1,0,0,-1], tr=b.tp.bl)
+tmpo_old = ITransverse.fwback_tMPO_old(b, ss, 2, 6, 6, 2, mid_op = [1,0,0,-1], tr=b.tp.bl)
 
 @test tmpo_new ≈ tmpo_old
 

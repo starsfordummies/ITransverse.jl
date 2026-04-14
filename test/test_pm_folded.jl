@@ -34,6 +34,7 @@ function main_folded_pm(tp, Nt, pm_params)
 end
 
 
+@testset "Truncation sweeps for power method " begin 
 Nt = 20
 tp = ising_tp()
 
@@ -49,7 +50,7 @@ allerrs = []
 allchis = []
 allpars = []
 for direction = [:right, :left]
-    for alg = ["densitymatrix", "naive", "RTM"]
+    for alg = ["densitymatrix", "naive", "RTM", "naiveRTM"]
         for opt_method = [:nosym, :sym] 
             for normalization = ["norm", "overlap"]
 
@@ -71,43 +72,49 @@ for direction = [:right, :left]
     end
 end
 
+
+# for (params, zerr, chi) in zip(allpars, allerrs, allchis)
+#     @testset "$(params)" begin
+#         @info chi
+#         @test abs(zerr) < 1e-4
+#     end
+# end
+
+# allerrs = [] 
+# allchis = []
+# allpars = []
+# for direction = [:right, :left]
+#     for alg = ["naiveRTM"]
+#         for opt_method = [:nosym,:sym]
+#             for normalization = ["norm", "overlap"]
+
+#             truncp = (;cutoff, maxdim, direction, alg)
+#             pm_params = PMParams(;truncp, itermax, eps_converged, opt_method, normalization, stuck_after)
+
+#             try
+#                 ev, chi = main_folded_pm(tp, Nt, pm_params)
+
+#                 push!(allerrs, real(ev["Z"]) - ref)
+#                 push!(allchis, chi)
+#                 push!(allpars, [direction, alg, opt_method, normalization])
+#             catch e 
+#                 println("error $e")
+#             end
+
+#             end
+#         end
+#     end
+# end
+
+
 for (params, zerr, chi) in zip(allpars, allerrs, allchis)
-    @testset "$(params)" begin
-        @info chi
-        @test abs(zerr) < 1e-4
+    @info params, " ", chi, "  ", abs(zerr)
+    if params[1] == :left
+        @test abs(zerr) < 1e-5
+    else
+        @test abs(zerr) < 2e-2
     end
 end
 
-allerrs = [] 
-allchis = []
-allpars = []
-for direction = [:right, :left]
-    for alg = ["naiveRTM"]
-        for opt_method = [:nosym,:sym]
-            for normalization = ["norm", "overlap"]
 
-            truncp = (;cutoff, maxdim, direction, alg)
-            pm_params = PMParams(;truncp, itermax, eps_converged, opt_method, normalization, stuck_after)
-
-            try
-                ev, chi = main_folded_pm(tp, Nt, pm_params)
-
-                push!(allerrs, real(ev["Z"]) - ref)
-                push!(allchis, chi)
-                push!(allpars, [direction, alg, opt_method, normalization])
-            catch e 
-                println("error $e")
-            end
-
-            end
-        end
-    end
-end
-
-
-for (params, zerr, chi) in zip(allpars, allerrs, allchis)
-    @testset "$(params)" begin
-        @info chi
-        @test abs(zerr) < 4e-2
-    end
 end

@@ -7,6 +7,13 @@ function rtm2_contracted_old(psi::MPS, phi::MPS; normalize_factor::Number=1.0)
     return r2s
 end
 
+
+function generalized_vn_entropy_symmetric_alt(psiL::MPS)
+    eigs_rtm = diagonalize_rtm_symmetric_alt(psiL)
+    return vn_from_matrix(eigs_rtm)
+end
+
+
 function fwback_tMPO_old(b::FwtMPOBlocks, time_sites::Vector{<:Index}, nbetai::Int, nfw::Int, nback::Int, nbetaf::Int; 
     mid_op = [1,0,0,1], t_op::Int=nbetai+nfw, bl::ITensor = b.tp.bl, tr = b.tp.bl)
 

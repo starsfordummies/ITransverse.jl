@@ -8,10 +8,6 @@ function generalized_vn_entropy_symmetric(psiL::MPS; bring_gen_can::Bool=true, n
     return [salpha(eigs, 1) for eigs in eigs_rtm]
 end
 
-function generalized_vn_entropy_symmetric_alt(psiL::MPS)
-    eigs_rtm = diagonalize_rtm_symmetric_alt(psiL)
-    return vn_from_matrix(eigs_rtm)
-end
 
 function generalized_r2_entropy_symmetric(psiL::MPS; bring_gen_can::Bool=true, normalize_eigs::Bool=true)
     eigs_rtm = diagonalize_rtm_symmetric(psiL; bring_gen_can, normalize_eigs, sort_by_largest=false)
@@ -20,7 +16,7 @@ end
 
 
 function generalized_svd_vn_entropy_symmetric(psi::MPS)
-    _, svs = truncate_rsweep_sym(psi; cutoff=1e-12, maxdim=maxlinkdim(psi), use_eig=false)
+    _, svs = truncate_sweep_sym(psi; cutoff=1e-12, maxdim=maxlinkdim(psi), use_eig=false)
     return vn_from_matrix(svs)
 end
 

@@ -46,7 +46,7 @@ end
     @test maxlinkdim(psi) < 2^7
 
 
-    tp = (;cutoff=1e-20, maxidim=24)
+    tp = (;cutoff=1e-20, maxdim=24)
 
     psi = random_mps(ss, linkdims=2)
 
@@ -154,10 +154,6 @@ oooL = ITransverse.folded_tMPO_ext(b, ss; LR=:left, n_ext=1, fold_op=[1,0,0,1])
 
 kk = applyn(oooL,psiR)
 
-
-ITransverse.ITenUtils.contract_dangling!(kk)
-orthogonalize(kk, length(kk))
-normalize(kk)
 
 
  #expvals
