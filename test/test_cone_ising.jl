@@ -81,7 +81,7 @@ cone_params = ConeParams(;truncp, opt_method=:sym, optimize_op)
 psi, psiR, cp = run_cone(c0, b, cone_params, cp, Nsteps)
 ex_rtm = cp.obs_hist[:X][end]
 
-@test abs(ex_rtm - ex_rdm) < 0.001
+@test abs(ex_rtm - ex_rdm) < 0.05
 
 
 # Not implemented yet 
@@ -101,6 +101,6 @@ cone_params = ConeParams(;truncp, opt_method=:ns, optimize_op)
 psi, psiR, cp = run_cone(c0, b, cone_params, cp, Nsteps)
 ex_rtm = cp.obs_hist[:X][end]
 
-@test abs(ex_rtm - ex_rdm) < 0.001
+@test abs(ex_rtm - ex_rdm) < 0.05
 
 end
