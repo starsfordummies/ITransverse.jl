@@ -177,17 +177,19 @@ function _tlrcontract_rtm_right(ψL::MPS, AL::MPO, AR::MPO, ψR::MPS;
 
     redge_L = ITensors.OneITensor()
     for j = reverse(n+1:NL)
-        redge_L *= AL[j-1]
+        redge_L *= AL[j] * get(ψL, j)
     end
 
     redge_R = ITensors.OneITensor()
     for j = reverse(n+1:NR)
-        redge_R *= AR[j-1]
+        redge_R *= AR[j] * get(ψR, j)
     end
     
+    #@show inds(R)
+    #@show inds(redge_R)
 
-    ψR_out[n] = R * redge_L
-    ψL_out[n] = L * redge_R
+    ψR_out[n] = R * redge_R
+    ψL_out[n] = L * redge_L
 
 
     return ψL_out, ψR_out, S_all

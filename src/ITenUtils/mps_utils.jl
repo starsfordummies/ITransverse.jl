@@ -302,18 +302,58 @@ end
 
 
 
-function check_mps_sanity(psi::MPS)
-    good = if length(siteinds(psi)) != length(psi.data)
-        @warn "length/sites: $(length(siteinds(psi))) != $(length(psi.data))"
-        false
-    elseif length(linkinds(psi)) != length(psi.data)-1
-        false
-    elseif ndims(psi[1]) != 2 || ndims(psi[end]) != 2 || !all(x -> ndims(x) == 3, psi[2:end-1])
-        false
-    else
-        true
+function check_mps_sanity(psi::MPS; verbose::Bool=true)
+    N = length(psi)
+    issues = String[]
+    flag(msg) = push!(issues, msg)
+
+    # 1. Site index count matches tensor count
+    nsi = length(siteinds(psi))
+    nsi != N && flag("site index count ($nsi) ≠ tensor count ($N)")
+
+    # 2. Link index count
+    nli = length(linkinds(psi))
+    nli != N - 1 && flag("link index count ($nli) ≠ N-1 = $(N-1)")
+
+    # 3. Tensor ranks: boundary rank-2, bulk rank-3
+    N >= 1 && ndims(psi[1]) != 2   && flag("psi[1] rank=$(ndims(psi[1])), expected 2")
+    N >= 2 && ndims(psi[N]) != 2   && flag("psi[$N] rank=$(ndims(psi[N])), expected 2")
+    for j in 2:N-1
+        ndims(psi[j]) != 3 && flag("psi[$j] rank=$(ndims(psi[j])), expected 3")
     end
-    return good
+
+    # 4. Adjacent tensors share exactly one link index
+    for j in 1:N-1
+        isnothing(commonind(psi[j], psi[j+1])) && flag("psi[$j] and psi[$(j+1)] share no link index")
+    end
+
+    # 5. Each tensor has exactly one site index
+    for j in 1:N
+        isnothing(siteind(psi, j)) && flag("psi[$j] has no site index")
+    end
+
+    # 6. No NaN or Inf
+    for j in 1:N
+        n = norm(psi[j])
+        !isfinite(n) && flag("psi[$j] contains NaN or Inf (norm=$n)")
+    end
+
+    # 7. No zero tensors
+    for j in 1:N
+        norm(psi[j]) == 0 && flag("psi[$j] has zero norm")
+    end
+
+    # 8. Ortho limits are in valid range
+    ll, rl = ITensorMPS.leftlim(psi), ITensorMPS.rightlim(psi)
+    !(0 <= ll <= N) && flag("leftlim=$ll out of [0, $N]")
+    !(1 <= rl <= N+1) && flag("rightlim=$rl out of [1, $(N+1)]")
+
+    if verbose
+        for msg in issues
+            @warn msg
+        end
+    end
+    return isempty(issues)
 end
 
 """ Experimental predictable combiner - returns a combiner whose combinedind id is the sum of the ids of the

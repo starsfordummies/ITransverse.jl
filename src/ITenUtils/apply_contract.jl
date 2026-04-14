@@ -59,6 +59,9 @@ function contract_dangling!(psi::AbstractMPS)
         (ndims(t) == 1 && hascommoninds(t, psi[end-1])) || break
         psi[end-1] = t * psi[end-1]   # setindex! invalidates limits for site end-1
         pop!(psi.data)
+        if ITensorMPS.rightlim(psi) > length(psi)+1
+            setrightlim!(psi, length(psi)+1)
+        end
     end
     #@show ortho_lims(psi)
 
