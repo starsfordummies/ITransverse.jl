@@ -36,6 +36,8 @@ include("mps_utils.jl")
 include("apply_contract.jl")
 include("trunc_apply.jl")
 
+include("custom_svd.jl")
+
 # Symmetric SVD/EIG decompositions
 include("svd_sym.jl")
 include("eig_sym.jl")

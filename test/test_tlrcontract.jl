@@ -87,10 +87,12 @@ leftref, rightref, sref = ITransverse.trapply(ITensors.Algorithm("densitymatrix"
 @test siteinds(leftref) == siteinds(rightref)
 
 
+
 #= 
 
-using BenchmarkTools
-
+direction = :right 
+truncp = (; cutoff, maxdim, direction)
+left, right, s = ITransverse.tlrapply(ψL, AL, AR, ψR; alg="RTM", truncp...)
 
 
  ITransverse.tlrcontract(ITensors.Algorithm("RTM"), ψL, AL, AR, ψR; cutoff=1e-10, maxdim=100, direction=:left)

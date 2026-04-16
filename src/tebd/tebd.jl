@@ -93,7 +93,7 @@ function tebd_z(Nt::Int, tp::tMPOParams; N::Int = 2*Nt+4, kwargs...)
 
     evs = []
 
-    p = Progress(Nt; dt=20, showspeed=true)
+    p = Progress(Nt; dt=2, showspeed=true)
 
     for nt = 1:Nt
         # println("timestep N°=$(nt)\ttime=$(t)")

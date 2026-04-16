@@ -36,7 +36,8 @@ function truncate_sweep(psi::MPS, phi::MPS;
         @assert order(env) == 2
 
         bond = ii + sv_offset  # :right → ii-1 (bond to the left), :left → ii (bond to the right)
-        U, S, Vdag = svd(env, ind(env, 1); cutoff, maxdim,
+ 
+        U, S, Vdag = svd(env, commonind(env, Ai); cutoff, maxdim,
                          lefttags  = tags(linkind(psi, bond)),
                          righttags = tags(linkind(phi, bond)))
         norm_factor = sum(S)
@@ -46,7 +47,7 @@ function truncate_sweep(psi::MPS, phi::MPS;
         XV    = dag(Vdag)
         XVinv = Vdag
 
-        env /= sum(S)
+        env /= norm_factor
 
         env *= XU
         env *= XV
