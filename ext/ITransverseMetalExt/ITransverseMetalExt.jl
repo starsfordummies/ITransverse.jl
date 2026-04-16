@@ -1,11 +1,21 @@
 module ITransverseMetalExt
 
 using Metal: MtlArray
-using ITensors.Adapt
+using ITensors: Algorithm
+using Adapt
+using ITensors, ITensorMPS 
 using ITransverse 
 
 import ITransverse: togpu
 
+import ITransverse.ITenUtils: tcontract
 ITransverse.togpu(x) = adapt(MtlArray, adapt(ComplexF32, x))
+
+function ITransverse.ITenUtils.tcontract(::Algorithm{:mtldensitymatrix},
+        A::MPO,
+        ψ::MPS)
+
+        return ψ
+end
 
 end

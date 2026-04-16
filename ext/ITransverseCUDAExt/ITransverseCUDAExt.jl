@@ -2,7 +2,9 @@ module ITransverseCUDAExt
 
 using CUDA
 using NDTensors
-using ITensors.Adapt
+using ITensors: Algorithm
+using ITensorMPS
+using Adapt
 using ITransverse 
 
 import ITransverse: togpu
