@@ -6,7 +6,7 @@ using ITensors.Adapt
 using ITransverse 
 
 import ITransverse: togpu
-import ITransverse: tcontract
+import ITransverse.ITenUtils: tcontract
 include("light_cuapply.jl")
 
 NDTensors.cu(x::tMPOParams) = tMPOParams(x; bl = NDTensors.cu(x.bl))
