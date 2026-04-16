@@ -119,11 +119,11 @@ function rho4_fwback(psi::MPS, cut::Int; alg="zipup", cutoff=1e-12, maxdim=maxli
     psit = reopen_inds(psit;  different_fwback_inds=false)
 
     rho4 = ITensor(1)
-    for kk = 1:length(psit)
-        rho4 *= psit[kk]
-        rho4 *= psit[kk]'
-        rho4 *= psit[kk]''
-        rho4 *= replaceprime(psit[kk]''', 4 =>0)
+    for psik in psit
+        rho4 *= psik
+        rho4 *= psik'
+        rho4 *= psik''
+        rho4 *= replaceprime(psik''', 4 =>0)
     end
 
     return scalar(rho4)/(tr_rho^4)
@@ -151,11 +151,11 @@ function rho4_fwback_alt(psi::MPS, cut::Int; alg="densitymatrix", cutoff=1e-12, 
     psit = reopen_inds(psit;  different_fwback_inds=false)
 
     rho4 = ITensor(1)
-    for kk = 1:length(psit)
-        rho4 *= psit[kk]
-        rho4 *= psit[kk]'
-        rho4 *= psit[kk]''
-        rho4 *= replaceprime(psit[kk]''', 4 =>0)
+    for psik in psit 
+        rho4 *= psik
+        rho4 *= psik'
+        rho4 *= psik''
+        rho4 *= replaceprime(psik''', 4 =>0)
     end
 
     return scalar(rho4)/(tr_rho^4)

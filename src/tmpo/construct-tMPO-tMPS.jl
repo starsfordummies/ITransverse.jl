@@ -78,7 +78,7 @@ function construct_tMPS_tMPO(psi_i::MPS, in_Uts::Vector{MPO}, psi_f::MPS;
   # Replace indices, starting from the right MPS 
 
   ssR = siteinds(psiR)
-  new_siteinds = something(new_siteinds, [noprime(sim(ssR[ii], tags="Site,nt=$(ii)")) for ii = 1:length(ssR)])
+  new_siteinds = something(new_siteinds, [noprime(sim(ssR[ii], tags="Site,nt=$(ii)")) for ii in eachindex(ssR)])
   new_siteindsP = dag(new_siteinds')
 
   replace_siteinds!(psiR, new_siteinds)
