@@ -8,7 +8,6 @@ using Adapt
 using ITransverse 
 
 import ITransverse: togpu
-import ITransverse.ITenUtils: tcontract
 
 NDTensors.cu(x::tMPOParams) = tMPOParams(x; bl = NDTensors.cu(x.bl))
 

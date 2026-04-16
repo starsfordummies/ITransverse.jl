@@ -1,3 +1,5 @@
+import ITransverse.ITenUtils: tcontract
+
 """ Contract MPO-MPS with algorithm densitymatrix, starting from the left. At the end we can chop/extend 
 if we work with light cone. If `contract_dangling=true` we shrink dangling edges, if present  """
 function ITransverse.ITenUtils.tcontract(::Algorithm{:cudensitymatrix},
