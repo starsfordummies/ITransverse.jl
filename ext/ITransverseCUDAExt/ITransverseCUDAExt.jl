@@ -9,10 +9,11 @@ using ITransverse
 
 import ITransverse: togpu
 import ITransverse.ITenUtils: tcontract
-include("light_cuapply.jl")
 
 NDTensors.cu(x::tMPOParams) = tMPOParams(x; bl = NDTensors.cu(x.bl))
 
 ITransverse.togpu(x) = adapt(CuArray, x)
+
+include("light_cuapply.jl")
 
 end
