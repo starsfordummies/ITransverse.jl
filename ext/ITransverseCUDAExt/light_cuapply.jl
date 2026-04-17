@@ -1,5 +1,7 @@
 import ITransverse.ITenUtils: tcontract
 
+tocpu(x) = adapt(Array, x)
+
 """ Contract MPO-MPS with algorithm densitymatrix, starting from the left. At the end we can chop/extend 
 if we work with light cone. If `contract_dangling=true` we shrink dangling edges, if present  """
 function ITransverse.ITenUtils.tcontract(::Algorithm{:cudensitymatrix},
@@ -38,6 +40,7 @@ function ITransverse.ITenUtils.tcontract(::Algorithm{:cudensitymatrix},
         Ecurr = E[j + 1] * A[j] * A_c[j] 
         E[j] = Ecurr
     end
+    # Do the bulk on GPU
     Ecurr = togpu(Ecurr)
     for j in reverse(2:min(N-1,n))
         Ecurr = Ecurr * togpu(ψ[j]) * togpu(A[j]) * togpu(A_c[j]) * togpu(ψ_c[j])
