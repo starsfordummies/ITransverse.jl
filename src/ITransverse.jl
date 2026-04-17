@@ -76,6 +76,7 @@ export truncate_sweep, truncate_sweep_rtm
 export truncate_lsweep_sym, truncate_rsweep_sym, truncate_sweep_sym
 
 export tlapply, trapply, tlrapply
+export TruncLR
 
 export gen_canonical
 
