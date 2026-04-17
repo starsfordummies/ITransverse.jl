@@ -90,8 +90,8 @@ function ITransverse.ITenUtils.tcontract(::Algorithm{:cudensitymatrix},
 
         ψ_out[j] = tocpu(Ut)
 
-        L = L * dag(Ut) * ψ[j+1] * A[j+1]
-        simL_c = simL_c * U* ψ_c[j+1] * simA_c[j+1]
+        L = L * dag(Ut) * togpu(ψ[j+1]) * togpu(A[j+1])
+        simL_c = simL_c * U* togpu(ψ_c[j+1]) * togpu(simA_c[j+1])
 
         Dvec = collect(D.tensor.storage.data)/sum(D)  
  
