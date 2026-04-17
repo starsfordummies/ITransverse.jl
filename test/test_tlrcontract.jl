@@ -58,12 +58,17 @@ ss = siteinds("S=1/2", 40)
 AL = random_mpo(ss) + im*random_mpo(ss)
 AR = random_mpo(ss) + im*random_mpo(ss)
 
+ov = overlap_noconj(ψL,ψR)
+ψL = ψL / sqrt(ov)
+ψR = ψR / sqrt(ov)
 
-cutoff = 1e-20
-maxdim=256
+cutoff = 1e-60
+maxdim=128
+mindim=128
 direction = :right 
 truncp = (; cutoff, maxdim, direction)
 left, right, s = ITransverse.tlrapply(ψL, AL, AR, ψR; alg="RTM", truncp...)
+overlap_noconj(left,right)
 leftll, rightrr, s = ITransverse.tlrapply(ψL, AL, AR, ψR; alg="RTM", truncp..., direction=:left)
 
 leftn, rightn, sn = ITransverse.tlrapply(ψL, AL, AR, ψR; alg="naiveRTM", direction=:left)

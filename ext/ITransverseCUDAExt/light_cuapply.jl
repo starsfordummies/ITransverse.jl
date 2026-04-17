@@ -113,7 +113,7 @@ function ITransverse.ITenUtils.tcontract(::Algorithm{:cudensitymatrix},
     ITensorMPS.setrightlim!(ψ_out, N+1)
 
     if contract_dangling
-        contract_dangling!(ψ_out)
+        ITransverse.ITenUtils.contract_dangling!(ψ_out)
     end
 
     return ψ_out, S_all

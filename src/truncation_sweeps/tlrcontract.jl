@@ -7,16 +7,11 @@ function tlrcontract(::Algorithm"naiveRTM", psiL::MPS, OL::MPO, OR::MPO, psiR::M
     truncate_sweep(psiLO, OpsiR; kwargs...)
 end
 
-function tlrcontract(::Algorithm"naive", psiL::MPS, OL::MPO, OR::MPO, psiR::MPS; kwargs...)
-    OpsiR, sv = tapply(Algorithm("naive"), OR, psiR; kwargs...)
-    psiLO, _ = tapplys(Algorithm("naive"), OL, psiL; kwargs...)
-    return psiLO, OpsiR, sv  
-end
-
-function tlrcontract(::Algorithm"densitymatrix", psiL::MPS, OL::MPO, OR::MPO, psiR::MPS; kwargs...)
-    OpsiR, sv = tapply(Algorithm("densitymatrix"), OR, psiR; kwargs...)
-    psiLO, _ = tapplys(Algorithm("densitymatrix"), OL, psiL; kwargs...)
-    return psiLO, OpsiR, sv  
+# Generic fallback
+function tlrcontract(alg::Algorithm, psiL::MPS, OL::MPO, OR::MPO, psiR::MPS; kwargs...)
+    OpsiR, sv = tapply(alg, OR, psiR; kwargs...)
+    psiLO, _  = tapplys(alg, OL, psiL; kwargs...)
+    return psiLO, OpsiR, sv
 end
 
 function tlrcontract(::Algorithm"notrunc", psiL::MPS, OL::MPO, OR::MPO, psiR::MPS; kwargs...)
@@ -45,10 +40,7 @@ end
 
 
 
-function trcontract(::Algorithm"naiveRTM",
-        ψL::MPS,
-        AR::MPO,
-        ψR::MPS;
+function trcontract(::Algorithm"naiveRTM", ψL::MPS, AR::MPO, ψR::MPS;
         preserve_mps_tags::Bool=false, # TODO not implemented yet 
         kwargs...)
         
@@ -56,16 +48,40 @@ function trcontract(::Algorithm"naiveRTM",
     truncate_sweep(ψL, OpsiR; kwargs...)
 end
 
-# Just for conveninence, does not touch left MPS, only acts on Right 
-function trcontract(::Algorithm"densitymatrix", psiL::MPS, AR::MPO, psiR::MPS; kwargs...)
-    OpsiR, sv = tapply(Algorithm("densitymatrix"), AR, psiR; kwargs...)
-    return psiL, OpsiR, sv  
+function trcontract(::Algorithm"naiveRTM_normR", ψL::MPS, AR::MPO, ψR::MPS;
+        preserve_mps_tags::Bool=false, # TODO not implemented yet 
+        kwargs...)
+        
+    OpsiR = applyn(AR, ψR; truncate=false)
+    ov_before = overlap_noconj(ψL, OpsiR)
+    ll, rr, sv = truncate_sweep(ψL, OpsiR; kwargs...)
+    ov_after = overlap_noconj(ll,rr)
+    return ll, rr * ov_before/ov_after, sv
 end
-function trcontract(::Algorithm"naive", psiL::MPS, AR::MPO, psiR::MPS; kwargs...)
-    OpsiR, sv = tapply(Algorithm("naive"), AR, psiR; kwargs...)
+
+# Just for conveninence, does not touch left MPS, only acts on Right 
+# function trcontract(::Algorithm"densitymatrix", psiL::MPS, AR::MPO, psiR::MPS; kwargs...)
+#     OpsiR, sv = tapply(Algorithm("densitymatrix"), AR, psiR; kwargs...)
+#     return psiL, OpsiR, sv  
+# end
+# function trcontract(::Algorithm"naive", psiL::MPS, AR::MPO, psiR::MPS; kwargs...)
+#     OpsiR, sv = tapply(Algorithm("naive"), AR, psiR; kwargs...)
+#     return psiL, OpsiR, sv  
+# end
+
+
+function trcontract(::Algorithm"notrunc", psiL::MPS, OR::MPO, psiR::MPS; kwargs...)
+    OpsiR = applyn(OR, psiR; truncate=false)
+    sv = zeros(1,1)
     return psiL, OpsiR, sv  
 end
 
+
+# Generic fallback
+function trcontract(alg::Algorithm, psiL::MPS, AR::MPO, psiR::MPS; kwargs...)
+    OpsiR, sv = tapply(alg, AR, psiR; kwargs...)
+    return psiL, OpsiR, sv  
+end
 
 """ 
 Applies MPO to left-right and truncates on the RTM |AR R><L AL| \\

@@ -144,6 +144,8 @@ function _tlrcontract_rtm_right(ψL::MPS, AL::MPO, AR::MPO, ψR::MPS;
         @assert ndims(E[j]) < 5 "$j - $(inds(E[j]))"
     end
 
+    #@show scalar(E[1])
+
     # Step 2: left boundary tensors at site 1.
     # ALp (site plevs 2,3): plev-2 contracts with ψL'', plev-3 stays open for output.
     R = ψR[1] * AR[1]
@@ -191,17 +193,22 @@ function _tlrcontract_rtm_right(ψL::MPS, AL::MPO, AR::MPO, ψR::MPS;
     ψR_out[n] = R * redge_R
     ψL_out[n] = L * redge_L
 
+    # ttemp = ψR_out[n] * ψL_out[n]
+    # @show final_rho = scalar(ttemp * delta(inds(ttemp)))
+
+    # @show overlap_noconj(ψL_out, ψR_out)
+
 
     return ψL_out, ψR_out, S_all
 end
 
 
 
+########################################################
+######## trcontract ####################################
+########################################################
 
-
-
-
-
+""" Applies AR to ψR and truncates building RTM from |AψR><ψL| """ 
 function trcontract(::Algorithm"RTM",
         ψL::MPS,
         AR::MPO,
@@ -210,113 +217,89 @@ function trcontract(::Algorithm"RTM",
         maxdim::Int = max(maxlinkdim(ψL), maxlinkdim(AR) * maxlinkdim(ψR)),
         mindim::Int = 1,
         preserve_mps_tags::Bool = false,
-        direction = :right, # TODO no left yet 
+        direction = :right,
         kwargs...,
     )
+    if direction == :right
+        return _trcontract_rtm_right(ψL, AR, ψR; cutoff, maxdim, mindim, preserve_mps_tags, kwargs...)
+    elseif direction == :left
+        return _trcontract_rtm_left(ψL, AR, ψR; cutoff, maxdim, mindim, preserve_mps_tags, kwargs...)
+    else
+        error("direction must be :left or :right, got :$(direction)")
+    end
+end
 
-    @assert direction == :right ":left not implemented yet"
+""" Builds LEFT environments, sweeps RIGHT→LEFT """
+function _trcontract_rtm_right(ψL::MPS, AR::MPO, ψR::MPS;
+        cutoff, maxdim, mindim, preserve_mps_tags, kwargs...)
 
     ### Indices prime contractions conventions
-    # (ie we prime ψL to contract it to AL in the proper direction)
     # ψL--p'--AL--p--     --p'--AR--p--ψR 
 
-    N = length(ψL)
+    N  = length(ψL)
     nR = length(ψR)
     NR = length(AR)
 
+    #@info N, nR, NR
+
     @assert NR >= nR
 
-    sR  = firstsiteinds(AR, plev=1)
-
+    sR               = firstsiteinds(AR, plev=1)
     requested_maxdim = maxdim
+    ψR_out           = typeof(ψR)(N)
+    ψL_out           = typeof(ψL)(N)
+    ψLp              = prime(siteinds, ψL')
+    S_all            = zeros(Float64, N-1, requested_maxdim)
 
-    ψR_out = typeof(ψR)(N)
-    ψL_out = typeof(ψL)(N)
-
-    # Step 1: build left environments up to site N-1
-    E = Vector{ITensor}(undef, N-1)
-
-    # Sites 1..min(nL,nR): both ψL and ψR present
-    # Sites min+1..max(nL,nR): only one ψ present
-    # Sites max+1..N-1: neither ψ present
-    env = ITensors.OneITensor() 
-    for j in 1:N-1
-        hasψR = j <= nR
-        env = if hasψR 
-            env * ψR[j] * AR[j]  * ψL[j]'
-        else
-            env * AR[j]  * ψL[j]'
-        end
-        E[j] = env
-
+    # Step 1: build left environments E[j] = sites 1..j
+    E   = Vector{ITensor}(undef, N)
+    env = ITensors.OneITensor()
+    for j in 1:N
+        env   = env * get(ψR,j) * AR[j] * ψL[j]' 
+        E[j]  = env
         @assert ndims(env) < 4
     end
 
-    # Step 2: initialize R and L by contracting the excess tail of the longer MPO
-    # Start from the far right edge and work inward until both sides reach site N
 
-    # Initialize edge tensors at the right boundary
-    R = if NR > N
-        # contract ψR and AR from NR down to N+1
-        t = nR >= NR ? ψR[NR] * AR[NR] : AR[NR]
-        for j in reverse(N:NR-1)
-            t = t * (j <= nR ? ψR[j] * AR[j] : AR[j])
-        end
-        t
-    else
-        # NR == N, initialize at site N only
-        nR >= NR ? ψR[NR] * AR[NR] : AR[NR]
+    # Step 2: right boundary, absorbing excess AR sites beyond N
+    R = ITensors.OneITensor()
+    for j in reverse(N:NR)
+        R = R * get(ψR,j) * AR[j] 
     end
-
-    ψLp = prime(siteinds, ψL')
-
     L = ψLp[N]
 
-
     r_renorm = nothing
-    S_all = zeros(Float64, N-1, requested_maxdim)
 
-    # Step 3: main sweep from N-1 down to 1
+    # Step 3: sweep right → left
     for j in reverse(1:N-1)
+        maxdim = min(dim(commoninds(R, E[j])), dim(commoninds(L, E[j])), requested_maxdim)
 
-        hasψR = j <= nR
-
-        ciR = commoninds(R, E[j])
-        ciL = commoninds(L, E[j])
-        maxdim = min(dim(ciR), dim(ciL), requested_maxdim)
-
-        #@show inds(E[j])
-        #@show inds(L)
-        #@show inds(R)
         rho = E[j] * L * R
-        #@show inds(rho)
         @assert ndims(rho) < 5 "inds(rho) @site $j ? $(inds(rho))"
 
         tsR = if preserve_mps_tags
-            linkR  = j < nR ? linkind(ψR, j) : nothing
-            tsR = isnothing(linkR) ? "" : tags(linkR)
+            linkR = j < nR ? linkind(ψR, j) : nothing
+            isnothing(linkR) ? "" : tags(linkR)
         else
             "Link,l=$(j)"
         end
-
         tsL = if preserve_mps_tags
-            linkL  = j < N ? linkind(ψL, j) : nothing
-            tsL = isnothing(linkL) ? "" : tags(linkL)
+            linkL = j < N ? linkind(ψL, j) : nothing
+            isnothing(linkL) ? "" : tags(linkL)
         else
             "Link,l=$(j)"
         end
 
-        Ris = isnothing(r_renorm) ? IndexSet(sR[j+1])  : IndexSet(sR[j+1], r_renorm)
-
-        F = svd(rho, Ris; cutoff, maxdim, mindim, lefttags=tsR, righttags=tsL, kwargs...)
-        S, U, V = F.S, F.U, F.V
-        r_renorm= F.u
+        Ris = isnothing(r_renorm) ? IndexSet(sR[j+1]) : IndexSet(sR[j+1], r_renorm)
+        F   = svd(rho, Ris; cutoff, maxdim, mindim, lefttags=tsR, righttags=tsL, kwargs...)
+        S, U, V  = F.S, F.U, F.V
+        r_renorm = F.u
 
         ψR_out[j+1] = U
         ψL_out[j+1] = V
 
-        R = hasψR ? dag(U) * R * ψR[j] * AR[j]  : dag(U) * R * AR[j]
-        L = dag(V) * L * ψLp[j] 
+        R = dag(U) * R * get(ψR,j) * AR[j] 
+        L = dag(V) * L * ψLp[j]
 
         Svec = collect(S.tensor.storage.data) ./ sum(S)
         S_all[j, 1:length(Svec)] .= Svec
@@ -324,6 +307,86 @@ function trcontract(::Algorithm"RTM",
 
     ψR_out[1] = R
     ψL_out[1] = L
+
+    return ψL_out, ψR_out, S_all
+end
+
+""" Builds RIGHT environments, sweeps LEFT→RIGHT """
+function _trcontract_rtm_left(ψL::MPS, AR::MPO, ψR::MPS;
+        cutoff, maxdim, mindim, preserve_mps_tags, kwargs...)
+
+    N  = length(ψL)
+    nR = length(ψR)
+    NR = length(AR)
+
+    @assert NR >= nR
+
+    sR               = firstsiteinds(AR, plev=1)
+    requested_maxdim = maxdim
+    ψR_out           = typeof(ψR)(N)
+    ψL_out           = typeof(ψL)(N)
+    ψLp              = prime(siteinds, ψL')
+    S_all            = zeros(Float64, N-1, requested_maxdim)
+
+    # Step 1: build right environments E[j] = sites j..N (+ excess AR beyond N)
+    E = Vector{ITensor}(undef, N+1)
+    eR = ITensor(1)
+    for j in reverse(N+1:NR)
+        eR *= get(ψR,j) * AR[j]
+    end
+    E[N+1] = eR
+    for j in reverse(1:N)
+        E[j]  = E[j+1] * get(ψR,j) * AR[j] * ψL[j]'
+    end
+
+    # Step 2: left boundary at site 1
+    R        = ψR[1] * AR[1]
+    L        = ψLp[1]
+    l_renorm = nothing
+
+    # Step 3: sweep left → right
+    for j in 2:N
+        maxdim = min(dim(commoninds(R, E[j])), dim(commoninds(L, E[j])), requested_maxdim)
+
+        rho = E[j] * R * L
+        @assert ndims(rho) < 5 "inds(rho) @site $j ? $(inds(rho))"
+
+        tsR = if preserve_mps_tags
+            linkR = j-1 < nR ? linkind(ψR, j-1) : nothing
+            isnothing(linkR) ? "" : tags(linkR)
+        else
+            "Link,l=$(j-1)"
+        end
+        tsL = if preserve_mps_tags
+            linkL = j-1 < N ? linkind(ψL, j-1) : nothing
+            isnothing(linkL) ? "" : tags(linkL)
+        else
+            "Link,l=$(j-1)"
+        end
+
+        Lis = isnothing(l_renorm) ? IndexSet(sR[j-1]) : IndexSet(sR[j-1], l_renorm)
+        F   = svd(rho, Lis; cutoff, maxdim, mindim, lefttags=tsR, righttags=tsL, kwargs...)
+        S, U, V  = F.S, F.U, F.V
+        l_renorm = F.u
+
+        ψR_out[j-1] = U
+        ψL_out[j-1] = V
+
+        R = dag(U) * R * get(ψR, j) * AR[j] 
+        L = dag(V) * L * ψLp[j]
+
+        Svec = collect(S.tensor.storage.data) ./ sum(S)
+        S_all[j-1, 1:length(Svec)] .= Svec
+    end
+
+
+    redge_R = ITensors.OneITensor()
+    for j = reverse(N+1:NR)
+        redge_R *= AR[j] * get(ψR, j)
+    end
+    
+    ψR_out[N] = R * redge_R
+    ψL_out[N] = L
 
     return ψL_out, ψR_out, S_all
 end
