@@ -1,6 +1,6 @@
 using ITensors
 using ITransverse
-using ITransverse.ITenUtils: matrix_svd
+using ITransverse: matrix_svd
 using Test
 
 a = random_itensor(Index(10), Index(10))
@@ -13,6 +13,7 @@ mf = matrix_svd(a, maxdim=7,cutoff=1e-3)
 @test diag(f.S)≈ diag(mf.S)
 @test f.V.tensor ≈ mf.V.tensor
 
+#= 
 n = 300
 i1 = Index(n)
 i2 = Index(n)
@@ -35,6 +36,7 @@ for _ = 1:100
         push!(errs, abs( tr(matrix(w)) - tr(matrix(wrec)))/abs(tr(matrix(w))))
     end
 end
+
 
 using Plots
 
@@ -67,3 +69,4 @@ end
 plot(errs2)
 #hline!([sqrt(cutoff)])
 hline!([cutoff])
+=# 

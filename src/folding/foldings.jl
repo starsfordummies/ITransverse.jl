@@ -12,7 +12,7 @@ function folded_UUt(Ut::MPO; new_siteinds=nothing)
     for jj = 1:N
         UUt[jj] = Ut[jj] * dag(prime(Ut[jj],2))
         s = sites_u[jj]
-        cs = ITransverse.ITenUtils.pcombiner(s, dag(s)'', tags = tags(s); dir=ITensors.In)
+        cs = pcombiner(s, dag(s)'', tags = tags(s); dir=ITensors.In)
         UUt[jj] = UUt[jj] * cs  #TODO CHECK THIS 
         UUt[jj] = UUt[jj] * dag(cs)'  #TODO CHECK THIS 
     end
@@ -80,9 +80,9 @@ function combine_and_fold(W1::AbstractMPS, W2::AbstractMPS; dag_W2::Bool=false,
     W12 = typeof(W1)(LL)
 
     comb_p = if dag_W2 || isa(W12, MPS) # if we dag, we also transpose (so in the end it's not flipped)
-        [ITransverse.ITenUtils.pcombiner(sites1_p[ii], sites2_p[ii]'', tags="Site,nn=$(ii)") for ii = 1:LL]
+        [pcombiner(sites1_p[ii], sites2_p[ii]'', tags="Site,nn=$(ii)") for ii = 1:LL]
     else
-        [ITransverse.ITenUtils.pcombiner(sites1_p[ii], sites2_ps[ii]'', tags="Site,nn=$(ii)") for ii = 1:LL]
+        [pcombiner(sites1_p[ii], sites2_ps[ii]'', tags="Site,nn=$(ii)") for ii = 1:LL]
     end
 
 

@@ -1,6 +1,6 @@
 using ITensors, ITensorMPS
 using Test
-using ITransverse.ITenUtils
+using ITransverse
 
 s = siteinds("S=1/2", 30)
 psi = random_mps(s, linkdims=50)

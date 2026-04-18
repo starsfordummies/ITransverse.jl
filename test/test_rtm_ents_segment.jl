@@ -20,7 +20,7 @@ function compute_ents_segments(psi::MPS, cut_range)
             rhoc *= psigp[kk]
         end
 
-        F = ITransverse.ITenUtils.symm_oeig(rhoc, (linkind(psig,iA-1), linkind(psig,iB)); cutoff=1e-13)
+        F = ITransverse.symm_oeig(rhoc, (linkind(psig,iA-1), linkind(psig,iB)); cutoff=1e-13)
         renyis_diag = renyi_entropies(F.D.tensor.storage.data, which_ents=[0.5,1,2,4])
 
         push!(renyis, renyis_diag)
@@ -52,7 +52,7 @@ for kk = iA:iB
     rhoc *= psigp[kk]
 end
 
-F = ITransverse.ITenUtils.symm_oeig(rhoc, (linkind(psig,iA-1), linkind(psig,iB)); cutoff=1e-13)
+F = ITransverse.symm_oeig(rhoc, (linkind(psig,iA-1), linkind(psig,iB)); cutoff=1e-13)
 S2_diag = renyi_entropies(F.D.tensor.storage.data, which_ents=[2])["S2"][1]
 
 @test S2_manual ≈ S2_diag
@@ -91,7 +91,7 @@ for kk = fA+1:LL
     rho *= psi[kk]'
 end
 
-FA = ITransverse.ITenUtils.symm_oeig(rho, inds(rho,plev=0); cutoff=1e-13)
+FA = ITransverse.symm_oeig(rho, inds(rho,plev=0); cutoff=1e-13)
 
 rho = ITensor(1)
 
@@ -110,7 +110,7 @@ for kk = fA+1:LL
     rho *= psip[kk]
 end
 
-FB = ITransverse.ITenUtils.symm_oeig(rho, inds(rho, plev=1); cutoff=1e-13)
+FB = ITransverse.symm_oeig(rho, inds(rho, plev=1); cutoff=1e-13)
 
 @test diag(FA.D) ≈ diag(FB.D)
 

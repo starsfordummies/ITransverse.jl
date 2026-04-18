@@ -1,5 +1,5 @@
 
-function ITransverse.ITenUtils.plot_matrix(a::Matrix)
+function plot_matrix(a::Matrix)
     heatmap(1:size(a,1),
            1:size(a,2), abs.(a),
            c=cgrad([:blue, :white,:red, :yellow]),
@@ -7,20 +7,20 @@ function ITransverse.ITenUtils.plot_matrix(a::Matrix)
            title="matrix")
 end
 
-function ITransverse.ITenUtils.plot_matrix(a::ITensor; label::String="")
+function plot_matrix(a::ITensor; label::String="")
     @assert order(a) == 2
     plot_matrix(matrix(a),label="$(label)")
 end
 
-function ITransverse.ITenUtils.plotr(a::Array; label::String="")
+function plotr(a::Array; label::String="")
     plot(real(a), label="Re($(label))")
 end
 
-function ITransverse.ITenUtils.ploti(a::Array; label::String="")
+function ploti(a::Array; label::String="")
     plot(imag(a), label="Im($(label))")
 end
 
-function ITransverse.ITenUtils.plotri(a::Array; label::String="")
+function plotri(a::Array; label::String="")
     p1 = plot(real(a), label="Re($(label))")
     p2 = plot(imag(a), label="Im($(label))")
     plot(p1,p2)

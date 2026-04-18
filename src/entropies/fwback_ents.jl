@@ -233,7 +233,7 @@ function compute_sn_cut(psi::MPS, n::Int; cut::Int=div(length(psi),2), cutoff=1e
         psi[kk] = trace_combinedind(psi[kk], ss[kk])
     end
 
-    psi = ITenUtils.contract_dangling!(psi)
+    psi = contract_dangling!(psi)
 
     orthogonalize!(psi,1)
 
@@ -241,7 +241,7 @@ function compute_sn_cut(psi::MPS, n::Int; cut::Int=div(length(psi),2), cutoff=1e
 
     oo = reopen_inds!(psi, different_fwback_inds=false)
 
-    oo = oo/ITenUtils.trace_mpo(oo)
+    oo = oo/trace_mpo(oo)
 
     @show siteinds(oo)
     @show linkinds(oo)
@@ -252,7 +252,7 @@ function compute_sn_cut(psi::MPS, n::Int; cut::Int=div(length(psi),2), cutoff=1e
         rho2 = apply(oo, rho2; cutoff,maxdim)
     end
 
-    ITenUtils.trace_mpo(rho2)
+    trace_mpo(rho2)
 end
 
 

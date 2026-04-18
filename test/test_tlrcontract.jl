@@ -50,6 +50,8 @@ fidelity(rr, rrc)
 fidelity(rr, rrt)
 
 
+
+
 ss = siteinds("S=1/2", 40)
 
 ψL = random_mps(ComplexF64, ss, linkdims=100) 
@@ -65,15 +67,19 @@ ov = overlap_noconj(ψL,ψR)
 cutoff = 1e-60
 maxdim=128
 mindim=128
-direction = :right 
-truncp = (; cutoff, maxdim, direction)
-left, right, s = ITransverse.tlrapply(ψL, AL, AR, ψR; alg="RTM", truncp...)
+truncp = (; cutoff, maxdim)
+left, right, s = ITransverse.tlrapply(ψL, AL, AR, ψR; alg="RTM", direction=:right, truncp...)
 overlap_noconj(left,right)
 leftll, rightrr, s = ITransverse.tlrapply(ψL, AL, AR, ψR; alg="RTM", truncp..., direction=:left)
 
-leftn, rightn, sn = ITransverse.tlrapply(ψL, AL, AR, ψR; alg="naiveRTM", direction=:left)
+leftn, rightn, sn = ITransverse.tlrapply(ψL, AL, AR, ψR; alg="naiveRTM", truncp..., direction=:left)
+leftn, rightn, sn = ITransverse.tlrapply(ψL, AL, AR, ψR; alg="naiveRTM", truncp..., direction=:right)
 
 @show fidelity(left,leftn) 
+@show fidelity(left,leftll) 
+
+@show fidelity(left,leftn) 
+
 @test fidelity(left,leftn) > 0.99
 @show fidelity(right, rightn) #> 0.99
 

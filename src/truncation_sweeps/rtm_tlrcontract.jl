@@ -148,7 +148,7 @@ function _tlrcontract_rtm_right(ψL::MPS, AL::MPO, AR::MPO, ψR::MPS;
     end
 
     # E[1] is the full overlap <ψL|AL AR|ψR> before truncation (scalar for OBC)
-    ov_before = compute_norm ? scalar(E[1]) : nothing
+    ov_before = compute_norm ? scalar(E[1]) : 1.0
 
     # Step 2: left boundary tensors at site 1.
     # ALp (site plevs 2,3): plev-2 contracts with ψL'', plev-3 stays open for output.
@@ -201,7 +201,7 @@ function _tlrcontract_rtm_right(ψL::MPS, AL::MPO, AR::MPO, ψR::MPS;
         ov_after = overlap_noconj(noprime(ψL_out), noprime(ψR_out))
         ov_before / ov_after
     else
-        nothing
+        1.0
     end
 
     return ψL_out, ψR_out, S_all, norm_factor
@@ -268,7 +268,7 @@ function _trcontract_rtm_right(ψL::MPS, AR::MPO, ψR::MPS;
     end
 
     # E[N] is the full overlap <ψL|AR|ψR> before truncation (scalar for OBC)
-    ov_before = compute_norm ? scalar(E[N]) : nothing
+    ov_before = compute_norm ? scalar(E[N]) : 1.0
 
     # Step 2: right boundary, absorbing excess AR sites beyond N
     R = ITensors.OneITensor()
@@ -321,7 +321,7 @@ function _trcontract_rtm_right(ψL::MPS, AR::MPO, ψR::MPS;
         ov_after = overlap_noconj(noprime(ψL_out), noprime(ψR_out))
         ov_before / ov_after
     else
-        nothing
+        1.0
     end
 
     return ψL_out, ψR_out, S_all, norm_factor
@@ -356,7 +356,7 @@ function _trcontract_rtm_left(ψL::MPS, AR::MPO, ψR::MPS;
     end
 
     # E[1] is the full overlap <ψL|AR|ψR> before truncation (scalar for OBC)
-    ov_before = compute_norm ? scalar(E[1]) : nothing
+    ov_before = compute_norm ? scalar(E[1]) : 1.0
 
     # Step 2: left boundary at site 1
     R        = ψR[1] * AR[1]
@@ -411,7 +411,7 @@ function _trcontract_rtm_left(ψL::MPS, AR::MPO, ψR::MPS;
         ov_after = overlap_noconj(noprime(ψL_out), noprime(ψR_out))
         ov_before / ov_after
     else
-        nothing
+        1.0
     end
 
     return ψL_out, ψR_out, S_all, norm_factor

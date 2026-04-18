@@ -59,8 +59,8 @@ function expH_random_symm_svd_1o(dt::Number)
     eH2 = exp(im * dt * H2)
     eH3 = exp(im * dt * H3)
 
-    l1, r2 = ITenUtils.symm_factorization(e12, inds(op(s, "X", 1)), cutoff=1e-14)
-    l2, r3 = ITenUtils.symm_factorization(e23, inds(op(s, "X", 2)), cutoff=1e-14)
+    l1, r2 = symm_factorization(e12, inds(op(s, "X", 1)), cutoff=1e-14)
+    l2, r3 = symm_factorization(e23, inds(op(s, "X", 2)), cutoff=1e-14)
 
     Wl = apply(eH1, l1)
     Wc = apply(eH2, apply(r2, l2))

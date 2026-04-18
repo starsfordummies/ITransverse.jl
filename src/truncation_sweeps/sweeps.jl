@@ -6,7 +6,8 @@ Could call it "naiveRTM" ?
 function truncate_sweep(psi::MPS, phi::MPS;
         cutoff::Real  = 1e-13,
         maxdim::Int   = max(maxlinkdim(psi), maxlinkdim(phi)),
-        direction::Symbol = :right
+        direction::Symbol = :right,
+        compute_norm::Bool = false
     )
 
     N = length(psi)

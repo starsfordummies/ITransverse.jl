@@ -1,10 +1,10 @@
-import ITransverse.ITenUtils: tcontract
+import ITransverse: tcontract
 
 tocpu(x) = adapt(Array, x)
 
 """ Contract MPO-MPS with algorithm densitymatrix, starting from the left. At the end we can chop/extend 
 if we work with light cone. If `contract_dangling=true` we shrink dangling edges, if present  """
-function ITransverse.ITenUtils.tcontract(::Algorithm{:cudensitymatrix},
+function ITransverse.tcontract(::Algorithm{:cudensitymatrix},
         A::MPO,
         ψ::MPS;
         cutoff = 1.0e-13,
@@ -113,7 +113,7 @@ function ITransverse.ITenUtils.tcontract(::Algorithm{:cudensitymatrix},
     ITensorMPS.setrightlim!(ψ_out, N+1)
 
     if contract_dangling
-        ITransverse.ITenUtils.contract_dangling!(ψ_out)
+        ITransverse.contract_dangling!(ψ_out)
     end
 
     return ψ_out, S_all

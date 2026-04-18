@@ -9,7 +9,8 @@ preserve_mps_tags = true
 cutoff = 1e-20
 maxdim=256
 direction = :right 
-truncp = (; cutoff, maxdim, preserve_mps_tags)
+compute_norm = true
+truncp = (; cutoff, maxdim, preserve_mps_tags, compute_norm)
 
 ss = siteinds("S=1/2", 10)
 

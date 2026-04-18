@@ -16,14 +16,14 @@ Supports destructuring as `(L, R, sv)` for backward compatibility:
     result     = tlrapply(...)
     result.norm_factor                  # new field, nothing if not requested
 """
-struct TruncLR
+struct TruncLR{TSV,TNorm}
     L::MPS
     R::MPS
-    sv::Matrix{Float64}
-    norm_factor::Union{Nothing, Number}
+    sv::Matrix{TSV}
+    norm_factor::TNorm
 end
 
-TruncLR(L, R, sv) = TruncLR(L, R, sv, nothing)
+TruncLR(L, R, sv) = TruncLR(L, R, sv, 1.0)
 
 Base.iterate(t::TruncLR, state=1) =
     state == 1 ? (t.L,  2) :
@@ -39,6 +39,8 @@ function Base.getindex(t::TruncLR, i::Int)
     i == 3 && return t.sv
     throw(BoundsError(t, i))
 end
+
+overlap_noconj(lr::TruncLR, reverse_qn_ll::Bool=false; kwargs...) = overlap_noconj(lr.L, lr.R, reverse_qn_ll; kwargs...) 
 
 
 function tlrcontract(::Algorithm"naiveRTM", psiL::MPS, OL::MPO, OR::MPO, psiR::MPS;
