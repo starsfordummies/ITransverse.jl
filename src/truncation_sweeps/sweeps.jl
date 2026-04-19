@@ -10,6 +10,8 @@ function truncate_sweep(psi::MPS, phi::MPS;
         compute_norm::Bool = false
     )
 
+    norm_before = compute_norm ? overlap_noconj(psi,phi) : 1.0
+
     N = length(psi)
 
     sweep_start, sweep_step, sweep_end, sv_offset = if direction == :right
@@ -65,7 +67,14 @@ function truncate_sweep(psi::MPS, phi::MPS;
     psi_ortho[last_site] = XUinv * psi_ortho[last_site]
     phi_ortho[last_site] = XVinv * phi_ortho[last_site]
 
-    return psi_ortho, phi_ortho, SV_all
+    norm_factor = if compute_norm
+        norm_after = scalar(psi_ortho[last_site] * phi_ortho[last_site])
+        norm_before/norm_after
+    else
+        1.0
+    end
+
+    return TruncLR(psi_ortho, phi_ortho, SV_all, norm_factor)
 end
 
 

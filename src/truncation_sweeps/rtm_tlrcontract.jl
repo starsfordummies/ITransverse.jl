@@ -33,55 +33,53 @@ end
 
 
 
-""" Builds LEFT environments, sweeps RIGHT→LEFT"""
+""" Builds LEFT environments, sweeps RIGHT→LEFT (opt. tauB = trA(tau) )"""
 function _tlrcontract_rtm_left(ψL::MPS, AL::MPO, AR::MPO, ψR::MPS;
-        cutoff, maxdim, mindim, preserve_mps_tags, compute_norm=false, kwargs...)
+        cutoff, maxdim, mindim, preserve_mps_tags, compute_norm, kwargs...)
 
+    NL = length(AL)
+    NR = length(AR)
+    n  = min(NL, NR)
+    N = max(NL, NR)
 
-    @assert length(AL) >= length(ψL)
-    @assert length(AR) >= length(ψR)
+    @assert NL >= length(ψL)
+    @assert NR >= length(ψR)
 
     AL  = AL'
     ψL  = ψL''
-
     ALp = replaceprime(AL, 1 => 3, tags="Site")
-
-    NL = length(ALp)
-    NR = length(AR)
-    N  = min(NL, NR)
 
     sR             = firstsiteinds(AR, plev=1)
     requested_maxdim = maxdim
-    ψR_out         = typeof(ψR)(N)
-    ψL_out         = typeof(ψL)(N)
-    S_all          = zeros(Float64, N-1, requested_maxdim)
+    ψR_out         = typeof(ψR)(n)
+    ψL_out         = typeof(ψL)(n)
+    S_all          = zeros(Float64, n-1, requested_maxdim)
 
     # Step 1: left environments E[j] = contraction of sites 1..j (both arms).
-    # get(ψ, j, OneITensor()) returns OneITensor() for j beyond the MPS, so no branching needed.
-    E = Vector{ITensor}(undef, N-1)
-    for j in 1:N-1
+    E = Vector{ITensor}(undef, N)
+    for j in 1:N
         prev  = j == 1 ? ITensors.OneITensor() : E[j-1]
-        E[j]  = prev * get(ψR, j) * AR[j] * AL[j] * get(ψL, j)
+        E[j]  = prev * get(ψR, j) * get(AR, j) * get(AL, j) * get(ψL, j)
         @assert ndims(E[j]) < 5 "Bad env[$j] ? - $(inds(E[j]))"
     end
 
+    ov_before = compute_norm ? scalar(E[N]) : 1.0
 
-    # Step 2: right boundary tensors (AR arm = R, ALp arm = L).
-    # When NR==N the loop body is reverse(N:N-1) = empty, so R is just site N.
+    # Initialize right boundary tensors 
     R = get(ψR, NR) * AR[NR]
-    for j in reverse(N:NR-1)
+    for j in reverse(n:NR-1)
         R = R * get(ψR, j) * AR[j]
     end
 
     L = get(ψL, NL) * ALp[NL]
-    for j in reverse(N:NL-1)
+    for j in reverse(n:NL-1)
         L = L * get(ψL, j) * ALp[j]
     end
 
     renorm_idx = nothing
 
-    # Step 3: sweep right → left, extracting one tensor pair per bond.
-    for j in reverse(1:N-1)
+    # Step 3: sweep right → left
+    for j in reverse(1:n-1)
         maxdim = min(dim(commoninds(R, E[j])), dim(commoninds(L, E[j])), requested_maxdim)
         rho    = E[j] * L * R
 
@@ -110,14 +108,20 @@ function _tlrcontract_rtm_left(ψL::MPS, AL::MPO, AR::MPO, ψR::MPS;
     ψR_out[1] = R
     ψL_out[1] = L
 
-    # ov_before cannot be cheaply extracted from left-environments for the LR case
-    return ψL_out, ψR_out, S_all, nothing
+    norm_factor = if compute_norm 
+        ov_after = overlap_noconj(noprime(ψL_out), noprime(ψR_out))
+        ov_before / ov_after
+    else
+        1.0
+    end
+
+    return ψL_out, ψR_out, S_all, norm_factor
 end
 
 
-""" Builds RIGHT environments, sweeps LEFT→RIGHT """
+""" Builds RIGHT environments, sweeps LEFT→RIGHT (opt. tauA=trB(tau) ) """
 function _tlrcontract_rtm_right(ψL::MPS, AL::MPO, AR::MPO, ψR::MPS;
-        cutoff, maxdim, mindim, preserve_mps_tags, compute_norm=false, kwargs...)
+        cutoff, maxdim, mindim, preserve_mps_tags, compute_norm, kwargs...)
 
     @assert length(AL) >= length(ψL)
     @assert length(AR) >= length(ψR)
@@ -197,7 +201,7 @@ function _tlrcontract_rtm_right(ψL::MPS, AL::MPO, AR::MPO, ψR::MPS;
     ψR_out[n] = R * redge_R
     ψL_out[n] = L * redge_L
 
-    norm_factor = if compute_norm && ov_before !== nothing
+    norm_factor = if compute_norm 
         ov_after = overlap_noconj(noprime(ψL_out), noprime(ψR_out))
         ov_before / ov_after
     else
@@ -238,7 +242,7 @@ end
 
 """ Builds LEFT environments, sweeps RIGHT→LEFT """
 function _trcontract_rtm_right(ψL::MPS, AR::MPO, ψR::MPS;
-        cutoff, maxdim, mindim, preserve_mps_tags, compute_norm=false, kwargs...)
+        cutoff, maxdim, mindim, preserve_mps_tags, compute_norm, kwargs...)
 
     ### Indices prime contractions conventions
     # ψL--p'--AL--p--     --p'--AR--p--ψR 
@@ -329,7 +333,7 @@ end
 
 """ Builds RIGHT environments, sweeps LEFT→RIGHT """
 function _trcontract_rtm_left(ψL::MPS, AR::MPO, ψR::MPS;
-        cutoff, maxdim, mindim, preserve_mps_tags, compute_norm=false, kwargs...)
+        cutoff, maxdim, mindim, preserve_mps_tags, compute_norm, kwargs...)
 
     N  = length(ψL)
     nR = length(ψR)

@@ -7,13 +7,12 @@ using Test
 
 preserve_mps_tags = true
 cutoff = 1e-20
-maxdim=256
+maxdim=128
 direction = :right 
 compute_norm = true
 truncp = (; cutoff, maxdim, preserve_mps_tags, compute_norm)
 
 ss = siteinds("S=1/2", 10)
-
 
 ψL = random_mps(ComplexF64, ss[1:5], linkdims=10)
 ψR = random_mps(ComplexF64, ss, linkdims=12) 
@@ -55,20 +54,16 @@ end
 truncp = (; cutoff=1e-8, maxdim=10, preserve_mps_tags=false)
 
 ref = ITransverse.trapply(ITensors.Algorithm("notrunc"), ψL, AR, ψR)
-overlap_noconj(ref[1],ref[2])
 
 
 rR = ITransverse.trapply(ITensors.Algorithm("RTM"), ψL, AR, ψR; truncp..., direction=:right)
 rL = ITransverse.trapply(ITensors.Algorithm("RTM"), ψL, AR, ψR; truncp..., direction=:left)
 nrL = ITransverse.trapply(ITensors.Algorithm("naiveRTM"), ψL, AR, ψR; truncp..., direction=:left)
 nrR = ITransverse.trapply(ITensors.Algorithm("naiveRTM"), ψL, AR, ψR; truncp..., direction=:right)
-nrRn = ITransverse.trapply(ITensors.Algorithm("naiveRTM_normR"), ψL, AR, ψR; truncp..., direction=:right)
 
-nlRn = ITransverse.tlapply(ITensors.Algorithm("naiveRTM_normR"), ψL, AR, ψR; truncp..., direction=:right)
+overlap_noconj(ref)
 
-overlap_noconj(rR[1],rR[2])
-overlap_noconj(rL[1],rL[2])
-overlap_noconj(nrL[1],nrL[2])
-overlap_noconj(nrR[1],nrR[2])
-overlap_noconj(nrRn[1],nrRn[2])
-overlap_noconj(nlRn[1],nlRn[2])
+overlap_noconj(rR)
+overlap_noconj(rL)
+overlap_noconj(nrL)
+overlap_noconj(nrR)

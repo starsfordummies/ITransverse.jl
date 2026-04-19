@@ -31,12 +31,14 @@ Base.iterate(t::TruncLR, state=1) =
     state == 3 ? (t.sv, 4) :
     nothing
 
-Base.length(::TruncLR) = 3
+#Base.length(::TruncLR) = 3
+ITensorMPS.maxlinkdim(t::TruncLR) = max(maxlinkdim(t.L), maxlinkdim(t.R))
 
 function Base.getindex(t::TruncLR, i::Int)
     i == 1 && return t.L
     i == 2 && return t.R
     i == 3 && return t.sv
+    i == 4 && return t.norm_factor
     throw(BoundsError(t, i))
 end
 
@@ -92,18 +94,6 @@ function trcontract(::Algorithm"naiveRTM", ψL::MPS, AR::MPO, ψR::MPS;
     OpsiR = applyn(AR, ψR; truncate=false)
     l, r, sv = truncate_sweep(ψL, OpsiR; kwargs...)
     return TruncLR(l, r, sv)
-end
-
-function trcontract(::Algorithm"naiveRTM_normR", ψL::MPS, AR::MPO, ψR::MPS;
-        preserve_mps_tags::Bool=false, # TODO not implemented yet
-        kwargs...)
-
-    OpsiR    = applyn(AR, ψR; truncate=false)
-    ov_before = overlap_noconj(ψL, OpsiR)
-    ll, rr, sv = truncate_sweep(ψL, OpsiR; kwargs...)
-    ov_after  = overlap_noconj(ll, rr)
-    norm_factor = ov_before / ov_after
-    return TruncLR(ll, rr * norm_factor, sv, norm_factor)
 end
 
 function trcontract(::Algorithm"notrunc", psiL::MPS, OR::MPO, psiR::MPS; kwargs...)
