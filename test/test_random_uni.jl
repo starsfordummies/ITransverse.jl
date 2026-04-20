@@ -1,5 +1,5 @@
 using ITensors, ITransverse
-using ITransverse.ITenUtils: random_uni
+using ITransverse: random_uni
 using Test
 c1 = combiner(Index(10), Index(8))
 

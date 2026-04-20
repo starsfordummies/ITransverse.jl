@@ -1,5 +1,3 @@
-using .ITenUtils: ctruncate!, ctruncate!!
-
 
 """ Overriding ITensor's eigen() when we're dealing with complex matrices?"""
 function LinearAlgebra.eigen(

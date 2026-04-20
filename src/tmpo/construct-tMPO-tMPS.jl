@@ -52,8 +52,8 @@ function construct_tMPS_tMPO(psi_i::MPS, in_Uts::Vector{MPO}, psi_f::MPS;
 
   #Incorporate initial and final state in MPOs. 
   #First remove trivial links from produc states for QN mental sanity
-  ITransverse.ITenUtils.delete_link_from_prodMPS!(psi_i)
-  ITransverse.ITenUtils.delete_link_from_prodMPS!(psi_f)
+  delete_link_from_prodMPS!(psi_i)
+  delete_link_from_prodMPS!(psi_f)
 
   if dagger_psif
     psi_f = dag(psi_f)
@@ -161,16 +161,16 @@ function construct_tMPS_tMPO_finite(psi_i::MPS, mpo_rows::Vector{MPO}, psi_f::MP
 
   #Incorporate initial and final state in MPOs. 
   #First remove trivial links from produc states for QN mental sanity
-  # ITransverse.ITenUtils.delete_link_from_prodMPS!(psi_i)
-  # ITransverse.ITenUtils.delete_link_from_prodMPS!(psi_f)
+  # delete_link_from_prodMPS!(psi_i)
+  # delete_link_from_prodMPS!(psi_f)
 
   if dagger_psif
     psi_f = dag(psi_f)
   end
 
   # Incorporate initial and final states in the first/last row, which become MPS 
-  work_rows[1] = applyn(work_rows[1], ITransverse.ITenUtils.delete_link_from_prodMPS(psi_i))
-  work_rows[end] = applyns(work_rows[end], ITransverse.ITenUtils.delete_link_from_prodMPS!(psi_f))
+  work_rows[1] = applyn(work_rows[1], delete_link_from_prodMPS(psi_i))
+  work_rows[end] = applyns(work_rows[end], delete_link_from_prodMPS!(psi_f))
 
   for ii = 3:Nrows
     work_rows[ii] = prime(siteinds, work_rows[ii], ii - 2)

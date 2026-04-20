@@ -16,70 +16,70 @@ function tlrcontract(::Algorithm"RTM",
         mindim::Int = 1,
         preserve_mps_tags::Bool = false,
         direction = :right,
+        compute_overlaps::Bool = false,
         kwargs...,
     )
 
     if direction == :right
-        return _tlrcontract_rtm_right(ψL, AL, AR, ψR; cutoff, maxdim, mindim, preserve_mps_tags, kwargs...)
+        L, R, sv, nf = _tlrcontract_rtm_right(ψL, AL, AR, ψR; cutoff, maxdim, mindim, preserve_mps_tags, compute_overlaps, kwargs...)
     elseif direction == :left
-        return _tlrcontract_rtm_left(ψL, AL, AR, ψR; cutoff, maxdim, mindim, preserve_mps_tags, kwargs...)
+        L, R, sv, nf = _tlrcontract_rtm_left(ψL, AL, AR, ψR; cutoff, maxdim, mindim, preserve_mps_tags, compute_overlaps, kwargs...)
     else
         error("direction must be :left or :right, got :$(direction)")
     end
+    return TruncLR(L, R, sv, nf)
 end
 
 
 
 
-""" Builds LEFT environments, sweeps RIGHT→LEFT"""
+""" Builds LEFT environments, sweeps RIGHT→LEFT (opt. tauB = trA(tau) )"""
 function _tlrcontract_rtm_left(ψL::MPS, AL::MPO, AR::MPO, ψR::MPS;
-        cutoff, maxdim, mindim, preserve_mps_tags, kwargs...)
+        cutoff, maxdim, mindim, preserve_mps_tags, compute_overlaps, kwargs...)
 
+    NL = length(AL)
+    NR = length(AR)
+    n  = min(NL, NR)
+    N = max(NL, NR)
 
-    @assert length(AL) >= length(ψL)
-    @assert length(AR) >= length(ψR)
+    @assert NL >= length(ψL)
+    @assert NR >= length(ψR)
 
     AL  = AL'
     ψL  = ψL''
-
     ALp = replaceprime(AL, 1 => 3, tags="Site")
-
-    NL = length(ALp)
-    NR = length(AR)
-    N  = min(NL, NR)
 
     sR             = firstsiteinds(AR, plev=1)
     requested_maxdim = maxdim
-    ψR_out         = typeof(ψR)(N)
-    ψL_out         = typeof(ψL)(N)
-    S_all          = zeros(Float64, N-1, requested_maxdim)
+    ψR_out         = typeof(ψR)(n)
+    ψL_out         = typeof(ψL)(n)
+    S_all          = zeros(Float64, n-1, requested_maxdim)
 
     # Step 1: left environments E[j] = contraction of sites 1..j (both arms).
-    # get(ψ, j, OneITensor()) returns OneITensor() for j beyond the MPS, so no branching needed.
-    E = Vector{ITensor}(undef, N-1)
-    for j in 1:N-1
+    E = Vector{ITensor}(undef, N)
+    for j in 1:N
         prev  = j == 1 ? ITensors.OneITensor() : E[j-1]
-        E[j]  = prev * get(ψR, j) * AR[j] * AL[j] * get(ψL, j)
+        E[j]  = prev * get(ψR, j) * get(AR, j) * get(AL, j) * get(ψL, j)
         @assert ndims(E[j]) < 5 "Bad env[$j] ? - $(inds(E[j]))"
     end
 
+    ov_before = compute_overlaps ? scalar(E[N]) : 1.0
 
-    # Step 2: right boundary tensors (AR arm = R, ALp arm = L).
-    # When NR==N the loop body is reverse(N:N-1) = empty, so R is just site N.
+    # Initialize right boundary tensors 
     R = get(ψR, NR) * AR[NR]
-    for j in reverse(N:NR-1)
+    for j in reverse(n:NR-1)
         R = R * get(ψR, j) * AR[j]
     end
 
     L = get(ψL, NL) * ALp[NL]
-    for j in reverse(N:NL-1)
+    for j in reverse(n:NL-1)
         L = L * get(ψL, j) * ALp[j]
     end
 
     renorm_idx = nothing
 
-    # Step 3: sweep right → left, extracting one tensor pair per bond.
-    for j in reverse(1:N-1)
+    # Step 3: sweep right → left
+    for j in reverse(1:n-1)
         maxdim = min(dim(commoninds(R, E[j])), dim(commoninds(L, E[j])), requested_maxdim)
         rho    = E[j] * L * R
 
@@ -108,13 +108,20 @@ function _tlrcontract_rtm_left(ψL::MPS, AL::MPO, AR::MPO, ψR::MPS;
     ψR_out[1] = R
     ψL_out[1] = L
 
-    return ψL_out, ψR_out, S_all
+    norm_factor = if compute_overlaps 
+        ov_after = overlap_noconj(noprime(ψL_out), noprime(ψR_out))
+        ov_before / ov_after
+    else
+        1.0
+    end
+
+    return ψL_out, ψR_out, S_all, norm_factor
 end
 
 
-""" Builds RIGHT environments, sweeps LEFT→RIGHT """
+""" Builds RIGHT environments, sweeps LEFT→RIGHT (opt. tauA=trB(tau) ) """
 function _tlrcontract_rtm_right(ψL::MPS, AL::MPO, AR::MPO, ψR::MPS;
-        cutoff, maxdim, mindim, preserve_mps_tags, kwargs...)
+        cutoff, maxdim, mindim, preserve_mps_tags, compute_overlaps, kwargs...)
 
     @assert length(AL) >= length(ψL)
     @assert length(AR) >= length(ψR)
@@ -143,6 +150,9 @@ function _tlrcontract_rtm_right(ψL::MPS, AL::MPO, AR::MPO, ψR::MPS;
         E[j] = E[j+1] * get(ψR, j) * get(AR, j) * get(AL, j) * get(ψL, j)
         @assert ndims(E[j]) < 5 "$j - $(inds(E[j]))"
     end
+
+    # E[1] is the full overlap <ψL|AL AR|ψR> before truncation (scalar for OBC)
+    ov_before = compute_overlaps ? scalar(E[1]) : 1.0
 
     # Step 2: left boundary tensors at site 1.
     # ALp (site plevs 2,3): plev-2 contracts with ψL'', plev-3 stays open for output.
@@ -191,17 +201,23 @@ function _tlrcontract_rtm_right(ψL::MPS, AL::MPO, AR::MPO, ψR::MPS;
     ψR_out[n] = R * redge_R
     ψL_out[n] = L * redge_L
 
+    norm_factor = if compute_overlaps 
+        ov_after = overlap_noconj(noprime(ψL_out), noprime(ψR_out))
+        ov_before / ov_after
+    else
+        1.0
+    end
 
-    return ψL_out, ψR_out, S_all
+    return ψL_out, ψR_out, S_all, norm_factor
 end
 
 
 
+########################################################
+######## trcontract ####################################
+########################################################
 
-
-
-
-
+""" Applies AR to ψR and truncates building RTM from |AψR><ψL| """ 
 function trcontract(::Algorithm"RTM",
         ψL::MPS,
         AR::MPO,
@@ -210,113 +226,101 @@ function trcontract(::Algorithm"RTM",
         maxdim::Int = max(maxlinkdim(ψL), maxlinkdim(AR) * maxlinkdim(ψR)),
         mindim::Int = 1,
         preserve_mps_tags::Bool = false,
-        direction = :right, # TODO no left yet 
+        direction = :right,
+        compute_overlaps::Bool = false,
         kwargs...,
     )
+    if direction == :right
+        L, R, sv, nf = _trcontract_rtm_right(ψL, AR, ψR; cutoff, maxdim, mindim, preserve_mps_tags, compute_overlaps, kwargs...)
+    elseif direction == :left
+        L, R, sv, nf = _trcontract_rtm_left(ψL, AR, ψR; cutoff, maxdim, mindim, preserve_mps_tags, compute_overlaps, kwargs...)
+    else
+        error("direction must be :left or :right, got :$(direction)")
+    end
+    return TruncLR(L, R, sv, nf)
+end
 
-    @assert direction == :right ":left not implemented yet"
+""" Builds LEFT environments, sweeps RIGHT→LEFT """
+function _trcontract_rtm_right(ψL::MPS, AR::MPO, ψR::MPS;
+        cutoff, maxdim, mindim, preserve_mps_tags, compute_overlaps, kwargs...)
 
     ### Indices prime contractions conventions
-    # (ie we prime ψL to contract it to AL in the proper direction)
     # ψL--p'--AL--p--     --p'--AR--p--ψR 
 
-    N = length(ψL)
+    N  = length(ψL)
     nR = length(ψR)
     NR = length(AR)
 
+    #@info N, nR, NR
+
     @assert NR >= nR
 
-    sR  = firstsiteinds(AR, plev=1)
-
+    sR               = firstsiteinds(AR, plev=1)
     requested_maxdim = maxdim
+    ψR_out           = typeof(ψR)(N)
+    ψL_out           = typeof(ψL)(N)
+    ψLp              = prime(siteinds, ψL')
+    S_all            = zeros(Float64, N-1, requested_maxdim)
 
-    ψR_out = typeof(ψR)(N)
-    ψL_out = typeof(ψL)(N)
-
-    # Step 1: build left environments up to site N-1
-    E = Vector{ITensor}(undef, N-1)
-
-    # Sites 1..min(nL,nR): both ψL and ψR present
-    # Sites min+1..max(nL,nR): only one ψ present
-    # Sites max+1..N-1: neither ψ present
-    env = ITensors.OneITensor() 
-    for j in 1:N-1
-        hasψR = j <= nR
-        env = if hasψR 
-            env * ψR[j] * AR[j]  * ψL[j]'
-        else
-            env * AR[j]  * ψL[j]'
-        end
-        E[j] = env
-
+    # Step 1: build left environments E[j] = sites 1..j
+    E   = Vector{ITensor}(undef, N)
+    env = ITensors.OneITensor()
+    for j in 1:N
+        env   = env * get(ψR,j) * AR[j] * ψL[j]' 
+        E[j]  = env
         @assert ndims(env) < 4
     end
 
-    # Step 2: initialize R and L by contracting the excess tail of the longer MPO
-    # Start from the far right edge and work inward until both sides reach site N
-
-    # Initialize edge tensors at the right boundary
-    R = if NR > N
-        # contract ψR and AR from NR down to N+1
-        t = nR >= NR ? ψR[NR] * AR[NR] : AR[NR]
-        for j in reverse(N:NR-1)
-            t = t * (j <= nR ? ψR[j] * AR[j] : AR[j])
+    # E[N] covers sites 1..N; if AR (or ψR) extends beyond N, accumulate the excess
+    ov_before = if compute_overlaps
+        excess = ITensors.OneITensor()
+        for j in N+1:NR
+            excess *= get(ψR, j) * AR[j]
         end
-        t
+        scalar(E[N] * excess)
     else
-        # NR == N, initialize at site N only
-        nR >= NR ? ψR[NR] * AR[NR] : AR[NR]
+        1.0
     end
 
-    ψLp = prime(siteinds, ψL')
-
+    # Step 2: right boundary, absorbing excess AR sites beyond N
+    R = ITensors.OneITensor()
+    for j in reverse(N:NR)
+        R = R * get(ψR,j) * AR[j] 
+    end
     L = ψLp[N]
 
-
     r_renorm = nothing
-    S_all = zeros(Float64, N-1, requested_maxdim)
 
-    # Step 3: main sweep from N-1 down to 1
+    # Step 3: sweep right → left
     for j in reverse(1:N-1)
+        maxdim = min(dim(commoninds(R, E[j])), dim(commoninds(L, E[j])), requested_maxdim)
 
-        hasψR = j <= nR
-
-        ciR = commoninds(R, E[j])
-        ciL = commoninds(L, E[j])
-        maxdim = min(dim(ciR), dim(ciL), requested_maxdim)
-
-        #@show inds(E[j])
-        #@show inds(L)
-        #@show inds(R)
         rho = E[j] * L * R
-        #@show inds(rho)
         @assert ndims(rho) < 5 "inds(rho) @site $j ? $(inds(rho))"
 
         tsR = if preserve_mps_tags
-            linkR  = j < nR ? linkind(ψR, j) : nothing
-            tsR = isnothing(linkR) ? "" : tags(linkR)
+            linkR = j < nR ? linkind(ψR, j) : nothing
+            isnothing(linkR) ? "" : tags(linkR)
         else
             "Link,l=$(j)"
         end
-
         tsL = if preserve_mps_tags
-            linkL  = j < N ? linkind(ψL, j) : nothing
-            tsL = isnothing(linkL) ? "" : tags(linkL)
+            linkL = j < N ? linkind(ψL, j) : nothing
+            isnothing(linkL) ? "" : tags(linkL)
         else
             "Link,l=$(j)"
         end
 
-        Ris = isnothing(r_renorm) ? IndexSet(sR[j+1])  : IndexSet(sR[j+1], r_renorm)
-
-        F = svd(rho, Ris; cutoff, maxdim, mindim, lefttags=tsR, righttags=tsL, kwargs...)
-        S, U, V = F.S, F.U, F.V
-        r_renorm= F.u
+        Ris = isnothing(r_renorm) ? IndexSet(sR[j+1]) : IndexSet(sR[j+1], r_renorm)
+        F   = svd(rho, Ris; cutoff, maxdim, mindim, lefttags=tsR, righttags=tsL, kwargs...)
+        S, U, V  = F.S, F.U, F.V
+        r_renorm = F.u
 
         ψR_out[j+1] = U
         ψL_out[j+1] = V
 
-        R = hasψR ? dag(U) * R * ψR[j] * AR[j]  : dag(U) * R * AR[j]
-        L = dag(V) * L * ψLp[j] 
+        R = dag(U) * R * get(ψR,j) * AR[j] 
+        L = dag(V) * L * ψLp[j]
 
         Svec = collect(S.tensor.storage.data) ./ sum(S)
         S_all[j, 1:length(Svec)] .= Svec
@@ -325,5 +329,102 @@ function trcontract(::Algorithm"RTM",
     ψR_out[1] = R
     ψL_out[1] = L
 
-    return ψL_out, ψR_out, S_all
+    norm_factor = if compute_overlaps && ov_before !== nothing
+        ov_after = overlap_noconj(noprime(ψL_out), noprime(ψR_out))
+        ov_before / ov_after
+    else
+        1.0
+    end
+
+    return ψL_out, ψR_out, S_all, norm_factor
+end
+
+""" Builds RIGHT environments, sweeps LEFT→RIGHT """
+function _trcontract_rtm_left(ψL::MPS, AR::MPO, ψR::MPS;
+        cutoff, maxdim, mindim, preserve_mps_tags, compute_overlaps, kwargs...)
+
+    N  = length(ψL)
+    nR = length(ψR)
+    NR = length(AR)
+
+    @assert NR >= nR
+
+    sR               = firstsiteinds(AR, plev=1)
+    requested_maxdim = maxdim
+    ψR_out           = typeof(ψR)(N)
+    ψL_out           = typeof(ψL)(N)
+    ψLp              = prime(siteinds, ψL')
+    S_all            = zeros(Float64, N-1, requested_maxdim)
+
+    # Step 1: build right environments E[j] = sites j..N (+ excess AR beyond N)
+    E = Vector{ITensor}(undef, N+1)
+    eR = ITensor(1)
+    for j in reverse(N+1:NR)
+        eR *= get(ψR,j) * AR[j]
+    end
+    E[N+1] = eR
+    for j in reverse(1:N)
+        E[j]  = E[j+1] * get(ψR,j) * AR[j] * ψL[j]'
+    end
+
+    # E[1] is the full overlap <ψL|AR|ψR> before truncation (scalar for OBC)
+    ov_before = compute_overlaps ? scalar(E[1]) : 1.0
+
+    # Step 2: left boundary at site 1
+    R        = ψR[1] * AR[1]
+    L        = ψLp[1]
+    l_renorm = nothing
+
+    # Step 3: sweep left → right
+    for j in 2:N
+        maxdim = min(dim(commoninds(R, E[j])), dim(commoninds(L, E[j])), requested_maxdim)
+
+        rho = E[j] * R * L
+        @assert ndims(rho) < 5 "inds(rho) @site $j ? $(inds(rho))"
+
+        tsR = if preserve_mps_tags
+            linkR = j-1 < nR ? linkind(ψR, j-1) : nothing
+            isnothing(linkR) ? "" : tags(linkR)
+        else
+            "Link,l=$(j-1)"
+        end
+        tsL = if preserve_mps_tags
+            linkL = j-1 < N ? linkind(ψL, j-1) : nothing
+            isnothing(linkL) ? "" : tags(linkL)
+        else
+            "Link,l=$(j-1)"
+        end
+
+        Lis = isnothing(l_renorm) ? IndexSet(sR[j-1]) : IndexSet(sR[j-1], l_renorm)
+        F   = svd(rho, Lis; cutoff, maxdim, mindim, lefttags=tsR, righttags=tsL, kwargs...)
+        S, U, V  = F.S, F.U, F.V
+        l_renorm = F.u
+
+        ψR_out[j-1] = U
+        ψL_out[j-1] = V
+
+        R = dag(U) * R * get(ψR, j) * AR[j] 
+        L = dag(V) * L * ψLp[j]
+
+        Svec = collect(S.tensor.storage.data) ./ sum(S)
+        S_all[j-1, 1:length(Svec)] .= Svec
+    end
+
+
+    redge_R = ITensors.OneITensor()
+    for j = reverse(N+1:NR)
+        redge_R *= AR[j] * get(ψR, j)
+    end
+    
+    ψR_out[N] = R * redge_R
+    ψL_out[N] = L
+
+    norm_factor = if compute_overlaps && ov_before !== nothing
+        ov_after = overlap_noconj(noprime(ψL_out), noprime(ψR_out))
+        ov_before / ov_after
+    else
+        1.0
+    end
+
+    return ψL_out, ψR_out, S_all, norm_factor
 end

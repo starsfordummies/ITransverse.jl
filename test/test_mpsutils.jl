@@ -1,7 +1,7 @@
 using Test
 using ITensors
 using ITransverse 
-using ITransverse.ITenUtils
+using ITransverse
 
 s = siteinds("S=1/2", 6)
 s2 = sim(s)

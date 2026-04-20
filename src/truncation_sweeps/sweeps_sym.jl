@@ -145,20 +145,20 @@ truncate_lsweep_sym(in_psi::MPS; kwargs...) = truncate_sweep_sym(in_psi; directi
 truncate_rsweep_sym(in_psi::MPS; kwargs...) = truncate_sweep_sym(in_psi; direction=:right, kwargs...) 
 
 
-function ITenUtils.tcontract(::Algorithm"naiveRTMsym", A::MPO, ψ::MPS; preserve_tags_mps::Bool=false, kwargs...)
+function tcontract(::Algorithm"naiveRTMsym", A::MPO, ψ::MPS; preserve_tags_mps::Bool=false, kwargs...)
     psi = apply(A, ψ; alg="naive", preserve_tags_mps, truncate=false)
     truncate_sweep_sym(psi; kwargs...)
 end
 
 
-function ITenUtils.tcontract(::Algorithm"naiveRTMsymRTM", A::MPO, ψ::MPS; preserve_tags_mps::Bool=false, kwargs...)
+function tcontract(::Algorithm"naiveRTMsymRTM", A::MPO, ψ::MPS; preserve_tags_mps::Bool=false, kwargs...)
     psi = apply(A, ψ; alg="naive", preserve_tags_mps, truncate=false)
     truncate_sweep_sym_rtm!(psi; kwargs...)
 end
 
 """ Contract MPO-MPS with algorithm densitymatrix, starting from the left. At the end we can chop/extend 
 if we work with light cone """
-function ITenUtils.tcontract(::Algorithm"RTMsym",
+function tcontract(::Algorithm"RTMsym",
         A::MPO,
         ψ::MPS;
         cutoff = 1.0e-13,

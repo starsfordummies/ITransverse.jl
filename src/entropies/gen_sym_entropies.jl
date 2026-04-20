@@ -51,7 +51,7 @@ function gensym_renyi_entropies_segment(psi::MPS, iA::Int, fA::Int; which_ents=[
         rhoc *= psigp[kk]
     end
 
-    F = ITransverse.ITenUtils.symm_oeig(rhoc, (linkind(psig,iA-1), linkind(psig,fA)); cutoff=1e-13)
+    F = symm_oeig(rhoc, (linkind(psig,iA-1), linkind(psig,fA)); cutoff=1e-13)
     eigvals_tau = normalize_eigs ? F.D/sum(F.D) : F.D
 
 

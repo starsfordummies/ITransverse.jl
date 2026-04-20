@@ -1,8 +1,8 @@
 using LinearAlgebra
 using ITensors
 using ITransverse
-using ITransverse.ITenUtils
-using ITransverse.ITenUtils: truncated_svd
+using ITransverse
+using ITransverse: truncated_svd
 using Test
 
 @testset "Testing symmetric SVD/EIG" begin
@@ -63,9 +63,9 @@ fiten = svd(m, ind(m,1); cutoff)
 
 ms = randsymITensor(40)
 ms /= norm(ms)
-u,s,ut = ITransverse.ITenUtils.symm_svd(ms, ind(ms,1))
+u,s,ut = ITransverse.symm_svd(ms, ind(ms,1))
 @test norm(u * s * ut - ms) < 1e-10
 
-u,s,ut = ITransverse.ITenUtils.symm_svd(ms, ind(ms,1), cutoff=1e-3)
+u,s,ut = ITransverse.symm_svd(ms, ind(ms,1), cutoff=1e-3)
 @test norm(u * s * ut - ms) < sqrt(1e-3)
 end

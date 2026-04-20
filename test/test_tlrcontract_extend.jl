@@ -7,12 +7,12 @@ using Test
 
 preserve_mps_tags = true
 cutoff = 1e-20
-maxdim=256
+maxdim=128
 direction = :right 
-truncp = (; cutoff, maxdim, preserve_mps_tags)
+compute_overlaps = true
+truncp = (; cutoff, maxdim, preserve_mps_tags, compute_overlaps)
 
 ss = siteinds("S=1/2", 10)
-
 
 ψL = random_mps(ComplexF64, ss[1:5], linkdims=10)
 ψR = random_mps(ComplexF64, ss, linkdims=12) 
@@ -37,3 +37,33 @@ lrnl = ITransverse.tlrapply(ITensors.Algorithm("naiveRTM"), ψL, AL, AR, ψR; tr
 
 lrs3 = ITransverse.tlrapply(ITensors.Algorithm("RTM"), ψL, AL, AR, ψR; truncp..., direction=:left)
 lrn = ITransverse.tlrapply(ITensors.Algorithm("naiveRTM"), ψL, AL, AR, ψR; truncp..., direction=:right)
+
+
+
+ss = siteinds("S=1/2", 30)
+
+ψL = random_mps(ComplexF64, ss[1:27], linkdims=60)
+ψR = random_mps(ComplexF64, ss, linkdims=102) 
+
+AR = random_mpo(ss) + im*random_mpo(ss)
+
+for jj = 28:30
+    AR[jj] *= ITensor([1,0], ss[jj]')
+end
+
+truncp = (; cutoff=1e-8, maxdim=10, preserve_mps_tags=false)
+
+ref = ITransverse.trapply(ITensors.Algorithm("notrunc"), ψL, AR, ψR)
+
+
+rR = ITransverse.trapply(ITensors.Algorithm("RTM"), ψL, AR, ψR; truncp..., direction=:right)
+rL = ITransverse.trapply(ITensors.Algorithm("RTM"), ψL, AR, ψR; truncp..., direction=:left)
+nrL = ITransverse.trapply(ITensors.Algorithm("naiveRTM"), ψL, AR, ψR; truncp..., direction=:left)
+nrR = ITransverse.trapply(ITensors.Algorithm("naiveRTM"), ψL, AR, ψR; truncp..., direction=:right)
+
+overlap_noconj(ref)
+
+overlap_noconj(rR)
+overlap_noconj(rL)
+overlap_noconj(nrL)
+overlap_noconj(nrR)

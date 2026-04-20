@@ -1,27 +1,4 @@
-module ITenUtils
-
-using JLD2
-using LinearAlgebra
-
-using NDTensors 
-
-using ITensors
-using ITensorMPS
-
-using ProgressMeter
-
-using ITensors.Adapt: adapt
-
-using ITensorMPS:  setleftlim!, setrightlim!
-
-using NDTensors:
- replace_nothing,
- default_use_absolute_cutoff,
- default_use_relative_cutoff,
- expose,
- truncate!!,
- Algorithm,
- @Algorithm_str
+# ITenUtils — files included directly in ITransverse (no submodule)
 
 include("ctruncate.jl")
 include("ceigen.jl")
@@ -47,60 +24,3 @@ include("eig_sym.jl")
 include("sqrt_itensor.jl")
 
 include("size_estimate.jl")
-
-
-# export sqrt
-
-export mergedicts!, mergedicts, dictfromlist
-
-#from utils.jl
-export pMPS,
-    overlap_noconj, 
-    check_symmetry_itensor_mpo, 
-    check_symmetry_swap,
-    normbyfactor,
-    ttruncate!,
-    tapply, tapplys,
-    applyn, applys, applyns,
-    match_siteinds, match_siteinds!,
-    replace_linkinds!,
-    phys_ind,
-    gaugefix_left,
-    fidelity,
-    gen_fidelity,
-    logfidelity,
-    normalize_for_overlap!,
-    allsiteinds,
-    tcontract
-
-
-# moreutils.jl
-export randsymITensor,
-    isid,
-    isdiag,
-    pinvten,
-    randITensor_decayspec
-
-# matrix_utils.jl
-export symmetrize,
-    check_id_matrix,
-    isapproxdiag,
-    randmat_decayspec,
-    matrix_svd,
-    vectorized_identity,
-    itensor_to_vector,
-    to_itensor,
-    vectorized_op,
-    trace_mpo, trace_mpo_squared,
-    max_diff
-
-# gen_svdeig_symm.jl
-export
-    symm_svd,
-    symm_oeig,
-    mytrunc_eig
-
-export beta_lims
-
-
-end

@@ -13,18 +13,59 @@ using ITensors: OneITensor
 
 using ITensors: @Algorithm_str, Algorithm
 
+using ITensors.Adapt: adapt
+
+using ITensorMPS: setleftlim!, setrightlim!
+
+using NDTensors:
+    replace_nothing,
+    default_use_absolute_cutoff,
+    default_use_relative_cutoff,
+    expose,
+    truncate!!
+
+# Collection of utilities 
 include("ITenUtils/ITenUtils.jl")
-using .ITenUtils
+
+export mergedicts!, mergedicts, dictfromlist
 
 export pMPS,
     overlap_noconj,
-    tapply, applyn, applys, applyns,
-    isid,
-    mergedicts!,
-    fidelity, logfidelity,
-    gen_fidelity,
-    normalize_for_overlap!
+    check_symmetry_itensor_mpo,
+    check_symmetry_swap,
+    normbyfactor,
+    ttruncate!,
+    tapply, tapplys, applyn, applys, applyns,
+    match_siteinds, match_siteinds!,
+    replace_linkinds!,
+    phys_ind,
+    gaugefix_left,
+    fidelity, logfidelity, gen_fidelity,
+    normalize_for_overlap!,
+    allsiteinds,
+    tcontract
 
+export randsymITensor,
+    isid, isdiag,
+    pinvten,
+    randITensor_decayspec
+
+export symmetrize,
+    check_id_matrix,
+    isapproxdiag,
+    randmat_decayspec,
+    matrix_svd,
+    truncated_svd,
+    vectorized_identity,
+    itensor_to_vector,
+    to_itensor,
+    vectorized_op,
+    trace_mpo, trace_mpo_squared,
+    max_diff
+
+export symm_svd, symm_oeig, mytrunc_eig
+
+export beta_lims
 
 include("BenchData/BenchData.jl")
 using .BenchData
@@ -76,6 +117,7 @@ export truncate_sweep, truncate_sweep_rtm
 export truncate_lsweep_sym, truncate_rsweep_sym, truncate_sweep_sym
 
 export tlapply, trapply, tlrapply
+export TruncLR
 
 export gen_canonical
 
