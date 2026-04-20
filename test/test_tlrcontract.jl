@@ -67,7 +67,7 @@ ov = overlap_noconj(ψL,ψR)
 cutoff = 1e-60
 maxdim=256
 mindim=256
-truncp = (; cutoff, maxdim, compute_norm=true)
+truncp = (; cutoff, maxdim, compute_overlaps=true)
 
 rtmr = ITransverse.tlrapply(ψL, AL, AR, ψR; alg="RTM", truncp..., direction=:right)
 rtml = ITransverse.tlrapply(ψL, AL, AR, ψR; alg="RTM", truncp..., direction=:left)
@@ -108,20 +108,39 @@ leftref, rightref, sref = ITransverse.trapply(ITensors.Algorithm("densitymatrix"
 
 
 
-#= 
 
-direction = :right 
-truncp = (; cutoff, maxdim, direction)
-left, right, s = ITransverse.tlrapply(ψL, AL, AR, ψR; alg="RTM", truncp...)
+ss = siteinds("S=1/2", 40)
+
+ψL = random_mps(ComplexF64, ss, linkdims=100) 
+ψR = random_mps(ComplexF64, ss, linkdims=120) 
+
+AL = random_mpo(ss) + im*random_mpo(ss)
+AR = random_mpo(ss) + im*random_mpo(ss)
+
+truncp = (; cutoff=1e-5, maxdim=100, compute_overlaps=true)
+
+ref = ITransverse.tlrapply(ψL, AL, AR, ψR; alg="notrunc", truncp..., direction=:right)
+
+overlap_noconj(ref)
+rtmr = ITransverse.tlrapply(ψL, AL, AR, ψR; alg="RTM", truncp..., direction=:right)
+rtml = ITransverse.tlrapply(ψL, AL, AR, ψR; alg="RTM", truncp..., direction=:left)
+
+overlap_noconj(rtmr)
+overlap_noconj(rtml)
+
+overlap_noconj(ref)/overlap_noconj(rtml)
+rtml.norm_factor
+overlap_noconj(ref)/overlap_noconj(rtmr)
+rtmr.norm_factor
 
 
- ITransverse.tlrcontract(ITensors.Algorithm("RTM"), ψL, AL, AR, ψR; cutoff=1e-10, maxdim=100, direction=:left)
+rtmnr = ITransverse.tlrapply(ψL, AL, AR, ψR; alg="naiveRTM", truncp..., direction=:right)
+rtmnl = ITransverse.tlrapply(ψL, AL, AR, ψR; alg="naiveRTM", truncp..., direction=:left)
 
- ITransverse.tlrcontract(ITensors.Algorithm("RTM"), ψL, AL, AR, ψR; cutoff=1e-10, maxdim=100, direction=:right)
+overlap_noconj(rtmnr)
+overlap_noconj(rtmnl)
 
-
- @info "Left"
-@btime tlrapply(ψL, AL, AR, ψR; alg="RTM", cutoff=1e-10, maxdim=100, direction=:left)
- @info "Right"
-@btime tlrapply(ψL, AL, AR, ψR; alg="RTM", cutoff=1e-10, maxdim=100, direction=:right)
-=#
+overlap_noconj(ref)/overlap_noconj(rtmnl)
+rtmnl.norm_factor
+overlap_noconj(ref)/overlap_noconj(rtmnr)
+rtmnr.norm_factor

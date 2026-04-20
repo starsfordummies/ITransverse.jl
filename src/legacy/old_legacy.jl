@@ -239,7 +239,7 @@ function tlrcontract(::Algorithm"RTMold",
         mindim::Int = 1,
         preserve_mps_tags::Bool = false,
         direction = :right, # TODO no left yet 
-        compute_norm = false, # no norm here
+        compute_overlaps = false, # no norm here
         kwargs...,
     )
 

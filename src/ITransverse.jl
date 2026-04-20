@@ -24,7 +24,7 @@ using NDTensors:
     expose,
     truncate!!
 
-# ITenUtils — included directly (no submodule)
+# Collection of utilities 
 include("ITenUtils/ITenUtils.jl")
 
 export mergedicts!, mergedicts, dictfromlist

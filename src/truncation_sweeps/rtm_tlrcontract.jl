@@ -16,14 +16,14 @@ function tlrcontract(::Algorithm"RTM",
         mindim::Int = 1,
         preserve_mps_tags::Bool = false,
         direction = :right,
-        compute_norm::Bool = false,
+        compute_overlaps::Bool = false,
         kwargs...,
     )
 
     if direction == :right
-        L, R, sv, nf = _tlrcontract_rtm_right(ψL, AL, AR, ψR; cutoff, maxdim, mindim, preserve_mps_tags, compute_norm, kwargs...)
+        L, R, sv, nf = _tlrcontract_rtm_right(ψL, AL, AR, ψR; cutoff, maxdim, mindim, preserve_mps_tags, compute_overlaps, kwargs...)
     elseif direction == :left
-        L, R, sv, nf = _tlrcontract_rtm_left(ψL, AL, AR, ψR; cutoff, maxdim, mindim, preserve_mps_tags, compute_norm, kwargs...)
+        L, R, sv, nf = _tlrcontract_rtm_left(ψL, AL, AR, ψR; cutoff, maxdim, mindim, preserve_mps_tags, compute_overlaps, kwargs...)
     else
         error("direction must be :left or :right, got :$(direction)")
     end
@@ -35,7 +35,7 @@ end
 
 """ Builds LEFT environments, sweeps RIGHT→LEFT (opt. tauB = trA(tau) )"""
 function _tlrcontract_rtm_left(ψL::MPS, AL::MPO, AR::MPO, ψR::MPS;
-        cutoff, maxdim, mindim, preserve_mps_tags, compute_norm, kwargs...)
+        cutoff, maxdim, mindim, preserve_mps_tags, compute_overlaps, kwargs...)
 
     NL = length(AL)
     NR = length(AR)
@@ -63,7 +63,7 @@ function _tlrcontract_rtm_left(ψL::MPS, AL::MPO, AR::MPO, ψR::MPS;
         @assert ndims(E[j]) < 5 "Bad env[$j] ? - $(inds(E[j]))"
     end
 
-    ov_before = compute_norm ? scalar(E[N]) : 1.0
+    ov_before = compute_overlaps ? scalar(E[N]) : 1.0
 
     # Initialize right boundary tensors 
     R = get(ψR, NR) * AR[NR]
@@ -108,7 +108,7 @@ function _tlrcontract_rtm_left(ψL::MPS, AL::MPO, AR::MPO, ψR::MPS;
     ψR_out[1] = R
     ψL_out[1] = L
 
-    norm_factor = if compute_norm 
+    norm_factor = if compute_overlaps 
         ov_after = overlap_noconj(noprime(ψL_out), noprime(ψR_out))
         ov_before / ov_after
     else
@@ -121,7 +121,7 @@ end
 
 """ Builds RIGHT environments, sweeps LEFT→RIGHT (opt. tauA=trB(tau) ) """
 function _tlrcontract_rtm_right(ψL::MPS, AL::MPO, AR::MPO, ψR::MPS;
-        cutoff, maxdim, mindim, preserve_mps_tags, compute_norm, kwargs...)
+        cutoff, maxdim, mindim, preserve_mps_tags, compute_overlaps, kwargs...)
 
     @assert length(AL) >= length(ψL)
     @assert length(AR) >= length(ψR)
@@ -152,7 +152,7 @@ function _tlrcontract_rtm_right(ψL::MPS, AL::MPO, AR::MPO, ψR::MPS;
     end
 
     # E[1] is the full overlap <ψL|AL AR|ψR> before truncation (scalar for OBC)
-    ov_before = compute_norm ? scalar(E[1]) : 1.0
+    ov_before = compute_overlaps ? scalar(E[1]) : 1.0
 
     # Step 2: left boundary tensors at site 1.
     # ALp (site plevs 2,3): plev-2 contracts with ψL'', plev-3 stays open for output.
@@ -201,7 +201,7 @@ function _tlrcontract_rtm_right(ψL::MPS, AL::MPO, AR::MPO, ψR::MPS;
     ψR_out[n] = R * redge_R
     ψL_out[n] = L * redge_L
 
-    norm_factor = if compute_norm 
+    norm_factor = if compute_overlaps 
         ov_after = overlap_noconj(noprime(ψL_out), noprime(ψR_out))
         ov_before / ov_after
     else
@@ -227,13 +227,13 @@ function trcontract(::Algorithm"RTM",
         mindim::Int = 1,
         preserve_mps_tags::Bool = false,
         direction = :right,
-        compute_norm::Bool = false,
+        compute_overlaps::Bool = false,
         kwargs...,
     )
     if direction == :right
-        L, R, sv, nf = _trcontract_rtm_right(ψL, AR, ψR; cutoff, maxdim, mindim, preserve_mps_tags, compute_norm, kwargs...)
+        L, R, sv, nf = _trcontract_rtm_right(ψL, AR, ψR; cutoff, maxdim, mindim, preserve_mps_tags, compute_overlaps, kwargs...)
     elseif direction == :left
-        L, R, sv, nf = _trcontract_rtm_left(ψL, AR, ψR; cutoff, maxdim, mindim, preserve_mps_tags, compute_norm, kwargs...)
+        L, R, sv, nf = _trcontract_rtm_left(ψL, AR, ψR; cutoff, maxdim, mindim, preserve_mps_tags, compute_overlaps, kwargs...)
     else
         error("direction must be :left or :right, got :$(direction)")
     end
@@ -242,7 +242,7 @@ end
 
 """ Builds LEFT environments, sweeps RIGHT→LEFT """
 function _trcontract_rtm_right(ψL::MPS, AR::MPO, ψR::MPS;
-        cutoff, maxdim, mindim, preserve_mps_tags, compute_norm, kwargs...)
+        cutoff, maxdim, mindim, preserve_mps_tags, compute_overlaps, kwargs...)
 
     ### Indices prime contractions conventions
     # ψL--p'--AL--p--     --p'--AR--p--ψR 
@@ -271,8 +271,16 @@ function _trcontract_rtm_right(ψL::MPS, AR::MPO, ψR::MPS;
         @assert ndims(env) < 4
     end
 
-    # E[N] is the full overlap <ψL|AR|ψR> before truncation (scalar for OBC)
-    ov_before = compute_norm ? scalar(E[N]) : 1.0
+    # E[N] covers sites 1..N; if AR (or ψR) extends beyond N, accumulate the excess
+    ov_before = if compute_overlaps
+        excess = ITensors.OneITensor()
+        for j in N+1:NR
+            excess *= get(ψR, j) * AR[j]
+        end
+        scalar(E[N] * excess)
+    else
+        1.0
+    end
 
     # Step 2: right boundary, absorbing excess AR sites beyond N
     R = ITensors.OneITensor()
@@ -321,7 +329,7 @@ function _trcontract_rtm_right(ψL::MPS, AR::MPO, ψR::MPS;
     ψR_out[1] = R
     ψL_out[1] = L
 
-    norm_factor = if compute_norm && ov_before !== nothing
+    norm_factor = if compute_overlaps && ov_before !== nothing
         ov_after = overlap_noconj(noprime(ψL_out), noprime(ψR_out))
         ov_before / ov_after
     else
@@ -333,7 +341,7 @@ end
 
 """ Builds RIGHT environments, sweeps LEFT→RIGHT """
 function _trcontract_rtm_left(ψL::MPS, AR::MPO, ψR::MPS;
-        cutoff, maxdim, mindim, preserve_mps_tags, compute_norm, kwargs...)
+        cutoff, maxdim, mindim, preserve_mps_tags, compute_overlaps, kwargs...)
 
     N  = length(ψL)
     nR = length(ψR)
@@ -360,7 +368,7 @@ function _trcontract_rtm_left(ψL::MPS, AR::MPO, ψR::MPS;
     end
 
     # E[1] is the full overlap <ψL|AR|ψR> before truncation (scalar for OBC)
-    ov_before = compute_norm ? scalar(E[1]) : 1.0
+    ov_before = compute_overlaps ? scalar(E[1]) : 1.0
 
     # Step 2: left boundary at site 1
     R        = ψR[1] * AR[1]
@@ -411,7 +419,7 @@ function _trcontract_rtm_left(ψL::MPS, AR::MPO, ψR::MPS;
     ψR_out[N] = R * redge_R
     ψL_out[N] = L
 
-    norm_factor = if compute_norm && ov_before !== nothing
+    norm_factor = if compute_overlaps && ov_before !== nothing
         ov_after = overlap_noconj(noprime(ψL_out), noprime(ψR_out))
         ov_before / ov_after
     else

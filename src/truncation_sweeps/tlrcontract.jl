@@ -6,8 +6,7 @@ Fields:
 - `L`: left output MPS
 - `R`: right output MPS
 - `sv`: singular value matrix (rows = bonds, cols = singular values normalised to sum 1)
-- `norm_factor`: `ov_before / ov_after` when computed; `nothing` otherwise.
-  Can be used to rescale `L` and `R` so that `overlap_noconj(L, R)` matches the
+- `norm_factor`: can be used to rescale `L` and `R` so that `overlap_noconj(L, R)` matches the
   pre-truncation overlap.
 
 Supports destructuring as `(L, R, sv)` for backward compatibility:
@@ -50,15 +49,14 @@ function tlrcontract(::Algorithm"naiveRTM", psiL::MPS, OL::MPO, OR::MPO, psiR::M
         kwargs...)
     OpsiR = applyn(OR, psiR; truncate=false)
     psiLO = applyns(OL, psiL; truncate=false)
-    l, r, sv = truncate_sweep(psiLO, OpsiR; kwargs...)
-    return TruncLR(l, r, sv)
+    truncate_sweep(psiLO, OpsiR; kwargs...)
 end
 
 # Generic fallback
 function tlrcontract(alg::Algorithm, psiL::MPS, OL::MPO, OR::MPO, psiR::MPS; kwargs...)
     OpsiR, sv = tapply(alg, OR, psiR; kwargs...)
     psiLO, _  = tapplys(alg, OL, psiL; kwargs...)
-    return TruncLR(psiLO, OpsiR, sv)
+    return TruncLR(psiLO, OpsiR, sv, 1.0)
 end
 
 function tlrcontract(::Algorithm"notrunc", psiL::MPS, OL::MPO, OR::MPO, psiR::MPS; kwargs...)
@@ -92,14 +90,13 @@ function trcontract(::Algorithm"naiveRTM", ψL::MPS, AR::MPO, ψR::MPS;
         kwargs...)
 
     OpsiR = applyn(AR, ψR; truncate=false)
-    l, r, sv = truncate_sweep(ψL, OpsiR; kwargs...)
-    return TruncLR(l, r, sv)
+    truncate_sweep(ψL, OpsiR; kwargs...)
 end
 
 function trcontract(::Algorithm"notrunc", psiL::MPS, OR::MPO, psiR::MPS; kwargs...)
     OpsiR = applyn(OR, psiR; truncate=false)
     sv = zeros(1,1)
-    return TruncLR(psiL, OpsiR, sv)
+    return TruncLR(psiL, OpsiR, sv, 1.0)
 end
 
 # Generic fallback
@@ -137,8 +134,11 @@ function trapply(alg, ψL::MPS, A::MPO, ψR::MPS; kwargs...)
     return TruncLR(noprime(res.L), noprime(res.R), res.sv, res.norm_factor)
 end
 
+
+# Generic wrappers 
 tlapply(ψL::MPS, A::MPO, ψR::MPS; alg=Algorithm(:naiveRTM), kwargs...) = tlapply(Algorithm(alg), ψL, A, ψR; kwargs...)
 trapply(ψL::MPS, A::MPO, ψR::MPS; alg=Algorithm(:naiveRTM), kwargs...) = trapply(Algorithm(alg), ψL, A, ψR; kwargs...)
+
 
 """
 Applies AL to ψL from the left, AR to ψR from the right, and truncates on the RTM
