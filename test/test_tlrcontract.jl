@@ -67,9 +67,11 @@ ov = overlap_noconj(ψL,ψR)
 cutoff = 1e-60
 maxdim=256
 mindim=256
-truncp = (; cutoff, maxdim, compute_overlaps=true)
+truncp = (; cutoff, maxdim)
 
 rtmr = ITransverse.tlrapply(ψL, AL, AR, ψR; alg="RTM", truncp..., direction=:right)
+rtmr.ov_before
+
 rtml = ITransverse.tlrapply(ψL, AL, AR, ψR; alg="RTM", truncp..., direction=:left)
 
 rtmnl = ITransverse.tlrapply(ψL, AL, AR, ψR; alg="naiveRTM", truncp..., direction=:left)
@@ -117,7 +119,7 @@ ss = siteinds("S=1/2", 40)
 AL = random_mpo(ss) + im*random_mpo(ss)
 AR = random_mpo(ss) + im*random_mpo(ss)
 
-truncp = (; cutoff=1e-5, maxdim=100, compute_overlaps=true)
+truncp = (; cutoff=1e-5, maxdim=100)
 
 ref = ITransverse.tlrapply(ψL, AL, AR, ψR; alg="notrunc", truncp..., direction=:right)
 
@@ -129,9 +131,9 @@ overlap_noconj(rtmr)
 overlap_noconj(rtml)
 
 overlap_noconj(ref)/overlap_noconj(rtml)
-rtml.norm_factor
+rtml.ov_before
 overlap_noconj(ref)/overlap_noconj(rtmr)
-rtmr.norm_factor
+rtmr.ov_before
 
 
 rtmnr = ITransverse.tlrapply(ψL, AL, AR, ψR; alg="naiveRTM", truncp..., direction=:right)
@@ -141,6 +143,14 @@ overlap_noconj(rtmnr)
 overlap_noconj(rtmnl)
 
 overlap_noconj(ref)/overlap_noconj(rtmnl)
-rtmnl.norm_factor
+rtmnl.ov_before
 overlap_noconj(ref)/overlap_noconj(rtmnr)
-rtmnr.norm_factor
+rtmnr.ov_before
+
+
+overlap_noconj(ref)
+rtmr = ITransverse.trapply(ψL, AR, ψR; alg="RTM", truncp..., direction=:right)
+rtml = ITransverse.trapply(ψL, AR, ψR; alg="RTM", truncp..., direction=:left)
+rtmr.ov_before
+overlap_noconj(rtmr)
+overlap_noconj(ψL, rtmr.R)

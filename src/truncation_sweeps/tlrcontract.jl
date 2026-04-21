@@ -1,28 +1,19 @@
 
 """
 Result of a truncated left-right contraction.
-
-Fields:
-- `L`: left output MPS
-- `R`: right output MPS
-- `sv`: singular value matrix (rows = bonds, cols = singular values normalised to sum 1)
-- `norm_factor`: can be used to rescale `L` and `R` so that `overlap_noconj(L, R)` matches the
-  pre-truncation overlap.
-
-Supports destructuring as `(L, R, sv)` for backward compatibility:
-
-    ll, rr, sv = tlrapply(...)         # existing callers unchanged
-    result     = tlrapply(...)
-    result.norm_factor                  # new field, nothing if not requested
 """
-struct TruncLR{TSV,TNorm}
+struct TruncLR{TSV}
     L::MPS
     R::MPS
     sv::Matrix{TSV}
-    norm_factor::TNorm
+    ov_before::ComplexF64 # overlap before truncation
+    ov_after::ComplexF64   # overlap after truncation
 end
 
-TruncLR(L, R, sv) = TruncLR(L, R, sv, 1.0)
+TruncLR(L, R, sv, ovb::Number=1.0, ova::Number=1.0) = TruncLR(L, R, sv, ComplexF64(ovb), ComplexF64(ova))
+
+""" Ratio ov_before / ov_after. Both fields must be non-nothing. """
+norm_factor(t::TruncLR) = t.ov_before / t.ov_after
 
 Base.iterate(t::TruncLR, state=1) =
     state == 1 ? (t.L,  2) :
@@ -37,7 +28,8 @@ function Base.getindex(t::TruncLR, i::Int)
     i == 1 && return t.L
     i == 2 && return t.R
     i == 3 && return t.sv
-    i == 4 && return t.norm_factor
+    i == 4 && return t.ov_before
+    i == 5 && return t.ov_after
     throw(BoundsError(t, i))
 end
 
@@ -46,17 +38,23 @@ overlap_noconj(lr::TruncLR, reverse_qn_ll::Bool=false; kwargs...) = overlap_noco
 
 function tlrcontract(::Algorithm"naiveRTM", psiL::MPS, OL::MPO, OR::MPO, psiR::MPS;
         preserve_mps_tags::Bool=false, # TODO not implemented yet
+        compute_ov_before::Bool=false,
         kwargs...)
-    OpsiR = applyn(OR, psiR; truncate=false)
+    
     psiLO = applyns(OL, psiL; truncate=false)
-    truncate_sweep(psiLO, OpsiR; kwargs...)
+    OpsiR = applyn(OR, psiR;  truncate=false)
+
+    ov_before = compute_ov_before ? overlap_noconj(psiLO, OpsiR) : 1.0
+
+    res = truncate_sweep(psiLO, OpsiR; kwargs...)
+    return TruncLR(res.L, res.R, res.sv, ov_before, res.ov_after)
 end
 
-# Generic fallback
+# Generic fallback (no overlap tracking)
 function tlrcontract(alg::Algorithm, psiL::MPS, OL::MPO, OR::MPO, psiR::MPS; kwargs...)
     OpsiR, sv = tapply(alg, OR, psiR; kwargs...)
     psiLO, _  = tapplys(alg, OL, psiL; kwargs...)
-    return TruncLR(psiLO, OpsiR, sv, 1.0)
+    return TruncLR(psiLO, OpsiR, sv)
 end
 
 function tlrcontract(::Algorithm"notrunc", psiL::MPS, OL::MPO, OR::MPO, psiR::MPS; kwargs...)
@@ -76,7 +74,7 @@ end
 #### NEW LR apply
 function tlrapply(alg, psiL::MPS, OL::MPO, OR::MPO, psiR::MPS; kwargs...)
     res = tlrcontract(alg, psiL, OL, OR, psiR; kwargs...)
-    return TruncLR(noprime(res.L), noprime(res.R), res.sv, res.norm_factor)
+    return TruncLR(noprime(res.L), noprime(res.R), res.sv, res.ov_before, res.ov_after)
 end
 
 
@@ -86,17 +84,21 @@ end
 
 
 function trcontract(::Algorithm"naiveRTM", ψL::MPS, AR::MPO, ψR::MPS;
-        preserve_mps_tags::Bool=false, # TODO not implemented yet
+        preserve_mps_tags::Bool=false, 
+        compute_ov_before::Bool=false, # TODO not implemented yet
         kwargs...)
 
     OpsiR = applyn(AR, ψR; truncate=false)
-    truncate_sweep(ψL, OpsiR; kwargs...)
+
+    ov_before = compute_ov_before ? overlap_noconj(ψL, OpsiR) : 1.0
+    res = truncate_sweep(ψL, OpsiR; kwargs...)
+    return TruncLR(res.L, res.R, res.sv, ov_before, res.ov_after)
 end
 
 function trcontract(::Algorithm"notrunc", psiL::MPS, OR::MPO, psiR::MPS; kwargs...)
     OpsiR = applyn(OR, psiR; truncate=false)
     sv = zeros(1,1)
-    return TruncLR(psiL, OpsiR, sv, 1.0)
+    return TruncLR(psiL, OpsiR, sv)
 end
 
 # Generic fallback
@@ -113,7 +115,7 @@ Returns `TruncLR` (destructures as `(LEFT, RIGHT, SV)`)
 function tlcontract(alg, ψL::MPS, AL::MPO, ψR::MPS; kwargs...)
     res = trcontract(alg, ψR, swapprime(AL, 0=>1, "Site"), ψL; kwargs...)
     # trcontract treats its first arg as ψL and third as ψR; swap L↔R in result
-    return TruncLR(res.R, res.L, res.sv, res.norm_factor)
+    return TruncLR(res.R, res.L, res.sv, res.ov_before, res.ov_after)
 end
 
 """
@@ -122,7 +124,7 @@ Returns `TruncLR` (destructures as `(LEFT, RIGHT, SV)`)
 """
 function tlapply(alg, ψL::MPS, A::MPO, ψR::MPS; kwargs...)
     res = tlcontract(alg, ψL, A, ψR; kwargs...)
-    return TruncLR(noprime(res.L), noprime(res.R), res.sv, res.norm_factor)
+    return TruncLR(noprime(res.L), noprime(res.R), res.sv, res.ov_before, res.ov_after)
 end
 
 """
@@ -131,7 +133,7 @@ Returns `TruncLR` (destructures as `(LEFT, RIGHT, SV)`)
 """
 function trapply(alg, ψL::MPS, A::MPO, ψR::MPS; kwargs...)
     res = trcontract(alg, ψL, A, ψR; kwargs...)
-    return TruncLR(noprime(res.L), noprime(res.R), res.sv, res.norm_factor)
+    return TruncLR(noprime(res.L), noprime(res.R), res.sv, res.ov_before, res.ov_after)
 end
 
 

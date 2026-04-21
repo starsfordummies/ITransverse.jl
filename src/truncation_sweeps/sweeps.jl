@@ -6,11 +6,8 @@ Could call it "naiveRTM" ?
 function truncate_sweep(psi::MPS, phi::MPS;
         cutoff::Real  = 1e-13,
         maxdim::Int   = max(maxlinkdim(psi), maxlinkdim(phi)),
-        direction::Symbol = :right,
-        compute_overlaps::Bool = false
+        direction::Symbol = :right
     )
-
-    ov_before = compute_overlaps ? overlap_noconj(psi,phi) : 1.0
 
     N = length(psi)
 
@@ -69,20 +66,11 @@ function truncate_sweep(psi::MPS, phi::MPS;
     psi_ortho[last_site] = XUinv * psi_ortho[last_site]
     phi_ortho[last_site] = XVinv * phi_ortho[last_site]
 
-    ov_factor = if compute_overlaps
-        last_env = psi_ortho[last_site] * phi_ortho[last_site]
-        ov_after = scalar(last_env * env)
-        ov_after *= exp(logov_factor)
-        @debug ov_before
-        @debug ov_after
-        ov_before/ov_after
-    else
-        1.0
-    end
-    
-    @debug ov_factor
 
-    return TruncLR(psi_ortho, phi_ortho, SV_all, ov_factor)
+    last_env = psi_ortho[last_site] * phi_ortho[last_site]
+    ov_after = scalar(last_env * env)
+    ov_after * exp(logov_factor)
+    return TruncLR(psi_ortho, phi_ortho, SV_all, 1.0, ov_after)
 end
 
 
