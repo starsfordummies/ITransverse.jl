@@ -147,6 +147,8 @@ rtmnl.ov_before
 overlap_noconj(ref)/overlap_noconj(rtmnr)
 rtmnr.ov_before
 
+overlap_noconj(rtmnr)
+overlap_noconj(rtmnl)
 
 overlap_noconj(ref)
 rtmr = ITransverse.trapply(ψL, AR, ψR; alg="RTM", truncp..., direction=:right)

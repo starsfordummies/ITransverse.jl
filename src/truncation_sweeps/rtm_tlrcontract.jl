@@ -17,6 +17,7 @@ function tlrcontract(::Algorithm"RTM",
         preserve_mps_tags::Bool = false,
         compute_ov_before::Bool = true, # we actually do it anyway 
         direction = :right,
+        compute_overlaps::Bool = false,
         kwargs...,
     )
 
@@ -39,7 +40,7 @@ end
 
 """ Builds LEFT environments, sweeps RIGHT→LEFT (opt. tauB = trA(tau) )"""
 function _tlrcontract_rtm_left(ψL::MPS, AL::MPO, AR::MPO, ψR::MPS;
-        cutoff, maxdim, mindim, preserve_mps_tags, kwargs...)
+        cutoff, maxdim, mindim, preserve_mps_tags, compute_overlaps, kwargs...)
 
     NL = length(AL)
     NR = length(AR)
@@ -119,7 +120,7 @@ end
 
 """ Builds RIGHT environments, sweeps LEFT→RIGHT (opt. tauA=trB(tau) ) """
 function _tlrcontract_rtm_right(ψL::MPS, AL::MPO, AR::MPO, ψR::MPS;
-        cutoff, maxdim, mindim, preserve_mps_tags, kwargs...)
+        cutoff, maxdim, mindim, preserve_mps_tags, compute_overlaps, kwargs...)
 
     @assert length(AL) >= length(ψL)
     @assert length(AR) >= length(ψR)
@@ -199,6 +200,12 @@ function _tlrcontract_rtm_right(ψL::MPS, AL::MPO, AR::MPO, ψR::MPS;
     ψR_out[n] = R * redge_R
     ψL_out[n] = L * redge_L
 
+    norm_factor = if compute_overlaps 
+        ov_after = overlap_noconj(noprime(ψL_out), noprime(ψR_out))
+        ov_before / ov_after
+    else
+        1.0
+    end
 
     return ψL_out, ψR_out, S_all, ov_before
 end
