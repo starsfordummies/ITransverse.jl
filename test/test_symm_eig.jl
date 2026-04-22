@@ -1,6 +1,6 @@
 using ITensors, ITensorMPS, ITransverse 
 using LinearAlgebra
-using ITransverse.ITenUtils: symmetrize, mytrunc_eig
+using ITransverse: symmetrize, mytrunc_eig
 
 function make_complex_symmetric(n::Int, n_degen::Int, degen_val=nothing)
     @assert n_degen <= n "Cannot have more degenerate eigenvalues than matrix size"

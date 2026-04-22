@@ -134,8 +134,8 @@ function expH_ising_symm_svd_3site(Jtwo::Number, hperp::Number, λpar::Number; d
     eX2 = exp(eps*λpar*op(s,"X",2))
     eX3 = exp(eps*λpar*op(s,"X",3))
 
-    l1, r2 = ITenUtils.symm_factorization(e12, inds(X1), cutoff=1e-14)
-    l2, r3 = ITenUtils.symm_factorization(e23, inds(X2), cutoff=1e-14)
+    l1, r2 = symm_factorization(e12, inds(X1), cutoff=1e-14)
+    l2, r3 = symm_factorization(e23, inds(X2), cutoff=1e-14)
 
     """
 

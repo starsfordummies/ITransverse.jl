@@ -226,7 +226,9 @@ function tlrcontract_old(
     return ψL_out, ψR_out, S_all 
 end
 
-""" Builds LEFT environments and truncates RTM from the RIGHT """
+
+
+""" Original implementation of new RTM algo for :right, should work  """
 function tlrcontract(::Algorithm"RTMold",
         ψL::MPS,
         AL::MPO,
@@ -237,6 +239,7 @@ function tlrcontract(::Algorithm"RTMold",
         mindim::Int = 1,
         preserve_mps_tags::Bool = false,
         direction = :right, # TODO no left yet 
+        compute_overlaps = false, # no norm here
         kwargs...,
     )
 
@@ -381,6 +384,6 @@ function tlrcontract(::Algorithm"RTMold",
     ψR_out[1] = R
     ψL_out[1] = L
 
-    return ψL_out, ψR_out, S_all
+    return TruncLR(ψL_out, ψR_out, S_all, 1.0)
 end
 

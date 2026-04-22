@@ -44,7 +44,6 @@ function overlap_noconj_ite(ll::MPS, rr::MPS)
     siteinds(ll) != siteinds(rr) ? rr = replace_siteinds(rr, siteinds(ll)) : nothing
     overlap = inner(dag(ll),rr) 
     return overlap
-    
 end
 
 """ Computes the overlap (ll,rr) between two MPS *without* conjugating either one.

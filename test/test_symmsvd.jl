@@ -1,6 +1,6 @@
 using ITensors
 using LinearAlgebra
-using ITransverse.ITenUtils
+using ITransverse
 using Test
 
 

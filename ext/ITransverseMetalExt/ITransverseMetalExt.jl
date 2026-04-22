@@ -8,10 +8,10 @@ using ITransverse
 
 import ITransverse: togpu
 
-import ITransverse.ITenUtils: tcontract
+import ITransverse: tcontract
 ITransverse.togpu(x) = adapt(MtlArray, adapt(ComplexF32, x))
 
-function ITransverse.ITenUtils.tcontract(::Algorithm{:mtldensitymatrix},
+function ITransverse.tcontract(::Algorithm{:mtldensitymatrix},
         A::MPO,
         ψ::MPS)
 

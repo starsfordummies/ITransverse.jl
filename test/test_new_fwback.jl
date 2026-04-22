@@ -1,6 +1,6 @@
 using ITensors, ITensorMPS, ITransverse
 using ITensors.Adapt
-using ITransverse.ITenUtils: to_itensor
+using ITransverse: to_itensor
 using Test
 
 """ Unfolded tMPO with 

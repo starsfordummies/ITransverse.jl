@@ -1,5 +1,4 @@
 using ITensors, ITensorMPS
-using ITransverse.ITenUtils
 #using Plots
 
 using ITransverse

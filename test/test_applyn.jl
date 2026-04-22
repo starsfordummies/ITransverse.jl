@@ -2,7 +2,7 @@ using ITensors, ITensorMPS
 using Test
 
 using ITransverse
-using ITransverse.ITenUtils: check_mps_sanity
+using ITransverse: check_mps_sanity
 
 b = FoldtMPOBlocks(ising_tp())
 ss = siteinds(4, 10)

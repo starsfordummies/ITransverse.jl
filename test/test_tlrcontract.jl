@@ -50,6 +50,8 @@ fidelity(rr, rrc)
 fidelity(rr, rrt)
 
 
+
+
 ss = siteinds("S=1/2", 40)
 
 ψL = random_mps(ComplexF64, ss, linkdims=100) 
@@ -63,27 +65,42 @@ ov = overlap_noconj(ψL,ψR)
 ψR = ψR / sqrt(ov)
 
 cutoff = 1e-60
-maxdim=128
-mindim=128
-direction = :right 
-truncp = (; cutoff, maxdim, direction)
-left, right, s = ITransverse.tlrapply(ψL, AL, AR, ψR; alg="RTM", truncp...)
-overlap_noconj(left,right)
-leftll, rightrr, s = ITransverse.tlrapply(ψL, AL, AR, ψR; alg="RTM", truncp..., direction=:left)
+maxdim=256
+mindim=256
+truncp = (; cutoff, maxdim)
 
-leftn, rightn, sn = ITransverse.tlrapply(ψL, AL, AR, ψR; alg="naiveRTM", direction=:left)
+rtmr = ITransverse.tlrapply(ψL, AL, AR, ψR; alg="RTM", truncp..., direction=:right)
+rtmr.ov_before
 
-@show fidelity(left,leftn) 
-@test fidelity(left,leftn) > 0.99
-@show fidelity(right, rightn) #> 0.99
+rtml = ITransverse.tlrapply(ψL, AL, AR, ψR; alg="RTM", truncp..., direction=:left)
 
-@test (abs(gen_fidelity(left, right) - gen_fidelity(leftn, rightn)))/ abs(gen_fidelity(left, right)) < 0.1
+rtmnl = ITransverse.tlrapply(ψL, AL, AR, ψR; alg="naiveRTM", truncp..., direction=:left)
+rtmnr = ITransverse.tlrapply(ψL, AL, AR, ψR; alg="naiveRTM", truncp..., direction=:right)
+
+fidelity(rtmr.L,rtmnr.L) 
+fidelity(rtml.L,rtmnr.L) 
+fidelity(rtmnl.L,rtmnr.L) 
+
+
+fidelity(rtmr.R,rtmnr.R) 
+fidelity(rtml.R,rtmnr.R) 
+fidelity(rtmnl.R,rtmnr.R) 
+
+overlap_noconj(rtmr)
+overlap_noconj(rtml)
+overlap_noconj(rtmnr)
+overlap_noconj(rtmnl)
+
+@test fidelity(rtmr.L,rtmnr.L) > 0.99
+@show fidelity(rtmr.R, rtmnl.R) #> 0.99
+
+@test (abs(gen_fidelity(rtmr.L, rtmr.R) - gen_fidelity(rtmnr.L, rtmnr.R)))/ abs(gen_fidelity(rtmr.L, rtmr.R)) < 0.1
 
 
 cutoff = 1e-20
 maxdim=256
-truncp = (; cutoff, maxdim, direction)
-left, right, s = ITransverse.trapply(ITensors.Algorithm("RTM"), ψL, AR, ψR; truncp...)
+truncp = (; cutoff, maxdim)
+left, right, s = ITransverse.trapply(ITensors.Algorithm("RTM"), ψL, AR, ψR; truncp..., direction=:right)
 leftn, rightn, sn = ITransverse.trapply(ITensors.Algorithm("naiveRTM"), ψL, AR, ψR; direction=:right)
 leftref, rightref, sref = ITransverse.trapply(ITensors.Algorithm("densitymatrix"), ψL, AR, ψR; direction=:left)
 
@@ -93,20 +110,49 @@ leftref, rightref, sref = ITransverse.trapply(ITensors.Algorithm("densitymatrix"
 
 
 
-#= 
 
-direction = :right 
-truncp = (; cutoff, maxdim, direction)
-left, right, s = ITransverse.tlrapply(ψL, AL, AR, ψR; alg="RTM", truncp...)
+ss = siteinds("S=1/2", 40)
+
+ψL = random_mps(ComplexF64, ss, linkdims=100) 
+ψR = random_mps(ComplexF64, ss, linkdims=120) 
+
+AL = random_mpo(ss) + im*random_mpo(ss)
+AR = random_mpo(ss) + im*random_mpo(ss)
+
+truncp = (; cutoff=1e-5, maxdim=100)
+
+ref = ITransverse.tlrapply(ψL, AL, AR, ψR; alg="notrunc", truncp..., direction=:right)
+
+overlap_noconj(ref)
+rtmr = ITransverse.tlrapply(ψL, AL, AR, ψR; alg="RTM", truncp..., direction=:right)
+rtml = ITransverse.tlrapply(ψL, AL, AR, ψR; alg="RTM", truncp..., direction=:left)
+
+overlap_noconj(rtmr)
+overlap_noconj(rtml)
+
+overlap_noconj(ref)/overlap_noconj(rtml)
+rtml.ov_before
+overlap_noconj(ref)/overlap_noconj(rtmr)
+rtmr.ov_before
 
 
- ITransverse.tlrcontract(ITensors.Algorithm("RTM"), ψL, AL, AR, ψR; cutoff=1e-10, maxdim=100, direction=:left)
+rtmnr = ITransverse.tlrapply(ψL, AL, AR, ψR; alg="naiveRTM", truncp..., direction=:right)
+rtmnl = ITransverse.tlrapply(ψL, AL, AR, ψR; alg="naiveRTM", truncp..., direction=:left)
 
- ITransverse.tlrcontract(ITensors.Algorithm("RTM"), ψL, AL, AR, ψR; cutoff=1e-10, maxdim=100, direction=:right)
+overlap_noconj(rtmnr)
+overlap_noconj(rtmnl)
 
+overlap_noconj(ref)/overlap_noconj(rtmnl)
+rtmnl.ov_before
+overlap_noconj(ref)/overlap_noconj(rtmnr)
+rtmnr.ov_before
 
- @info "Left"
-@btime tlrapply(ψL, AL, AR, ψR; alg="RTM", cutoff=1e-10, maxdim=100, direction=:left)
- @info "Right"
-@btime tlrapply(ψL, AL, AR, ψR; alg="RTM", cutoff=1e-10, maxdim=100, direction=:right)
-=#
+overlap_noconj(rtmnr)
+overlap_noconj(rtmnl)
+
+overlap_noconj(ref)
+rtmr = ITransverse.trapply(ψL, AR, ψR; alg="RTM", truncp..., direction=:right)
+rtml = ITransverse.trapply(ψL, AR, ψR; alg="RTM", truncp..., direction=:left)
+rtmr.ov_before
+overlap_noconj(rtmr)
+overlap_noconj(ψL, rtmr.R)
