@@ -10,7 +10,7 @@ cutoff = 1e-20
 maxdim=128
 direction = :right 
 compute_overlaps = true
-truncp = (; cutoff, maxdim, preserve_mps_tags, compute_overlaps)
+truncp = (; cutoff, maxdim, preserve_mps_tags)
 
 ss = siteinds("S=1/2", 10)
 
