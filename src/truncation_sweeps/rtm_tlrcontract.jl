@@ -29,9 +29,9 @@ function tlrcontract(::Algorithm"RTM",
     end
 
     if !compute_ov_before
-        ovb = 1.0
+        ovb = NaN
     end
-    return TruncLR(L, R, sv, ovb, 1.0)
+    return TruncLR(L, R, sv, ovb, NaN)
 end
 
 
@@ -230,10 +230,10 @@ function trcontract(::Algorithm"RTM",
     end
 
     if !compute_ov_before
-        ovb = 1.0
+        ovb = NaN
     end
     
-    return TruncLR(L, R, sv, ovb, 1.0)
+    return TruncLR(L, R, sv, ovb, NaN)
 end
 
 """ Builds LEFT environments, sweeps RIGHT→LEFT """

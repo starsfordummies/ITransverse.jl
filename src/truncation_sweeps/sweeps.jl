@@ -10,7 +10,7 @@ function truncate_sweep(psi::MPS, phi::MPS;
         compute_overlaps::Bool = false
     )
 
-    ov_before = compute_overlaps ? overlap_noconj(psi,phi) : 1.0
+    ov_before = compute_overlaps ? overlap_noconj(psi,phi) : NaN
 
     N = length(psi)
 
@@ -72,8 +72,8 @@ function truncate_sweep(psi::MPS, phi::MPS;
 
     last_env = psi_ortho[last_site] * phi_ortho[last_site]
     ov_after = scalar(last_env * env)
-    ov_after * exp(logov_factor)
-    return TruncLR(psi_ortho, phi_ortho, SV_all, 1.0, ov_after)
+    ov_after *= exp(logov_factor)
+    return TruncLR(psi_ortho, phi_ortho, SV_all, ov_before, ov_after)
 end
 
 

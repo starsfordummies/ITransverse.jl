@@ -10,7 +10,7 @@ struct TruncLR{TSV}
     ov_after::ComplexF64   # overlap after truncation
 end
 
-TruncLR(L, R, sv, ovb::Number=1.0, ova::Number=1.0) = TruncLR(L, R, sv, ComplexF64(ovb), ComplexF64(ova))
+TruncLR(L, R, sv, ovb::Number=NaN, ova::Number=NaN) = TruncLR(L, R, sv, ComplexF64(ovb), ComplexF64(ova))
 
 """ Ratio ov_before / ov_after. Both fields must be non-nothing. """
 norm_factor(t::TruncLR) = t.ov_before / t.ov_after
@@ -44,7 +44,7 @@ function tlrcontract(::Algorithm"naiveRTM", psiL::MPS, OL::MPO, OR::MPO, psiR::M
     psiLO = applyns(OL, psiL; truncate=false)
     OpsiR = applyn(OR, psiR;  truncate=false)
 
-    ov_before = compute_ov_before ? overlap_noconj(psiLO, OpsiR) : 1.0
+    ov_before = compute_ov_before ? overlap_noconj(psiLO, OpsiR) : NaN
 
     res = truncate_sweep(psiLO, OpsiR; kwargs...)
     return TruncLR(res.L, res.R, res.sv, ov_before, res.ov_after)
@@ -79,8 +79,8 @@ end
 
 
 
-### Apply only one, then truncate
 
+### Apply only one, then truncate
 
 
 function trcontract(::Algorithm"naiveRTM", ψL::MPS, AR::MPO, ψR::MPS;
