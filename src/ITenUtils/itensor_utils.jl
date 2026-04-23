@@ -207,3 +207,8 @@ end
 function ITensors.sim(a::ITensor)
     replaceinds(a, inds(a), sim.(inds(a)))
 end
+
+ITensors.ndims(::ITensors.OneITensor) = 1
+
+Base.get(psi::AbstractMPS, j::Integer, default=ITensor(1)) = 
+    1 <= j <= length(psi) ? psi[j] : default

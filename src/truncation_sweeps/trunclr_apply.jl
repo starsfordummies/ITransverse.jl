@@ -90,7 +90,7 @@ function trcontract(::Algorithm"naiveRTM", ψL::MPS, AR::MPO, ψR::MPS;
 
     OpsiR = applyn(AR, ψR; truncate=false)
 
-    ov_before = compute_ov_before ? overlap_noconj(ψL, OpsiR) : 1.0
+    ov_before = compute_ov_before ? overlap_noconj(ψL, OpsiR) : NaN
     res = truncate_sweep(ψL, OpsiR; kwargs...)
     return TruncLR(res.L, res.R, res.sv, ov_before, res.ov_after)
 end
@@ -107,13 +107,13 @@ function trcontract(alg::Algorithm, psiL::MPS, AR::MPO, psiR::MPS; kwargs...)
     return TruncLR(psiL, OpsiR, sv)
 end
 
+
 """
-Applies MPO to left-right and truncates on the RTM |AR R><L AL| \\
-Allows for different length MPS/MPO \\
-Returns `TruncLR` (destructures as `(LEFT, RIGHT, SV)`)
+Applies MPO to the left and truncates on the RTM |R><L*AL| by building it explicitly \\
 """
 function tlcontract(alg, ψL::MPS, AL::MPO, ψR::MPS; kwargs...)
     res = trcontract(alg, ψR, swapprime(AL, 0=>1, "Site"), ψL; kwargs...)
+
     # trcontract treats its first arg as ψL and third as ψR; swap L↔R in result
     return TruncLR(res.R, res.L, res.sv, res.ov_before, res.ov_after)
 end
