@@ -23,7 +23,7 @@ function tebd_ev(Nx::Int, tp::tMPOParams, Nt::Int, ops::Vector{<:String}, truncp
         siteinds(psi0), psi0
     end
 
-    eH = tp.expH_func(ss, tp.mp, tp.dt)
+    eH = build_Ut(ss, tp)
 
     psi_t = deepcopy(psi0)
 
