@@ -90,7 +90,7 @@ ez = cp.obs_hist[:Z][end-10:end]
 tp = tMPOParams(dt, expH_ising_murg, mp, nbeta, init_state)
 Ut_4o = build_Ut(ss, tp, build_4o=true)
 
-z_tebd_4o = ITransverse.evolve(psi0, Ut_4o, Nsteps; cutoff=truncp.cutoff, maxdim=truncp.maxdim)
+z_tebd_4o = ITransverse.tebd_z(Nsteps, psi0, Ut_4o; cutoff=truncp.cutoff, maxdim=truncp.maxdim)
 
 
 @show z_tebd_4o[end-10:end]

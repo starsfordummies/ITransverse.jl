@@ -113,3 +113,17 @@ function tebd_z(Nt::Int, tp::tMPOParams; N::Int = 2*Nt+4, kwargs...)
     tebd(N, tp, Nt; callback=cb, kwargs...)
     return evs_z
 end
+
+function tebd_z(Nt::Int, psi0::MPS, Ut::MPO; kwargs...)
+    evs_z = ComplexF64[]
+    p     = Progress(Nt; dt=2, showspeed=true)
+
+    function cb(nt, psi)
+        zeta = expect(psi, "Z")[length(psi) ÷ 2]
+        push!(evs_z, zeta)
+        next!(p; showvalues=[(:Info, "chi=$(maxlinkdim(psi)), <Z>=$(zeta)")])
+    end
+
+    tebd(psi0, Ut, Nt; callback=cb, kwargs...)
+    return evs_z
+end
