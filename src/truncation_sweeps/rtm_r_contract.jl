@@ -50,7 +50,7 @@ function _trcontract_rtm_left(ψL::MPS, AR::MPO, ψR::MPS;
     nR = length(ψR)
     N = length(AR)
 
-    @show nL, N, nR
+    @debug nL, N, nR
 
     @assert N >= nR
     @assert N >= nL
@@ -101,9 +101,6 @@ function _trcontract_rtm_left(ψL::MPS, AR::MPO, ψR::MPS;
         S, U, V  = F.S, F.U, F.V
         r_renorm = F.u
 
-        @show inds(rho)
-        @show j, Ris 
-
         ψR_out[j+1] = U
         ψL_out[j+1] = V
 
@@ -114,14 +111,11 @@ function _trcontract_rtm_left(ψL::MPS, AR::MPO, ψR::MPS;
         S_all[j, 1:length(Svec)] .= Svec
     end
 
-    @show inds(R)
-    @show inds(L)
-
     ψR_out[1] = R
     ψL_out[1] = L
 
-    @show check_mps_sanity(ψL_out)
-    @show check_mps_sanity(ψR_out)
+    # @show check_mps_sanity(ψL_out)
+    # @show check_mps_sanity(ψR_out)
 
     return ψL_out, ψR_out, S_all, ov_before
 end
