@@ -51,7 +51,6 @@ The "generalized norm" of an MPS should be sqrt(overlap_noconj(psi,psi)).
 """
 function overlap_noconj(ll::MPS, rr::MPS, reverse_qn_ll::Bool=false; fast::Bool=false)
 
-    #T =  promote_type(promote_itensor_eltype(ll), promote_itensor_eltype(rr))
     if reverse_qn_ll 
         return inner(conj(ll),rr)
     else

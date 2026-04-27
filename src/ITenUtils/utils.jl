@@ -100,7 +100,7 @@ function beta_lims(Ntot::Int, nbeta::Int, init_beta_only::Bool)
     return b1,b2
 end
 
-""" Remove nothing's from a list """
+""" Remove nothing's from a list (must be unpacked) """
 filter_nothings(args...) = filter(x -> x !== nothing, args)
 
 
