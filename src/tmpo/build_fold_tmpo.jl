@@ -38,13 +38,13 @@ function folded_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index}; LR::Symbol=:right, 
     if LR == :left
         WW = b.WWl
         WW_im = b.WWl_im
-        WWinds = (b.rot_inds[:Ps], b.rot_inds[:L], b.rot_inds[:R])
+        WWinds = (b.iPs, b.iL, b.iR)
         get_newinds = (ii, tlinks) -> (ts[ii], tlinks[ii], tlinks[ii+1])
         edge_contract = (psi, b, tlinks) -> psi[1] *= replaceind(b.rho0, ind(b.rho0,1), tlinks[1])
     elseif LR == :right
         WW = b.WWr
         WW_im = b.WWr_im
-        WWinds = (b.rot_inds[:P], b.rot_inds[:R], b.rot_inds[:L])
+        WWinds = (b.iP, b.iR, b.iL)
         get_newinds = (ii, tlinks) -> (ts[ii], tlinks[ii+1], tlinks[ii])
         edge_contract = (psi, b, tlinks) -> psi[1] = psi[1] * b.rho0 * delta(ind(b.rho0,1), tlinks[1])
     else
@@ -58,7 +58,7 @@ function folded_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index}; LR::Symbol=:right, 
         psi[ib] = WW_im
     end
 
-    tlinks = [Index(dim(b.rot_inds[:R]), "Link,time_fold,l=$(ii-1)") for ii in 1:length(ts)+1]
+    tlinks = [Index(dim(b.iR), "Link,time_fold,l=$(ii-1)") for ii in 1:length(ts)+1]
 
     for ii in eachindex(psi)
         newinds = get_newinds(ii, tlinks)
@@ -124,7 +124,7 @@ end
  Accepted kwargs: fold_op(default=Identity op.), verbose(=false), init_beta_only(=true) """ 
 function folded_tMPO_open_edges(b::FoldtMPOBlocks, ts::Vector{<:Index}; init_beta_only::Bool=true, verbose::Bool=false)
 
-    (; tp, WWc, WWc_im, rot_inds) = b
+    (; tp, WWc, WWc_im, iL, iR, iP, iPs) = b
 
     #match indices for real-imag so it's easier to work with them 
     replaceinds!(WWc_im, inds(WWc_im), inds(WWc))
@@ -148,12 +148,12 @@ function folded_tMPO_open_edges(b::FoldtMPOBlocks, ts::Vector{<:Index}; init_bet
 
     oo = MPO(Ntot)
 
-    virtual_ind_size = dim(rot_inds[:R])
+    virtual_ind_size = dim(iR)
 
     # two tlinks will be contracted at the end
     tlinks = [Index(virtual_ind_size,"Link,time_fold,l=$(ii-1)") for ii in 1:length(ts)+1]
 
-    WWinds =  (rot_inds[:P], rot_inds[:Ps], rot_inds[:L], rot_inds[:R] )
+    WWinds =  (iP, iPs, iL, iR)
 
     for ii in eachindex(oo)
         newinds = (ts[ii],        ts[ii]',       tlinks[ii],   tlinks[ii+1])

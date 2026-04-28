@@ -19,7 +19,7 @@ function folded_tMPO_ext(b::FoldtMPOBlocks, ts::Vector{<:Index};
     @assert init_beta_only # extending on imag time not implemented yet, so only accept beta at the bottom 
     @assert Nb + n_ext < Nt # extending on imag time not implemented yet
 
-    (; WWc, WWc_im, WWl, WWr, rot_inds) = b 
+    (; WWc, WWc_im, WWl, WWr, iL, iR, iP, iPs) = b 
     
     @assert inds(WWc) == inds(WWc_im)
 
@@ -35,9 +35,9 @@ function folded_tMPO_ext(b::FoldtMPOBlocks, ts::Vector{<:Index};
     #match indices for real-imag so it's easier to work with them 
     replaceinds!(WWc_im, inds(WWc_im), inds(WWc))
 
-    WWinds =  (b.rot_inds[:P],b.rot_inds[:Ps],b.rot_inds[:L],b.rot_inds[:R] )
+    WWinds =  (b.iP, b.iPs, b.iL, b.iR)
 
-    dim_virtual_inds = dim(b.rot_inds[:R])
+    dim_virtual_inds = dim(b.iR)
 
     # Time links
     tl = [Index(dim_virtual_inds,"Link,time_fold,l=$(ii-1)") for ii in 1:Nt+1]

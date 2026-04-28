@@ -150,7 +150,7 @@ function compute_expvals(ll::AbstractMPS, rr::AbstractMPS, op_list, b::FoldtMPOB
     allevs = Dict{String,ComplexF64}()
 
     #Normalization 
-    idN = vectorized_identity(dim(b.rot_inds[:R]))
+    idN = vectorized_identity(dim(b.iR))
     ev_L1R = expval_LR(ll, rr, idN, b)
 
     #two-col exp value is expensive, only compute if necessary
