@@ -29,6 +29,8 @@ include("ITenUtils/ITenUtils.jl")
 
 export mergedicts!, mergedicts, dictfromlist
 
+export halfsite
+
 export pMPS,
     overlap_noconj,
     check_symmetry_itensor_mpo,
