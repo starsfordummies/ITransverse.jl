@@ -52,7 +52,7 @@ end
 Build a product initial state of length `N` from `tp`, then evolve for `Nt` steps.
 """
 function tebd(LL::Int, tp::tMPOParams, Nt::Int; kwargs...)
-    ss   = _siteinds_from_tp(N, tp)
+    ss   = _siteinds_from_tp(LL, tp)
     psi0 = _psi0_from_tp(ss, tp)
     tebd(psi0, tp, Nt; kwargs...)
 end
