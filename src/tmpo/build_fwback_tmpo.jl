@@ -33,35 +33,34 @@ function fwback_tMPO_open_edges(b::FwtMPOBlocks, time_sites::Vector{<:Index}, nb
     Ntot = length(time_sites) 
     @assert nbetai + nfw + nback + nbetaf == Ntot
 
-    (; tp, Wc, Wc_im, rot_inds) = b
-    (icL, icR, icP, icPs) = (rot_inds[:L], rot_inds[:R], rot_inds[:P], rot_inds[:Ps]) 
+    (; tp, Wc, Wc_im, iL, iR, iP, iPs) = b
 
     elt = NDTensors.unwrap_array_type(tp.bl)
 
-    ind_op = sim(icR, tags="op")
+    ind_op = sim(iR, tags="op")
     ten_mid_op = adapt(elt, ITensor(mid_op, ind_op, ind_op'))
 
     # Make same indices for real and imag, it's easier aftwards 
     replaceinds!(Wc_im, inds(Wc_im), inds(Wc))
 
-    time_links = [Index(dim(icL), "Link,rotl=$(ii-1)") for ii in 1:(Ntot+1)]
+    time_links = [Index(dim(iL), "Link,rotl=$(ii-1)") for ii in 1:(Ntot+1)]
 
     tMPO =  MPO(Ntot)
 
     for ii = 1:nbetai
         #@info "$(ii) imag"
-        tMPO[ii] = replaceinds(Wc_im, (icP, icPs, icL, icR), (time_sites[ii],time_sites[ii]', time_links[ii],time_links[ii+1]))
+        tMPO[ii] = replaceinds(Wc_im, (iP, iPs, iL, iR), (time_sites[ii],time_sites[ii]', time_links[ii],time_links[ii+1]))
     end
     for ii = nbetai+1:nbetai+nfw
-        tMPO[ii] = replaceinds(Wc, (icP, icPs, icL, icR), (time_sites[ii],time_sites[ii]', time_links[ii],time_links[ii+1]))
+        tMPO[ii] = replaceinds(Wc, (iP, iPs, iL, iR), (time_sites[ii],time_sites[ii]', time_links[ii],time_links[ii+1]))
     end
 
     for ii = nbetai+nfw+1:nbetai+nfw+nback
-        tMPO[ii] = replaceinds(dag(Wc), (icP, icPs, icL, icR), (time_sites[ii]',time_sites[ii], time_links[ii],time_links[ii+1]))  # TODO Check [ts',ts] order
+        tMPO[ii] = replaceinds(dag(Wc), (iP, iPs, iL, iR), (time_sites[ii]',time_sites[ii], time_links[ii],time_links[ii+1]))  # TODO Check [ts',ts] order
     end
     for ii = nbetai+nfw+nback+1:Ntot
         #@info "$(ii) imag"
-        tMPO[ii] = replaceinds(dag(Wc_im), (icP, icPs, icL, icR), (time_sites[ii]',time_sites[ii], time_links[ii],time_links[ii+1])) # TODO Check [ts',ts] order
+        tMPO[ii] = replaceinds(dag(Wc_im), (iP, iPs, iL, iR), (time_sites[ii]',time_sites[ii], time_links[ii],time_links[ii+1])) # TODO Check [ts',ts] order
     end
 
 
@@ -141,11 +140,11 @@ function fwback_tMPS(
     (iL, iR, iP) = if LR == :left
         W = b.Wl
         W_im = b.Wl_im
-        (b.rot_inds[:L], b.rot_inds[:R], b.rot_inds[:Ps])
+        (b.iL, b.iR, b.iPs)
     elseif LR == :right
         W = b.Wr
         W_im = b.Wr_im
-        (b.rot_inds[:L], b.rot_inds[:R], b.rot_inds[:P])
+        (b.iL, b.iR, b.iP)
     else
         error("Unknown LR: $(LR)")
     end

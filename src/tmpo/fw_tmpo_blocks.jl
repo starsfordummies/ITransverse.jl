@@ -9,49 +9,57 @@ struct FwtMPOBlocks
     Wc_im::ITensor
     Wr_im::ITensor
     tp::tMPOParams
-    rot_inds::Dict
+    iL::Index
+    iR::Index
+    iP::Index
+    iPs::Index
 
-    function FwtMPOBlocks(Wl::ITensor,Wc::ITensor,Wr::ITensor, Wl_im::ITensor,Wc_im::ITensor,Wr_im::ITensor, tp::tMPOParams, rot_inds::Dict) 
+    function FwtMPOBlocks(Wl::ITensor,Wc::ITensor,Wr::ITensor, Wl_im::ITensor,Wc_im::ITensor,Wr_im::ITensor, tp::tMPOParams, iL::Index, iR::Index, iP::Index, iPs::Index)
 
         # The data type of the bottom-left term in tp dictates whether the *full* thing will lie on GPU
         dttype = NDTensors.unwrap_array_type(tp.bl)
 
-        new( adapt(dttype,Wl), adapt(dttype,Wc), adapt(dttype, Wr), adapt(dttype,Wl_im), adapt(dttype,Wc_im), adapt(dttype, Wr_im), tp, rot_inds)
+        new( adapt(dttype,Wl), adapt(dttype,Wc), adapt(dttype, Wr), adapt(dttype,Wl_im), adapt(dttype,Wc_im), adapt(dttype, Wr_im), tp, iL, iR, iP, iPs)
     end
 end
 
+ITensorMPS.linkinds(b::FwtMPOBlocks) = (b.iL, b.iR)
+ITensorMPS.siteinds(b::FwtMPOBlocks) = (b.iP, b.iPs)
+ITensorMPS.siteind(b::FwtMPOBlocks) = b.iP
+
 
 function FwtMPOBlocks(tp::tMPOParams; init_state=nothing)
-    Wl, Wc, Wr, rot_inds = make_fwtmpoblocks(tp)
+    Wl, Wc, Wr, iL, iR, iP, iPs = make_fwtmpoblocks(tp)
 
     if !isnothing(init_state)
         @info "Setting tp.init_state to $(init_state)"
         tp = tMPOParams(tp; bl=init_state)
     end
 
-    Wl_im, Wc_im, Wr_im, rot_inds_im = make_fwtmpoblocks(tp; build_imag=true)
-    iminds = (rot_inds_im[:L], rot_inds_im[:R], rot_inds_im[:P], rot_inds_im[:Ps])
-    inds =   (   rot_inds[:L],    rot_inds[:R],    rot_inds[:P],    rot_inds[:Ps])
+    Wl_im, Wc_im, Wr_im, iL_im, iR_im, iP_im, iPs_im = make_fwtmpoblocks(tp; build_imag=true)
+    iminds = (iL_im, iR_im, iP_im, iPs_im)
+    inds   = (iL,    iR,    iP,    iPs)
 
     Wl_im = replaceinds(Wl_im, iminds, inds)
     Wc_im = replaceinds(Wc_im, iminds, inds)
     Wr_im = replaceinds(Wr_im, iminds, inds)
     
-    return FwtMPOBlocks(Wl, Wc, Wr, Wl_im, Wc_im, Wr_im, tp, rot_inds)
+    return FwtMPOBlocks(Wl, Wc, Wr, Wl_im, Wc_im, Wr_im, tp, iL, iR, iP, iPs)
 
 end
 
 function FwtMPOBlocks(eH::MPO; init_state=nothing)
     tp = tMPOParams(nothing; bl=init_state)
-    Wl, Wc, Wr, rot_inds = make_fwtmpoblocks(eH)
-    return FwtMPOBlocks(Wl, Wc, Wr, Wl, Wc, Wr, tp, rot_inds)
+    Wl, Wc, Wr, iL, iR, iP, iPs = make_fwtmpoblocks(eH)
+    return FwtMPOBlocks(Wl, Wc, Wr, Wl, Wc, Wr, tp, iL, iR, iP, iPs)
 
 end
 
 """ Allow changing elements of FwtMPOBlocks """
 function FwtMPOBlocks(b::FwtMPOBlocks; 
-    Wl=b.Wl, Wc=b.Wc, Wr=b.Wr, Wl_im=b.Wl_im, Wc_im=b.Wc_im, Wr_im=b.Wr_im, tp=b.tp, rot_inds=b.rot_inds)
-    return FwtMPOBlocks(Wl, Wc, Wr, Wl_im, Wc_im, Wr_im, tp, rot_inds)
+    Wl=b.Wl, Wc=b.Wc, Wr=b.Wr, Wl_im=b.Wl_im, Wc_im=b.Wc_im, Wr_im=b.Wr_im, tp=b.tp,
+    iL=b.iL, iR=b.iR, iP=b.iP, iPs=b.iPs)
+    return FwtMPOBlocks(Wl, Wc, Wr, Wl_im, Wc_im, Wr_im, tp, iL, iR, iP, iPs)
 end
 
 function make_fwtmpoblocks(tp::tMPOParams; build_imag::Bool=false)
@@ -88,9 +96,7 @@ function make_fwtmpoblocks(eH::MPO; check_sym::Bool=true)
     Wr = replaceinds(Wr, (iLink2,irP,irP'), (time_P,time_vL, time_vR))
 
 
-    rot_inds = Dict(:Ps => time_P',:P => time_P, :L => time_vL, :R=> time_vR) 
-
-    return Wl, Wc, Wr, rot_inds
+    return Wl, Wc, Wr, time_vL, time_vR, time_P, time_P'
 end
 
 
