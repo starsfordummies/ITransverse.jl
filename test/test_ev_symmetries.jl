@@ -36,7 +36,7 @@ end
 
 
 
-expect(psiT, "Z")[div(length(psiT)+1,2)]
+expect(psiT, "Z")[halfsite(psiT)]
 
 
 ss = siteinds("S=1/2", Lx; conserve_szparity=true)
@@ -59,7 +59,7 @@ for jj = 1:Nt
 end
 
 local_ops = [op("I", s) for s in siteinds(psi0)]
-local_ops[div(length(rhoT)+1,2)] = op("Z", siteind(psi0, div(length(psi0)+1,2)))
+local_ops[halfsite(rhoT)] = op("Z", siteind(psi0, halfsite(psi0)))
 
 o_local_ops = MPO(local_ops)
 
@@ -70,7 +70,7 @@ vo_local_ops = replace_siteinds(vo_local_ops, siteinds(rhoT))
 siteinds(rhoT)[1]
 siteinds(vo_local_ops)[1]
 
-@test isapprox(expect(psiT, "Z")[div(length(psiT)+1,2)] , inner(rhoT, vo_local_ops); rtol=1e-4)
+@test isapprox(expect(psiT, "Z")[halfsite(psiT)] , inner(rhoT, vo_local_ops); rtol=1e-4)
 
 
 Nt = 12
@@ -92,7 +92,6 @@ UUt_sym = ITransverse.folded_UUt(Ut_sym)
 UUt_sym2 = ITransverse.folded_UUt(Ut_sym)
 
 local_ops = [op("I", s) for s in siteinds(psi0)]
-#local_ops[div(length(rhoT)+1,2)] = op("Z", siteind(psi0, div(length(psi0)+1,2)))
 
 o_local_ops = MPO(local_ops)
 o_local_ops = MPO(siteinds(psi0), "Id")
@@ -122,7 +121,7 @@ _, Tc_Z, _ = ITransverse.construct_tMPS_tMPO(rho0v, fill(UUt_sym, Nt), vo_local_
 lleft = psiL
 rright = psiR
 
-for jj = 1:div(Lx,2)
+for jj = 1:halfsite(Lx)
     lleft = applyns(Tc, lleft; cutoff=1e-12)
     rright = applyn(Tc, rright; cutoff=1e-12)
 end
@@ -132,6 +131,6 @@ lleft = replace_siteinds(lleft, firstsiteinds(Tc_Z))
 
 expval_LR(lleft, Tc_Z, rright)/overlap_noconj(lleft,rright)
 
-@test isapprox(expect(psiT, "Z")[div(length(psiT)+1,2)] , expval_LR(lleft, Tc_Z, rright)/overlap_noconj(lleft,rright); rtol=1e-5)
+@test isapprox(expect(psiT, "Z")[halfsite(psiT)] , expval_LR(lleft, Tc_Z, rright)/overlap_noconj(lleft,rright); rtol=1e-5)
 
 end

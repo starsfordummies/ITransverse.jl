@@ -110,7 +110,7 @@ function tebd_z(Nt::Int, tp::tMPOParams; LL::Int = 2*Nt+4, kwargs...)
         next!(p; showvalues=[(:Info, "chi=$(maxlinkdim(psi)), <Z>=$(zeta)")])
     end
 
-    tebd(N, tp, Nt; callback=cb, kwargs...)
+    tebd(LL, tp, Nt; callback=cb, kwargs...)
     return evs_z
 end
 

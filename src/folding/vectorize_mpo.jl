@@ -24,7 +24,7 @@ end
 
 
 """ Returns an MPS with the (folded) MPO for a local operator `local_op` at `site_op` """
-function vectorized_local_op(ss::Vector{<:Index}; local_op::String="Id", site_op=div(length(ss)+1,2))
+function vectorized_local_op(ss::Vector{<:Index}; local_op::String="Id", site_op=halfsite(ss))
 
     local_ops = [op("Id", s) for s in ss]
     local_ops[site_op] = op(local_op, ss[site_op])

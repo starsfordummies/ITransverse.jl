@@ -226,7 +226,7 @@ end
 
 
 
-function compute_sn_cut(psi::MPS, n::Int; cut::Int=div(length(psi),2), cutoff=1e-10, maxdim=maxlinkdim(psi))
+function compute_sn_cut(psi::MPS, n::Int; cut::Int=halfsite(psi), cutoff=1e-10, maxdim=maxlinkdim(psi))
     ss = siteinds(psi)
 
     for kk = length(psi):-1:cut
@@ -258,7 +258,7 @@ end
 
 function t4mid_slice(psi::MPS)
     NN = length(psi)
-    cut = div(NN,2)
+    cut = halfsite(NN)
 
 
     ll = linkinds(psi)

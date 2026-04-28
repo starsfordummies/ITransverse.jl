@@ -1,6 +1,6 @@
 """ Simple transverse contraction: builds Left and Right vectors
  by applying the first Nhalf MPO to left_edge and the last Nhalf to right_edge """
-function build_LR(left_mps::MPS, mpos_bulk::Vector, right_mps::MPS; cutoff=1e-12, maxdim=512, Nhalf::Int=div(length(mpos_bulk),2))
+function build_LR(left_mps::MPS, mpos_bulk::Vector, right_mps::MPS; cutoff=1e-12, maxdim=512, Nhalf::Int=halfsite(mpos_bulk))
 
     @info "Total length L=$(1+length(mpos_bulk)+1) Nt = $(length(left_mps)) ||  L=1:$(Nhalf), R=$(Nhalf+1:length(mpos_bulk)) "
     L = left_mps

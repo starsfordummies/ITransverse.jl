@@ -126,7 +126,7 @@ function fwback_tMPS(
 
     Ntot = length(time_sites) 
     @assert Ntot % 2 == 0 
-    Nt = div(length(time_sites),2)
+    Nt = div(Ntot,2)
 
 
     bl = to_itensor(bl, "bl")
