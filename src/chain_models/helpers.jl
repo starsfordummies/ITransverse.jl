@@ -1,10 +1,10 @@
 function build_H(sites::Vector{<:Index}, fH::Function, mp::ModelParams)
-    fH(sites, modelparams(mp)...)
+    fH(sites, mp)
 end
 
 function build_H(fH::Function, mp::ModelParams)
     s = [sim(mp.phys_site) for _ in 1:3]
-    fH(s, modelparams(mp)...)
+    fH(s, mp)
 end
 
 

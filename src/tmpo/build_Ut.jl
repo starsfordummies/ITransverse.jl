@@ -1,24 +1,19 @@
 """ Queen of all boilerplate """
 function _build_Ut(sites::Vector{<:Index}, 
-    fUt::Function, model_params...; dt::Number, build_4o::Bool)
-    Ut = if build_4o
-        p = 1.0/(4- 4^(1/3))
-        U1 = fUt(sites, model_params...; dt=p*dt)
-        U2 = fUt(sites, model_params...; dt=(1-4p)*dt)
-
-        UU1 = applyn(U1,U1)
-        U4 = applyn(U2, UU1)
-        U4 = applyn(UU1, U4)
- 
+    fUt::Function, mp::ModelParams; dt::Number, build_4o::Bool)
+    if build_4o
+        p = 1.0/(4 - 4^(1/3))
+        U1 = fUt(sites, mp; dt=p*dt)
+        U2 = fUt(sites, mp; dt=(1-4p)*dt)
+        UU1 = applyn(U1, U1)
+        return applyn(UU1, applyn(U2, UU1))
     else
-        fUt(sites, model_params...; dt)
+        return fUt(sites, mp; dt)
     end
-
-    return Ut 
 end
 
 function build_Ut(sites::Vector{<:Index}, fUt::Function, mp::ModelParams; dt::Number, build_4o::Bool=false)
-    _build_Ut(sites, fUt, modelparams(mp)...; dt, build_4o)
+    _build_Ut(sites, fUt, mp; dt, build_4o)
 end
 
 function build_Ut(sites::Vector{<:Index}, tp::tMPOParams; dt::Number=tp.dt, build_4o::Bool=false)

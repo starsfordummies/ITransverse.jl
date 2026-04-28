@@ -25,8 +25,8 @@ function os_H_XXZ(N::Int, JXY::Real, ΔZZ::Real, hz::Real)
     return os
 end
 
-function H_XXZ(sites, JXY::Real, ΔZZ::Real, hz::Real)
-    os = os_H_XXZ(length(sites), JXY, ΔZZ, hz)
+function H_XXZ(sites, mp::XXZParams)
+    os = os_H_XXZ(length(sites), mp.J_XY, mp.J_ZZ, mp.hz)
     return MPO(os, sites)
 end
 
@@ -65,9 +65,10 @@ end
 """ exp(-i*H_XX*t) using symmetric SVD - TODO Check """
 function expH_XX_svd(
     in_space_sites,
-    JXX::Real;
+    mp::XXZParams;
     dt::Number)
 
+    JXX = mp.J_XY
 
     # For real dt this does REAL time evolution 
     # I should have already taken into account both the - sign in exp(-iHt) 
@@ -135,9 +136,11 @@ end
 """ exp(-i*H_XX*t) using symmetric SVD - TODO Check """
 function expH_XXZ_svd(
     in_space_sites,
-    JXX::Number, Δ::Number;
+    mp::XXZParams;
     dt::Number)
 
+    JXX = mp.J_XY
+    Δ = mp.J_ZZ
 
     # For real dt this does REAL time evolution 
     # I should have already taken into account both the - sign in exp(-iHt) 

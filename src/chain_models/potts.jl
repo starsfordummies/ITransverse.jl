@@ -92,18 +92,18 @@ ITensors.op(::OpName"τplusτdag",::SiteType"S1_Z3") =
 ```
  """
 
-function H_potts(sites_potts, JJ::Real, ff::Real)
- 
+function H_potts(sites_potts, mp::PottsParams)
+    (; JSS, ftau) = mp
     N = length(sites_potts)
 
     os = OpSum()
     for j=1:N-1
-        os += -JJ,"Σ",j,"Σdag",j+1
-        os += -JJ,"Σdag",j,"Σ",j+1
+        os += -JSS,"Σ",j,"Σdag",j+1
+        os += -JSS,"Σdag",j,"Σ",j+1
     end
 
     for j=1:N
-        os += -ff,"τplusτdag", j
+        os += -ftau,"τplusτdag", j
     end
 
     H_potts = MPO(os,sites_potts)
@@ -205,10 +205,11 @@ Builds exp(Hpotts) with the expression a la Murg (sin/cos alike).
 dt should be already included in the parameters! 
 Bond dimension is 3
 """
-function expH_potts_murg(sites, Jtwo::Number, fpott::Number; dt::Number)
+function expH_potts_murg(sites, mp::PottsParams; dt::Number)
+    (; JSS, ftau) = mp
 
-    Jtwodt = Jtwo * dt
-    fdt = fpott * dt
+    Jtwodt = JSS * dt
+    fdt = ftau * dt
 
     fsumI_a(x) = (2*exp(-x) + exp(2*x))/3.
     fsumΣ_a(x) = (-exp(-x) + exp(2*x))/3.
@@ -395,12 +396,13 @@ should be symmetric (p<->p') and (L<->R)
 Bond dimension is 3. 
 dt should be already included in the parameters! 
 """
-function expH_potts_symmetric_svd(in_space_sites, Jtwo::Number, fpott::Number; dt::Number)
+function expH_potts_symmetric_svd(in_space_sites, mp::PottsParams; dt::Number)
+    (; JSS, ftau) = mp
 
     # ASSERT NEED SYMMETRY p<->p' OR WE SHOuLD BE MORE CAREFUL
 
-    Jdt = Jtwo * dt
-    fdt = fpott * dt
+    Jdt = JSS * dt
+    fdt = ftau * dt
     ϵ = Jdt * 1.0im 
 
     N = length(in_space_sites)

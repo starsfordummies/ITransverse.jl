@@ -51,7 +51,7 @@ end
 
 Build a product initial state of length `N` from `tp`, then evolve for `Nt` steps.
 """
-function tebd(N::Int, tp::tMPOParams, Nt::Int; kwargs...)
+function tebd(LL::Int, tp::tMPOParams, Nt::Int; kwargs...)
     ss   = _siteinds_from_tp(N, tp)
     psi0 = _psi0_from_tp(ss, tp)
     tebd(psi0, tp, Nt; kwargs...)
@@ -100,7 +100,7 @@ Evolve for `Nt` steps and collect the half-chain ⟨Z⟩ after each step.
 Default chain length `N = 2*Nt+4` follows the light-cone.
 Returns a vector of ⟨Z⟩ values.
 """
-function tebd_z(Nt::Int, tp::tMPOParams; N::Int = 2*Nt+4, kwargs...)
+function tebd_z(Nt::Int, tp::tMPOParams; LL::Int = 2*Nt+4, kwargs...)
     evs_z = ComplexF64[]
     p     = Progress(Nt; dt=2, showspeed=true)
 

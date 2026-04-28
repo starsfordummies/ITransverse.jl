@@ -2,66 +2,50 @@
 abstract type ModelParams end
 
 
-struct NoParams <: ModelParams
-    phys_site::Index{Int64}
+Base.@kwdef mutable struct NoParams <: ModelParams
+    phys_site::Index{Int64} = Index(2, "S=1/2")
 end
+NoParams(i::Index) = NoParams(; phys_site=i)
 
 
-struct IsingParams{T <: Number} <: ModelParams
-    Jtwo::T
-    gperp::T
-    hpar::T
-    phys_site::Index{Int64}
-
+Base.@kwdef mutable struct IsingParams <: ModelParams
+    Jtwo::Float64  = 1.0
+    gperp::Float64 = 0.4
+    hpar::Float64  = 0.0
+    phys_site::Index{Int64} = Index(2, "S=1/2")
 end
+# Positional constructor for backward compatibility: IsingParams(J, g, h)
+IsingParams(Jtwo::Number, gperp::Number, hpar::Number) =
+    IsingParams(; Jtwo=Float64(Jtwo), gperp=Float64(gperp), hpar=Float64(hpar))
+# Copy constructor
+IsingParams(x::IsingParams; Jtwo=x.Jtwo, gperp=x.gperp, hpar=x.hpar) =
+    IsingParams(; Jtwo, gperp, hpar)
 
-function IsingParams(Jtwo::Number, gperp::Number, hpar::Number)
-    T = promote_type(Float64, typeof(Jtwo), typeof(gperp), typeof(hpar))
-    IsingParams{T}(T(Jtwo), T(gperp), T(hpar), Index(2, "S=1/2"))
+
+Base.@kwdef mutable struct PottsParams <: ModelParams
+    JSS::Float64  = 1.0
+    ftau::Float64 = 0.4
+    phys_site::Index{Int64} = Index(3, "S=1")
 end
+# Positional constructor for backward compatibility: PottsParams(J, f)
+PottsParams(JSS::Number, ftau::Number) =
+    PottsParams(; JSS=Float64(JSS), ftau=Float64(ftau))
+# Copy constructor
+PottsParams(x::PottsParams; JSS=x.JSS, ftau=x.ftau) =
+    PottsParams(; JSS, ftau)
 
-# Defaults
-IsingParams() = IsingParams(1.0, -1.05, 0.5)
 
-
-# allow for changes on the fly of params 
-IsingParams(x::IsingParams; Jtwo=x.Jtwo, gperp=x.gperp, hpar=x.hpar) = IsingParams(Jtwo, gperp, hpar)
-
-
-struct PottsParams{T <: Number} <: ModelParams
-    JSS::T
-    ftau::T
-    phys_site::Index{Int64}
+Base.@kwdef mutable struct XXZParams <: ModelParams
+    J_XY::Float64  = 1.0
+    J_ZZ::Float64  = 1.0
+    hz::Float64    = 0.0
+    phys_site::Index{Int64} = Index(2, "S=1/2")
 end
-
-function  PottsParams(Jtwo::Number, ftau::Number)
-    T = promote_type(Float64, typeof(Jtwo), typeof(ftau))
-    PottsParams{T}(T(Jtwo), T(ftau), Index(3, "S=1"))
-end
-
-
-
-""" For XXZ We need to specify the physical site, as it can be defined for different spins """
-
-struct XXZParams{T <: Number} <: ModelParams
-    J_XY::T
-    J_ZZ::T
-    hz::T
-    phys_site::Index{Int64}
-end
-
-# Default to Spin 1/2 Heisenberg 
-function XXZParams(J_XY::Number, J_ZZ::Number, hz::Number=0., phys_site = Index(2, "S=1/2"))
-    T = promote_type(Float64, typeof(J_XY), typeof(J_ZZ), typeof(hz))
-    XXZParams{T}(T(J_XY), T(J_ZZ), T(hz), phys_site)
-end
-
-
-# do we want this ? 
-#XXZParams(J_ZZ, hz, phys_site) = XXZParams(1, J_ZZ, hz, phys_site)
-
-
-# Extract only the model parameters in reasonable order 
-modelparams(mp::IsingParams) = (mp.Jtwo, mp.gperp, mp.hpar)
-modelparams(mp::PottsParams) = (mp.JSS, mp.ftau)
-modelparams(mp::XXZParams) = (mp.J_XY, mp.J_ZZ, mp.hz)
+# Positional constructors for backward compatibility
+XXZParams(J_XY::Number, J_ZZ::Number, hz::Number=0.0) =
+    XXZParams(; J_XY=Float64(J_XY), J_ZZ=Float64(J_ZZ), hz=Float64(hz))
+XXZParams(J_XY::Number, J_ZZ::Number, hz::Number, phys_site::Index) =
+    XXZParams(; J_XY=Float64(J_XY), J_ZZ=Float64(J_ZZ), hz=Float64(hz), phys_site)
+# Copy constructor
+XXZParams(x::XXZParams; J_XY=x.J_XY, J_ZZ=x.J_ZZ, hz=x.hz) =
+    XXZParams(; J_XY, J_ZZ, hz, phys_site=x.phys_site)

@@ -5,7 +5,8 @@
 ######## Hamiltonian ########
 
 """ Builds Ising Hamiltonian MPO  H = -Jtwo*XX - gperp*Z - hpar*X """ 
-function H_ising(sites::Vector{<:Index}, Jtwo::Real, gperp::Real, hpar::Real)
+function H_ising(sites::Vector{<:Index}, mp::IsingParams)
+    (; Jtwo, gperp, hpar) = mp
 
     # Input operator terms which define a Hamiltonian
     N = length(sites)
@@ -32,7 +33,8 @@ end
 """ Symmetric prescription a la Murg for exp(-i*H*dt) Ising transverse+parallel
 Convention H = -( Jtwo*XX + gperp*Z + λpar*X ) 
 """
-function expH_ising_murg(sites::Vector{<:Index}, Jtwo::Number, gperp::Number, λpar::Number; dt::Number)
+function expH_ising_murg(sites::Vector{<:Index}, mp::IsingParams; dt::Number)
+    (; Jtwo, gperp, hpar) = mp
 
     # For real dt this does REAL time evolution 
     # I should have already taken into account both the - sign in exp(-iHt) 
@@ -40,12 +42,12 @@ function expH_ising_murg(sites::Vector{<:Index}, Jtwo::Number, gperp::Number, λ
 
     Uxx = expXX_murg(sites, Jtwo; dt)
 
-    Ux = MPO([op(s, "Rx", θ=-2*λpar*dt) for s in sites])
+    Ux = MPO([op(s, "Rx", θ=-2*hpar*dt) for s in sites])
     Uzhalf = MPO([op(s, "Rz", θ=-gperp*dt) for s in sites])
 
     # Multiply in order:  exp(iZ/2)*exp(iX)*exp(iXX)*exp(iZ/2)
     
-    U_t = iszero(λpar) ? Uzhalf : applyn(Ux, Uzhalf) 
+    U_t = iszero(hpar) ? Uzhalf : applyn(Ux, Uzhalf) 
     U_t = applyn(Uxx, U_t) 
     U_t = applyn(Uzhalf, U_t) 
 
@@ -101,9 +103,10 @@ end
 
 
 
-function expH_ising_symm_svd(s::Vector{<:Index}, Jtwo::Number, hperp::Number, λpar::Number; dt::Number)
+function expH_ising_symm_svd(s::Vector{<:Index}, mp::IsingParams; dt::Number)
+    (; Jtwo, gperp, hpar) = mp
 
-    w = expH_ising_symm_svd_3site(Jtwo, hperp, λpar; dt)
+    w = expH_ising_symm_svd_3site(Jtwo, gperp, hpar; dt)
     wmpo = if length(s) == 3
         replace_siteinds(w, s)
     else
@@ -160,10 +163,10 @@ function expH_ising_symm_svd_3site(Jtwo::Number, hperp::Number, λpar::Number; d
 end
 
 
-function expH_ising_murg_4o(sites::Vector{<:Index}, Jtwo::Number, gperp::Number, λpar::Number; dt::Number)
+function expH_ising_murg_4o(sites::Vector{<:Index}, mp::IsingParams; dt::Number)
     p = 1.0/(4- 4^(1/3))
-    U1 = expH_ising_murg(sites, Jtwo, gperp, λpar; dt=p*dt)
-    U2 = expH_ising_murg(sites, Jtwo, gperp, λpar; dt=(1-4p)*dt)
+    U1 = expH_ising_murg(sites, mp; dt=p*dt)
+    U2 = expH_ising_murg(sites, mp; dt=(1-4p)*dt)
 
     UU1 = applyn(U1,U1)
     U4 = applyn(U2, UU1)
@@ -174,17 +177,15 @@ end
 """ Not sure what order is this anymore """ 
 function expH_ising_murg_xo(
     sites::Vector{<:Index},
-    Jtwo::Number,
-    gperp::Number,
-    λpar::Number; 
+    mp::IsingParams;
     dt::Number)
 
     tfac = 2^(1/3)
     dt1 = 1/(2-tfac)
     dt2 = -tfac/(2-tfac)
 
-    U1 = expH_ising_murg(sites, Jtwo, gperp, λpar; dt = dt*dt1)
-    U2 = expH_ising_murg(sites, Jtwo, gperp, λpar; dt = dt*dt2)
+    U1 = expH_ising_murg(sites, mp; dt = dt*dt1)
+    U2 = expH_ising_murg(sites, mp; dt = dt*dt2)
 
     U4 = applyn(U2, U1; truncate=false)
     U4 = applyn(U1, U4; truncate=false)
