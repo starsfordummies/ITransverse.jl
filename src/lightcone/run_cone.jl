@@ -21,7 +21,7 @@ function run_cone(ll::MPS, rr::MPS,
 
     (; opt_method, optimize_op, truncp, vwidth) = cone_pars
 
-    Id = vectorized_identity(dim(b.rot_inds[:R]))
+    Id = vectorized_identity(dim(b.iR))
 
     time_dim = dim(b.WWc,1)
 

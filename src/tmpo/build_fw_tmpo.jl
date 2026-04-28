@@ -23,45 +23,43 @@ function fw_tMPO_opentr(b::FwtMPOBlocks, time_sites::Vector{<:Index};  bl::ITens
 
     Ntot = length(time_sites)
 
-    (; Wc, Wc_im, rot_inds) = b
+    (; Wc, Wc_im, iL, iR, iP, iPs) = b
 
     @assert nbeta <= Ntot
 
     b1,b2 = beta_lims(Ntot, nbeta, init_beta_only)
 
-    (icL, icR, icP, icPs) = (rot_inds[:L], rot_inds[:R], rot_inds[:P], rot_inds[:Ps]) 
-
     # Make same indices for real and imag, it's easier aftwards 
     replaceinds!(Wc_im, inds(Wc_im), inds(Wc))
 
-    time_links = [Index(dim(icL), "Link,rotl=$ii") for ii in 1:(Ntot-1)]
+    time_links = [Index(dim(iL), "Link,rotl=$ii") for ii in 1:(Ntot-1)]
 
     tMPO =  MPO(fill(Wc, Ntot))
 
     for ii = 1:b1
         #@info "$(ii) imag"
-        tMPO[ii] = replaceinds(Wc_im, (icP, icPs), (time_sites[ii],time_sites[ii]'))
+        tMPO[ii] = replaceinds(Wc_im, (iP, iPs), (time_sites[ii],time_sites[ii]'))
     end
     for ii = b1+1:b2
-        tMPO[ii] = replaceinds(Wc, (icP, icPs), (time_sites[ii],time_sites[ii]') )
+        tMPO[ii] = replaceinds(Wc, (iP, iPs), (time_sites[ii],time_sites[ii]') )
 
     end
     for ii = b2+1:Ntot
         #@info "$(ii) imag"
-        tMPO[ii] = replaceinds(dag(Wc_im), (icP, icPs), (time_sites[ii],time_sites[ii]'))
+        tMPO[ii] = replaceinds(dag(Wc_im), (iP, iPs), (time_sites[ii],time_sites[ii]'))
     end
 
 
     # Label linkinds
     # TODO phys ind of bl and tr must be first one here (in case thye're not product states)
 
-    tMPO[1] = replaceinds(tMPO[1], (icL, icR), (ind(bl,1), time_links[1]))   
+    tMPO[1] = replaceinds(tMPO[1], (iL, iR), (ind(bl,1), time_links[1]))   
 
     for ii = 2:Ntot-1
-        tMPO[ii] = replaceinds(tMPO[ii], (icL, icR), (time_links[ii-1],time_links[ii]))
+        tMPO[ii] = replaceinds(tMPO[ii], (iL, iR), (time_links[ii-1],time_links[ii]))
     end
 
-    tMPO[end] = replaceinds(tMPO[end], (icL, icR), (time_links[end] , Index(dim(icR), "Link,tr") ))
+    tMPO[end] = replaceinds(tMPO[end], (iL, iR), (time_links[end] , Index(dim(iR), "Link,tr") ))
 
     # Contract boundary states (bottom/left)
     tMPO[1] = tMPO[1] * bl  
@@ -127,11 +125,11 @@ function fw_tMPS(
     (iL, iR, iP) = if LR == :left
         W = b.Wl
         W_im = b.Wl_im
-        (b.rot_inds[:L], b.rot_inds[:R], b.rot_inds[:Ps])
+        (b.iL, b.iR, b.iPs)
     elseif LR == :right
         W = b.Wr
         W_im = b.Wr_im
-        (b.rot_inds[:L], b.rot_inds[:R], b.rot_inds[:P])
+        (b.iL, b.iR, b.iP)
     else
         error("Unknown LR: $(LR)")
     end
@@ -191,30 +189,28 @@ function fw_tMPO_open_edges(b::FwtMPOBlocks, time_sites::Vector{<:Index}; init_b
 
     Ntot = length(time_sites)
 
-    (; tp, Wc, Wc_im, rot_inds) = b
+    (; tp, Wc, Wc_im, iL, iR, iP, iPs) = b
     nbeta = tp.nbeta 
 
     @assert nbeta <= Ntot
 
     b1,b2 = beta_lims(Ntot, nbeta, init_beta_only)
 
-    (icL, icR, icP, icPs) = (rot_inds[:L], rot_inds[:R], rot_inds[:P], rot_inds[:Ps]) 
-
     # Make same indices for real and imag, it's easier aftwards 
     replaceinds!(Wc_im, inds(Wc_im), inds(Wc))
 
-    time_links = [Index(dim(icL), "Link,rotl=$(ii-1)") for ii in 1:(Ntot+1)]
+    time_links = [Index(dim(iL), "Link,rotl=$(ii-1)") for ii in 1:(Ntot+1)]
 
     tMPO =  MPO(fill(Wc, Ntot))
 
     for ii = 1:b1
-        tMPO[ii] = replaceinds(Wc_im, (icP, icPs, icL, icR), (time_sites[ii],time_sites[ii]',time_links[ii],time_links[ii+1]))
+        tMPO[ii] = replaceinds(Wc_im, (iP, iPs, iL, iR), (time_sites[ii],time_sites[ii]',time_links[ii],time_links[ii+1]))
     end
     for ii = b1+1:b2
-        tMPO[ii] = replaceinds(Wc,(icP, icPs, icL, icR), (time_sites[ii],time_sites[ii]',time_links[ii],time_links[ii+1]))
+        tMPO[ii] = replaceinds(Wc,(iP, iPs, iL, iR), (time_sites[ii],time_sites[ii]',time_links[ii],time_links[ii+1]))
     end
     for ii = b2+1:Ntot
-        tMPO[ii] = replaceinds(dag(Wc_im), (icP, icPs, icL, icR), (time_sites[ii],time_sites[ii]',time_links[ii],time_links[ii+1]))
+        tMPO[ii] = replaceinds(dag(Wc_im), (iP, iPs, iL, iR), (time_sites[ii],time_sites[ii]',time_links[ii],time_links[ii+1]))
     end
 
     return tMPO, time_links[1], time_links[end]

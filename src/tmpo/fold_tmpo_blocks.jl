@@ -11,25 +11,34 @@ struct FoldtMPOBlocks
     WWr_im::ITensor
     rho0::ITensor
     tp::tMPOParams
-    rot_inds::Dict
+    iL::Index
+    iR::Index
+    iP::Index
+    iPs::Index
 
     function FoldtMPOBlocks(WWl::ITensor,WWc::ITensor,WWr::ITensor, WWl_im::ITensor,WWc_im::ITensor,WWr_im::ITensor,
-        rho0::ITensor,tp::tMPOParams,rot_inds::Dict) 
+        rho0::ITensor,tp::tMPOParams, iL::Index, iR::Index, iP::Index, iPs::Index)
 
         # The data type of the bottom-left term in tp dictates whether the *full* thing will lie on GPU
         dttype = NDTensors.unwrap_array_type(tp.bl)
 
         new(adapt(dttype,WWl), adapt(dttype,WWc), adapt(dttype, WWr), 
             adapt(dttype,WWl_im), adapt(dttype,WWc_im), adapt(dttype, WWr_im), 
-            adapt(dttype, rho0), tp, rot_inds)
+            adapt(dttype, rho0), tp, iL, iR, iP, iPs)
     end
 end
+
+ITensorMPS.linkinds(b::FoldtMPOBlocks) = (b.iL, b.iR)
+ITensorMPS.siteinds(b::FoldtMPOBlocks) = (b.iP, b.iPs)
+ITensorMPS.siteind(b::FoldtMPOBlocks) = b.iP
+
 
 
 """ Allow changing elements of FoldtMPOBlocks """
 function FoldtMPOBlocks(b::FoldtMPOBlocks; 
-    WWl=b.WWl, WWc=b.WWc, WWr=b.WWr, WWl_im=b.WWl_im, WWc_im=b.WWc_im, WWr_im=b.WWr_im, rho0=b.rho0, tp=b.tp, rot_inds=b.rot_inds)
-    return FoldtMPOBlocks(WWl, WWc, WWr, WWl_im, WWc_im, WWr_im, rho0, tp, rot_inds)
+    WWl=b.WWl, WWc=b.WWc, WWr=b.WWr, WWl_im=b.WWl_im, WWc_im=b.WWc_im, WWr_im=b.WWr_im, rho0=b.rho0, tp=b.tp,
+    iL=b.iL, iR=b.iR, iP=b.iP, iPs=b.iPs)
+    return FoldtMPOBlocks(WWl, WWc, WWr, WWl_im, WWc_im, WWr_im, rho0, tp, iL, iR, iP, iPs)
 end
 
 
@@ -131,9 +140,7 @@ function FoldtMPOBlocks(x::Union{tMPOParams, MPO}; init_state=nothing, check_sym
         @error "Dimension of init_state is $(physdim_init) vs linkdim $(dim(P))"
     end
 
-    inds_ww = Dict(:Ps => time_P', :P => time_P, :L => time_L, :R=> time_R)
-
-    return FoldtMPOBlocks(WWl, WWc, WWr, WWl_im, WWc_im, WWr_im, rho0, tp, inds_ww)
+    return FoldtMPOBlocks(WWl, WWc, WWr, WWl_im, WWc_im, WWr_im, rho0, tp, time_L, time_R, time_P, time_P')
 end
 
 
