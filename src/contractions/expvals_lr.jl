@@ -154,7 +154,7 @@ function compute_expvals(ll::AbstractMPS, rr::AbstractMPS, op_list, b::FoldtMPOB
     ev_L1R = expval_LR(ll, rr, idN, b)
 
     #two-col exp value is expensive, only compute if necessary
-    ev_L11R = haskey(op_list, "XX") || haskey(op_list, "ZZ") || haskey(op_list, "eps_ising") ? expval_LR(ll, rr, (idN, idN), b) : 1.0
+    ev_L11R = ("XX" in op_list) || ("ZZ" in op_list) || ("eps_ising" in op_list) ? expval_LR(ll, rr, (idN, idN), b) : 1.0
 
     for op in op_list
         if op == "eps_ising"  # do this separately
@@ -165,7 +165,7 @@ function compute_expvals(ll::AbstractMPS, rr::AbstractMPS, op_list, b::FoldtMPOB
         elseif  op == "ZZ"
             allevs[op] = expval_LR(ll, rr, [1,0,0,-1], [1,0,0,-1], b)/ev_L11R
         elseif  op == "Pz"
-            allevs[op] = expval_LR(ll, rr, [1,0,0,0], b)/ev_L11R
+            allevs[op] = expval_LR(ll, rr, [1,0,0,0], b)/ev_L1R
   
         else  # Basically all one-site operators should be handled by ITensors (+ appropriate overloading)
 

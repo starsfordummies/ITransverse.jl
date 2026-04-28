@@ -6,31 +6,19 @@ function dictfromlist(v::Vector{T}, ValueType=Any) where T
     return dd
 end
 
-function smart_append!(A, B)
-    if A isa AbstractArray && B isa AbstractArray
-        append!(A, B)
-    elseif A isa AbstractArray && B isa Number
-        push!(A, B)
-    elseif A isa Number && B isa Number
-        return [A, B]
-    elseif A isa Number && B isa AbstractArray
-        return vcat([A], B)
-    else
-        throw(ArgumentError("Unsupported argument types"))
-    end
-    return A
-end
+smart_append!(A::AbstractVector, B::AbstractVector) = append!(A, B)
+smart_append!(A::AbstractVector, B) = push!(A, B)
 
 """ Updates the first dict with data (with matching keys) from the second """
 function mergedicts!(dict_to_update::Dict, new_data::Dict)
-    for (key,val) in new_data
+    for (key, val) in new_data
         if !haskey(dict_to_update, key)
             @warn "key $(key) not present in the dict to update, creating an empty one"
-            dict_to_update[key] = []  # Initialize with an empty array if the key doesn't exist
+            dict_to_update[key] = [val]
+        else
+            existing = dict_to_update[key]
+            dict_to_update[key] = existing isa AbstractVector ? smart_append!(existing, val) : [existing, val]
         end
-        
-        smart_append!(dict_to_update[key], val)
-    
     end
 end
 
