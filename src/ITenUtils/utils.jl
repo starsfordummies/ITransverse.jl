@@ -103,4 +103,4 @@ choparr(ten::ITensor; kwargs...) = choparr(array(ten), kwargs...)
 
 
 halfsite(L::Int) = div(L+1,2)
-halfsite(v) = div(length(v)+1,2)
+halfsite(v) = halfsite(length(v))
