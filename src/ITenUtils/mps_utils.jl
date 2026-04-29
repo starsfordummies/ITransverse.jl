@@ -1,5 +1,15 @@
 import ITensorMPS: replace_siteinds!, replace_siteinds
 
+# # Override the text/plain display (what you see in the REPL)
+# function Base.show(io::IO, ::MIME"text/plain", mps::AbstractMPS)
+#     println(io, "$(typeof(mps))($(length(mps))) | d=$(dim(siteind(mps,1))) | χ=$(maxlinkdim(mps))")
+# end
+
+# # Override the one-line show (used in arrays, inside other objects, etc.)
+# function Base.show(io::IO, mps::AbstractMPS)
+#     print(io, "$(typeof(mps))($(length(mps))) | d=$(dim(siteind(mps,1))) | χ=$(maxlinkdim(mps)))")
+# end
+
 """ Builds a product MPS """ 
 function pMPS(ss::Vector{<:Index}, site_tensor::AbstractVector{<:Number})
     psi = MPS(ss)

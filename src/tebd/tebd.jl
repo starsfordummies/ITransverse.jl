@@ -11,8 +11,8 @@ function _siteinds_from_tp(N::Int, tp::tMPOParams)
     end
 end
 
-""" Build product initial state from `tMPOParams` boundary tensor. """
-_psi0_from_tp(ss, tp::tMPOParams) = pMPS(ss, tp.bl.tensor.storage)
+""" Build product initial state from `tp.bl` tensor. """
+_psi0_from_tp(ss, tp::tMPOParams) = pMPS(ss, storage(tp.bl))
 
 # ── core time evolution ──────────────────────────────────────────────────────
 
@@ -35,11 +35,6 @@ function tebd(psi0::MPS, Ut::MPO, Nt::Int;
     return psi_t
 end
 
-"""
-    tebd(psi0::MPS, tp::tMPOParams, Nt::Int; kwargs...)
-
-Build the propagator from `tp` and evolve `psi0` for `Nt` steps.
-"""
 function tebd(psi0::MPS, tp::tMPOParams, Nt::Int; kwargs...)
     Ut = build_Ut(siteinds(psi0), tp)
     Ut = adapt(mapreduce(NDTensors.unwrap_array_type, promote_type, psi0), Ut)
@@ -75,14 +70,13 @@ function tebd_ev(init, tp::tMPOParams, Nt::Int, ops::Vector{<:String}; kwargs...
         _psi0_from_tp(ss, tp)
     end
 
-    LL   = length(psi0)
     evs  = dictfromlist(ops)
     chis = Int[]
     dt   = tp.dt
 
     function cb(nt, psi)
         for op in keys(evs)
-            push!(evs[op], expect(psi, op)[LL ÷ 2])
+            push!(evs[op], expect(psi, op)[halfsite(psi)])
         end
         push!(chis, maxlinkdim(psi))
         @info "T=$(dt*nt), chi=$(maxlinkdim(psi))"
@@ -105,7 +99,7 @@ function tebd_z(Nt::Int, tp::tMPOParams; LL::Int = 2*Nt+4, kwargs...)
     p     = Progress(Nt; dt=2, showspeed=true)
 
     function cb(nt, psi)
-        zeta = expect(psi, "Z")[length(psi) ÷ 2]
+        zeta = expect(psi, "Z")[halfsite(psi)]
         push!(evs_z, zeta)
         next!(p; showvalues=[(:Info, "chi=$(maxlinkdim(psi)), <Z>=$(zeta)")])
     end
@@ -119,7 +113,7 @@ function tebd_z(Nt::Int, psi0::MPS, Ut::MPO; kwargs...)
     p     = Progress(Nt; dt=2, showspeed=true)
 
     function cb(nt, psi)
-        zeta = expect(psi, "Z")[length(psi) ÷ 2]
+        zeta = expect(psi, "Z")[halfsite(psi)]
         push!(evs_z, zeta)
         next!(p; showvalues=[(:Info, "chi=$(maxlinkdim(psi)), <Z>=$(zeta)")])
     end

@@ -3,9 +3,8 @@ using Observers
 using Test
 
 using ITransverse
-using ITransverse: vX, plus_state
 
-  measure_Z(; state) = expect(state, "Z"; sites=length(state) ÷ 2)
+  measure_Z(; state) = expect(state, "Z"; sites=halfsite(state))
   current_time(; current_time) = current_time
   return_state(; state) = state
   obs = observer(
