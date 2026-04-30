@@ -26,7 +26,7 @@ init_state = up_state
 
 mp = IsingParams(JXX, hz, gx)
 
-tp = tMPOParams(dt,  expH_ising_murg, mp, 0, init_state)
+tp = tMPOParams(dt, Murg(), mp, 0, init_state)
 b = FwtMPOBlocks(tp)
 
 ss = siteinds("S=1/2", 16)

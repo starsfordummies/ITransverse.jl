@@ -104,7 +104,7 @@ function main_losch()
     Tstep = 1
 
 
-    tp = tMPOParams(dt, dbeta, expH_ising_murg, mp, nbeta, init_state)
+    tp = tMPOParams(dt, dbeta, Murg(), mp, nbeta, init_state)
     psis, results = ising_loschmidt(tp, Tmin, Tmax, nbeta; Tstep)
 
     rr2s = []

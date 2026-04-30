@@ -45,7 +45,7 @@ eps_converged=1e-6
 cutoff = 1e-12
 maxdim = 128
 
-ref = ITransverse.tebd_z(Nt, tp; N=2*Nt, cutoff=1e-12)[end]
+ref = ITransverse.tebd_z(Nt, tp; LL=2*Nt, cutoff=1e-12)[end]
 allerrs = [] 
 allchis = []
 allpars = []

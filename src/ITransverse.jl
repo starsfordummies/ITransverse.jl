@@ -75,6 +75,8 @@ using .BenchData
 
 include("chain_models/model_params.jl")
 export ModelParams, IsingParams, PottsParams, XXZParams, NoParams
+export TrotterScheme, Murg, SymSVD, Floquet
+export expH
 
 include("chain_models/helpers.jl")
 include("chain_models/id_mpo.jl")
@@ -83,28 +85,20 @@ include("chain_models/potts.jl")
 include("chain_models/xxzmodel.jl")
 include("chain_models/random_mpo.jl")
 include("chain_models/floq_ising.jl")
+include("chain_models/trotter_schemes.jl")
 
 export up_state, down_state, plus_state
 export vX, vZ, vI
 
 
 # from ising.jl
-export H_ising, 
-    expH_ising_murg,
-    expH_ising_symm_svd,
-    expH_ising_murg_4o
+export H_ising
 
 #from potts.jl
 export H_potts_manual,
-    H_potts,
-    #expH_potts_2o,
-    expH_potts_murg,
-    expH_potts_symmetric_svd
-
-export expH_random_symm_svd_1o
+    H_potts
 
 export build_H, build_Ut
-#export timeEvo_MPO_2ndOrder, timeEvo_MPO_2ndOrder_LRflipped
 
 #include("truncation_sweeps/trunc_params.jl")
 include("truncation_sweeps/sweeps.jl")

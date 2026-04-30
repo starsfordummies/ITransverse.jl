@@ -35,7 +35,7 @@ function build_WW(eH::MPO)
 end
 
 function build_WW(tp::tMPOParams; build_imag::Bool=false, kwargs...)
-    @info "Building WW tensors using $(tp.expH_func), build_imag=$(build_imag), parameters $(tp.mp)"
+    @info "Building WW tensors using $(tp.scheme), build_imag=$(build_imag), parameters $(tp.mp)"
     dt = build_imag ? tp.dbeta : tp.dt
     eH = build_Ut(tp; dt, kwargs...)
     build_WW(eH)

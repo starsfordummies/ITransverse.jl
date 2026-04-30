@@ -453,7 +453,7 @@ function expH_potts_symmetric_svd(in_space_sites, mp::PottsParams; dt::Number)
 
     U_t[N] = uT_open
 
-    if fdt > 1e-10
+    if abs(fdt) > 1e-10
         for n = 1:N
 
             ttdag = op(in_space_sites, "τplusτdag",  n)

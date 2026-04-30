@@ -83,7 +83,7 @@ function FoldtMPOBlocks(x::Union{tMPOParams, MPO}; init_state=nothing, check_sym
         # If the input is an MPO, we don't build anyting else, just put placeholders in tp 
         phys_site = siteind(x,2)
         mp = NoParams(phys_site)
-        tp = tMPOParams(NaN, NaN, nothing, mp, 0, init_state)
+        tp = tMPOParams(NaN, NaN, Murg(), mp, 0, init_state)
         tp, WWl, WWc, WWr
 
     else # x isa tMPOParams
