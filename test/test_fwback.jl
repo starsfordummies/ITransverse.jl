@@ -153,19 +153,19 @@ init_state = up_state
 mp = IsingParams(JXX, hz, gx)
 
 
-tp = tMPOParams(0.1,  expH_ising_symm_svd, mp, 0, init_state)
+tp = tMPOParams(0.1,  SymSVD(), mp, 0, init_state)
 TT = 40 
 psi, b = ising_fwb(tp,2*TT)
 vn1 = vn_entanglement_entropy(psi)
 chi1 = maxlinkdim(psi)
 
-tp = tMPOParams(0.05,  expH_ising_symm_svd, mp, 0, init_state)
+tp = tMPOParams(0.05,  SymSVD(), mp, 0, init_state)
 TT = 80 
 psi, b = ising_fwb(tp,2*TT)
 vn2 = vn_entanglement_entropy(psi)
 chi2 = maxlinkdim(psi)
 
-tp = tMPOParams(0.02,  expH_ising_symm_svd, mp, 0, init_state)
+tp = tMPOParams(0.02,  SymSVD(), mp, 0, init_state)
 TT = 200
 psi, b = ising_fwb(tp,2*TT)
 vn3 = vn_entanglement_entropy(psi)

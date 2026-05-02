@@ -75,7 +75,7 @@ using .BenchData
 
 include("chain_models/model_params.jl")
 export ModelParams, IsingParams, PottsParams, XXZParams, NoParams
-export TrotterScheme, Murg, SymSVD, Floquet
+export ExpHRecipe, Murg, SymSVD, Floquet
 export expH
 
 include("chain_models/helpers.jl")

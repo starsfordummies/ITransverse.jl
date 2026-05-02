@@ -1,8 +1,8 @@
-abstract type TrotterScheme end
+abstract type ExpHRecipe end
 
-struct Murg    <: TrotterScheme end
-struct SymSVD  <: TrotterScheme end
-struct Floquet <: TrotterScheme end
+struct Murg    <: ExpHRecipe end
+struct SymSVD  <: ExpHRecipe end
+struct Floquet <: ExpHRecipe end
 
 # ── Ising ────────────────────────────────────────────────────────────────────
 expH(sites, mp::IsingParams, ::Murg;    dt) = expH_ising_murg(sites, mp; dt)

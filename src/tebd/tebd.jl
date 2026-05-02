@@ -88,13 +88,13 @@ function tebd_ev(init, tp::tMPOParams, Nt::Int, ops::Vector{<:String}; kwargs...
 end
 
 """
-    tebd_z(Nt::Int, tp::tMPOParams; N::Int = 2*Nt+4, kwargs...)
+    tebd_z(init, tp::tMPOParams, Nt::Int; kwargs...)
 
 Evolve for `Nt` steps and collect the half-chain ⟨Z⟩ after each step.
-Default chain length `N = 2*Nt+4` follows the light-cone.
+`init` is either a chain length `N::Int` or an initial state `psi0::MPS`.
 Returns a vector of ⟨Z⟩ values.
 """
-function tebd_z(Nt::Int, tp::tMPOParams; LL::Int = 2*Nt+4, kwargs...)
+function tebd_z(init, tp::tMPOParams, Nt::Int; kwargs...)
     evs_z = ComplexF64[]
     p     = Progress(Nt; dt=2, showspeed=true)
 
@@ -104,11 +104,11 @@ function tebd_z(Nt::Int, tp::tMPOParams; LL::Int = 2*Nt+4, kwargs...)
         next!(p; showvalues=[(:Info, "chi=$(maxlinkdim(psi)), <Z>=$(zeta)")])
     end
 
-    tebd(LL, tp, Nt; callback=cb, kwargs...)
+    tebd(init, tp, Nt; callback=cb, kwargs...)
     return evs_z
 end
 
-function tebd_z(Nt::Int, psi0::MPS, Ut::MPO; kwargs...)
+function tebd_z(psi0::MPS, Ut::MPO, Nt::Int; kwargs...)
     evs_z = ComplexF64[]
     p     = Progress(Nt; dt=2, showspeed=true)
 

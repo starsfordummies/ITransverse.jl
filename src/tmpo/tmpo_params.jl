@@ -1,4 +1,4 @@
-Base.@kwdef struct tMPOParams{Tdt, Tdbeta, MP, S<:TrotterScheme}
+Base.@kwdef struct tMPOParams{Tdt, Tdbeta, MP, S<:ExpHRecipe}
     dt::Tdt
     dbeta::Tdbeta = dt
     scheme::S
@@ -15,11 +15,11 @@ end
 
 
 # Master constructor: accepts AbstractVector for bl
-tMPOParams(dt::Number, dbeta::Number, scheme::TrotterScheme, mp::ModelParams, nbeta::Int, bl_in::AbstractVector) =
+tMPOParams(dt::Number, dbeta::Number, scheme::ExpHRecipe, mp::ModelParams, nbeta::Int, bl_in::AbstractVector) =
     tMPOParams(dt, dbeta, scheme, mp, nbeta, to_itensor(bl_in, "bl"))
 
 # Short form: omit dbeta (defaults to -im*dt)
-tMPOParams(dt::Number, scheme::TrotterScheme, mp::ModelParams, nbeta::Int, bl_in::AbstractVector) =
+tMPOParams(dt::Number, scheme::ExpHRecipe, mp::ModelParams, nbeta::Int, bl_in::AbstractVector) =
     tMPOParams(dt, -im*dt, scheme, mp, nbeta, bl_in)
 
 # Allow changes on the fly
