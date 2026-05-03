@@ -23,7 +23,7 @@ function test_symmpm(Tstart::Int, Tend::Int, nbeta::Int; Tstep::Int=1)
     eps_converged = 1e-6
 
     mp = IsingParams(JXX, hz, gx)
-    tp = tMPOParams(dt, expH_ising_murg, mp, nbeta, init_state)
+    tp = tMPOParams(dt, Murg(), mp, nbeta, init_state)
 
     b = FwtMPOBlocks(tp)
 

@@ -26,7 +26,7 @@ direction = :right
 Nsteps = 80
 
 mp = IsingParams(JXX, hz, gx)
-tp = tMPOParams(dt, expH_ising_murg, mp, nbeta, init_state)
+tp = tMPOParams(dt, Murg(), mp, nbeta, init_state)
 b = FoldtMPOBlocks(tp)
 
 c0 = init_cone(b)
