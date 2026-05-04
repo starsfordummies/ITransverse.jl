@@ -89,4 +89,57 @@ end
 
 end
 
+
+@testset "cuRTM/cudensitymatrix applys" begin
+
+   
+    ss = siteinds("S=1/2", 30)
+    psi = random_mps(ss, linkdims=40)
+    phi = random_mps(ss, linkdims=24)
+    oo = random_mpo(ss) + random_mpo(ss)
+    oo2 = random_mpo(ss) + random_mpo(ss)
+
+    oopsi = apply(oo, psi; alg="densitymatrix", cutoff=1e-8, maxdim=30)
+    oopsi_gpu = apply(oo, psi; alg="cudensitymatrix", cutoff=1e-8, maxdim=30)
+
+    @test oopsi ≈ oopsi_gpu
+
+    ll, rr, sv = trapply(psi, oo, phi; alg="RTM", direction=:left, cutoff=1e-8, maxdim=30)
+    ll_gpu, rr_gpu, sv_gpu = trapply(psi, oo, phi; alg="cuRTM", direction=:left, cutoff=1e-8, maxdim=30)
+
+    @test ll ≈ ll_gpu
+    @test rr ≈ rr_gpu
+    @test sv ≈ sv_gpu
+
+    ll, rr, sv = trapply(psi, oo, phi; alg="RTM", direction=:right, cutoff=1e-8, maxdim=30)
+    ll_gpu, rr_gpu, sv_gpu = trapply(psi, oo, phi; alg="cuRTM", direction=:right, cutoff=1e-8, maxdim=30)
+
+    @test ll ≈ ll_gpu
+    @test rr ≈ rr_gpu
+    @test sv ≈ sv_gpu
+
+
+    ll, rr, sv = tlrapply(psi, oo, oo2, phi; alg="RTM", direction=:left, cutoff=1e-8, maxdim=30)
+    ll_gpu, rr_gpu, sv_gpu = tlrapply(psi, oo, oo2, phi; alg="cuRTM", direction=:left, cutoff=1e-8, maxdim=30)
+
+    @test ll ≈ ll_gpu
+    @test rr ≈ rr_gpu
+    @test sv ≈ sv_gpu
+
+
+    ll, rr, sv = tlrapply(psi, oo, oo2, phi; alg="RTM", direction=:right, cutoff=1e-8, maxdim=30)
+    ll_gpu, rr_gpu, sv_gpu = tlrapply(psi, oo, oo2, phi; alg="cuRTM", direction=:right, cutoff=1e-8, maxdim=30)
+
+    @test ll ≈ ll_gpu
+    @test rr ≈ rr_gpu
+    @test sv ≈ sv_gpu
+
 end
+
+
+
+
+
+
+
+end # All cuda testsets 

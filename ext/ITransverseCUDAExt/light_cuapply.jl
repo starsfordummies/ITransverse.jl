@@ -9,7 +9,7 @@ function ITransverse.tcontract(::Algorithm{:cudensitymatrix},
         cutoff = 1.0e-13,
         maxdim = maxlinkdim(A) * maxlinkdim(ψ),
         mindim = 1,
-        direction = :right,  # TODO not implemented yet 
+        direction = :right,  # TODO left not implemented yet 
         contract_dangling::Bool=true,
         kwargs...,
     )
@@ -33,7 +33,7 @@ function ITransverse.tcontract(::Algorithm{:cudensitymatrix},
     # Store the right environment tensors
     E = Vector{ITensor}(undef, N)
 
-    Ecurr = N > n ?  A[N] *A_c[N] : ψ[N] * A[N] * A_c[N] * ψ_c[N]
+    Ecurr = N > n ?  A[N] * A_c[N] : ψ[N] * A[N] * A_c[N] * ψ_c[N]
     E[N] = Ecurr
     for j in reverse(n+1:N-1)
         Ecurr = E[j + 1] * A[j] * A_c[j] 
@@ -171,8 +171,11 @@ function _cutrcontract_rtm_right(ψL::MPS, AR::MPO, ψR::MPS;
         eR *= get(ψR,j) * AR[j]
     end
     E[N+1] = eR
+    # do the bulk envs on GPU 
+    eR = togpu(eR)
     for j in reverse(1:N)
-        E[j] = E[j+1] * get(ψR,j) * AR[j] * ψL[j]'
+        eR = eR * togpu(get(ψR,j)) * togpu(AR[j]) * togpu(ψL[j]')
+        E[j] = tocpu(eR)
     end
 
     ov_before = scalar(E[1])
@@ -184,7 +187,7 @@ function _cutrcontract_rtm_right(ψL::MPS, AR::MPO, ψR::MPS;
 
     # Step 3: sweep left → right on GPU
     for j in 2:N
-        maxdim = min(dim(commoninds(tocpu(R), E[j])), dim(commoninds(tocpu(L), E[j])), requested_maxdim)
+        maxdim = min(dim(commoninds(R, E[j])), dim(commoninds(L, E[j])), requested_maxdim)
 
         rho = togpu(E[j]) * R * L
         @assert ndims(rho) < 5 "inds(rho) @site $j ? $(inds(rho))"
@@ -213,7 +216,7 @@ function _cutrcontract_rtm_right(ψL::MPS, AR::MPO, ψR::MPS;
         R = dag(U) * R * togpu(get(ψR, j)) * togpu(AR[j])
         L = dag(V) * L * togpu(ψLp[j])
 
-        Svec = collect(S.tensor.storage.data) ./ sum(S)
+        Svec = collect(storage(S).data) ./ sum(S)
         S_all[j-1, 1:length(Svec)] .= Svec
     end
 
@@ -246,12 +249,12 @@ function _cutrcontract_rtm_left(ψL::MPS, AR::MPO, ψR::MPS;
     ψL_out           = MPS(nL)
     S_all            = zeros(Float64, N-1, requested_maxdim)
 
-    # Step 1: build left environments on CPU
+    # Step 1: build left environments
     E   = Vector{ITensor}(undef, N)
     env = ITensors.OneITensor()
     for j in 1:N
-        env  = env * get(ψR,j) * AR[j] * get(ψLp,j)
-        E[j] = env
+        env  = env * togpu(get(ψR,j)) * togpu(AR[j]) * togpu(get(ψLp,j))
+        E[j] = tocpu(env)
         @assert ndims(env) < 4 "env[$(j)] ? $(inds(env))"
     end
 
@@ -268,7 +271,7 @@ function _cutrcontract_rtm_left(ψL::MPS, AR::MPO, ψR::MPS;
 
     # Step 3: sweep right → left on GPU
     for j in reverse(1:nL-1)
-        maxdim = min(dim(commoninds(tocpu(R), E[j])), dim(commoninds(tocpu(L), E[j])), requested_maxdim)
+        maxdim = min(dim(commoninds(R, E[j])), dim(commoninds(L, E[j])), requested_maxdim)
 
         rho = togpu(E[j]) * L * R
         @assert ndims(rho) < 5 "inds(rho) @site $j ? $(inds(rho))"
@@ -296,6 +299,8 @@ function _cutrcontract_rtm_left(ψL::MPS, AR::MPO, ψR::MPS;
 
     return ψL_out, ψR_out, S_all, ov_before
 end
+
+
 
 # ─── cuRTM tlrcontract ────────────────────────────────────────────────────
 
@@ -326,79 +331,6 @@ function ITransverse.tlrcontract(::Algorithm"cuRTM",
     return ITransverse.TruncLR(L, R, sv, ovb, NaN)
 end
 
-function _cutlrcontract_rtm_left(ψL::MPS, AL::MPO, AR::MPO, ψR::MPS;
-        cutoff, maxdim, mindim, preserve_mps_tags, kwargs...)
-
-    NL = length(AL)
-    NR = length(AR)
-    n  = min(NL, NR)
-    N  = max(NL, NR)
-
-    @assert NL >= length(ψL)
-    @assert NR >= length(ψR)
-
-    AL  = AL'
-    ψL  = ψL''
-    ALp = replaceprime(AL, 1 => 3, tags="Site")
-
-    sR               = firstsiteinds(AR, plev=1)
-    requested_maxdim = maxdim
-    ψR_out           = typeof(ψR)(n)
-    ψL_out           = typeof(ψL)(n)
-    S_all            = zeros(Float64, n-1, requested_maxdim)
-
-    # Step 1: build left environments on CPU
-    E   = Vector{ITensor}(undef, N)
-    env = ITensors.OneITensor()
-    for j in 1:N
-        env  = env * get(ψR, j) * get(AR, j) * get(AL, j) * get(ψL, j)
-        E[j] = env
-        @assert ndims(env) < 5 "Bad env[$j] ? - $(inds(env))"
-    end
-    ov_before = scalar(env)
-
-    # Step 2: right boundary — move to GPU
-    R = get(ψR, NR) * AR[NR]
-    for j in reverse(n:NR-1)
-        R = R * get(ψR, j) * AR[j]
-    end
-    L = get(ψL, NL) * ALp[NL]
-    for j in reverse(n:NL-1)
-        L = L * get(ψL, j) * ALp[j]
-    end
-    R          = togpu(R)
-    L          = togpu(L)
-    renorm_idx = nothing
-
-    # Step 3: sweep right → left on GPU
-    for j in reverse(1:n-1)
-        maxdim = min(dim(commoninds(tocpu(R), E[j])), dim(commoninds(tocpu(L), E[j])), requested_maxdim)
-        rho    = togpu(E[j]) * L * R
-
-        tsR = preserve_mps_tags ? (l = linkind(ψR, j); isnothing(l) ? "" : tags(l)) : "Link,l=$(j)"
-        tsL = preserve_mps_tags ? (l = linkind(ψL, j); isnothing(l) ? "" : tags(l)) : "Link,l=$(j)"
-        Ris = isnothing(renorm_idx) ? IndexSet(sR[j+1]) : IndexSet(sR[j+1], renorm_idx)
-
-        F  = svd(rho, Ris; cutoff, maxdim, mindim, lefttags=tsR, righttags=tsL, kwargs...)
-        S, U, V = F.S, F.U, F.V
-        renorm_idx = F.u
-
-        ψR_out[j+1] = tocpu(U)
-        ψL_out[j+1] = tocpu(V)
-
-        R = dag(U) * R * togpu(get(ψR, j)) * togpu(AR[j])
-        L = dag(V) * L * togpu(get(ψL, j)) * togpu(ALp[j])
-
-        Svec = collect(S.tensor.storage.data) ./ sum(S)
-        S_all[j, 1:length(Svec)] .= Svec
-    end
-
-    ψR_out[1] = tocpu(R)
-    ψL_out[1] = tocpu(L)
-
-    return ψL_out, ψR_out, S_all, ov_before
-end
-
 function _cutlrcontract_rtm_right(ψL::MPS, AL::MPO, AR::MPO, ψR::MPS;
         cutoff, maxdim, mindim, preserve_mps_tags, kwargs...)
 
@@ -420,12 +352,12 @@ function _cutlrcontract_rtm_right(ψL::MPS, AL::MPO, AR::MPO, ψR::MPS;
     ψL_out           = typeof(ψL)(n)
     S_all            = zeros(Float64, n-1, requested_maxdim)
 
-    # Step 1: build right environments on CPU
+    # Step 1: build right environments 
     E   = Vector{ITensor}(undef, N)
     env = ITensors.OneITensor()
     for j in reverse(1:N)
-        env  = env * get(ψR, j) * get(AR, j) * get(AL, j) * get(ψL, j)
-        E[j] = env
+        env  = env * togpu(get(ψR, j)) * togpu(get(AR, j)) * togpu(get(AL, j)) * togpu(get(ψL, j))
+        E[j] = tocpu(env)
         @assert ndims(env) < 5 "$j - $(inds(env))"
     end
     ov_before = scalar(env)
@@ -437,7 +369,7 @@ function _cutlrcontract_rtm_right(ψL::MPS, AL::MPO, AR::MPO, ψR::MPS;
 
     # Step 3: sweep left → right on GPU
     for j in 2:n
-        maxdim = min(dim(commoninds(tocpu(R), E[j])), dim(commoninds(tocpu(L), E[j])), requested_maxdim)
+        maxdim = min(dim(commoninds(R, E[j])), dim(commoninds(L, E[j])), requested_maxdim)
         rho    = togpu(E[j]) * R * L
 
         tsR = preserve_mps_tags ? (l = linkind(ψR, j-1); isnothing(l) ? "" : tags(l)) : "Link,l=$(j-1)"
@@ -469,6 +401,80 @@ function _cutlrcontract_rtm_right(ψL::MPS, AL::MPO, AR::MPO, ψR::MPS;
 
     ψR_out[n] = tocpu(R) * redge_R
     ψL_out[n] = tocpu(L) * redge_L
+
+    return ψL_out, ψR_out, S_all, ov_before
+end
+
+
+function _cutlrcontract_rtm_left(ψL::MPS, AL::MPO, AR::MPO, ψR::MPS;
+        cutoff, maxdim, mindim, preserve_mps_tags, kwargs...)
+
+    NL = length(AL)
+    NR = length(AR)
+    n  = min(NL, NR)
+    N  = max(NL, NR)
+
+    @assert NL >= length(ψL)
+    @assert NR >= length(ψR)
+
+    AL  = AL'
+    ψL  = ψL''
+    ALp = replaceprime(AL, 1 => 3, tags="Site")
+
+    sR               = firstsiteinds(AR, plev=1)
+    requested_maxdim = maxdim
+    ψR_out           = typeof(ψR)(n)
+    ψL_out           = typeof(ψL)(n)
+    S_all            = zeros(Float64, n-1, requested_maxdim)
+
+    # Step 1: build left environments 
+    E   = Vector{ITensor}(undef, N)
+    env = ITensors.OneITensor()
+    for j in 1:N
+        env  = env * togpu(get(ψR, j)) * togpu(get(AR, j)) * togpu(get(AL, j)) * togpu(get(ψL, j))
+        E[j] = tocpu(env)
+        @assert ndims(env) < 5 "Bad env[$j] ? - $(inds(env))"
+    end
+    ov_before = scalar(env)
+
+    # Step 2: right boundary — move to GPU
+    R = get(ψR, NR) * AR[NR]
+    for j in reverse(n:NR-1)
+        R = R * get(ψR, j) * AR[j]
+    end
+    L = get(ψL, NL) * ALp[NL]
+    for j in reverse(n:NL-1)
+        L = L * get(ψL, j) * ALp[j]
+    end
+    R          = togpu(R)
+    L          = togpu(L)
+    renorm_idx = nothing
+
+    # Step 3: sweep right → left on GPU
+    for j in reverse(1:n-1)
+        maxdim = min(dim(commoninds(R, E[j])), dim(commoninds(L, E[j])), requested_maxdim)
+        rho    = togpu(E[j]) * L * R
+
+        tsR = preserve_mps_tags ? (l = linkind(ψR, j); isnothing(l) ? "" : tags(l)) : "Link,l=$(j)"
+        tsL = preserve_mps_tags ? (l = linkind(ψL, j); isnothing(l) ? "" : tags(l)) : "Link,l=$(j)"
+        Ris = isnothing(renorm_idx) ? IndexSet(sR[j+1]) : IndexSet(sR[j+1], renorm_idx)
+
+        F  = svd(rho, Ris; cutoff, maxdim, mindim, lefttags=tsR, righttags=tsL, kwargs...)
+        S, U, V = F.S, F.U, F.V
+        renorm_idx = F.u
+
+        ψR_out[j+1] = tocpu(U)
+        ψL_out[j+1] = tocpu(V)
+
+        R = dag(U) * R * togpu(get(ψR, j)) * togpu(AR[j])
+        L = dag(V) * L * togpu(get(ψL, j)) * togpu(ALp[j])
+
+        Svec = collect(S.tensor.storage.data) ./ sum(S)
+        S_all[j, 1:length(Svec)] .= Svec
+    end
+
+    ψR_out[1] = tocpu(R)
+    ψL_out[1] = tocpu(L)
 
     return ψL_out, ψR_out, S_all, ov_before
 end
