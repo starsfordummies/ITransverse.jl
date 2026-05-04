@@ -21,7 +21,7 @@ function compute_ents_segments(psi::MPS, cut_range)
         end
 
         F = ITransverse.symm_oeig(rhoc, (linkind(psig,iA-1), linkind(psig,iB)); cutoff=1e-13)
-        renyis_diag = renyi_entropies(F.D.tensor.storage.data, which_ents=[0.5,1,2,4])
+        renyis_diag = renyi_entropies(F.D.tensor.storage.data)
 
         push!(renyis, renyis_diag)
     end
@@ -53,7 +53,7 @@ for kk = iA:iB
 end
 
 F = ITransverse.symm_oeig(rhoc, (linkind(psig,iA-1), linkind(psig,iB)); cutoff=1e-13)
-S2_diag = renyi_entropies(F.D.tensor.storage.data, which_ents=[2])["S2"][1]
+S2_diag = renyi_entropies(F.D.tensor.storage.data).S2[1]
 
 @test S2_manual ≈ S2_diag
 

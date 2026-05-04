@@ -127,12 +127,12 @@ function renyi_entropy(psi::MPS, α::Number=2)
 end
 
 
-function renyi_entropies(in_psi::MPS; which_ents = [0.5, 1, 2])
-    renyi_entropies(diagonalize_rdm(in_psi); which_ents)
+function renyi_entropies(in_psi::MPS)
+    renyi_entropies(diagonalize_rdm(in_psi))
 end
 
 
-function renyi_entropies(in_w::MPO; which_ents = [0.5, 1, 2])
+function renyi_entropies(in_w::MPO)
     w_vectorized, _ = vectorize_mpo(in_w)
-    renyi_entropies(diagonalize_rdm(w_vectorized); which_ents)
+    renyi_entropies(diagonalize_rdm(w_vectorized))
 end

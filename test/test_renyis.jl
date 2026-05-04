@@ -6,11 +6,11 @@ using Test
 ss = siteinds("S=1/2", 20)
 psi = random_mps(ComplexF64, ss, linkdims=40)
 
-rs = renyi_entropies(psi, which_ents = [0.4, 1, 2, 4])
+rs = renyi_entropies(psi)
 
-@test all(rs["S0.4"] .>= rs["S1.0"] )
-@test all(rs["S1.0"] .>= rs["S2.0"] )
-@test all(rs["S2.0"] .>= rs["S4.0"] )
+@test all(rs.S05 .>= rs.S1)
+@test all(rs.S1  .>= rs.S2)
+@test all(rs.S2  .>= rs.S4)
 
 end
 

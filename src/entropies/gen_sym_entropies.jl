@@ -30,17 +30,17 @@ function generalized_svd_vn_entropy(psi::MPS, phi::MPS)
 end
 
 
-""" Given an input MPS `psi`, computes the symmetric generalized entropies by diagonalizing RTM
-and builds alpha-order Renyi entropies as specified by `which_ents`. Returns a dict """
-function gensym_renyi_entropies(psiL::MPS; which_ents=[0.5,1,2], bring_gen_can::Bool=true, normalize_eigs::Bool=true)
+""" Given an input MPS `psi`, computes the symmetric generalized entropies by diagonalizing RTM.
+Returns a NamedTuple (; S0, S05, S1, S2, S4). """
+function gensym_renyi_entropies(psiL::MPS; bring_gen_can::Bool=true, normalize_eigs::Bool=true)
     eigs_rtm = diagonalize_rtm_symmetric(psiL; bring_gen_can, normalize_eigs, sort_by_largest=false)
-    return renyi_entropies(eigs_rtm; which_ents, normalize_eigs=false)
+    return renyi_entropies(eigs_rtm; normalize_eigs=false)
 end
 
 
 
 """ Computes generalized entropies for a segment by diagonalizing the RTM - expensive!  (chi^4) """
-function gensym_renyi_entropies_segment(psi::MPS, iA::Int, fA::Int; which_ents=[0.5,1,2], normalize_eigs::Bool=true)
+function gensym_renyi_entropies_segment(psi::MPS, iA::Int, fA::Int; normalize_eigs::Bool=true)
 
     psig = ITransverse.gen_canonical(psi, iA+1)
 
@@ -55,13 +55,13 @@ function gensym_renyi_entropies_segment(psi::MPS, iA::Int, fA::Int; which_ents=[
     eigvals_tau = normalize_eigs ? F.D/sum(F.D) : F.D
 
 
-    renyi_entropies(eigvals_tau.tensor.storage.data; which_ents)
+    renyi_entropies(eigvals_tau.tensor.storage.data)
 end
 
 
-""" Computes the generalized SVD entropies: Given input MPS |phi> and <psi|, < diagonalizes the RTM |phi><psi| 
-and builds alpha-order Renyi entropies as specified by `which_ents` (alpha=1 ie. VN is always computed). Returns a dict """
-function gensvd_renyi_entropies(psi::MPS, phi::MPS; which_ents=[0.5,1,2], normalize_eigs::Bool=true)
+""" Computes the generalized SVD entropies: Given input MPS |phi> and <psi|, diagonalizes the RTM |phi><psi|.
+Returns a NamedTuple (; S0, S05, S1, S2, S4). """
+function gensvd_renyi_entropies(psi::MPS, phi::MPS; normalize_eigs::Bool=true)
  
     mpslen = length(psi)
     phi = sim(linkinds,phi)
@@ -107,7 +107,7 @@ function gensvd_renyi_entropies(psi::MPS, phi::MPS; which_ents=[0.5,1,2], normal
 
     end
 
-    return renyi_entropies(svds_rdm; which_ents, normalize_eigs=false)
+    return renyi_entropies(svds_rdm; normalize_eigs=false)
 
 end
 

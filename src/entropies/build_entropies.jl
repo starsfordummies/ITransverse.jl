@@ -1,6 +1,8 @@
 """ Given a vector of eigenvalues, computes the renyi `alpha` entropy from it (in a supposedly efficient way) """
 function salpha(eigs::AbstractVector{<:Number}, alpha::Number)
-    if alpha ≈ 1
+    if alpha ≈ 0
+        return log(length(eigs))
+    elseif alpha ≈ 1
         return -mapreduce(λ -> λ * log(λ), +, eigs)
     else
         return log(mapreduce(λ -> λ^alpha, +, eigs)) / (1 - alpha)
@@ -8,14 +10,39 @@ function salpha(eigs::AbstractVector{<:Number}, alpha::Number)
 end
 
 #
-""" Given an input spectrum, normalizes it (unless normalize_eigs=false) 
-and builds the corresponding entropy according to the alphas in `which_ents` """
-function renyi_entropies(spectrum::AbstractVector{<:Number}; which_ents, normalize_eigs::Bool=true)
-    renyi_entropies([spectrum]; which_ents, normalize_eigs)
+""" Given an input spectrum, normalizes it (unless normalize_eigs=false)
+and builds the corresponding entropies (S0, S05, S1, S2, S4). """
+function renyi_entropies(spectrum::AbstractVector{<:Number}; normalize_eigs::Bool=true)
+    renyi_entropies([spectrum]; normalize_eigs)
+end
+
+function renyi_entropies(spectra::AbstractVector{<:AbstractVector};
+        normalize_eigs::Bool = true)
+
+    el_type = promote_type(Float64, map(eltype, spectra)...) 
+
+    n  = length(spectra)
+    S0 = Vector{el_type}(undef, n)
+    S05 = Vector{el_type}(undef, n)
+    S1 = Vector{el_type}(undef, n)
+    S2 = Vector{el_type}(undef, n)
+    S4 = Vector{el_type}(undef, n)
+
+    for (i, eigs) in enumerate(spectra)
+        eigs_cpu = Vector{el_type}(Array(eigs))
+        eigs_n   = normalize_eigs ? eigs_cpu ./ sum(eigs_cpu) : eigs_cpu
+        S0[i] = salpha(eigs_n, 0)
+        S05[i] = salpha(eigs_n, 0.5)
+        S1[i] = salpha(eigs_n, 1.0)
+        S2[i] = salpha(eigs_n, 2.0)
+        S4[i] = salpha(eigs_n, 4.0)
+
+    end
+    return (; S0, S05, S1, S2, S4)
 end
 
 
-function renyi_entropies(spectra::AbstractVector{<:AbstractVector};
+function renyi_entropies_old(spectra::AbstractVector{<:AbstractVector};
                          which_ents = [0.5, 1, 2],
                          normalize_eigs::Bool = true)
 
