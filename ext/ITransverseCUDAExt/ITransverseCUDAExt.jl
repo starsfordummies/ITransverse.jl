@@ -3,7 +3,7 @@ module ITransverseCUDAExt
 using CUDA
 using NDTensors
 using ITensors
-using ITensors: Algorithm
+using ITensors: Algorithm, @Algorithm_str
 using ITensorMPS
 using Adapt
 using ITransverse 
