@@ -102,7 +102,7 @@ and  |R> = (in_mpo_R)^N|ψ0>
 """
 function powermethod_lr(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::PMParams)
 
-    (; opt_method, itermax, cutoffs, maxdims, truncp, normalization, compute_fidelity) = pm_params
+    (;itermax, cutoffs, maxdims, truncp, normalization, compute_fidelity) = pm_params
 
     stepper, info_iterations = init_pm(pm_params)
 
@@ -111,7 +111,7 @@ function powermethod_lr(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::PM
     llprev = copy(ll)
 
     sv_prev = zeros(Float64, 2,2)
-    pm_info_string = "[PM LR|$(pm_params.truncp.alg)|$(opt_method)] L=$(length(in_mps)), cutoff=$(last(cutoffs)), maxdim=$(last(maxdims)), normalize=$(normalization))"
+    pm_info_string = "[PM LR|$(truncp.alg)] L=$(length(in_mps)), cutoff=$(last(cutoffs)), maxdim=$(last(maxdims)), normalize=$(normalization))"
 
     p = Progress(itermax; desc=pm_info_string, showspeed=true) 
     

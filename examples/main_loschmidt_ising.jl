@@ -56,7 +56,7 @@ function main_losch(Ntmin = 10, Ntmax  = 80; Ntstep = 2)
         cutoffs       = [1e-12],
         maxdims       = 2:2:256,
         itermax       = 2000,
-        eps_converged = 1e-9,
+        eps_converged = 1e-7,
         normalization = "overlap",
         stuck_after   = 200,
     )
@@ -75,4 +75,4 @@ function main_losch(Ntmin = 10, Ntmax  = 80; Ntstep = 2)
 end
 
 
-times, psis, results = main_losch(10,300; Ntstep=2)
+times, psis, results = main_losch(10,240; Ntstep=4)

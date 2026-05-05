@@ -109,14 +109,14 @@ end
     eigs_r = diagonalize_rtm_symmetric(psi; direction=:right)
     eigs_l = diagonalize_rtm_symmetric(psi; direction=:left)
 
-    all_ents = renyi_entropies(eigs_r, which_ents=[2.0])
+    all_ents = renyi_entropies(eigs_r)
     
     psin = psi/sqrt(overlap_noconj(psi,psi))
     r2_cut = log.(rtm2_contracted(psin, psin))/(1-2.)
 
     @test psi[7] == psic[7]
 
-    @test all_ents["S2.0"] ≈ r2_cut[2:end-1]
+    @test all_ents.S2 ≈ r2_cut
     
 end
     
@@ -127,7 +127,7 @@ end
     psi = random_mps(ComplexF64, s, linkdims=40)
 
     r2_contract = gen_renyi2(psi, psi)
-    r2sym = gensym_renyi_entropies(psi)["S2.0"]
+    r2sym = gensym_renyi_entropies(psi).S2
 
-    @test isapprox(r2_contract[2:end-1], r2sym)
+    @test isapprox(r2_contract, r2sym)
 end

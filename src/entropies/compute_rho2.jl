@@ -26,12 +26,12 @@ function rtm2_contracted(psi::MPS, phi::MPS; normalize_factor::Number=1.0, match
         renvs[jj] = (renvs[jj+1] * psi[jj]) * phi[jj]
     end
 
-    # Now compute tr(rho^2) at each cut using cached envs
-    rho2s = Vector{eltype(renvs[1])}(undef, LL+1)
-    for jj in 1:LL+1
-        tr_rho2 = lenvs[jj] * prime(renvs[jj], linkinds(psi,jj-1))
+    # Compute tr(rho^2) at the LL-1 internal bipartition cuts (after sites 1..LL-1).
+    rho2s = Vector{eltype(renvs[1])}(undef, LL-1)
+    for jj in 2:LL
+        tr_rho2 = lenvs[jj] * prime(renvs[jj], linkinds(psi, jj-1))
         tr_rho2 *= swapprime(tr_rho2, 1 => 0)
-        rho2s[jj] = scalar(tr_rho2) * inv_norm2
+        rho2s[jj-1] = scalar(tr_rho2) * inv_norm2
     end
 
     return rho2s

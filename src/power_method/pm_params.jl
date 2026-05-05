@@ -12,6 +12,15 @@ Base.@kwdef mutable struct PMParams{TP,TChis,TCutoffs}
     quiet::Bool = false
 end
 
+function Base.show(io::IO, p::PMParams)
+    println(io, "PMParams:")
+    for f in fieldnames(PMParams)
+        println(io, "  $(rpad(f, 16)) = $(getfield(p, f))")
+    end
+end
+
+
+
 
 # Iteration step checker
 
