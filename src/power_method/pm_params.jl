@@ -3,7 +3,7 @@ Base.@kwdef mutable struct PMParams{TP,TChis,TCutoffs}
     opt_method::Symbol = :sym  # either R or LR
     itermin::Int = 20
     itermax::Int = 600
-    eps_converged::Float64 = 1e-8
+    eps_converged::Float64 = 1e-6
     maxdims::TChis = 2:2:truncp.maxdim
     cutoffs::TCutoffs = [truncp.cutoff]
     normalization::String = "norm"

@@ -26,11 +26,16 @@ An optional `callback(nt, psi_t)` is called after each step.
 function tebd(psi0::MPS, Ut::MPO, Nt::Int;
               normalize::Bool = true,
               callback = nothing,
+              cutoff=1e-10,
+              maxdim=256,
               kwargs...)
     psi_t = psi0
+    p     = Progress(Nt; dt=2, showspeed=true)
+
     for nt in 1:Nt
-        psi_t = apply(Ut, psi_t; normalize, kwargs...)
+        psi_t = apply(Ut, psi_t; normalize, cutoff, maxdim, kwargs...)
         isnothing(callback) || callback(nt, psi_t)
+        next!(p; showvalues=[(:Info, "chi=$(maxlinkdim(psi_t))")])
     end
     return psi_t
 end
@@ -96,12 +101,10 @@ Returns a vector of ⟨Z⟩ values.
 """
 function tebd_z(init, tp::tMPOParams, Nt::Int; kwargs...)
     evs_z = ComplexF64[]
-    p     = Progress(Nt; dt=2, showspeed=true)
 
     function cb(nt, psi)
         zeta = expect(psi, "Z")[halfsite(psi)]
         push!(evs_z, zeta)
-        next!(p; showvalues=[(:Info, "chi=$(maxlinkdim(psi)), <Z>=$(zeta)")])
     end
 
     tebd(init, tp, Nt; callback=cb, kwargs...)
@@ -110,12 +113,10 @@ end
 
 function tebd_z(psi0::MPS, Ut::MPO, Nt::Int; kwargs...)
     evs_z = ComplexF64[]
-    p     = Progress(Nt; dt=2, showspeed=true)
 
     function cb(nt, psi)
         zeta = expect(psi, "Z")[halfsite(psi)]
         push!(evs_z, zeta)
-        next!(p; showvalues=[(:Info, "chi=$(maxlinkdim(psi)), <Z>=$(zeta)")])
     end
 
     tebd(psi0, Ut, Nt; callback=cb, kwargs...)
