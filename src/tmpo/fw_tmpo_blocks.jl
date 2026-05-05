@@ -48,12 +48,14 @@ function FwtMPOBlocks(tp::tMPOParams; init_state=nothing)
 
 end
 
-function FwtMPOBlocks(eH::MPO; init_state=nothing)
+function FwtMPOBlocks(eH::MPO; init_state)
     tp = tMPOParams(nothing; bl=init_state)
     Wl, Wc, Wr, iL, iR, iP, iPs = make_fwtmpoblocks(eH)
     return FwtMPOBlocks(Wl, Wc, Wr, Wl, Wc, Wr, tp, iL, iR, iP, iPs)
-
 end
+
+FwtMPOBlocks(scheme::ExpHRecipe, mp::ModelParams; dt::Number=0.1, kwargs...) =
+    FwtMPOBlocks(tMPOParams(mp; dt, scheme); kwargs...)
 
 """ Allow changing elements of FwtMPOBlocks """
 function FwtMPOBlocks(b::FwtMPOBlocks; 
