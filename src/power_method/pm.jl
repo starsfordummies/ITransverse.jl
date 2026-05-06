@@ -28,7 +28,7 @@ function powermethod_op(in_mps::MPS; mpo_id::MPO, mpo_op::MPO, pm_params::PMPara
 
         ll, rr, SVs = if opt_method == :sym
 
-            rright, SVs = if truncp.alg == "densitymatrix" || truncp.alg == "naive"
+            rright, SVs = if truncp.alg == "densitymatrix" || truncp.alg == "naive" || truncp.alg == "cudensitymatrix"
                 tapply(mpo_id, rr; truncp...)
             else
                 _, rright, SVs = tlrapply(ll, mpo_op, mpo_id, rr; truncp...)

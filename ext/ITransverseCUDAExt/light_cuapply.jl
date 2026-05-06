@@ -115,13 +115,15 @@ function ITransverse.tcontract(::Algorithm{:cudensitymatrix},
         ITransverse.contract_dangling!(ψ_out)
     end
 
+    return ψ_out, S_all
+
 end
 
 # ─── cuRTM trcontract ───────────────────────────────────────────────────────────────────
 
 """ RTM truncation with GPU-accelerated inner sweep (mirrors :RTM but loads
 tensors to GPU on-the-fly, keeping environments on CPU). """
-function ITransverse.trcontract(::Algorithm"cuRTM",
+function ITransverse.trcontract(::Algorithm{:cuRTM},
         ψL::MPS,
         AR::MPO,
         ψR::MPS;
@@ -305,7 +307,7 @@ end
 # ─── cuRTM tlrcontract ────────────────────────────────────────────────────
 
 """ Two-MPO RTM truncation with GPU-accelerated inner sweep. """
-function ITransverse.tlrcontract(::Algorithm"cuRTM",
+function ITransverse.tlrcontract(::Algorithm{:cuRTM},
         ψL::MPS,
         AL::MPO,
         AR::MPO,
