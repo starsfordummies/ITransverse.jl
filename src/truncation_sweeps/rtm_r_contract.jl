@@ -107,7 +107,7 @@ function _trcontract_rtm_left(ψL::MPS, AR::MPO, ψR::MPS;
         R = dag(U) * R * get(ψR,j) * AR[j] 
         L = dag(V) * L * get(ψLpp,j)
 
-        Svec = collect(storage(S).data) ./ sum(S)
+        Svec = Array(storage(S).data) ./ sum(S)
         S_all[j, 1:length(Svec)] .= Svec
     end
 
@@ -187,7 +187,7 @@ function _trcontract_rtm_right(ψL::MPS, AR::MPO, ψR::MPS;
         R = dag(U) * R * get(ψR, j) * AR[j] 
         L = dag(V) * L * ψLp[j]
 
-        Svec = collect(S.tensor.storage.data) ./ sum(S)
+        Svec = Array(storage(S).data) ./ sum(S)
         S_all[j-1, 1:length(Svec)] .= Svec
     end
 

@@ -211,7 +211,7 @@ function tcontract(::Algorithm"densitymatrix",
         L = L * dag(Ut) * ψ[j+1] * A[j+1]
         simL_c = simL_c * U* ψ_c[j+1] * simA_c[j+1]
 
-        Dvec = collect(D.tensor.storage.data)/sum(D)  
+        Dvec = Array(storage(D).data)/sum(D)
  
         S_all[j, 1:length(Dvec)] .= Dvec  
         #@show sum(Dvec)

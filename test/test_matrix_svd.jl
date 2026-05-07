@@ -1,6 +1,5 @@
 using ITensors
 using ITransverse
-using ITransverse: matrix_svd
 using Test
 
 a = random_itensor(Index(10), Index(10))

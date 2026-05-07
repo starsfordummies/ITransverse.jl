@@ -1,7 +1,8 @@
 """ Truncate sweeps based on RTM """
 
-""" Our original algorithm: first bring to canonical form, then perform gauge transformations and truncations. 
-Could call it "naiveRTM" ?
+""" Our original algorithm: first bring to canonical form, 
+then perform gauge transformations and truncations. 
+Could call it "naiveRTM" 
 """
 function truncate_sweep(psi::MPS, phi::MPS;
         cutoff::Real  = 1e-13,
