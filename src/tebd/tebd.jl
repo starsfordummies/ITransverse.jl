@@ -17,24 +17,46 @@ _psi0_from_tp(ss, tp::tMPOParams) = pMPS(ss, storage(tp.bl))
 # ── core time evolution ──────────────────────────────────────────────────────
 
 """
-    tebd(psi0::MPS, Ut::MPO, Nt::Int; normalize=true, callback=nothing, kwargs...)
+    tebd(psi0::MPS, Ut::MPO, Nt::Int; normalize=true, (observer!)=nothing, dt=nothing, kwargs...)
 
 Evolve `psi0` for `Nt` steps by applying `Ut` at each step.
 Truncation parameters (`cutoff`, `maxdim`, …) are forwarded to `apply`.
-An optional `callback(nt, psi_t)` is called after each step.
+
+After each step, if an `observer!` (an Observers.jl `DataFrame`) is provided,
+`update!` is called with keyword arguments:
+- `state`  — the current MPS
+- `step`   — the step index `nt ∈ 1:Nt`
+- `time`   — `dt * nt` (only when `dt` is provided, i.e. when called via a `tMPOParams` overload)
+
+Observer functions need only declare the kwargs they use; unsupported ones are silently dropped.
+
+# Example
+```julia
+obs = observer(
+    "Z"   => (; state) -> expect(state, "Z")[halfsite(state)],
+    "chi" => (; state) -> maxlinkdim(state),
+)
+psi_t = tebd(psi0, Ut, 50; (observer!)=obs)
+obs[!, "Z"]   # Vector of ⟨Z⟩ values at each step
+```
 """
 function tebd(psi0::MPS, Ut::MPO, Nt::Int;
               normalize::Bool = true,
-              callback = nothing,
-              cutoff=1e-10,
-              maxdim=256,
+              (observer!) = nothing,
+              dt = nothing,
+              cutoff = 1e-10,
+              maxdim = 256,
               kwargs...)
     psi_t = psi0
     p     = Progress(Nt; dt=2, showspeed=true)
 
     for nt in 1:Nt
         psi_t = apply(Ut, psi_t; normalize, cutoff, maxdim, kwargs...)
-        isnothing(callback) || callback(nt, psi_t)
+        if !isnothing(observer!)
+            obs_kw = isnothing(dt) ? (; state=psi_t, step=nt) :
+                                     (; state=psi_t, step=nt, time=dt*nt)
+            update!(observer!; obs_kw...)
+        end
         next!(p; showvalues=[(:Info, "chi=$(maxlinkdim(psi_t))")])
     end
     return psi_t
@@ -42,18 +64,22 @@ end
 
 function tebd(psi0::MPS, tp::tMPOParams, Nt::Int; kwargs...)
     Ut = build_Ut(siteinds(psi0), tp)
-    Ut = adapt(mapreduce(NDTensors.unwrap_array_type, promote_type, psi0), Ut)
-    tebd(psi0, Ut, Nt; kwargs...)
+    arrtype = Base.typename(NDTensors.unwrap_array_type(psi0[1])).wrapper
+    Ut = adapt(arrtype, Ut)
+    tebd(psi0, Ut, Nt; dt=tp.dt, kwargs...)
 end
 
 """
     tebd(N::Int, tp::tMPOParams, Nt::Int; kwargs...)
 
 Build a product initial state of length `N` from `tp`, then evolve for `Nt` steps.
+If `tp` has been adapted to a GPU backend the initial state is moved to the same device.
 """
 function tebd(LL::Int, tp::tMPOParams, Nt::Int; kwargs...)
-    ss   = _siteinds_from_tp(LL, tp)
-    psi0 = _psi0_from_tp(ss, tp)
+    ss      = _siteinds_from_tp(LL, tp)
+    psi0    = _psi0_from_tp(ss, tp)
+    arrtype = Base.typename(NDTensors.unwrap_array_type(tp.bl)).wrapper
+    psi0    = adapt(arrtype, psi0)
     tebd(psi0, tp, Nt; kwargs...)
 end
 
@@ -64,7 +90,6 @@ end
 
 Evolve for `Nt` steps and collect half-chain expectation values of `ops` after each step.
 `init` is either a chain length `N::Int` or an initial state `psi0::MPS`.
-Truncation and other parameters are passed as keyword arguments.
 Returns `(evs::Dict, psi_t::MPS)` where `evs["chis"]` holds the bond dimension history.
 """
 function tebd_ev(init, tp::tMPOParams, Nt::Int, ops::Vector{<:String}; kwargs...)
@@ -75,20 +100,14 @@ function tebd_ev(init, tp::tMPOParams, Nt::Int, ops::Vector{<:String}; kwargs...
         _psi0_from_tp(ss, tp)
     end
 
-    evs  = dictfromlist(ops)
-    chis = Int[]
-    dt   = tp.dt
+    obs_pairs = Pair{String,Any}[op => (; state) -> expect(state, op)[halfsite(state)] for op in ops]
+    push!(obs_pairs, "chi" => (; state) -> maxlinkdim(state))
+    obs = observer(obs_pairs...)
 
-    function cb(nt, psi)
-        for op in keys(evs)
-            push!(evs[op], expect(psi, op)[halfsite(psi)])
-        end
-        push!(chis, maxlinkdim(psi))
-        @info "T=$(dt*nt), chi=$(maxlinkdim(psi))"
-    end
+    psi_t = tebd(psi0, tp, Nt; (observer!)=obs, kwargs...)
 
-    psi_t = tebd(psi0, tp, Nt; callback=cb, kwargs...)
-    evs["chis"] = chis
+    evs = Dict(op => obs[!, op] for op in ops)
+    evs["chis"] = Vector{Int}(obs[!, "chi"])
     return evs, psi_t
 end
 
@@ -97,28 +116,16 @@ end
 
 Evolve for `Nt` steps and collect the half-chain ⟨Z⟩ after each step.
 `init` is either a chain length `N::Int` or an initial state `psi0::MPS`.
-Returns a vector of ⟨Z⟩ values.
+Returns a `Vector{ComplexF64}` of ⟨Z⟩ values.
 """
 function tebd_z(init, tp::tMPOParams, Nt::Int; kwargs...)
-    evs_z = ComplexF64[]
-
-    function cb(nt, psi)
-        zeta = expect(psi, "Z")[halfsite(psi)]
-        push!(evs_z, zeta)
-    end
-
-    tebd(init, tp, Nt; callback=cb, kwargs...)
-    return evs_z
+    obs = observer("Z" => (; state) -> expect(state, "Z")[halfsite(state)])
+    tebd(init, tp, Nt; (observer!)=obs, kwargs...)
+    return ComplexF64.(obs[!, "Z"])
 end
 
 function tebd_z(psi0::MPS, Ut::MPO, Nt::Int; kwargs...)
-    evs_z = ComplexF64[]
-
-    function cb(nt, psi)
-        zeta = expect(psi, "Z")[halfsite(psi)]
-        push!(evs_z, zeta)
-    end
-
-    tebd(psi0, Ut, Nt; callback=cb, kwargs...)
-    return evs_z
+    obs = observer("Z" => (; state) -> expect(state, "Z")[halfsite(state)])
+    tebd(psi0, Ut, Nt; (observer!)=obs, kwargs...)
+    return ComplexF64.(obs[!, "Z"])
 end

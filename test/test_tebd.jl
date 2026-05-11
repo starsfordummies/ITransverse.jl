@@ -1,6 +1,5 @@
 using ITensors, ITensorMPS
 using ITransverse
-using ITransverse: tebd, tebd_z
 using ITransverse.BenchData
 using Test
 
@@ -28,7 +27,25 @@ Ut_up   = ITransverse.build_Ut(ss, tp_up)
     @test psi_t isa MPS
     @test length(psi_t) == N_TEBD
     @test norm(psi_t) ≈ 1.0 atol=1e-8
+end
 
+# ── direct observer! API ─────────────────────────────────────────────────────
+@testset "direct observer! API" begin
+    obs = observer(
+        "Z"    => (; state) -> expect(state, "Z")[halfsite(state)],
+        "chi"  => (; state) -> maxlinkdim(state),
+        "time" => (; time)  -> time,
+    )
+    psi_t = tebd(psi0_up, tp_up, Nt_TEBD; normalize=true, cutoff=1e-12, maxdim=64,
+                 (observer!)=obs)
+
+    @test length(obs[!, "Z"])   == Nt_TEBD
+    @test length(obs[!, "chi"]) == Nt_TEBD
+    # time column should be dt*step
+    @test obs[!, "time"] ≈ DT_TEBD .* (1:Nt_TEBD) atol=1e-12
+    # Z track must match tebd_z
+    evs_z = tebd_z(psi0_up, tp_up, Nt_TEBD; normalize=true, cutoff=1e-12, maxdim=64)
+    @test ComplexF64.(obs[!, "Z"]) ≈ evs_z atol=1e-6
 end
 
 # ── tebd(psi0, tp, Nt) and tebd(LL, tp, Nt) ──────────────────────────────────

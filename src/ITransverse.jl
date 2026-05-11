@@ -6,6 +6,7 @@ using NDTensors
 using ITensors
 using ITensorMPS
 using ProgressMeter
+using Observers: observer, update!
 using ITensors.Adapt
 using Statistics: mean, std
 
@@ -201,7 +202,8 @@ export ConeParams, folded_tMPO_ext, init_cone, run_cone, resume_cone
 
 include("tebd/tebd.jl")
 
-export tebd_ev
+export tebd, tebd_z, tebd_ev
+export observer, update!
 
 # legacy functions 
 include("legacy/old_legacy.jl")
