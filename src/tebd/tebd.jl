@@ -53,9 +53,8 @@ function tebd(psi0::MPS, Ut::MPO, Nt::Int;
     for nt in 1:Nt
         psi_t = apply(Ut, psi_t; normalize, cutoff, maxdim, kwargs...)
         if !isnothing(observer!)
-            obs_kw = isnothing(dt) ? (; state=psi_t, step=nt) :
-                                     (; state=psi_t, step=nt, time=dt*nt)
-            update!(observer!; obs_kw...)
+            t = isnothing(dt) ? nothing : dt * nt
+            update!(observer!; state=psi_t, step=nt, time=t)
         end
         next!(p; showvalues=[(:Info, "chi=$(maxlinkdim(psi_t))")])
     end
