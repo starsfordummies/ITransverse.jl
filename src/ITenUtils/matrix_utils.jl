@@ -1,13 +1,17 @@
-""" Checks if a matrix is diagonal within a given cutoff
+""" Checks if a matrix is diagonal within a given cutoff.
+Computes the off-diagonal Frobenius norm in a single allocation-free pass.
 """
 function isapproxdiag(d::AbstractMatrix; tol::Float64=1e-8, verbose::Bool=false)
-    
-    off_diag_norm = norm(d - Diagonal(d))
-    matrix_norm = norm(d)
-    
-    # Absolute + relative tolerance
-    threshold = tol * max(matrix_norm, 1.0)
-    
+    T = real(eltype(d))
+    off_sq  = zero(T)
+    diag_sq = zero(T)
+    for j in axes(d, 2), i in axes(d, 1)
+        v = abs2(d[i, j])
+        i == j ? (diag_sq += v) : (off_sq += v)
+    end
+    off_diag_norm = sqrt(off_sq)
+    matrix_norm   = sqrt(diag_sq + off_sq)
+    threshold = tol * max(matrix_norm, one(T))
     if off_diag_norm <= threshold
         return true
     else
@@ -16,45 +20,39 @@ function isapproxdiag(d::AbstractMatrix; tol::Float64=1e-8, verbose::Bool=false)
     end
 end
 
+isapproxid(m::AbstractMatrix; tol=1e-6) =  check_id_matrix(m; tol)
 
-# function check_id_matrix(m::Matrix, cutoff::Float64=1e-8)
 
-#     is_id_matrix = true 
-
-#     if size(m,1) == size(m,2)
-#         delta_diag = norm(m - I(size(m,1)))/norm(m)
-#         if delta_diag > cutoff
-#             @warn("Not identity: off by(norm) $delta_diag")
-#             if norm(m./m[1,1] - I(size(m,1)))/norm(m) < cutoff
-#                 @info("But proportional to identity, factor $(m[1,1])")
-#             end
-#             is_id_matrix = false
-#         end
-#     else
-#         @error ("Not even square? $(size(m))")
-#         is_id_matrix = false
-#     end
-
-#     return is_id_matrix
-# end
-
-""" Check if a matrix is identity within a given tol """
-function check_id_matrix(m::Matrix; tol=1e-6)
-    isid = false
-    if size(m,1) == size(m,2)
-        if norm(m - I) < tol * max(norm(m), 1)
-            isid = true
-        else
-            @warn "Not identity: max deviation $(maximum(abs.(m - I)))"
-            
-            # Check proportional
-            factor = tr(m) / size(m, 1)  # Average of diagonal
-            if abs(factor) > eps() && isapprox(m, factor * I; atol=tol)
-                @info "Proportional to identity, factor ≈ $factor"
-            end
-        end
+""" Check if a matrix is (proportional to) the identity within a given tol.
+Accepts any AbstractMatrix (including GPU arrays and views).
+"""
+function check_id_matrix(m::AbstractMatrix; tol=1e-6)
+    if size(m, 1) != size(m, 2)
+        @warn "check_id_matrix: non-square matrix $(size(m))"
+        return false
     end
-    return isid
+    n = size(m, 1)
+    T = real(eltype(m))
+    # Compute max-norm deviation from I and Frobenius norm of m in one pass
+    max_dev  = zero(T)
+    frob_sq  = zero(T)
+    for j in 1:n, i in 1:n
+        v = m[i, j]
+        frob_sq += abs2(v)
+        expected = i == j ? one(eltype(m)) : zero(eltype(m))
+        max_dev  = max(max_dev, abs(v - expected))
+    end
+    threshold = tol * max(sqrt(frob_sq), one(T))
+    if max_dev <= threshold
+        return true
+    else
+        @warn "Not identity: max element-wise deviation $max_dev (threshold $threshold)"
+        factor = tr(m) / n
+        if abs(factor) > eps(T) && isapprox(m, factor * I; atol=threshold)
+            @info "Proportional to identity, factor ≈ $factor"
+        end
+        return false
+    end
 end
 
 

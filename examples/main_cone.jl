@@ -67,17 +67,20 @@ psi, psiR, checkpt = resume_cone(checkpt, 40)
 
 write_cp(checkpt, filename="temp_cp.jld2")
 
-        myf_obs = (
-            SVN = s -> vn_entanglement_entropy(s.R),
-            S_SVD = s -> generalized_svd_vn_entropy(s.L, s.R),
-            overlap = s -> overlap_noconj(s.L, s.R),
-            expvals = s -> compute_expvals(s.L, s.R, ["Z","X"], s.b)
-        )
 
-        myf_savestate = (
-            L = s -> s.L,
-            R = s -> s.R,
-            b = s -> s.b
-        )
+# Resume from CP (file)  
+
+myf_obs = (
+    SVN = s -> vn_entanglement_entropy(s.R),
+    S_SVD = s -> generalized_svd_vn_entropy(s.L, s.R),
+    overlap = s -> overlap_noconj(s.L, s.R),
+    expvals = s -> compute_expvals(s.L, s.R, ["Z","X"], s.b)
+)
+
+myf_savestate = (
+    L = s -> s.L,
+    R = s -> s.R,
+    b = s -> s.b
+)
 
 psi, psiR, checkpt = resume_cone("temp_cp.jld2", 50; f_obs=myf_obs, f_savestate=myf_savestate)
