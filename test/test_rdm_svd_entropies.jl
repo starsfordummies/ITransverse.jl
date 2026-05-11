@@ -16,11 +16,9 @@ psi = deepcopy(psic)
 
 eigen_rho = diagonalize_rdm(psi)
 
-ents = renyi_entropies(eigen_rho; which_ents=[1])
+ents = renyi_entropies(eigen_rho)
 
-ents["S1"]
-
-@test ents["S1"] ≈ s_vn
+@test ents.S1 ≈ s_vn
 
 
 @test psi[9] ≈ psic[9]

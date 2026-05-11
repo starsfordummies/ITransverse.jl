@@ -78,8 +78,7 @@ function overlap_noconj(ll::MPS, rr::MPS, reverse_qn_ll::Bool=false; fast::Bool=
             overlap = (overlap * rr[ii]) * ll[ii]
             #@assert ndims(overlap) <= 2 "check your inds?"
         end
-        
-        return scalar(overlap) #:: ComplexF64
+        return scalar(overlap)
     end
 end
 

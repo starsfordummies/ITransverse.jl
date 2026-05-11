@@ -90,20 +90,16 @@ end
 
 allpsis = test_symmpm(40, 40, 2)
 
-allents = Dict()
+allents = Dict(k => renyi_entropies(v[1]) for (k, v) in allpsis)
 
-for (k,v) in allpsis
-    allents[k] = renyi_entropies(v[1]; which_ents=[0.5,1,2])
-end
+@show norm(allents[:eig].S1)
 
-@show norm(allents[:eig]["S1.0"])
+@test norm(allents[:eig].S1 - allents[:svd].S1) / norm(allents[:eig].S1) < 0.001
+@test norm(allents[:eig].S1 - allents[:rdm].S1) / norm(allents[:eig].S1) < 0.001
 
-@test norm(allents[:eig]["S1.0"] - allents[:svd]["S1.0"] )/norm(allents[:eig]["S1.0"]) < 0.001
-@test norm(allents[:eig]["S1.0"] - allents[:rdm]["S1.0"] )/norm(allents[:eig]["S1.0"]) < 0.001
+@show norm(allents[:eig].S2)
 
-@show norm(allents[:eig]["S2.0"])
-
-@test norm(allents[:eig]["S2.0"] - allents[:svd]["S2.0"] )/norm(allents[:eig]["S2.0"]) < 0.001
-@test norm(allents[:eig]["S2.0"] - allents[:rdm]["S2.0"] )/norm(allents[:eig]["S2.0"]) < 0.001
-@test norm(allents[:naivertm]["S2.0"] - allents[:rdm]["S2.0"] )/norm(allents[:naivertm]["S2.0"]) < 0.001
-@test norm(allents[:naivertmeig]["S2.0"] - allents[:rdm]["S2.0"] )/norm(allents[:naivertmeig]["S2.0"]) < 0.001
+@test norm(allents[:eig].S2 - allents[:svd].S2) / norm(allents[:eig].S2) < 0.001
+@test norm(allents[:eig].S2 - allents[:rdm].S2) / norm(allents[:eig].S2) < 0.001
+@test norm(allents[:naivertm].S2 - allents[:rdm].S2) / norm(allents[:naivertm].S2) < 0.001
+@test norm(allents[:naivertmeig].S2 - allents[:rdm].S2) / norm(allents[:naivertmeig].S2) < 0.001
