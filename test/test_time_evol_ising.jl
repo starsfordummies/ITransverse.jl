@@ -89,8 +89,9 @@ ez = cp.obs_hist[:Z][end-10:end]
 tp = tMPOParams(dt, Murg(), mp, nbeta, init_state)
 Ut_4o = build_Ut(ss, tp, build_4o=true)
 
-z_tebd_4o = ITransverse.tebd_z(psi0, Ut_4o, Nsteps; cutoff=truncp.cutoff, maxdim=truncp.maxdim)
-
+obs_4o = observer("Z" => (; state) -> expect(state, "Z"; sites=halfsite(state)))
+tebd(psi0, Ut_4o, Nsteps; (observer!)=obs_4o, cutoff=truncp.cutoff, maxdim=truncp.maxdim)
+z_tebd_4o = ComplexF64.(obs_4o[!, "Z"])
 
 @show z_tebd_4o[end-10:end]
 @info norm(z_tebd_4o[end-20:end] - obs.Z[end-20:end])

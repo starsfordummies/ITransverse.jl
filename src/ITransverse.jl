@@ -202,7 +202,7 @@ export ConeParams, folded_tMPO_ext, init_cone, run_cone, resume_cone
 
 include("tebd/tebd.jl")
 
-export tebd, tebd_z, tebd_ev
+export tebd
 export observer, update!
 
 # legacy functions 

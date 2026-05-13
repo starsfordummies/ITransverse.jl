@@ -43,9 +43,6 @@ end
     @test length(obs[!, "chi"]) == Nt_TEBD
     # time column should be dt*step
     @test obs[!, "time"] ≈ DT_TEBD .* (1:Nt_TEBD) atol=1e-12
-    # Z track must match tebd_z
-    evs_z = tebd_z(psi0_up, tp_up, Nt_TEBD; normalize=true, cutoff=1e-12, maxdim=64)
-    @test ComplexF64.(obs[!, "Z"]) ≈ evs_z atol=1e-6
 end
 
 # ── tebd(psi0, tp, Nt) and tebd(LL, tp, Nt) ──────────────────────────────────
@@ -60,10 +57,14 @@ end
     @test norm(psi_c) ≈ 1.0 atol=1e-8
 end
 
-# ── tebd_z ────────────────────────────────────────────────────────────────────
-@testset "tebd_z" begin
-    evs_z_tp  = tebd_z(N_TEBD, tp_up, Nt_TEBD; normalize=true, cutoff=1e-12, maxdim=64)
-    evs_z_mpo = tebd_z(psi0_up, Ut_up, Nt_TEBD; normalize=true, cutoff=1e-12, maxdim=64)
+# ── ⟨Z⟩ via observer ────────────────────────────────────────────────────────
+@testset "collect Z via observer" begin
+    obs_tp  = observer("Z" => (; state) -> expect(state, "Z")[halfsite(state)])
+    obs_mpo = observer("Z" => (; state) -> expect(state, "Z")[halfsite(state)])
+    tebd(N_TEBD,  tp_up, Nt_TEBD; normalize=true, cutoff=1e-12, maxdim=64, (observer!)=obs_tp)
+    tebd(psi0_up, Ut_up, Nt_TEBD; normalize=true, cutoff=1e-12, maxdim=64, (observer!)=obs_mpo)
+    evs_z_tp  = ComplexF64.(obs_tp[!,  "Z"])
+    evs_z_mpo = ComplexF64.(obs_mpo[!, "Z"])
 
     @test length(evs_z_tp)  == Nt_TEBD
     @test eltype(evs_z_tp)  == ComplexF64
@@ -76,39 +77,53 @@ end
     @test real.(evs_z_tp) ≈ bench_Z_04_up[1:Nt_TEBD] atol=BENCH_TOL
 end
 
-# ── tebd_ev ───────────────────────────────────────────────────────────────────
-@testset "tebd_ev structure" begin
-    ops = ["Z", "X"]
-    evs, psi_t = tebd_ev(N_TEBD, tp_up, Nt_TEBD, ops; normalize=true, cutoff=1e-12, maxdim=64)
+# ── multi-operator observer ──────────────────────────────────────────────────
+@testset "multi-operator observer" begin
+    obs = observer(
+        "Z"   => (; state) -> expect(state, "Z")[halfsite(state)],
+        "X"   => (; state) -> expect(state, "X")[halfsite(state)],
+        "chi" => (; state) -> maxlinkdim(state),
+    )
+    psi_t = tebd(N_TEBD, tp_up, Nt_TEBD; normalize=true, cutoff=1e-12, maxdim=64,
+                 (observer!)=obs)
 
-    @test haskey(evs, "Z") && haskey(evs, "X") && haskey(evs, "chis")
-    @test length(evs["Z"]) == length(evs["X"]) == length(evs["chis"]) == Nt_TEBD
-    @test all(evs["chis"] .>= 1)
+    @test all(haskey(obs.data, k) for k in ["Z", "X", "chi"])
+    @test length(obs[!, "Z"]) == length(obs[!, "X"]) == length(obs[!, "chi"]) == Nt_TEBD
+    @test all(obs[!, "chi"] .>= 1)
     @test psi_t isa MPS && length(psi_t) == N_TEBD
     @test norm(psi_t) ≈ 1.0 atol=1e-8
 
-    # "Z" track must agree with tebd_z
-    evs_z = tebd_z(N_TEBD, tp_up, Nt_TEBD; normalize=true, cutoff=1e-12, maxdim=64)
-    @test evs["Z"] ≈ evs_z atol=1e-6
-
-    # MPS-init variant must give the same result
-    evs2, _ = tebd_ev(psi0_up, tp_up, Nt_TEBD, ops; normalize=true, cutoff=1e-12, maxdim=64)
-    @test evs["Z"] ≈ evs2["Z"] atol=1e-6
+    # MPS-init variant gives the same Z track
+    obs2 = observer(
+        "Z" => (; state) -> expect(state, "Z")[halfsite(state)],
+        "X" => (; state) -> expect(state, "X")[halfsite(state)],
+    )
+    tebd(psi0_up, tp_up, Nt_TEBD; normalize=true, cutoff=1e-12, maxdim=64,
+         (observer!)=obs2)
+    @test obs[!, "Z"] ≈ obs2[!, "Z"] atol=1e-6
 end
 
-@testset "tebd_ev vs BenchData (g=0.4, up_state)" begin
-    ops = ["Z", "X"]
-    evs, _ = tebd_ev(N_TEBD, tp_up, Nt_TEBD, ops; normalize=true, cutoff=1e-12, maxdim=128)
+@testset "observer vs BenchData (g=0.4, up_state)" begin
+    obs = observer(
+        "Z" => (; state) -> expect(state, "Z")[halfsite(state)],
+        "X" => (; state) -> expect(state, "X")[halfsite(state)],
+    )
+    tebd(N_TEBD, tp_up, Nt_TEBD; normalize=true, cutoff=1e-12, maxdim=128,
+         (observer!)=obs)
 
-    @test real.(evs["Z"]) ≈ bench_Z_04_up[1:Nt_TEBD] atol=BENCH_TOL
+    @test real.(obs[!, "Z"]) ≈ bench_Z_04_up[1:Nt_TEBD] atol=BENCH_TOL
     # bench_X_04_up is all zeros (symmetry: ⟨X⟩=0 for up state, h=0)
-    @test real.(evs["X"]) ≈ bench_X_04_up[1:Nt_TEBD] atol=BENCH_TOL
+    @test real.(obs[!, "X"]) ≈ bench_X_04_up[1:Nt_TEBD] atol=BENCH_TOL
 end
 
-@testset "tebd_ev vs BenchData (g=0.4, plus_state)" begin
-    ops = ["Z", "X"]
-    evs, _ = tebd_ev(N_TEBD, tp_plus, Nt_TEBD, ops; normalize=true, cutoff=1e-12, maxdim=128)
+@testset "observer vs BenchData (g=0.4, plus_state)" begin
+    obs = observer(
+        "Z" => (; state) -> expect(state, "Z")[halfsite(state)],
+        "X" => (; state) -> expect(state, "X")[halfsite(state)],
+    )
+    tebd(N_TEBD, tp_plus, Nt_TEBD; normalize=true, cutoff=1e-12, maxdim=128,
+         (observer!)=obs)
 
-    @test real.(evs["Z"]) ≈ bench_Z_04_plus[1:Nt_TEBD] atol=BENCH_TOL
-    @test real.(evs["X"]) ≈ bench_X_04_plus[1:Nt_TEBD] atol=BENCH_TOL
+    @test real.(obs[!, "Z"]) ≈ bench_Z_04_plus[1:Nt_TEBD] atol=BENCH_TOL
+    @test real.(obs[!, "X"]) ≈ bench_X_04_plus[1:Nt_TEBD] atol=BENCH_TOL
 end

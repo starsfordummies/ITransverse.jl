@@ -45,7 +45,9 @@ eps_converged=1e-6
 cutoff = 1e-12
 maxdim = 128
 
-ref = ITransverse.tebd_z(2*Nt, tp, Nt; cutoff=1e-12)[end]
+obs_ref = observer("Z" => (; state) -> expect(state, "Z")[halfsite(state)])
+tebd(2*Nt, tp, Nt; (observer!)=obs_ref, cutoff=1e-12)
+ref = ComplexF64.(obs_ref[!, "Z"])[end]
 allerrs = [] 
 allchis = []
 allpars = []
