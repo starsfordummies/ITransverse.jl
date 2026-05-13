@@ -7,7 +7,7 @@ makedocs(;
     authors  = "Stefano Carignano",
     format   = Documenter.HTML(;
         prettyurls = get(ENV, "CI", "false") == "true",
-        canonical  = "https://github.com/Stefano-Carignano/ITransverse.jl",
+        canonical  = "https://starsfordummies.github.io/ITransverse.jl",
     ),
     pages = [
         "Home"       => "index.md",
@@ -28,7 +28,7 @@ makedocs(;
 )
 
 deploydocs(;
-    repo   = "github.com/Stefano-Carignano/ITransverse.jl",
+    repo   = "github.com/starsfordummies/ITransverse.jl",
     branch = "gh-pages",
     push_preview = true,
 )
