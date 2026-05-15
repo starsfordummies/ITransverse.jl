@@ -6,10 +6,10 @@ using NDTensors
 using ITensors
 using ITensorMPS
 using ProgressMeter
-using KrylovKit
 using Observers: observer, update!
 using ITensors.Adapt
 using Statistics: mean, std
+using KrylovKit: eigsolve
 
 using ITensors: OneITensor
 

@@ -1,4 +1,5 @@
-using ITensors, KrylovKit, ITransverse 
+using ITensors
+using ITransverse 
 using Test 
 
 @testset "dominant eigenvectors" begin 
