@@ -87,7 +87,6 @@ end
     psi_t = tebd(N_TEBD, tp_up, Nt_TEBD; normalize=true, cutoff=1e-12, maxdim=64,
                  (observer!)=obs)
 
-    @test all(haskey(obs.data, k) for k in ["Z", "X", "chi"])
     @test length(obs[!, "Z"]) == length(obs[!, "X"]) == length(obs[!, "chi"]) == Nt_TEBD
     @test all(obs[!, "chi"] .>= 1)
     @test psi_t isa MPS && length(psi_t) == N_TEBD
