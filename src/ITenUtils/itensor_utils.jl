@@ -211,18 +211,42 @@ end
 ITensors.ndims(::ITensors.OneITensor) = 1
 
 
-""" finds the dominant right eigenvector of A (todo understand which direction?) """ 
+""" finds the dominant eigenvector of A (matrix as ITensor) in the direction given by the index `j` """ 
 function dominant_eigenvectors(A::ITensor, j::Index; howmany::Int=1, which=:LM, kwargs...)
     # A must have exactly 2 indices
     @assert length(inds(A)) == 2
     @assert hasind(A, j)
+
     i = uniqueind(A, j)
 
-    A = replaceind(A, i => j')
+    A = replaceinds(A, (i,j) => (i',i))
     
-    x0 = random_itensor(j) 
+    x0 = random_itensor(i) 
 
     vals, vecs, info = eigsolve(A, x0, howmany, which; kwargs...)
     
+    # @show j
+    # @show inds(A)
+    # @show inds(x0)
+    # @show inds(vecs[1])
+
     vals[1:howmany], vecs[1:howmany], info
+end
+
+
+""" ITensors gives right eigenvectors AR = RL so R natually has rind of A,
+here we return the decomposition 
+` (lind)-R-(eig)-Λ-(eig')-Rdag-(rind) ≈ A `
+for hermitian matrices encoded as ITensors """
+function eigdecomp_mat(a::ITensor, lind; ishermitian, kwargs...)
+    @assert ndims(a) == 2 
+    @assert dim(a,1) == dim(a,2)
+    @assert ishermitian == true "non-herm not implemented yet"
+    rind = uniqueind(a,lind)
+    vals, vecs = eigen(a, lind, rind, kwargs...)
+    lambda_ind = commonind(vals,vecs)
+    R = replaceind(vecs, rind => lind)
+    Rd = prime(dag(vecs), lambda_ind)
+
+    return R, vals, Rd 
 end
