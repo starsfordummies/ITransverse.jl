@@ -6,6 +6,7 @@ using NDTensors
 using ITensors
 using ITensorMPS
 using ProgressMeter
+using KrylovKit
 using Observers: observer, update!
 using ITensors.Adapt
 using Statistics: mean, std
@@ -46,7 +47,8 @@ export pMPS,
     fidelity, logfidelity, gen_fidelity,
     normalize_for_overlap!,
     allsiteinds,
-    tcontract
+    tcontract,
+    dominant_eigenvectors
 
 export randsymITensor,
     isid, isdiag,

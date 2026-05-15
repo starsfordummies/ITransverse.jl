@@ -210,5 +210,19 @@ end
 
 ITensors.ndims(::ITensors.OneITensor) = 1
 
-Base.get(psi::AbstractMPS, j::Integer, default=ITensor(1)) = 
-    1 <= j <= length(psi) ? psi[j] : default
+
+""" finds the dominant right eigenvector of A (todo understand which direction?) """ 
+function dominant_eigenvectors(A::ITensor, j::Index; howmany::Int=1, which=:LM, kwargs...)
+    # A must have exactly 2 indices
+    @assert length(inds(A)) == 2
+    @assert hasind(A, j)
+    i = uniqueind(A, j)
+
+    A = replaceind(A, i => j')
+    
+    x0 = random_itensor(j) 
+
+    vals, vecs, info = eigsolve(A, x0, howmany, which; kwargs...)
+    
+    vals[1:howmany], vecs[1:howmany], info
+end

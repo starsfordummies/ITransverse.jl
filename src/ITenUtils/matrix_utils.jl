@@ -20,6 +20,15 @@ function isapproxdiag(d::AbstractMatrix; tol::Float64=1e-8, verbose::Bool=false)
     end
 end
 
+function isapproxherm(d::AbstractMatrix; tol::Float64=1e-8, verbose::Bool=false)
+    ndif = norm(d - d')
+    isherm = ndif < tol
+    if !isherm
+        @warn ndif 
+    end
+    return isherm 
+end
+
 isapproxid(m::AbstractMatrix; tol=1e-6) =  check_id_matrix(m; tol)
 
 

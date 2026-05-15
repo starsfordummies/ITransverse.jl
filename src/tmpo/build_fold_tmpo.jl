@@ -170,44 +170,6 @@ function folded_tMPO_open_edges(b::FoldtMPOBlocks, ts::Vector{<:Index}; init_bet
 end
 
 
-#= old 
-""" Builds folded tMPO. Of the `ts` timesites, the first `b.tp.nbeta` ones are imaginary time ones.
- Accepted kwargs: fold_op(default=Identity op.), verbose(=false), init_beta_only(=true) """ 
-function folded_tMPO_o1(b::FoldtMPOBlocks, ts::Vector{<:Index}; fold_op=nothing, init_beta_only::Bool=true, verbose::Bool=false, rho0=b.rho0)
-
-
-    oo, bl_ind, tr_ind = folded_tMPO_open_edges(b,ts; init_beta_only, verbose)
-
-
-    fold_op = something(fold_op, vectorized_identity(Index(dim(tr_ind), "Site")))
-
-    if ndims(rho0) == 1
-        oo[1] = contract(oo[1], rho0, bl_ind, only(inds(rho0)))
-    else
-        @show inds(rho0)
-        pushfirst!(oo.data, replaceind(rho0, only(inds(rho0, "Site")) => bl_ind)) 
-    end
-
-    if ndims(fold_op) == 1
-
-        dttype = NDTensors.unwrap_array_type(oo[end])
-        fold_op = adapt(dttype, fold_op)
-        oo[end] = contract(oo[end], fold_op, tr_ind, only(inds(fold_op)))
-    else
-        push!(oo.data, replaceind(fold_op, only(inds(fold_op, "Site")) => tr_ind))
-    end
-
-
-    if verbose
-        @info "fold_op = $(vector(fold_op))"
-    end
-
-
-    return oo
-
-end
-=#
-
 """Convert input to ITensor mapped onto target index, or return identity if nothing."""
 function _to_itensor_or_identity(op, target_ind::Index)
     op === nothing && return vectorized_identity(Index(dim(target_ind), "Site"))

@@ -2,7 +2,6 @@ using ITensors
 using ITensorMPS
 
 using ITransverse
-using ITransverse: vX, vZ, vI
 
 function main_folded_pm()
 
