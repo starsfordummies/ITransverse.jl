@@ -6,7 +6,7 @@ using NDTensors
 using ITensors
 using ITensorMPS
 using ProgressMeter
-using Observers: observer, update!
+using Observers: observer
 using ITensors.Adapt
 using Statistics: mean, std
 using KrylovKit: eigsolve
@@ -205,7 +205,7 @@ export ConeParams, folded_tMPO_ext, init_cone, run_cone, resume_cone
 include("tebd/tebd.jl")
 
 export tebd
-export observer, update!
+export observer
 
 # legacy functions 
 include("legacy/old_legacy.jl")
