@@ -54,11 +54,34 @@ FoldITensor(a::ITensor; kwargs...) = FoldITensor(array(a); kwargs...)
  
 
 
-""" Join two MPS/MPOs fold-like. We assume the standard (p,p') structure for physical indices.
-- If dag_W2, we both **conjugate** the tensors second object and **flip** them.
-- If `fold_op` is **not** empty/nothing, we join the two sheets. For this, we **remove** the **last** site tensors of both MP*S 
-and **replace** them with the folding operator `fold_op`
-- If `fold_init_state` is not empty/nothing, we **remove** the **first** site tensors of both and replace them with the folded initial state
+"""
+    combine_and_fold(W1::AbstractMPS, W2::AbstractMPS; dag_W2=false, fold_op=nothing,
+                     fold_init_state=nothing, new_siteinds=nothing)
+
+Join two MPS/MPOs of equal length into a single folded MPS/MPO by combining their physical
+and link indices. Assumes the standard `(p, p')` structure for physical indices.
+
+# Arguments
+- `W1::AbstractMPS`: first (forward) sheet.
+- `W2::AbstractMPS`: second (backward) sheet.
+
+# Keyword Arguments
+- `dag_W2::Bool=false`: if `true`, conjugate all tensors in `W2` and transpose them (i.e.
+  swap `p` and `p'` roles) before combining. 
+- `fold_op=nothing`: if provided, the **last** site tensors of both sheets are removed and
+  replaced by this folding operator (a matrix or ITensor) connecting the two sheets at the
+  fold point. Contracted against the boundary link indices of `W1` and `W2`.
+- `fold_init_state=nothing`: if provided, the **first** site tensors of both sheets are
+  removed and replaced by this folded initial-state tensor (a vector or ITensor) connecting
+  the two sheets at the open boundary. Contracted against the first link indices of `W1` and `W2`.
+- `new_siteinds=nothing`: if provided, replace the physical indices of the resulting MPS/MPO
+  with `new_siteinds` via `replace_siteinds!`.
+
+# Returns
+- `W12`: the combined/folded MPS (if inputs are MPS) or MPO (if inputs are MPO).
+- `comb_p`: vector of combiners used to merge the unprimed (`p`) physical indices.
+- `comb_ps`: vector of combiners used to merge the primed (`p'`) physical indices (MPO only;
+  `nothing` for MPS inputs).
 """
 function combine_and_fold(W1::AbstractMPS, W2::AbstractMPS; dag_W2::Bool=false,
     fold_op=nothing, fold_init_state=nothing,  new_siteinds=nothing)
