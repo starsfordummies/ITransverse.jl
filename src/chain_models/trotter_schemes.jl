@@ -55,8 +55,3 @@ default_scheme(::IsingParams) = Murg()
 default_scheme(::PottsParams) = Murg()
 default_scheme(::XXZParams)   = SymSVD()
 default_scheme(::NoParams)    = Murg()
-
-default_bl(::IsingParams) = [1, 0]
-default_bl(::PottsParams) = [1, 0, 0]
-default_bl(::XXZParams)   = [1, 0]
-default_bl(::NoParams)    = [1, 0]
