@@ -32,8 +32,8 @@ function FwtMPOBlocks(tp::tMPOParams; init_state=nothing)
     Wl, Wc, Wr, iL, iR, iP, iPs = make_fwtmpoblocks(tp)
 
     if !isnothing(init_state)
-        @info "Setting tp.init_state to $(init_state)"
-        tp = tMPOParams(tp; bl=init_state)
+        @info "Setting tp.bl to $(init_state)"
+        tp = tMPOParams(tp.mp; dt=tp.dt, dbeta=tp.dbeta, scheme=tp.scheme, nbeta=tp.nbeta, init_state=init_state)
     end
 
     Wl_im, Wc_im, Wr_im, iL_im, iR_im, iP_im, iPs_im = make_fwtmpoblocks(tp; build_imag=true)
@@ -54,8 +54,8 @@ function FwtMPOBlocks(eH::MPO; init_state)
     return FwtMPOBlocks(Wl, Wc, Wr, Wl, Wc, Wr, tp, iL, iR, iP, iPs)
 end
 
-FwtMPOBlocks(scheme::ExpHRecipe, mp::ModelParams; dt::Number=0.1, kwargs...) =
-    FwtMPOBlocks(tMPOParams(mp; dt, scheme); kwargs...)
+FwtMPOBlocks(scheme::ExpHRecipe, mp::ModelParams; dt::Number=0.1, init_state, kwargs...) =
+    FwtMPOBlocks(tMPOParams(mp; dt, scheme, init_state); kwargs...)
 
 """ Allow changing elements of FwtMPOBlocks """
 function FwtMPOBlocks(b::FwtMPOBlocks; 
@@ -84,8 +84,6 @@ function make_fwtmpoblocks(eH::MPO; check_sym::Bool=true)
         @info "Checking symmetry MPO tensor on bond(space) => phys(time) indices"
         check_symmetry_swap(Wc, iLink1, iLink2)
     end
-
-
 
     time_P = sim(iLink1, tags="Site,time")
     time_vL = sim(icP, tags="Link,time")

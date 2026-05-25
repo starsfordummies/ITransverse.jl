@@ -20,7 +20,7 @@ mp = IsingParams(1, 0.7, 0)
 init_state = rand(ComplexF64, 2)
 @show init_state
 
-tp = tMPOParams(ising_tp(); nbeta, mp=mp, bl=init_state)
+tp = tMPOParams(mp; nbeta, init_state)
 
 maxdim=128
 
@@ -94,7 +94,7 @@ mp = IsingParams(1, 0.7, 0)
 init_state = rand(ComplexF64, 2)
 @show init_state
 
-tp = tMPOParams(ising_tp(); nbeta, mp=mp, bl=init_state)
+tp = tMPOParams(mp; nbeta, init_state)
 
 maxdim=128
 
@@ -133,7 +133,7 @@ Nsteps = nbeta + Ntime_steps + nbeta
 
 mp_xxz = XXZParams(1, 0.7, 0.0, Index(3,"S=1"))
 
-tp_xxz = tMPOParams(dt, SymSVD(), mp_xxz, nbeta, [1,0,0])
+tp_xxz = tMPOParams(mp_xxz; dt, scheme=SymSVD(), nbeta, init_state=[1,0,0])
 
 rotated_phys = 7
 

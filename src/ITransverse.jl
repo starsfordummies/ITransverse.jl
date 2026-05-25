@@ -6,7 +6,7 @@ using NDTensors
 using ITensors
 using ITensorMPS
 using ProgressMeter
-using Observers: observer
+using Observers
 using ITensors.Adapt
 using Statistics: mean, std
 using KrylovKit: eigsolve

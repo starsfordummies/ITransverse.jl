@@ -9,7 +9,7 @@ nbeta = 4
 
 mp = IsingParams(1, 1, 0)
 
-tp = tMPOParams(tp; nbeta, mp=mp)
+tp.nbeta = nbeta; tp.mp = mp
 
 Nsteps = nbeta + Ntime_steps
 

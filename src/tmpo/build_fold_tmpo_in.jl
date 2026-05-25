@@ -11,7 +11,7 @@ function folded_tMPO_in(b::FoldtMPOBlocks, ts::Vector{<:Index}; init_tensor::ITe
 
     # Just build an extended folded_tMPO and replace the first tensor with the initial state 
 
-    tp_ext = tMPOParams(b.tp; nbeta = b.tp.nbeta+1)
+    tp_ext = tMPOParams(b.tp.mp; dt=b.tp.dt, dbeta=b.tp.dbeta, scheme=b.tp.scheme, nbeta=b.tp.nbeta+1, init_state=b.tp.bl)
     ww = folded_tMPO(FoldtMPOBlocks(b; tp=tp_ext), ts; kwargs...)
 
     init_tensor = init_tensor * delta(init_physidx, linkind(ww,1))
@@ -37,7 +37,7 @@ function fw_tMPO_in(b::FwtMPOBlocks, ts::Vector{<:Index}; init_tensor::ITensor, 
 
     # Just build an extended folded_tMPO and replace the first tensor with the initial state 
 
-    tp_ext = tMPOParams(b.tp; nbeta = b.tp.nbeta+1)
+    tp_ext = tMPOParams(b.tp.mp; dt=b.tp.dt, dbeta=b.tp.dbeta, scheme=b.tp.scheme, nbeta=b.tp.nbeta+1, init_state=b.tp.bl)
     ww = folded_tMPO(FwtMPOBlocks(b; tp=tp_ext), ts; kwargs...)
 
     init_tensor = init_tensor * delta(init_physidx, linkind(ww,1))
@@ -60,7 +60,7 @@ The extra site should already be incorporated in the `ts` index list (and we che
  so effectively we're building a tMPO for Nt = length(ts)-1 timesteps  """
 function tMPO_in(b, ts::Vector{<:Index}; init_tensor::ITensor, init_physidx::Index, kwargs...) 
 
-    tp_ext = tMPOParams(b.tp; nbeta = b.tp.nbeta+1)
+    tp_ext = tMPOParams(b.tp.mp; dt=b.tp.dt, dbeta=b.tp.dbeta, scheme=b.tp.scheme, nbeta=b.tp.nbeta+1, init_state=b.tp.bl)
 
     ww, dttype = if b isa FwtMPOBlocks
         fw_tMPO(FwtMPOBlocks(b; tp=tp_ext), ts; kwargs...), NDTensors.unwrap_array_type(b.Wc)

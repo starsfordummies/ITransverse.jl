@@ -107,7 +107,7 @@ init_state = up_state
 
 mp = IsingParams(JXX, hz, gx)
 
-tp = tMPOParams(dt,  Murg(), mp, 0, init_state)
+tp = tMPOParams(mp; dt, scheme=Murg(), nbeta=0, init_state)
 
 diffs = []
 

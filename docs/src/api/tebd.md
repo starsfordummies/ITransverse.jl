@@ -15,7 +15,7 @@ obs = observer(
     "chi" => (; state) -> maxlinkdim(state),
 )
 
-tp = tMPOParams(IsingParams(1.0, 0.4, 0.0); dt=0.1)
+tp = tMPOParams(IsingParams(1.0, 0.4, 0.0); dt=0.1, init_state=[1,0])
 psi_t = tebd(20, tp, 50; maxdim=128, cutoff=1e-12, (observer!)=obs)
 
 obs[!, "Z"]    # Vector of ⟨Z⟩ values at each step

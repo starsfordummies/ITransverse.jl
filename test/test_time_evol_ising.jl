@@ -52,7 +52,7 @@ state = tdvp(
 
 
 # Bench: light cone 
-tp = tMPOParams(dt, SymSVD(), mp, nbeta, init_state)
+tp = tMPOParams(mp; dt, scheme=SymSVD(), nbeta, init_state)
 b = FoldtMPOBlocks(tp)
 
 c0 = init_cone(b, 10; full=false)
@@ -86,7 +86,7 @@ ez = cp.obs_hist[:Z][end-10:end]
 
 
 # Fourth-order ising 
-tp = tMPOParams(dt, Murg(), mp, nbeta, init_state)
+tp = tMPOParams(mp; dt, scheme=Murg(), nbeta, init_state)
 Ut_4o = build_Ut(ss, tp, build_4o=true)
 
 obs_4o = observer("Z" => (; state) -> expect(state, "Z"; sites=halfsite(state)))

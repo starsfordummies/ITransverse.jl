@@ -9,7 +9,7 @@ mp = IsingParams(1, 0.7, 0)
 nbeta = 4
 
 
-tp = tMPOParams(0.1, Murg(), mp, nbeta, [1,0])
+tp = tMPOParams(mp; dt=0.1, scheme=Murg(), nbeta, init_state=[1,0])
 
 maxdim=128
 Ntime_steps = 30

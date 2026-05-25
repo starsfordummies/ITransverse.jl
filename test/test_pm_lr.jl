@@ -6,12 +6,12 @@ psi0 = random_mps(ts)
 pm_params = PMParams()
 
 
-bsym = FwtMPOBlocks(SymSVD(), PottsParams(1, 0.9))
+bsym = FwtMPOBlocks(SymSVD(), PottsParams(1, 0.9); init_state=[1,0,0])
 fwmpo = fw_tMPO(bsym, ts)
 psi_pmsym, infos = powermethod_sym(psi0, fwmpo, pm_params)
 
 
-bns = FwtMPOBlocks(Murg(), PottsParams(1, 0.9))
+bns = FwtMPOBlocks(Murg(), PottsParams(1, 0.9); init_state=[1,0,0])
 fwmpo = fw_tMPO(bns, ts)
 
 psi_fakesym, infos = powermethod_sym(psi0, fwmpo, pm_params)

@@ -11,7 +11,7 @@ using ITransverse
 import ITransverse: togpu
 import ITransverse: tcontract, trcontract, tlrcontract
 
-NDTensors.cu(x::tMPOParams) = tMPOParams(x; bl = NDTensors.cu(x.bl))
+NDTensors.cu(x::tMPOParams) = adapt(CuArray, x)
 
 ITransverse.togpu(x) = adapt(CuArray, x)
 

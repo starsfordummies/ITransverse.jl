@@ -5,7 +5,7 @@ using Test
 @testset "Building MPO blocks in different ways" begin
   tp = ising_tp()
 
-  tp = tMPOParams(tp; dbeta=0.1im)
+  tp.dbeta = 0.1im
   eH = build_Ut(tp)
 
   b = FwtMPOBlocks(tp)
