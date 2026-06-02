@@ -29,7 +29,7 @@ function main_folded_pm()
     p0 = random_mps(space_sites)
     _, gs = dmrg(hisi, p0, nsweeps=3)
 
-    tp = tMPOParams(tp; nbeta=0)
+    tp.nbeta = 0
 
 
     b = FoldtMPOBlocks(tp)

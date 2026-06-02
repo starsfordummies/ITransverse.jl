@@ -18,7 +18,7 @@ mp = IsingParams(JXX, hz, gx)
 
 @info ("Initial state $(init_state)  => quench @ $(mp) ")
 
-tp = tMPOParams(dt, Murg(), mp, nbeta, init_state)
+tp = tMPOParams(mp; dt, scheme=Murg(), nbeta, init_state)
 
 
 b = FwtMPOBlocks(tp)

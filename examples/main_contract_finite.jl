@@ -9,7 +9,7 @@ using ITransverse: vI
 function contract_strings(N::Int, length_string::Int, ts::Int, nbeta::Int)
 
     mp = IsingParams(1, 2., 0.)
-    tp = tMPOParams(0.1, Murg(), mp, nbeta, [1,0])
+    tp = tMPOParams(mp; dt=0.1, scheme=Murg(), nbeta, init_state=[1,0])
 
     cutoff = 1e-12
     maxdim = 128

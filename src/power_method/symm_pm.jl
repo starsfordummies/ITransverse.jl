@@ -1,8 +1,13 @@
 """
 Power method for *symmetric* case: takes as input a single MPS psi and an MPO O,
     applies the mpo and optimizes the overlap <psiO*|Opsi> 
+
+Keyword arguments:
+- `normalize_psi0`: normalize the input state before the first iteration.
+- `observer!`: optional `Observers.jl` observer updated at each iteration with
+    `state`, `step`, `ds`, `chi`, `fidelity`, `singular_values`.
 """
-function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams; normalize_psi0::Bool=false)
+function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams; normalize_psi0::Bool=false, (observer!)=nothing)
 
     (; itermax, truncp, cutoffs, maxdims, normalization, compute_fidelity) = pm_params
 
@@ -53,6 +58,18 @@ function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams; normaliz
 
         stop, reason = pm_itercheck!(stepper, info_iterations, psi_work, sv_prev, sv)
         sv_prev = sv 
+
+        if !isnothing(observer!)
+            Observers.update!(
+                observer!;
+                state=psi_work,
+                step=jj,
+                ds=last(info_iterations[:ds]),
+                chi=maxlinkdim(psi_work),
+                fidelity=fidelity,
+                singular_values=sv,
+            )
+        end
 
         # should we stop?
         if stop

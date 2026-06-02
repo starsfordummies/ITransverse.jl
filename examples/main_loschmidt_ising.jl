@@ -13,7 +13,16 @@ function ising_loschmidt(b::FwtMPOBlocks, ts::Int, pm_params)
     mpo       = fw_tMPO(b, time_sites, tr=tp.bl)
     start_mps = fw_tMPS(b, time_sites; tr=tp.bl, LR=:right)
 
-    psi_trunc, ds2 = powermethod_sym(start_mps, mpo, pm_params)
+    pm_observer = observer(
+        "chi" => (; state) -> maxlinkdim(state),
+        "S2" => (; state) -> begin
+            s2 = gensym_renyi_entropies(state)
+        end,
+        "Z_mid" => (; state) -> real(expect(state, "Z")[halfsite(state)]),
+        "X_mid" => (; state) -> real(expect(state, "X")[halfsite(state)]),
+    )
+
+    psi_trunc, ds2 = powermethod_sym(start_mps, mpo, pm_params; (observer!)=pm_observer)
 
     normalization = overlap_noconj(psi_trunc, psi_trunc)
     psi_trunc     = psi_trunc / sqrt(normalization)
@@ -25,18 +34,18 @@ function ising_loschmidt(b::FwtMPOBlocks, ts::Int, pm_params)
     OL         = apply(mpo, psi_trunc, alg="naive", truncate=false)
     leading_sq = overlap_noconj(OL, OL)
 
-    return psi_trunc, (; ds2, leading_eig, leading_sq, normalization, entropy=sgen)
+    return psi_trunc, (; ds2, leading_eig, leading_sq, normalization, entropy=sgen, pm_observer)
 end
 
 
 function main_losch(Ntmin = 10, Ntmax  = 80; Ntstep = 2)
 
     JXX = 1.0
-    hz  = -1.5
+    hz  = 1.0
     gx  = 0.0
 
-    dt    = 0.1
-    dbeta = im*dt   # reversed sign beta imag time
+    dt    = 0.05
+    dbeta = -im*dt   # reversed sign beta imag time
 
     nbeta      = 4
     init_state = up_state
@@ -46,7 +55,7 @@ function main_losch(Ntmin = 10, Ntmax  = 80; Ntstep = 2)
 
     allts = Ntmin:Ntstep:Ntmax
 
-    tp = tMPOParams(dt, dbeta, Murg(), mp, nbeta, init_state)
+    tp = tMPOParams(mp; dt, dbeta, scheme=Murg(), nbeta, init_state)
 
     b = FwtMPOBlocks(tp)
 
@@ -75,4 +84,4 @@ function main_losch(Ntmin = 10, Ntmax  = 80; Ntstep = 2)
 end
 
 
-times, psis, results = main_losch(10,240; Ntstep=4)
+times, psis, results = main_losch(120,120; Ntstep=4)
