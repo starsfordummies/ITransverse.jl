@@ -124,10 +124,7 @@ function fwback_tMPS(
 )
 
 
-    Ntot = length(time_sites) 
-    @assert Ntot % 2 == 0 
-    Nt = div(Ntot,2)
-
+    Ntot = length(time_sites)
 
     bl = to_itensor(bl, "bl")
     tr = to_itensor(tr, "tr")
@@ -135,6 +132,13 @@ function fwback_tMPS(
     nbeta = tp.nbeta
 
     @assert nbeta <= Ntot
+
+    # Same convention as fwback_tMPO: nbeta imag steps, then Nfw forward and Nfw backward
+    Nt = Ntot - nbeta
+    @assert Nt >= 0 && iseven(Nt)
+    Nfw = div(Nt, 2)
+    betai, betaf = init_beta_only ? (nbeta, 0) : (div(nbeta,2), div(nbeta,2))
+    @assert betai + 2*Nfw + betaf == Ntot
 
     # Choose direction-dependent fields and indices
     (iL, iR, iP) = if LR == :left
@@ -160,29 +164,23 @@ function fwback_tMPS(
 
 
 
-    # Make same indices for real and imag, it's easier afterwards 
+    # Make same indices for real and imag, it's easier afterwards
     replaceinds!(W_im, inds(W_im), inds(W))
-
-    b1,b2 = beta_lims(Ntot, nbeta, init_beta_only)
 
     rot_links_mps = [Index(dim(iL), "Link,rotl=$ii") for ii in 1:(Ntot - 1)]
 
     tMPS = MPS(Ntot)
 
-    for ii = 1:b1
-        #@info "$(ii) im" 
+    for ii = 1:betai
         tMPS[ii] = W_im * delta(iP, time_sites[ii])
     end
-    for ii = b1+1:Nt
-        #@info "$(ii) re" 
+    for ii = betai+1:betai+Nfw
         tMPS[ii] = W * delta(iP, time_sites[ii])
     end
-        for ii = Nt+1:b2
-        #@info "$(ii) re" 
+    for ii = betai+Nfw+1:betai+2*Nfw
         tMPS[ii] = dag(W) * delta(iP, time_sites[ii])
     end
-    for ii = b2+1:Ntot
-        #@info "$(ii) im" 
+    for ii = betai+2*Nfw+1:Ntot
         tMPS[ii] = dag(W_im) * delta(iP, time_sites[ii])
     end
 

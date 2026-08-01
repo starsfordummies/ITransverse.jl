@@ -85,7 +85,7 @@ in-U(β)-U(β)-..U(β)-U(idt)-U(idt)-U(idt)-U(idt)-fin
    Returns tMPO 
 """
 function fw_tMPO_initbetaonly(b::FwtMPOBlocks, time_sites::Vector{<:Index}; bl::ITensor = b.tp.bl, tr::ITensor)
-    ww = fw_tMPO_opentr(b, time_sites; init_beta_only=true, bl, tr)
+    ww = fw_tMPO_opentr(b, time_sites; init_beta_only=true, bl)
     fw_tMPO(ww, tr)
 end
 
