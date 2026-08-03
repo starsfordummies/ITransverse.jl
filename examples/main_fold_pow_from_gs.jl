@@ -25,9 +25,11 @@ function main_folded_pm()
 
 
     space_sites = siteinds("S=1/2", 80)
-    hisi = build_H(space_sites, H_ising, mp)
+    hisi = build_H(space_sites, H_ising, tp.mp)
     p0 = random_mps(space_sites)
-    _, gs = dmrg(hisi, p0, nsweeps=3)
+    # cap the bond dimension so that the bulk tensors all have the same (uniform) bonds,
+    # as required to use one of them as *the* boundary column of the transverse network
+    _, gs = dmrg(hisi, p0; nsweeps=6, maxdim=8, cutoff=1e-10)
 
     tp.nbeta = 0
 
@@ -40,19 +42,27 @@ function main_folded_pm()
     ts = 30:1:30
     alltimes = ts.* tp.dt
 
+    # one (bulk) column of the ground state: a *non-product* initial state, which the
+    # builders add as an extra site at the bottom of the temporal chain
+    jmid = div(length(gs), 2)
+    bl_gs = boundary_tensor(gs[jmid]; phys=siteind(gs, jmid),
+                            left=linkind(gs, jmid-1), right=linkind(gs, jmid))
+
+    # fold it *once*, so that both columns below share the same boundary bond index
+    rho0_gs = fold_boundary(bl_gs; folded_dim=dim(b.iL))
+
     for Nsteps in ts
 
         time_sites = siteinds(4, Nsteps)
-        pushfirst!(time_sites, Index(dim(b.rho0,1),tags="rho0"))
 
-        mpo_X = folded_tMPO_in(b, time_sites; init_tensor=gs[4], init_physidx=siteind(gs,4), fold_op=sigX)
-        mpo_1 = folded_tMPO_in(b, time_sites; init_tensor=gs[4], init_physidx=siteind(gs,4))
+        mpo_X = folded_tMPO(b, time_sites; rho0=rho0_gs, fold_op=sigX)
+        mpo_1 = folded_tMPO(b, time_sites; rho0=rho0_gs)
 
-        
+
         init_mps = ITransverse.folded_right_tMPS_in_murg(mpo_1)
 
 
-        rr, ll, ds2_pm  = powermethod_op(init_mps, mpo_1, mpo_X, pm_params) 
+        ll, rr, ds2_pm  = powermethod_op(init_mps; mpo_id=mpo_1, mpo_op=mpo_X, pm_params)
         #rr, ds2_pm  = powermethod_sym(init_mps, mpo_1, pm_params) 
 
         ev = 0. #compute_expvals(ll, rr, ["X"], b)

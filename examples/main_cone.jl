@@ -1,6 +1,6 @@
 using ITensors, ITensorMPS
 using JLD2
-#using Plots
+using Plots
 
 using ITransverse
 
@@ -17,14 +17,14 @@ function main_cone()
     optimize_op = vZ
     init_state = up_state
 
-    cutoff = 1e-10
+    cutoff = 1e-14
     maxdim = 256
-    direction = :right
+    direction = :left
     alg = "RTM"
 
     truncp = (;cutoff, maxdim, direction, alg)
 
-    Nsteps = 30
+    Nsteps = 60
 
     #time_sites = siteinds("S=3/2", 1)
 
@@ -83,4 +83,4 @@ myf_savestate = (
     b = s -> s.b
 )
 
-psi, psiR, checkpt = resume_cone("temp_cp.jld2", 50; f_obs=myf_obs, f_savestate=myf_savestate)
+psi, psiR, checkpt = resume_cone("temp_cp.jld2", 60; f_obs=myf_obs, f_savestate=myf_savestate)

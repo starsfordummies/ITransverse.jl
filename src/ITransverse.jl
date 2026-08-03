@@ -17,7 +17,7 @@ using ITensors: @Algorithm_str, Algorithm
 
 using ITensors.Adapt: adapt
 
-using ITensorMPS: setleftlim!, setrightlim!
+using ITensorMPS: setleftlim!, setrightlim!, set_ortho_lims!
 
 using NDTensors:
     replace_nothing,
@@ -48,6 +48,16 @@ export pMPS,
     normalize_for_overlap!,
     allsiteinds,
     tcontract,
+    arrow_match,
+    transpose_arrows,
+    no_qns_supported,
+    spectrum_vector,
+    transpose_matrix,
+    blockwise_sqrt,
+    blockwise_matfun,
+    blockwise_invsqrt,
+    arrows_clash,
+    stored_ind,
     dominant_eigenvectors
 
 export randsymITensor,
@@ -68,7 +78,7 @@ export symmetrize,
     trace_mpo, trace_mpo_squared,
     max_diff
 
-export symm_svd, symm_oeig, mytrunc_eig
+export symm_svd, symm_oeig, mytrunc_eig, ceigen
 
 export beta_lims
 
@@ -146,6 +156,23 @@ export rho2, rtm2_contracted
 include("tmpo/construct-tMPO-tMPS.jl")
 export construct_tMPS_tMPO
 
+include("tmpo/boundary_states.jl")
+export boundary_tensor,
+    close_boundary,
+    fold_boundary,
+    to_boundary,
+    check_boundary,
+    boundary_phys_ind,
+    boundary_bond_ind,
+    boundary_linkdim,
+    is_product_boundary,
+    n_boundary_sites,
+    attach_boundary_bottom!,
+    attach_boundary_top!
+
+include("tmpo/sided_mps.jl")
+export SidedMPS, sided, side, apply_column, tapply_column, flipside
+
 include("tmpo/tmpo_params.jl")
 export tMPOParams, ising_tp
 
@@ -171,7 +198,9 @@ export
     folded_tMPS,
     folded_left_tMPS,
     folded_right_tMPS,
-    folded_tMPO_in
+    folded_tMPO_in,
+    fw_tMPO_in,
+    tMPO_in
 
 include("folding/foldings.jl")
 include("folding/vectorize_mpo.jl")

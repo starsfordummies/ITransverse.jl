@@ -36,6 +36,15 @@ Convention H = -( Jtwo*XX + gperp*Z + λpar*X )
 function expH_ising_murg(sites::Vector{<:Index}, mp::IsingParams; dt::Number)
     (; Jtwo, gperp, hpar) = mp
 
+    # The Z2 conserved by `conserve_szparity` is P = prod(Z); XX and Z commute with it, a
+    # longitudinal X field does not (Rx mixes the two flux sectors), so no QN MPO exists.
+    if hasqns(sites) && !iszero(hpar)
+        error("""
+            Ising with a longitudinal field (hpar=$(hpar)) does not conserve Sz parity:
+            X flips the parity, so exp(-i hpar X dt) has no definite flux. Either set
+            hpar=0 or build the sites without `conserve_szparity`.""")
+    end
+
     # For real dt this does REAL time evolution 
     # I should have already taken into account both the - sign in exp(-iHt) 
     # and the overall minus in Ising H= -(JXX+Z)

@@ -19,10 +19,10 @@ function init_cone(b::FoldtMPOBlocks, ts::Vector{Index{Int64}}; LR::Symbol, full
 
     @assert b.tp.nbeta == 0  # not implemented yet otherwise
     
-    if full 
+    if full
         psi = folded_tMPS(b, ts; LR)
+        m = folded_tMPO(b, ts)
         for jj = 2:length(ts)
-            m = folded_tMPO(b,ts)
             psi = applyn(m, psi)
             orthogonalize!(psi, length(psi))
             orthogonalize!(psi,1)

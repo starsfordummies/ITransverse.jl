@@ -107,12 +107,18 @@ function _trcontract_rtm_left(ψL::MPS, AR::MPO, ψR::MPS;
         R = dag(U) * R * get(ψR,j) * AR[j] 
         L = dag(V) * L * get(ψLpp,j)
 
-        Svec = Array(storage(S).data) ./ sum(S)
+        Svec = spectrum_vector(S) ./ sum(S)
         S_all[j, 1:length(Svec)] .= Svec
     end
 
     ψR_out[1] = R
     ψL_out[1] = L
+
+    # Sites 2..nL are the SVD isometries U/V, so both outputs are right-canonical
+    # with the center on site 1. `setindex!` above wiped the limits; restore them
+    # so `orthogonalize!` is a no-op and `norm` uses the single-tensor path.
+    set_ortho_lims!(ψR_out, 1:1)
+    set_ortho_lims!(ψL_out, 1:1)
 
     # @show check_mps_sanity(ψL_out)
     # @show check_mps_sanity(ψR_out)
@@ -187,7 +193,7 @@ function _trcontract_rtm_right(ψL::MPS, AR::MPO, ψR::MPS;
         R = dag(U) * R * get(ψR, j) * AR[j] 
         L = dag(V) * L * ψLp[j]
 
-        Svec = Array(storage(S).data) ./ sum(S)
+        Svec = spectrum_vector(S) ./ sum(S)
         S_all[j-1, 1:length(Svec)] .= Svec
     end
 
@@ -199,6 +205,10 @@ function _trcontract_rtm_right(ψL::MPS, AR::MPO, ψR::MPS;
     
     ψR_out[N] = R * redge_R
     ψL_out[N] = L
+
+    # Sites 1..N-1 are the SVD isometries U/V: left-canonical, center on site N.
+    set_ortho_lims!(ψR_out, N:N)
+    set_ortho_lims!(ψL_out, N:N)
 
     return ψL_out, ψR_out, S_all, ov_before
 end

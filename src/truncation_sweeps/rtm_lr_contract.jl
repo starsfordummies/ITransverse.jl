@@ -111,6 +111,9 @@ function _tlrcontract_rtm_left(ψL::MPS, AL::MPO, AR::MPO, ψR::MPS;
     ψR_out[1] = R
     ψL_out[1] = L
 
+    # Sites 2..n are the SVD isometries U/V: right-canonical, center on site 1.
+    set_ortho_lims!(ψR_out, 1:1)
+    set_ortho_lims!(ψL_out, 1:1)
 
     return ψL_out, ψR_out, S_all, ov_before
 end
@@ -179,7 +182,7 @@ function _tlrcontract_rtm_right(ψL::MPS, AL::MPO, AR::MPO, ψR::MPS;
         R = dag(U) * R * get(ψR, j) * get(AR, j)
         L = dag(V) * L * get(ψL, j) * get(ALp, j)
 
-        Svec = collect(storage(S).data) ./ sum(S)
+        Svec = spectrum_vector(S) ./ sum(S)
         S_all[j-1, 1:length(Svec)] .= Svec
     end
 
@@ -195,6 +198,10 @@ function _tlrcontract_rtm_right(ψL::MPS, AL::MPO, AR::MPO, ψR::MPS;
     
     ψR_out[n] = R * redge_R
     ψL_out[n] = L * redge_L
+
+    # Sites 1..n-1 are the SVD isometries U/V: left-canonical, center on site n.
+    set_ortho_lims!(ψR_out, n:n)
+    set_ortho_lims!(ψL_out, n:n)
 
     return ψL_out, ψR_out, S_all, ov_before
 end

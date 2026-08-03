@@ -30,7 +30,11 @@ function folded_right_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index}; kwargs...)
     folded_tMPS(b,ts; LR=:right, kwargs...)
 end
 
-function folded_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index}; LR::Symbol=:right, init_beta_only::Bool=true, kwargs...)
+""" Folded (edge) tMPS. `rho0`/`fold_op` are the bottom/top boundary states: (folded)
+product states or rank-2 edge tensors of a non-product boundary MPS, which add one site
+to the chain (see [`boundary_tensor`](@ref), [`close_boundary`](@ref), [`fold_boundary`](@ref)). """
+function folded_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index}; LR::Symbol=:right,
+    init_beta_only::Bool=true, rho0=b.rho0, fold_op=nothing)
 
     if !init_beta_only
         error("init_beta on both sides not implemented yet")
@@ -40,13 +44,11 @@ function folded_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index}; LR::Symbol=:right, 
         WW_im = b.WWl_im
         WWinds = (b.iPs, b.iL, b.iR)
         get_newinds = (ii, tlinks) -> (ts[ii], tlinks[ii], tlinks[ii+1])
-        edge_contract = (psi, b, tlinks) -> psi[1] *= replaceind(b.rho0, ind(b.rho0,1), tlinks[1])
     elseif LR == :right
         WW = b.WWr
         WW_im = b.WWr_im
         WWinds = (b.iP, b.iR, b.iL)
         get_newinds = (ii, tlinks) -> (ts[ii], tlinks[ii+1], tlinks[ii])
-        edge_contract = (psi, b, tlinks) -> psi[1] = psi[1] * b.rho0 * delta(ind(b.rho0,1), tlinks[1])
     else
         error("Unknown LR: $(LR) (must be :left or :right)")
     end
@@ -65,11 +67,8 @@ function folded_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index}; LR::Symbol=:right, 
         psi[ii] = replaceinds(psi[ii], WWinds, newinds)
     end
 
-    dttype = NDTensors.unwrap_array_type(WW)
-    edge_contract(psi, b, tlinks)
-
-    fold_op = get(kwargs, :fold_op, vectorized_identity(tlinks[end]))
-    psi[end] = psi[end] * adapt(dttype, to_itensor(fold_op, tlinks[end]))
+    attach_boundary_bottom!(psi, rho0, tlinks[1])
+    attach_boundary_top!(psi, something(fold_op, vectorized_identity(tlinks[end])), tlinks[end])
 
     return psi
 end
@@ -80,37 +79,43 @@ end
 
 """ This works for murg construction, need to check how it does with the others... """
 
-"""Quick way to get init mps from an MPO Murg, just close the corresponding MPO with [1,0,0,0] to one side. 
+""" The *primed* (left-facing) site index of an MPO, ie. the leg we close to turn it into an MPS.
+Not simply `siteind(T,j)'`, which assumes the unprimed leg comes first. """
+_closing_siteind(T::MPO, j::Int) = only(filter(i -> plev(i) == 1, siteinds(T, j)))
+
+"""Quick way to get init mps from an MPO Murg, just close the corresponding MPO with [1,0,0,0] to one side.
 Nornalization might be not the best """
 function folded_right_tMPS_murg(T::MPO)
 
     psi = MPS(deepcopy(T.data))
 
     dttype = NDTensors.unwrap_array_type(T[1])
- 
+
     for ii in eachindex(psi)
-        psi[ii] *= adapt(dttype, ITensor([1,0,0,0], siteind(T,ii)'))
+        psi[ii] *= adapt(dttype, ITensor([1,0,0,0], _closing_siteind(T,ii)))
     end
 
-    return psi 
+    return psi
 end
 
 
 
-"""Quick way to get init mps, just close the corresponding MPO with [1,0,0,0] to one side. 
+"""Quick way to get init mps, just close the corresponding MPO with [1,0,0,0] to one side.
+The first site can be a (non-product) boundary state of any dimension, there we close with `e_1`.
 Nornalization might be not the best """
 function folded_right_tMPS_in_murg(T::MPO)
 
     psi = MPS(deepcopy(T.data))
 
-    one_first = zeros(dim(siteind(T,1)))
+    s1 = _closing_siteind(T,1)
+    one_first = zeros(dim(s1))
     one_first[1] = 1
     dttype = NDTensors.unwrap_array_type(T[1])
-    psi[1] = psi[1] * adapt(dttype, ITensor(one_first, siteind(T,1)'))
+    psi[1] = psi[1] * adapt(dttype, ITensor(one_first, s1))
     for ii in eachindex(psi)[2:end]
-        psi[ii] *= adapt(dttype, ITensor([1,0,0,0], siteind(T,ii)'))
+        psi[ii] *= adapt(dttype, ITensor([1,0,0,0], _closing_siteind(T,ii)))
     end
-    return psi 
+    return psi
 end
 
 
@@ -170,35 +175,10 @@ function folded_tMPO_open_edges(b::FoldtMPOBlocks, ts::Vector{<:Index}; init_bet
 end
 
 
-"""Convert input to ITensor mapped onto target index, or return identity if nothing."""
-function _to_itensor_or_identity(op, target_ind::Index)
-    op === nothing && return vectorized_identity(Index(dim(target_ind), "Site"))
-    op isa ITensor  && return op
-    # Array branch: adapt to correct storage type and wrap
-    return ITensor(op, Index(dim(target_ind), "Site"))
-end
-
-"""Attach a (possibly vector/matrix) operator to the boundary of an MPS."""
-function _attach_boundary_op!(oo::MPO, op::ITensor, bond_ind::Index)
-    if ndims(op) == 1
-        dttype = NDTensors.unwrap_array_type(oo[end])
-        oo[end] = contract(oo[end], adapt(dttype, op), bond_ind, only(inds(op)))
-    else
-        push!(oo.data, replaceind(op, only(inds(op, "Site")) => bond_ind))
-    end
-end
-
-"""Attach initial state rho0 to the left boundary of an MPS."""
-function _attach_rho0!(oo::MPO, rho0::ITensor, bond_ind::Index)
-    if ndims(rho0) == 1
-        oo[1] = contract(oo[1], rho0, bond_ind, only(inds(rho0)))
-    else
-        pushfirst!(oo.data, replaceind(rho0, only(inds(rho0, "Site")) => bond_ind))
-    end
-end
-
 """ Builds folded tMPO. Of the `ts` timesites, the first `b.tp.nbeta` ones are imaginary time ones.
- Accepted kwargs: fold_op (default=Identity, accepts Array or ITensor), verbose(=false), init_beta_only(=true) """ 
+ Accepted kwargs: fold_op (default=Identity, accepts Array or ITensor), verbose(=false), init_beta_only(=true).
+ `rho0` and `fold_op` may be non-product boundary states, in which case they add one site each
+ to the tMPO (see [`boundary_tensor`](@ref)). """
 function folded_tMPO(b::FoldtMPOBlocks, ts::Vector{<:Index};
                      fold_op=nothing,
                      init_beta_only::Bool=true,
@@ -207,12 +187,8 @@ function folded_tMPO(b::FoldtMPOBlocks, ts::Vector{<:Index};
 
     oo, bl_ind, tr_ind = folded_tMPO_open_edges(b, ts; init_beta_only, verbose)
 
-    fold_op_tensor = _to_itensor_or_identity(fold_op, tr_ind)
-
-    _attach_rho0!(oo, rho0, bl_ind)
-    _attach_boundary_op!(oo, fold_op_tensor, tr_ind)
-
-    verbose && @info "fold_op = $(vector(fold_op_tensor))"
+    attach_boundary_bottom!(oo, rho0, bl_ind)
+    attach_boundary_top!(oo, something(fold_op, vectorized_identity(tr_ind)), tr_ind)
 
     return oo
 end

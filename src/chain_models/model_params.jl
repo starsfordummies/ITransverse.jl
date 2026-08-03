@@ -13,9 +13,9 @@ Used when the time-evolution tensors are supplied externally (e.g. Floquet gates
 Fields: `phys_site` – the physical site index (default `S=1/2`).
 """
 Base.@kwdef mutable struct NoParams <: ModelParams
-    phys_site::Index{Int64} = Index(2, "S=1/2")
+    phys_site::Index = Index(2, "S=1/2")
 end
-NoParams(i::Index) = NoParams(; phys_site=i)
+# (the @kwdef positional constructor NoParams(phys_site) already covers NoParams(i::Index))
 
 
 """
@@ -34,11 +34,11 @@ Base.@kwdef mutable struct IsingParams <: ModelParams
     Jtwo::Float64  = 1.0
     gperp::Float64 = 0.4
     hpar::Float64  = 0.0
-    phys_site::Index{Int64} = Index(2, "S=1/2")
+    phys_site::Index = Index(2, "S=1/2")
 end
 # Positional constructor for backward compatibility: IsingParams(J, g, h)
-IsingParams(Jtwo::Number, gperp::Number, hpar::Number) =
-    IsingParams(; Jtwo=Float64(Jtwo), gperp=Float64(gperp), hpar=Float64(hpar))
+IsingParams(Jtwo::Number, gperp::Number, hpar::Number; phys_site::Index=Index(2, "S=1/2")) =
+    IsingParams(; Jtwo=Float64(Jtwo), gperp=Float64(gperp), hpar=Float64(hpar), phys_site)
 # Copy constructor
 IsingParams(x::IsingParams; Jtwo=x.Jtwo, gperp=x.gperp, hpar=x.hpar) =
     IsingParams(; Jtwo, gperp, hpar)
@@ -57,11 +57,11 @@ Fields:
 Base.@kwdef mutable struct PottsParams <: ModelParams
     JSS::Float64  = 1.0
     ftau::Float64 = 0.4
-    phys_site::Index{Int64} = Index(3, "S=1")
+    phys_site::Index = Index(3, "S=1")
 end
 # Positional constructor for backward compatibility: PottsParams(J, f)
-PottsParams(JSS::Number, ftau::Number) =
-    PottsParams(; JSS=Float64(JSS), ftau=Float64(ftau))
+PottsParams(JSS::Number, ftau::Number; phys_site::Index=Index(3, "S=1")) =
+    PottsParams(; JSS=Float64(JSS), ftau=Float64(ftau), phys_site)
 # Copy constructor
 PottsParams(x::PottsParams; JSS=x.JSS, ftau=x.ftau) =
     PottsParams(; JSS, ftau)
@@ -83,7 +83,7 @@ Base.@kwdef mutable struct XXZParams <: ModelParams
     J_XY::Float64  = 1.0
     J_ZZ::Float64  = 1.0
     hz::Float64    = 0.0
-    phys_site::Index{Int64} = Index(2, "S=1/2")
+    phys_site::Index = Index(2, "S=1/2")
 end
 # Positional constructors for backward compatibility
 XXZParams(J_XY::Number, J_ZZ::Number, hz::Number=0.0) =

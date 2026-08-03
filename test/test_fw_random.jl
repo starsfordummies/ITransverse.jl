@@ -15,7 +15,7 @@ time_sites = addtags(siteinds("S=1/2", Nsteps; conserve_qns=false), "time")
 
 random_eh = ITransverse.expH_random_symm_svd_1o(0.5)
 
-init_state = normalize(rand(2))
+init_state = normalize(randn(ComplexF64, 2))
 #init_statef = kron((init_state),conj(init_state))
 
 bf = FoldtMPOBlocks(random_eh, init_state=init_state)
@@ -23,7 +23,7 @@ bf = FoldtMPOBlocks(random_eh, init_state=init_state)
 b= FwtMPOBlocks(random_eh; init_state);
 
 final_state = up_state
-Pfinal = kron(final_state, final_state)
+Pfinal = kron(conj(final_state), final_state)
 
 
 mpo_fw =    fw_tMPO(b, time_sites; tr = final_state)
@@ -65,7 +65,7 @@ time_sites = addtags(siteinds(4, Nsteps; conserve_qns=false), "time")
 
 random_eh = ITransverse.expH_random()
 
-init_state = normalize(rand(2))
+init_state = normalize(randn(ComplexF64, 2))
 #init_statef = kron((init_state),conj(init_state))
 
 bf = FoldtMPOBlocks(random_eh, init_state=init_state)
@@ -73,7 +73,7 @@ bf = FoldtMPOBlocks(random_eh, init_state=init_state)
 b= FwtMPOBlocks(random_eh; init_state);
 
 final_state = up_state
-Pfinal = kron(final_state, final_state)
+Pfinal = kron(conj(final_state), final_state)
 
 
 mpo_fw =    fw_tMPO(b, time_sites; tr = final_state)

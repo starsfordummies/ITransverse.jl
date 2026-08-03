@@ -130,39 +130,6 @@ function rho4_fwback(psi::MPS, cut::Int; alg="zipup", cutoff=1e-12, maxdim=maxli
 
 end
 
-function rho4_fwback_alt(psi::MPS, cut::Int; alg="densitymatrix", cutoff=1e-12, maxdim=maxlinkdim(psi))
-
-    LL = length(psi)
-
-    # Normalization: tr(rho) = 1 
-    tr_rho = scalar(ptr_chunk(psi, 1, LL))
-
-    psit = if cut < LL
-        # tr_B
-        blockB = ptr_chunk(psi, cut+1, LL, contract_from_right=true)
-
-        psimats = psi[1:cut]
-        psimats[end] *= blockB
-        MPS(psimats)
-    else
-        psi 
-    end
-
-    psit = reopen_inds(psit;  different_fwback_inds=false)
-
-    rho4 = ITensor(1)
-    for psik in psit 
-        rho4 *= psik
-        rho4 *= psik'
-        rho4 *= psik''
-        rho4 *= replaceprime(psik''', 4 =>0)
-    end
-
-    return scalar(rho4)/(tr_rho^4)
-
-end
-
-
 """ Given input a folded `psi`, we reopen its legs to view it as a fw-back density matrix `rho`,
 then compute its purity tr(rho^2) for a segment """
 function rho2_fwback_segment(psi::MPS, iA::Int, fA::Int, iB::Int, fB::Int)
@@ -227,6 +194,7 @@ end
 
 
 function compute_sn_cut(psi::MPS, n::Int; cut::Int=halfsite(psi), cutoff=1e-10, maxdim=maxlinkdim(psi))
+    psi = copy(psi)
     ss = siteinds(psi)
 
     for kk = length(psi):-1:cut
@@ -237,47 +205,15 @@ function compute_sn_cut(psi::MPS, n::Int; cut::Int=halfsite(psi), cutoff=1e-10, 
 
     orthogonalize!(psi,1)
 
-    @show length(psi)
-
     oo = reopen_inds!(psi, different_fwback_inds=false)
 
     oo = oo/trace_mpo(oo)
 
-    @show siteinds(oo)
-    @show linkinds(oo)
-
     rho2 = copy(oo)
     for kk = 2:n
-        @show kk
         rho2 = apply(oo, rho2; cutoff,maxdim)
     end
 
     trace_mpo(rho2)
 end
-
-
-function t4mid_slice(psi::MPS)
-    NN = length(psi)
-    cut = halfsite(NN)
-
-
-    ll = linkinds(psi)
-    phi = prime(linkinds,psi)
-
-    for ii = 1:dim(ll[cut])
-        for jj = 1:dim(ll[cut])
-                
-            lenv = ITensors.OneITensor()
-            for kk = 1:4
-                lenv *= psi[kk]
-                lenv *= phi[kk]
-            end
-
-        end
-
-    end
-
-    return 
-end
-
 

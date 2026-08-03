@@ -58,11 +58,18 @@ The "generalized norm" of an MPS should be sqrt(overlap_noconj(psi,psi)).
 """
 function overlap_noconj(ll::MPS, rr::MPS, reverse_qn_ll::Bool=false; fast::Bool=false)
 
-    if reverse_qn_ll 
+    if reverse_qn_ll
         return inner(conj(ll),rr)
     else
 
-        if !fast 
+        # With QNs a state cannot be contracted with a copy of itself (same arrows on both
+        # sides); reverse the arrows of the left one, leaving its data untouched. No-op
+        # without QNs, and no-op for a genuine left/right pair, whose arrows already match up.
+        if arrows_clash(ll, rr)
+            ll = transpose_arrows(ll)
+        end
+
+        if !fast
             rr = sim(linkinds,rr)
             if !hassameinds(siteinds, ll, rr)
                 @warn "L and R don't have the same physical indices, correcting "
@@ -199,8 +206,9 @@ function gaugefix_left(psi::MPS)
     psi_work = orthogonalize(psi,length(psi))
     orthogonalize!(psi_work,1)
 
+    # lenv_1 = M M† is Hermitian PSD by construction: use the stable Hermitian path
     lenv_1 = psi_work[1] * prime(dag(psi_work[1]), linkind(psi_work,1))
-    vals, vecs = eigen(lenv_1)
+    vals, vecs = eigen(lenv_1; ishermitian=true)
     psi_work[1] = psi_work[1] * vecs
     psi_work[2] = dag(vecs) * psi_work[2] 
 
@@ -400,7 +408,7 @@ function diagonalize_mpo(w::MPO)
     wcomb = wcomb * cs
     wcomb = wcomb * cs' 
 
-    vals, vecs = eigen(wcomb, combinedind(cs), combinedind(cs)')
+    vals, vecs = ceigen(wcomb, combinedind(cs), combinedind(cs)')
 
 end
 

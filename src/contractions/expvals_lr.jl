@@ -1,3 +1,12 @@
+""" Time sites of a transverse MPS built with the blocks `b`: drops the extra site(s) that a
+non-product boundary state adds at the bottom of the chain (see `boundary_tensor`), so that a
+tMPO rebuilt from them matches the input MPS. """
+function _time_sites(psi::AbstractMPS, b)
+    nb = n_boundary_sites(b.rho0)
+    return siteinds(psi)[(1+nb):end]
+end
+
+
 """ Given <L|, MPO,|R> computes exp value <L|op_mpo|R>  (here L is *not* conjugated!)
 in a supposedly efficient way. No normalization and no compression is done here.  """
 function expval_LR(ll::MPS, op_mpo::MPO, rr::MPS; match_inds::Bool=false)
@@ -74,7 +83,7 @@ end
 function expval_LR(ll::MPS, rr::MPS, op::AbstractVector, b::FoldtMPOBlocks; match_inds::Bool=false)
 
     # Assuming here siteinds(ll) and (rr) match
-    time_sites = siteinds(rr)
+    time_sites = _time_sites(rr, b)
     tmpo = folded_tMPO(b, time_sites; fold_op=op)
     expval_LR(ll, tmpo, rr; match_inds)
     
@@ -84,12 +93,12 @@ end
 """ Build exp value <L|opLopR|R> for a pair of local operator `opL` and `opR` """ 
 function expval_LR(ll::MPS, rr::MPS, opL::AbstractVector, opR::AbstractVector, b::FoldtMPOBlocks)
 
-    time_sites = siteinds(ll)
+    time_sites = _time_sites(ll, b)
     # TODO CHECK do we need to swap legs on the left ? 
     #tmpoL = swapprime(folded_tMPO(b, time_sites, opL), 0, 1, "Site")
     tmpoL = folded_tMPO(b, time_sites, fold_op=opL)
 
-    time_sites = siteinds(rr)
+    time_sites = _time_sites(rr, b)
     tmpoR = folded_tMPO(b, time_sites, fold_op=opR)
 
     expval_LR(ll, tmpoL, tmpoR, rr)
@@ -111,10 +120,10 @@ function expval_LR_ops(ll::MPS, rr::MPS, ops::MPO, b::FoldtMPOBlocks)
     ops = adapt(mapreduce(NDTensors.unwrap_array_type, promote_type, ll), ops)
 
 
-    time_sites_L = siteinds(ll)
+    time_sites_L = _time_sites(ll, b)
     new_timesite = Index(dim(time_sites_L[end]))
     push!(time_sites_L, new_timesite)
-    time_sites_R = siteinds(rr)
+    time_sites_R = _time_sites(rr, b)
     push!(time_sites_R, new_timesite)
 
     tMPO1= folded_tMPO_ext(b, time_sites_L, LR=:left)
@@ -201,7 +210,7 @@ end
    Slower version which uses ITensors' apply(), allows to truncate intermediate MPO """
 function expval_LR_apply(ll::MPS, rr::MPS, op::AbstractVector, b::FoldtMPOBlocks; maxdim=nothing)
 
-    time_sites = siteinds(rr)
+    time_sites = _time_sites(rr, b)
     tmpo = folded_tMPO(b, time_sites; fold_op=op)
     psiOR = isnothing(maxdim) ? applyn(tmpo, rr) : apply(tmpo,rr; alg="naive", maxdim)
     LOR = overlap_noconj(ll,psiOR)
@@ -213,11 +222,11 @@ end
 """ Build exp value <L|opLopR|R> for a pair of local operator `opL` and `opR` using apply() """ 
 function expval_LR_apply(ll::MPS, rr::MPS, opL::AbstractVector, opR::AbstractVector, b::FoldtMPOBlocks)
 
-    time_sites = siteinds(ll)
+    time_sites = _time_sites(ll, b)
     tmpo = folded_tMPO(b, time_sites, fold_op=opL)
     psi_L = applyn(tmpo, ll)
 
-    time_sites = siteinds(rr)
+    time_sites = _time_sites(rr, b)
     tmpo = swapprime(folded_tMPO(b, time_sites, fold_op=opR), 0, 1, "Site")
     psi_R = applyn(tmpo, rr)
 

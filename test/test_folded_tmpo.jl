@@ -18,20 +18,20 @@ ss = firstsiteinds(random_eh)
 tp = ising_tp()
 ising_eh = build_Ut(ss, Murg(), tp.mp; dt=0.2)
 
-init_state = (rand(2))
-init_statef = kron(init_state,conj(init_state))
+init_state = normalize(randn(ComplexF64, 2))
+init_statef = kron(conj(init_state), init_state)
 
 ITensors.state(::StateName"rand_prod", ::SiteType"S=1/2") = init_state
 # Temporal contraction 
 
-init_psi = productMPS(ss, "rand_prod")
+init_psi = productMPS(ComplexF64, ss, "rand_prod")
 init_rho = outer(dag(init_psi)', init_psi)
 
 norm(init_rho)
 
 # Check1 : U Udag reduces to identity 
 
-rho0 = kron(init_state, init_state)
+rho0 = kron(conj(init_state), init_state)
 
 b= FoldtMPOBlocks(random_eh; init_state=rho0)
 
@@ -49,7 +49,7 @@ overlap = expval_LR(left_fold, mpo_fold, right_fold)
 # What if only on first and last sites 
 
 s2 = siteinds("S=1/2",2)
-init_psi = productMPS(s2, "rand_prod")
+init_psi = productMPS(ComplexF64, s2, "rand_prod")
 init_rho = outer(dag(init_psi)', init_psi)
 
 @test norm(init_rho) ≈ overlap_noconj(left_fold, right_fold)

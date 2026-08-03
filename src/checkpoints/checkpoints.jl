@@ -31,7 +31,9 @@ end
 """ Write the current cp state to disk. """
 function write_cp(cp::DoCheckpoint; filename=cp.filename)
     for (k, v) in pairs(cp.obs_hist)
-        cp.obs_hist[k] = collect(promote(v...))
+        # concrete-eltype copy for JLD2; avoid splatting long histories
+        isempty(v) && continue
+        cp.obs_hist[k] = convert(Vector{mapreduce(typeof, promote_type, v)}, v)
     end
     @info "Saving CP $(filename)..."
     save(filename,

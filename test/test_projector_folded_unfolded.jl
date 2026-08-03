@@ -166,7 +166,7 @@ Lsq = abs2(overlap_noconj(ll,rr))
 
 # Now folded 
 
-b_fold = FoldtMPOBlocks(tp_xxz; init_state= kron(init_state, conj(init_state)));
+b_fold = FoldtMPOBlocks(tp_xxz; init_state= kron(conj(init_state), init_state));
 
 mpo_fold = folded_tMPO(b_fold, time_sites_fold) # , fold_op = [1,0,0,0,0,0,0,0,0])
 

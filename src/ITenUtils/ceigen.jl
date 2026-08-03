@@ -1,67 +1,66 @@
+"""
+    ceigen(a::ITensor, linds, rinds = uniqueinds(a, linds); kwargs...)
 
-""" Overriding ITensor's eigen() when we're dealing with complex matrices?"""
-function LinearAlgebra.eigen(
-  T::DenseTensor{ElT,2,IndsT};
-  mindim=nothing,
-  maxdim=nothing,
-  cutoff=nothing,
-  use_absolute_cutoff=nothing,
-  use_relative_cutoff=nothing,
-) where {ElT<:Complex,IndsT}
-  matrixT = matrix(T)
-  if any(!isfinite, matrixT)
-    throw(
-      ArgumentError(
-        "Trying to perform the eigendecomposition of a matrix containing NaNs or Infs $matrixT"
-      ),
-    )
-  end
+Truncated eigendecomposition for a (generally non-Hermitian, complex) ITensor:
+eigenvalues sorted by decreasing |λ| and truncation applied to the absolute
+values of the spectrum (via [`mytrunc_eig`](@ref) / `ctruncate!`).
 
-  # so we know when it's being used 
-  # @info "ceigen"
-  
-  DM, VM = eigen(expose(matrixT))
+This is a package-local replacement for the former override of
+`LinearAlgebra.eigen(::DenseTensor{<:Complex,2})`: same behavior, but under a
+name we own, so dispatch for every other ITensors user is left untouched.
 
-  # Sort by largest (by absolute value) to smallest eigenvalues
-  p = sortperm(DM; by=abs, rev = true)
-  DM = DM[p]
-  VM = VM[:,p]
+Index conventions match `ITensors.eigen`: returns `TruncEigen(D, V, Vt, spec, l, r)`
+where `V` carries `(rinds..., r)`, `D` carries `(l, r)` with `l = r'`, and
+`Vt` is `V` re-mapped onto `(linds..., l)`, so `a * V ≈ Vt * D` for right
+eigenvectors. Assumes dense (non-QN) indices, with `linds`/`rinds` paired in
+order with equal dimensions.
 
-  if any(!isnothing, (maxdim, cutoff))
-    DM, truncerr, _ = ctruncate!!( DM; mindim, maxdim, cutoff, use_absolute_cutoff, use_relative_cutoff)
-    dD = length(DM)
-    if dD < size(VM, 2)
-      VM = VM[:, 1:dD]
-    end
-  else
-       #println("**NOT**TRUNCATING @ $maxdim, $cutoff,  last eig  = $(DM[end])  ")
-    dD = length(DM)
-    truncerr = 0.0
-  end
+Keyword arguments: `maxdim`, `mindim`, `cutoff`, `use_absolute_cutoff`,
+`use_relative_cutoff`, `lefttags` (tags of the new eigen index).
+"""
+function ceigen(a::ITensor, linds, rinds = uniqueinds(a, linds);
+        maxdim = nothing,
+        mindim = 1,
+        cutoff = nothing,
+        use_absolute_cutoff = nothing,
+        use_relative_cutoff = true,
+        lefttags = "Link,ceig")
 
-  # TODO it seems that truncate!! can return complex truncerr for corner cases
-  spec = 0
-  try
-    spec = Spectrum(abs.(DM), abs(truncerr))
-  catch e
-    println("not good, $e, $(abs.(DM)), $truncerr")
-  end
+    Lis = linds isa Index ? (linds,) : Tuple(linds)
+    Ris = rinds isa Index ? (rinds,) : Tuple(rinds)
 
-  i1, i2 = inds(T)
+    @assert length(Lis) == length(Ris) "ceigen: need equal numbers of left/right indices"
+    no_qns_supported("ceigen (non-hermitian eigendecomposition)", a)
+    @assert all(hasind(a, i) for i in (Lis..., Ris...)) "ceigen: indices not found in tensor"
 
-  # Make the new indices to go onto D and V
-  l = typeof(i1)(dD)
-  r = dag(sim(l))
-  Dinds = (l, r)
-  Vinds = (dag(i2), r)
-  D = complex(tensor(Diag(DM), Dinds))
-  V = complex(tensor(Dense(vec(VM)), Vinds))
-  return D, V, spec
+    cL = combiner(Lis...)
+    cR = combiner(Ris...)
+    iL = combinedind(cL)
+    iR = combinedind(cR)
+
+    am = matrix(permute((a * cL) * cR, iL, iR))
+
+    F, spec = mytrunc_eig(am; maxdim, mindim, cutoff, use_absolute_cutoff, use_relative_cutoff)
+    DM, VM = F.values, F.vectors
+
+    r = Index(length(DM), lefttags)
+    l = r'
+
+    D = diag_itensor(DM, l, r)
+    # columns of VM are right eigenvectors; their row index lives in the cR space
+    V = ITensor(VM, iR, r) * dag(cR)
+    Vt = replaceinds(V, (Ris..., r), (Lis..., l))
+
+    return ITensors.TruncEigen(D, V, Vt, spec, l, r)
 end
 
+""" Matrix-like convenience: eigendecompose a 2-index ITensor in ind1 vs ind2 """
+function ceigen(a::ITensor; kwargs...)
+    @assert ndims(a) == 2
+    ceigen(a, ind(a, 1); kwargs...)
+end
 
 
 """ Overriding eigvals()"""
 LinearAlgebra.eigvals(T::ITensor) = eigvals(matrix(T))
 LinearAlgebra.eigvals(T::ITensor, inds_T) = eigvals(Matrix(T, inds_T...))
-  

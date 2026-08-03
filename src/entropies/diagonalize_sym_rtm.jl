@@ -26,6 +26,13 @@ function diagonalize_rtm_symmetric(psi::MPS;
 
     mpslen = length(psi)
 
+    if bring_gen_can && hasqns(psi)
+        error("""
+            diagonalize_rtm_symmetric with `bring_gen_can=true` needs the generalized canonical
+            form, which has no QN implementation (it goes through `symm_oeig`). Pass
+            `bring_gen_can=false` to diagonalize the RTM of the state as given.""")
+    end
+
     if bring_gen_can
         ortho_center = direction == :left ? 1 : mpslen
         psi = gen_canonical(psi, ortho_center)
@@ -38,7 +45,8 @@ function diagonalize_rtm_symmetric(psi::MPS;
     end
 
     sweep = direction == :left ? (1:mpslen-1) : (mpslen:-1:2)
-    psiP  = prime(linkinds, psi)
+    # the "bra" copy: arrows reversed (QNs only), data *not* conjugated
+    psiP  = prime(linkinds, transpose_arrows(psi))
     env   = ITensors.OneITensor()
 
     eigenvalues_rtm = Vector{Vector}(undef, mpslen - 1)
@@ -113,7 +121,7 @@ function diagonalize_rtm_symmetric_alt(psi::MPS;
     F = symm_oeig(rho, ss[last_site], ss[last_site]'; maxdim, kwargs...)
     work *= F.V  # no dag, it's orthogonal
 
-    Dvec = Array(storage(F.D).data)/sum(F.D)
+    Dvec = spectrum_vector(F.D)/sum(F.D)
 
     eigen_all[last_site + sv_offset, 1:length(Dvec)] .= Dvec  # :right → bond 1, :left → bond N-1
 
@@ -127,7 +135,7 @@ function diagonalize_rtm_symmetric_alt(psi::MPS;
         F = symm_oeig(rho, (ss[jj], F.l), (ss[jj]', F.l'); maxdim, kwargs...)
         work *= F.V
 
-        Dvec = Array(storage(F.D).data)/sum(F.D)
+        Dvec = spectrum_vector(F.D)/sum(F.D)
         eigen_all[jj + sv_offset, 1:length(Dvec)] .= Dvec
     end
 

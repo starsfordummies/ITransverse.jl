@@ -27,7 +27,7 @@ function ttruncate!(
         setrightlim!(M, j)
         callback(; link = (j => j - 1), truncation_error = spec.truncerr)
 
-        s_vec = Array(storage(S).data)/sum(S)
+        s_vec = spectrum_vector(S)/sum(S)
         n_s = min(length(s_vec), maxdim)
             
         # Safe CPU operation
@@ -211,7 +211,7 @@ function tcontract(::Algorithm"densitymatrix",
         L = L * dag(Ut) * ψ[j+1] * A[j+1]
         simL_c = simL_c * U* ψ_c[j+1] * simA_c[j+1]
 
-        Dvec = Array(storage(D).data)/sum(D)
+        Dvec = spectrum_vector(D)/sum(D)
  
         S_all[j, 1:length(Dvec)] .= Dvec  
         #@show sum(Dvec)

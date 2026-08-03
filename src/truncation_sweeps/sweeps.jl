@@ -225,15 +225,14 @@ function truncate_sweep_rtm!(psiL::MPS, psiR::MPS;
 
         tsR = if preserve_mps_tags
             linkR = linkind(psiR, jj+sv_offset)
-            @show linkR 
-            tsR = isnothing(linkR) ? "" : tags(linkR)
+            isnothing(linkR) ? "" : tags(linkR)
         else
             "Link,l=$(jj)"
         end
 
         tsL = if preserve_mps_tags
-            linkL  = linkind(psiL, jj+sv_offset) 
-            tsL = isnothing(linkL) ? "" : tags(linkL)
+            linkL  = linkind(psiL, jj+sv_offset)
+            isnothing(linkL) ? "" : tags(linkL)
         else
             "Link,l=$(jj)"
         end

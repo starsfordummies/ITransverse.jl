@@ -30,7 +30,9 @@ function truncate_sweep_sym(in_psi::MPS;
         Ai = XUinv * psi[ii]
 
         env *= Ai
-        env *= noprime(Ai', ss[ii]')
+        # bra copy of Ai: with QNs a state cannot be contracted with a copy of itself, so
+        # reverse the arrows (data untouched). `transpose_arrows`/`dag` are no-ops without QNs.
+        env *= noprime(prime(transpose_arrows(Ai)), prime(dag(ss[ii])))
         @assert order(env) == 2 "unexpected env indices: $(inds(env))"
 
         Sn = if !use_eig 
@@ -41,7 +43,7 @@ function truncate_sweep_sym(in_psi::MPS;
 
             sS = sum(F.S)
             env /= sS
-            Sn = Array(storage(F.S).data)/sS
+            Sn = spectrum_vector(F.S)/sS
 
         else
             F = symm_oeig(env, ind(env, 1); cutoff, maxdim)
@@ -52,7 +54,7 @@ function truncate_sweep_sym(in_psi::MPS;
             XU    = F.V * isqS
             XUinv = sqS * F.V
 
-            Sn = Array(storage(F.D).data)/sum(F.D)
+            Sn = spectrum_vector(F.D)/sum(F.D)
 
         end
 
@@ -60,7 +62,7 @@ function truncate_sweep_sym(in_psi::MPS;
         @assert ndims(psi[ii]) < 4 "?? $(inds(psi[ii])) - $(inds(Ai)) $(inds(XU)) "
 
         env *= XU
-        env *= XU'
+        env *= prime(transpose_arrows(XU))   # transposed copy again
 
         SV_all[ii + sv_offset, 1:length(Sn)] .= Array(Sn)
     end
@@ -77,7 +79,9 @@ function truncate_sweep_sym_rtm!(psi::MPS; direction::Symbol=:right, maxdim::Int
     # TODO allow for eig here ? 
     ss = siteinds(psi)
     N = length(ss)
-    psip = prime(linkinds, psi)
+    # transposed copy of psi (the RTM is |psi*><psi|): with QNs that means reversed arrows
+    # and untouched data; `transpose_arrows` is a no-op without QNs
+    psip = prime(linkinds, transpose_arrows(psi))
 
     sweep_start, sweep_step, sweep_end, sv_offset = if direction == :right
         N, -1, 2, 0
@@ -104,13 +108,13 @@ function truncate_sweep_sym_rtm!(psi::MPS; direction::Symbol=:right, maxdim::Int
     work = psi[last_site]
 
     rho = work * envs[sweep_end]  # :right → envs[2], :left → envs[N-1]
-    rho *= work'
+    rho *= prime(transpose_arrows(work))
     @assert order(rho) == 2 "check your inds? $(inds(rho))"
 
-    F = symm_svd(rho, ss[last_site], ss[last_site]'; maxdim, kwargs...)
+    F = symm_svd(rho, ss[last_site], dag(prime(ss[last_site])); maxdim, kwargs...)
     work *= dag(F.U)
 
-    Svec = Array(storage(F.S).data) ./ sum(F.S)
+    Svec = spectrum_vector(F.S) ./ sum(F.S)
     SV_all[last_site + sv_offset, 1:length(Svec)] .= Svec  # :right → bond 1, :left → bond N-1
     #@show "filling $(last_site+sv_offset)"
     psi[last_site] = F.U
@@ -119,14 +123,14 @@ function truncate_sweep_sym_rtm!(psi::MPS; direction::Symbol=:right, maxdim::Int
         work *= psi[jj]
 
         rho = work * envs[jj - sweep_step]
-        rho *= work'
+        rho *= prime(transpose_arrows(work))
         @assert order(rho) == 4 "check your inds? $(inds(rho))"
 
-        F = symm_svd(rho, (ss[jj], F.u), (ss[jj]', F.u'); maxdim, kwargs...)
+        F = symm_svd(rho, (ss[jj], F.u), dag.((prime(ss[jj]), prime(F.u))); maxdim, kwargs...)
         work *= dag(F.U)
         psi[jj] = F.U
 
-        Svec = Array(storage(F.S).data) ./ sum(F.S)
+        Svec = spectrum_vector(F.S) ./ sum(F.S)
         #@show "filling SV[$(jj+sv_offset)]"
         SV_all[jj + sv_offset, 1:length(Svec)] .= Svec
     end
@@ -186,8 +190,10 @@ function tcontract(::Algorithm"RTMsym",
     # In case A and ψ have the same link indices
     A = sim(linkinds, A)
 
-    ψ_c = ψ''
-    A_c = replaceprime(prime(A, 2), 3 => 1)
+    # the "conjugate" copies here are *transposes* (the RTM is |psi*><psi|), which with QNs
+    # means reversed arrows and untouched data; both no-ops without QNs.
+    ψ_c = transpose_arrows(ψ)''
+    A_c = replaceprime(prime(transpose_arrows(A), 2), 3 => 1)
 
     # Store the right environment tensors
     E = Vector{ITensor}(undef, N)
@@ -217,20 +223,25 @@ function tcontract(::Algorithm"RTMsym",
 
         s = siteinds(uniqueinds, A, ψ, j)
 
-        rho = E[j + 1] * L * L''
+        # `L''` is the *transposed* copy of L (the RTM is |psi*><psi|): with QNs that means
+        # reversed arrows and untouched data, a no-op without QNs.
+        rho = E[j + 1] * L * prime(transpose_arrows(L), 2)
         l = linkind(ψ, j)
         ts = isnothing(l) ? "" : tags(l)
         Lis = isnothing(l_renorm) ? IndexSet(s...) : IndexSet(s..., l_renorm)
+        # right-hand indices of rho: they sit on the *transposed* copy, so with QNs they
+        # carry the reversed arrows (`dag` is a no-op without QNs)
+        Ris = dag.(prime(Lis, 2))
 
         #@assert ndims(rho) < 5 " $j $(inds(rho))"
 
 
         U, S, l_renorm, L  = if use_eig
-            F = symm_oeig(rho, Lis, Lis''; cutoff, maxdim=bond_maxdim, lefttags=ts, kwargs...)
+            F = symm_oeig(rho, Lis, Ris; cutoff, maxdim=bond_maxdim, lefttags=ts, kwargs...)
             F.V, F.D, F.l, L * F.V * ψ[j+1] * A[j+1]
 
         else
-            F = symm_svd(rho, Lis, Lis''; cutoff, maxdim=bond_maxdim, lefttags=ts, kwargs...)
+            F = symm_svd(rho, Lis, Ris; cutoff, maxdim=bond_maxdim, lefttags=ts, kwargs...)
             F.U, F.S, F.u, L * dag(F.U) * ψ[j+1] * A[j+1]
 
         end
@@ -238,7 +249,7 @@ function tcontract(::Algorithm"RTMsym",
         ψ_out[j] = U
 
 
-        Svec = Array(storage(S).data)/sum(S)
+        Svec = spectrum_vector(S)/sum(S)
  
         SV_all[j, 1:length(Svec)] .= Svec
     

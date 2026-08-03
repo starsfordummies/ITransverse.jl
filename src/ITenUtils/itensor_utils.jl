@@ -62,14 +62,28 @@ end
 
 
 
+"""
+    transpose_matrix(a::ITensor, i::Index, j::Index)
+
+Transpose of a matrix-like ITensor in its `(i,j)` legs.
+
+With QNs `i` and `j` are dual, so a plain `swapinds` would leave the arrows inconsistent and
+even `a - swapinds(a,i,j)` is not a well-formed subtraction. Reversing the arrows first
+([`transpose_arrows`](@ref)) and then swapping the labels back gives a tensor carrying
+*exactly* the original indices with the data transposed. Reduces to `swapinds(a, i, j)`
+without QNs.
+"""
+transpose_matrix(a::ITensor, i::Index, j::Index) =
+    hasqns(a) ? swapinds(transpose_arrows(a), (i, j), (j, i)) : swapinds(a, (i,), (j,))
+
 function symmetrize(a::ITensor; tol=1e-6, check=true)
     i, j = inds(a)
-    
+
     if dim(i) != dim(j)
         error("Not a square matrix! Dimensions are $(dim(i)) × $(dim(j))")
     end
 
-    a_T = swapinds(a, (i,), (j,))
+    a_T = transpose_matrix(a, i, j)
 
     if check
         asym = norm(a - a_T) / norm(a)
@@ -79,13 +93,89 @@ function symmetrize(a::ITensor; tol=1e-6, check=true)
     return (a + a_T) / 2
 end
 
+
+"""
+    spectrum_vector(S::ITensor)
+
+The diagonal of `S` (singular values or eigenvalues) as a plain vector, in *global*
+descending order of magnitude.
+
+Needed because with QNs the storage of a diagonal tensor is laid out block by block, so the
+raw `storage(S).data` is a concatenation of per-block spectra and is not globally ordered:
+when block dimensions shift between iterations the concatenated vector reorders, which makes
+iteration-to-iteration comparisons (the power-method `ds`) spike spuriously. Without QNs the
+values already come out ordered and this returns them untouched.
+"""
+function spectrum_vector(S::ITensor)
+    v = Array(storage(S).data)
+    return hasqns(S) ? sort(v; by=abs, rev=true) : v
+end
+
+""" Raise a clear error when a routine that has no block-sparse implementation is handed
+QN-conserving tensors. Without this they would silently densify (returning tensors with a
+mix of QN and plain indices), which is far worse than failing. """
+function no_qns_supported(what::AbstractString, x; hint="Use alg=\"naive\" or \"densitymatrix\" instead, or build the chain without QNs.")
+    hasqns(x) && error("""
+        $(what) has no QN (block-sparse) implementation: it goes through a dense matrix
+        decomposition and would silently drop the symmetry structure.
+        $(hint)""")
+    return x
+end
+
+"""
+    transpose_arrows(A)
+
+Reverse the QN arrows of `A` (ITensor, MPS or MPO) **without** conjugating its data, ie.
+`dag ∘ conj`. This is what turns a ket into the corresponding "transposed bra" used by all
+the no-conjugation contractions here (⟨ψ*|ψ⟩ and friends): with QNs a state cannot be
+contracted with itself, since both copies carry the same arrows.
+
+Exactly the identity for objects without QNs, so it can be applied unconditionally.
+"""
+transpose_arrows(A::ITensor) = dag(conj(A))
+transpose_arrows(M::AbstractMPS) = dag(conj(M))
+
+""" `true` if `ll` and `rr` cannot be contracted site-by-site because their site indices
+carry the same QN arrows (in which case one of them needs [`transpose_arrows`](@ref)). """
+function arrows_clash(ll::AbstractMPS, rr::AbstractMPS)
+    (hasqns(ll) && hasqns(rr)) || return false
+    return any(dir(a) == dir(b) for (a, b) in zip(allsiteinds(ll), allsiteinds(rr)))
+end
+
+"""
+    arrow_match(stored::Index, target::Index)
+
+Return `target` (or `dag(target)`) carrying the arrow that lets it stand in for `stored`,
+ie. the one for which `delta(dag(stored), arrow_match(stored, target))` is a legal QN delta.
+No-op for indices without QNs, so it can be sprinkled unconditionally.
+"""
+arrow_match(stored::Index, target::Index) =
+    (hasqns(stored) && hasqns(target) && dir(stored) != dir(target)) ? dag(target) : target
+
+""" The leg of `T` that matches `i` by id and prime level, ie. `i` *as stored* in `T`
+(the same index, but possibly carrying the opposite arrow). """
+function stored_ind(T::ITensor, i::Index)
+    k = findfirst(x -> id(x) == id(i) && plev(x) == plev(i), collect(inds(T)))
+    isnothing(k) && error("index $(i) not found in tensor with inds $(inds(T))")
+    return inds(T)[k]
+end
+
 """Computes norm difference of tensor vs itself with two indices (i,j) swapped"""
 function normdiff_under_swap(T::ITensor, i::Index, j::Index)
     return norm(T - swapinds(T, (i,), (j,)))
 end
 
-"""Checks if ITensor T is symmetric under swap of indices (i,j) (up to atol)"""
+""" Checks if ITensor T is symmetric under swap of indices (i,j) (up to atol).
+
+Skipped for QN tensors: the two legs carry dual arrows (and generally differently ordered
+QN blocks), so `T - swapinds(T,i,j)` is not even a well-formed subtraction there. Returns
+`missing` in that case - it is a diagnostic only, nothing downstream depends on the value.
+"""
 function check_symmetry_swap(T::ITensor, i::Index, j::Index; atol=1e-12, verbose::Bool=true)
+    if hasqns(T)
+        verbose && @info "Symmetry check skipped for QN tensor ($i <-> $j carry dual arrows)"
+        return missing
+    end
     norm_diff = normdiff_under_swap(T, i, j)
     is_sym = norm_diff < atol
     if verbose

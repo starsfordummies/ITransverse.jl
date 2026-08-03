@@ -33,7 +33,7 @@ end
 left *= combiner(inds(left,plev=1), tags="left")
 left *= combiner(inds(left,plev=2), tags="right")
 
-eigs_rho_left, _ = eigen(left, inds(left)...; cutoff=1e-14)
+eigs_rho_left, _ = ceigen(left, inds(left)...; cutoff=1e-14)
 _, svs_rho_left, _ = svd(left, ind(left,1); cutoff=1e-14)
 
 right = ITensor(1)
@@ -53,7 +53,7 @@ right *= combiner(inds(right,plev=1), tags="left")
 right *= combiner(inds(right,plev=2), tags="right")
 
 
-eigs_rho_right, _ = eigen(right, inds(right)...; cutoff=1e-14)
+eigs_rho_right, _ = ceigen(right, inds(right)...; cutoff=1e-14)
 _, svs_rho_right, _ = svd(right, ind(right,1); cutoff=1e-14)
 
 
