@@ -2,9 +2,14 @@ using ITensors, ITensorMPS, ITransverse
 using Test
 using LinearAlgebra
 
+using Random
+
 using ITransverse: boundary_tensor, close_boundary, fold_boundary, to_boundary,
     check_boundary, boundary_bond_ind, boundary_phys_ind, n_boundary_sites,
     is_product_boundary, boundary_linkdim
+
+# random boundary states below; seed so the tolerances mean something run to run
+Random.seed!(20250803)
 
 # Non-product (bond dimension > 1) initial/final states for the transverse builders.
 # Reference values always come from a plain real-space contraction of a finite TN.
@@ -114,7 +119,7 @@ end
 
     psi_t = MPS([ITensor(v0, s) for s in ss])
     for _ in 1:Nt
-        psi_t = apply(U, psi_t)
+        psi_t = apply(U, psi_t; alg="naive", truncate=false)
     end
 
     # network with <vf| taken as given (no conjugation)
@@ -167,7 +172,7 @@ end
 
     psi_t = psi_i
     for _ in 1:Nt
-        psi_t = apply(U, psi_t)
+        psi_t = apply(U, psi_t; alg="naive", truncate=false)
     end
 
     @testset "product final state" begin
@@ -352,7 +357,7 @@ end
     psi_i = ti_mps(A, ss[2], il, ir, vL, vR, ss)
     psi_t = psi_i
     for _ in 1:nfw
-        psi_t = apply(U, psi_t)
+        psi_t = apply(U, psi_t; alg="naive", truncate=false)
     end
     ref = inner(psi_t, psi_t)   # <psi(t)|1|psi(t)>
 

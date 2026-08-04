@@ -1,6 +1,13 @@
 using ITensors, ITensorMPS
 using ITransverse
 using Test
+using Random
+
+# The comparisons below pit a *truncated* folded contraction against the unfolded amplitude
+# squared with a 1e-4 relative tolerance, so the margin depends on the random initial state:
+# unseeded, this file failed intermittently (observed 2.6e-4 on an unlucky draw, against
+# 4e-6..1e-5 typically). Seed it so the tolerance means something.
+Random.seed!(20250803)
 
 @testset "Testing that folded+projector is the same as amplitude^2 using transverse contraction " begin
 
