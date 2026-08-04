@@ -130,10 +130,13 @@ Reverse the QN arrows of `A` (ITensor, MPS or MPO) **without** conjugating its d
 the no-conjugation contractions here (⟨ψ*|ψ⟩ and friends): with QNs a state cannot be
 contracted with itself, since both copies carry the same arrows.
 
-Exactly the identity for objects without QNs, so it can be applied unconditionally.
+Exactly the identity for objects without QNs, so it can be applied unconditionally - and in
+that case the input is returned *as is*, since `dag(conj(x))` would otherwise copy the data
+twice to reproduce it (the callers only read the result). That matters: these helpers sit in
+the inner loops of the RTM sweeps, where the copies cost ~10% of the allocations.
 """
-transpose_arrows(A::ITensor) = dag(conj(A))
-transpose_arrows(M::AbstractMPS) = dag(conj(M))
+transpose_arrows(A::ITensor) = hasqns(A) ? dag(conj(A)) : A
+transpose_arrows(M::AbstractMPS) = hasqns(M) ? dag(conj(M)) : M
 
 """ `true` if `ll` and `rr` cannot be contracted site-by-site because their site indices
 carry the same QN arrows (in which case one of them needs [`transpose_arrows`](@ref)). """
@@ -155,9 +158,12 @@ arrow_match(stored::Index, target::Index) =
 """ The leg of `T` that matches `i` by id and prime level, ie. `i` *as stored* in `T`
 (the same index, but possibly carrying the opposite arrow). """
 function stored_ind(T::ITensor, i::Index)
-    k = findfirst(x -> id(x) == id(i) && plev(x) == plev(i), collect(inds(T)))
-    isnothing(k) && error("index $(i) not found in tensor with inds $(inds(T))")
-    return inds(T)[k]
+    # iterate the index tuple directly: `collect`ing it here would allocate on every leg of
+    # every site, which shows up in the builders
+    for x in inds(T)
+        (id(x) == id(i) && plev(x) == plev(i)) && return x
+    end
+    return error("index $(i) not found in tensor with inds $(inds(T))")
 end
 
 """Computes norm difference of tensor vs itself with two indices (i,j) swapped"""
