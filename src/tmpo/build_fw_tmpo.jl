@@ -122,7 +122,9 @@ function fw_tMPS(
     tMPS = MPS(Ntot)
 
     for ii = 1:Ntot
-        Wii = ii <= b1 ? W_im : (ii <= b2 ? W : dag(W_im))
+        # closing beta block = conjugate of the opening one; `conj`, not `dag`, so the arrows
+        # are not reversed with QNs (see the same point in `fw_tMPO_open_edges`)
+        Wii = ii <= b1 ? W_im : (ii <= b2 ? W : conj(W_im))
         # take the legs *as stored* (the edge tensors Wl/Wr carry their own arrows) and
         # match the arrow of each replacement; all of this is inert without QNs
         sT, lT, rT = stored_ind(Wii, iP), stored_ind(Wii, iL), stored_ind(Wii, iR)
@@ -173,8 +175,12 @@ function fw_tMPO_open_edges(b::FwtMPOBlocks, time_sites::Vector{<:Index}; nbeta=
     for ii = b1+1:b2
         tMPO[ii] = replaceinds(Wc, (iP, iPs, iL, iR), newinds(ii))
     end
+    # The closing beta block is the *conjugate* of the opening one. Spell that `conj`, not
+    # `dag`: with QNs `dag` also reverses every arrow, which flips the two link legs of these
+    # tensors and breaks the chain (site b2 would hand an `Out` leg to another `Out`), and
+    # then `attach_boundary_top!` cannot contract the hook. `conj` == `dag` without QNs.
     for ii = b2+1:Ntot
-        tMPO[ii] = replaceinds(dag(Wc_im), (iP, iPs, iL, iR), newinds(ii))
+        tMPO[ii] = replaceinds(conj(Wc_im), (iP, iPs, iL, iR), newinds(ii))
     end
 
     return tMPO, time_links[1], time_links[end]
