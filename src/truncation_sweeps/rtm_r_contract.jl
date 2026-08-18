@@ -13,14 +13,15 @@ function trcontract(::Algorithm"RTM",
         maxdim::Int = max(maxlinkdim(ψL), maxlinkdim(AR) * maxlinkdim(ψR)),
         mindim::Int = 1,
         preserve_mps_tags::Bool = false,
-        compute_ov_before::Bool = true, # we actually do it anyway 
+        compute_ov_before::Bool = true, # we actually do it anyway
         direction = :right,
+        factored::Union{Bool,Symbol} = true, # QR-factorized RTM SVD; see rtm_svd.jl
         kwargs...,
     )
     if direction == :right
-        L, R, sv, ovb = _trcontract_rtm_right(ψL, AR, ψR; cutoff, maxdim, mindim, preserve_mps_tags, kwargs...)
+        L, R, sv, ovb = _trcontract_rtm_right(ψL, AR, ψR; cutoff, maxdim, mindim, preserve_mps_tags, factored, kwargs...)
     elseif direction == :left
-        L, R, sv, ovb = _trcontract_rtm_left(ψL, AR, ψR; cutoff, maxdim, mindim, preserve_mps_tags, kwargs...)
+        L, R, sv, ovb = _trcontract_rtm_left(ψL, AR, ψR; cutoff, maxdim, mindim, preserve_mps_tags, factored, kwargs...)
     else
         error("direction must be :left or :right, got :$(direction)")
     end
@@ -36,7 +37,7 @@ end
 
 """ Builds LEFT environments, sweeps RIGHT→LEFT """
 function _trcontract_rtm_left(ψL::MPS, AR::MPO, ψR::MPS;
-        cutoff, maxdim, mindim, preserve_mps_tags, kwargs...)
+        cutoff, maxdim, mindim, preserve_mps_tags, factored::Union{Bool,Symbol}=true, kwargs...)
 
     ### Indices prime contractions conventions
     # ψL--p'--AL--p--     --p'--AR--p--ψR 
@@ -90,16 +91,12 @@ function _trcontract_rtm_left(ψL::MPS, AR::MPO, ψR::MPS;
     for j in reverse(1:nL-1)
         maxdim = min(dim(commoninds(R, E[j])), dim(commoninds(L, E[j])), requested_maxdim)
 
-        rho = E[j] * L * R
-        @assert ndims(rho) < 5 "inds(rho) @site $j ? $(inds(rho))"
-
         tsR = preserve_mps_tags ? tags(linkind(ψR, j)) : "Link,l=$(j)"
         tsL = preserve_mps_tags ? tags(linkind(ψL, j)) : "Link,l=$(j)"
 
         Ris = isnothing(r_renorm) ? IndexSet(sR[j+1]) : IndexSet(sR[j+1], r_renorm)
-        F   = svd(rho, Ris; cutoff, maxdim, mindim, lefttags=tsR, righttags=tsL, kwargs...)
-        S, U, V  = F.S, F.U, F.V
-        r_renorm = F.u
+        U, S, V, r_renorm = svd_rtm(E[j], R, L, Ris; factored, cutoff, maxdim, mindim,
+                                    lefttags=tsR, righttags=tsL, kwargs...)
 
         ψR_out[j+1] = U
         ψL_out[j+1] = V
@@ -128,7 +125,7 @@ end
 
 """ Builds RIGHT environments, sweeps LEFT→RIGHT """
 function _trcontract_rtm_right(ψL::MPS, AR::MPO, ψR::MPS;
-        cutoff, maxdim, mindim, preserve_mps_tags, kwargs...)
+        cutoff, maxdim, mindim, preserve_mps_tags, factored::Union{Bool,Symbol}=true, kwargs...)
 
     N  = length(ψL)
     nR = length(ψR)
@@ -166,9 +163,6 @@ function _trcontract_rtm_right(ψL::MPS, AR::MPO, ψR::MPS;
     for j in 2:N
         maxdim = min(dim(commoninds(R, E[j])), dim(commoninds(L, E[j])), requested_maxdim)
 
-        rho = E[j] * R * L
-        @assert ndims(rho) < 5 "inds(rho) @site $j ? $(inds(rho))"
-
         tsR = if preserve_mps_tags
             linkR = j-1 < nR ? linkind(ψR, j-1) : nothing
             isnothing(linkR) ? "" : tags(linkR)
@@ -183,9 +177,8 @@ function _trcontract_rtm_right(ψL::MPS, AR::MPO, ψR::MPS;
         end
 
         Lis = isnothing(l_renorm) ? IndexSet(sR[j-1]) : IndexSet(sR[j-1], l_renorm)
-        F   = svd(rho, Lis; cutoff, maxdim, mindim, lefttags=tsR, righttags=tsL, kwargs...)
-        S, U, V  = F.S, F.U, F.V
-        l_renorm = F.u
+        U, S, V, l_renorm = svd_rtm(E[j], R, L, Lis; factored, cutoff, maxdim, mindim,
+                                    lefttags=tsR, righttags=tsL, kwargs...)
 
         ψR_out[j-1] = U
         ψL_out[j-1] = V

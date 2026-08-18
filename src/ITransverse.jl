@@ -119,6 +119,7 @@ include("truncation_sweeps/sweeps_sym.jl")
 include("truncation_sweeps/gen_orthogonalize.jl")
 include("truncation_sweeps/gen_form_checks.jl")
 include("truncation_sweeps/trunclr_apply.jl")
+include("truncation_sweeps/rtm_svd.jl")
 include("truncation_sweeps/rtm_r_contract.jl")
 include("truncation_sweeps/rtm_lr_contract.jl")
 
@@ -127,6 +128,7 @@ export truncate_lsweep_sym, truncate_rsweep_sym, truncate_sweep_sym
 
 export tlapply, trapply, tlrapply
 export TruncLR
+export svd_rtm
 
 export gen_canonical
 

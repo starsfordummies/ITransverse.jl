@@ -12,15 +12,16 @@ function tlrcontract(::Algorithm"RTM",
         maxdim::Int = max(maxlinkdim(AL) * maxlinkdim(ψL), maxlinkdim(AR) * maxlinkdim(ψR)),
         mindim::Int = 1,
         preserve_mps_tags::Bool = false,
-        compute_ov_before::Bool = true, # we actually do it anyway 
+        compute_ov_before::Bool = true, # we actually do it anyway
         direction = :right,
+        factored::Union{Bool,Symbol} = true, # QR-factorized RTM SVD; see rtm_svd.jl
         kwargs...,
     )
 
     if direction == :right
-        L, R, sv, ovb = _tlrcontract_rtm_right(ψL, AL, AR, ψR; cutoff, maxdim, mindim, preserve_mps_tags, kwargs...)
+        L, R, sv, ovb = _tlrcontract_rtm_right(ψL, AL, AR, ψR; cutoff, maxdim, mindim, preserve_mps_tags, factored, kwargs...)
     elseif direction == :left
-        L, R, sv, ovb = _tlrcontract_rtm_left(ψL, AL, AR, ψR; cutoff, maxdim, mindim, preserve_mps_tags, kwargs...)
+        L, R, sv, ovb = _tlrcontract_rtm_left(ψL, AL, AR, ψR; cutoff, maxdim, mindim, preserve_mps_tags, factored, kwargs...)
     else
         error("direction must be :left or :right, got :$(direction)")
     end
@@ -37,7 +38,7 @@ end
 
 """ Builds LEFT environments, sweeps RIGHT→LEFT (opt. tauB = trA(tau) )"""
 function _tlrcontract_rtm_left(ψL::MPS, AL::MPO, AR::MPO, ψR::MPS;
-        cutoff, maxdim, mindim, preserve_mps_tags, kwargs...)
+        cutoff, maxdim, mindim, preserve_mps_tags, factored::Union{Bool,Symbol}=true, kwargs...)
 
     NL = length(AL)
     NR = length(AR)
@@ -84,17 +85,15 @@ function _tlrcontract_rtm_left(ψL::MPS, AL::MPO, AR::MPO, ψR::MPS;
     # Step 3: sweep right → left
     for j in reverse(1:n-1)
         maxdim = min(dim(commoninds(R, E[j])), dim(commoninds(L, E[j])), requested_maxdim)
-        rho    = E[j] * L * R
 
         tsR = preserve_mps_tags ? (l = linkind(ψR, j); isnothing(l) ? "" : tags(l)) : "Link,l=$(j)"
         tsL = preserve_mps_tags ? (l = linkind(ψL, j); isnothing(l) ? "" : tags(l)) : "Link,l=$(j)"
 
         Ris = isnothing(renorm_idx) ? IndexSet(sR[j+1]) : IndexSet(sR[j+1], renorm_idx)
 
-        # We associate the "U" SVD branch to the R, the "V" to the L 
-        F = svd(rho, Ris; cutoff, maxdim, mindim, lefttags=tsR, righttags=tsL, kwargs...)
-        S, U, V  = F.S, F.U, F.V
-        renorm_idx = F.u
+        # We associate the "U" SVD branch to the R, the "V" to the L
+        U, S, V, renorm_idx = svd_rtm(E[j], R, L, Ris; factored, cutoff, maxdim, mindim,
+                                      lefttags=tsR, righttags=tsL, kwargs...)
 
         ψR_out[j+1] = U
         ψL_out[j+1] = V
@@ -104,7 +103,7 @@ function _tlrcontract_rtm_left(ψL::MPS, AL::MPO, AR::MPO, ψR::MPS;
 
         #@show ndims(R), ndims(L)
 
-        Svec = collect(S.tensor.storage.data) ./ sum(S)
+        Svec = spectrum_vector(S) ./ sum(S)
         S_all[j, 1:length(Svec)] .= Svec
     end
 
@@ -121,7 +120,7 @@ end
 
 """ Builds RIGHT environments, sweeps LEFT→RIGHT (opt. tauA=trB(tau) ) """
 function _tlrcontract_rtm_right(ψL::MPS, AL::MPO, AR::MPO, ψR::MPS;
-        cutoff, maxdim, mindim, preserve_mps_tags, kwargs...)
+        cutoff, maxdim, mindim, preserve_mps_tags, factored::Union{Bool,Symbol}=true, kwargs...)
 
     AL  = AL'
     ψL  = ψL''
@@ -165,16 +164,14 @@ function _tlrcontract_rtm_right(ψL::MPS, AL::MPO, AR::MPO, ψR::MPS;
     # Step 3: sweep left → right
     for j in 2:n
         maxdim = min(dim(commoninds(R, E[j])), dim(commoninds(L, E[j])), requested_maxdim)
-        rho    = E[j] * R * L 
 
         tsR = preserve_mps_tags ? (l = linkind(ψR, j-1); isnothing(l) ? "" : tags(l)) : "Link,l=$(j-1)"
         tsL = preserve_mps_tags ? (l = linkind(ψL, j-1); isnothing(l) ? "" : tags(l)) : "Link,l=$(j-1)"
 
         Ris = isnothing(renorm_idx) ? IndexSet(sR[j-1]) : IndexSet(sR[j-1], renorm_idx)
 
-        F = svd(rho, Ris; cutoff, maxdim, mindim, lefttags=tsR, righttags=tsL, kwargs...)
-        S, U, V  = F.S, F.U, F.V
-        renorm_idx = F.u  
+        U, S, V, renorm_idx = svd_rtm(E[j], R, L, Ris; factored, cutoff, maxdim, mindim,
+                                      lefttags=tsR, righttags=tsL, kwargs...)
 
         ψR_out[j-1] = U
         ψL_out[j-1] = V
