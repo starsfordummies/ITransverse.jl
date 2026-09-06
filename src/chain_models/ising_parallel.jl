@@ -172,35 +172,46 @@ function expH_ising_symm_svd_3site(Jtwo::Number, hperp::Number, λpar::Number; d
 end
 
 
-function expH_ising_murg_4o(sites::Vector{<:Index}, mp::IsingParams; dt::Number)
-    p = 1.0/(4- 4^(1/3))
-    U1 = expH_ising_murg(sites, mp; dt=p*dt)
-    U2 = expH_ising_murg(sites, mp; dt=(1-4p)*dt)
+"""
+    expH_ising_murg_4o(sites, mp; dt) -> MPO
 
-    UU1 = applyn(U1,U1)
-    U4 = applyn(U2, UU1)
-    U4 = applyn(UU1, U4)
+4th-order Ising step: the Suzuki five-fold composition `[p,p,1-4p,p,p]` of the
+Murg gate, `p = 1/(4-4^{1/3})`. Genuinely 4th order because `expH_ising_murg` is
+an exact palindromic Strang splitting, hence time-self-adjoint.
 
-end
+Bond dimension `2^5 = 32`. Thin wrapper over
+`build_Ut(sites, Murg(), mp; dt, compose=:suzuki5)`; see [`compose_steps`](@ref).
+"""
+expH_ising_murg_4o(sites::Vector{<:Index}, mp::IsingParams; dt::Number) =
+    build_Ut(sites, Murg(), mp; dt, compose=:suzuki5)
 
-""" Not sure what order is this anymore """ 
-function expH_ising_murg_xo(
-    sites::Vector{<:Index},
-    mp::IsingParams;
-    dt::Number)
+"""
+    expH_ising_murg_yoshida(sites, mp; dt) -> MPO
 
-    tfac = 2^(1/3)
-    dt1 = 1/(2-tfac)
-    dt2 = -tfac/(2-tfac)
+4th-order Ising step by **Yoshida's triple jump** (Phys. Lett. A 150 (1990) 262):
+three Murg factors at `[w, 1-2w, w]` with `w = 1/(2-2^{1/3}) ≈ 1.3512`, so the
+middle sub-step is a large backward one, `1-2w ≈ -1.7024`. The weights sum to 1
+and the composition is palindromic, so like [`expH_ising_murg_4o`](@ref) it is
+genuinely 4th order (measured local slope 5).
 
-    U1 = expH_ising_murg(sites, mp; dt = dt*dt1)
-    U2 = expH_ising_murg(sites, mp; dt = dt*dt2)
+Two factors fewer than the five-fold composition, at a ~19× larger error
+constant (measured). As an integrator that is a losing trade — matching accuracy
+needs `dt` smaller by `19.5^(1/4) ≈ 2.1`, i.e. ~6.3 gate applications per unit
+time against 5. What it buys is a **composite of bond dimension `D^3` instead of
+`D^5`** (8 instead of 32 for Murg; 216 instead of 7776, and 0.03 s instead of
+26 s, for a `Ghent3` base), which is what matters when the composite is an
+intermediate to be built and contracted densely rather than applied — the input
+to `ti_sym_gate`, above all.
 
-    U4 = applyn(U2, U1; truncate=false)
-    U4 = applyn(U1, U4; truncate=false)
+Thin wrapper over `build_Ut(sites, Murg(), mp; dt, compose=:yoshida3)`; see
+[`compose_steps`](@ref) for the full comparison.
+"""
+expH_ising_murg_yoshida(sites::Vector{<:Index}, mp::IsingParams; dt::Number) =
+    build_Ut(sites, Murg(), mp; dt, compose=:yoshida3)
 
-    return U4
-end
+""" Old name for [`expH_ising_murg_yoshida`](@ref) — `xo` meant "unidentified
+order"; it is Yoshida's triple jump, and it is 4th order. """
+const expH_ising_murg_xo = expH_ising_murg_yoshida
 
 
 
