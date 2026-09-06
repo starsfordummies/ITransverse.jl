@@ -173,7 +173,8 @@ export boundary_tensor,
     attach_boundary_top!
 
 include("tmpo/sided_mps.jl")
-export SidedMPS, sided, side, apply_column, tapply_column, flipside
+export SidedMPS, sided, side, apply_column, tapply_column, flipside,
+    n_boundary_bottom, n_boundary_top
 
 include("tmpo/tmpo_params.jl")
 export tMPOParams, ising_tp

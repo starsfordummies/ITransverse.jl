@@ -133,12 +133,19 @@ function fw_tMPS(
                    delta(dag(rT), arrow_match(rT, dag(rot_links_mps[ii+1])))
     end
 
-    # Contract edges with boundary states
+    # Contract edges with boundary states. A non-product boundary is *appended* as its own
+    # site, so count what each end added: afterwards nothing in the MPS distinguishes a
+    # boundary site from a time site (see `SidedMPS`).
+    nb = length(tMPS)
     attach_boundary_bottom!(tMPS, bl, rot_links_mps[1])
+    nbot = length(tMPS) - nb
+
+    nb = length(tMPS)
     attach_boundary_top!(tMPS, tr, rot_links_mps[end]; dagger=dagger_tr)
+    ntop = length(tMPS) - nb
 
     # `sided=true` keeps track of which edge this vector is, see `SidedMPS`
-    return sided ? SidedMPS(tMPS, LR) : tMPS
+    return sided ? SidedMPS(tMPS, LR, nbot, ntop) : tMPS
 end
 
 

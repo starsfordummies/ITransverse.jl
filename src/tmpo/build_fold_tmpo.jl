@@ -32,9 +32,13 @@ end
 
 """ Folded (edge) tMPS. `rho0`/`fold_op` are the bottom/top boundary states: (folded)
 product states or rank-2 edge tensors of a non-product boundary MPS, which add one site
-to the chain (see [`boundary_tensor`](@ref), [`close_boundary`](@ref), [`fold_boundary`](@ref)). """
+to the chain (see [`boundary_tensor`](@ref), [`close_boundary`](@ref), [`fold_boundary`](@ref)).
+
+`sided=true` returns a [`SidedMPS`](@ref), which remembers both the side and how many
+boundary sites each end added - the only reliable way to tell those apart from time sites
+afterwards. """
 function folded_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index}; LR::Symbol=:right,
-    init_beta_only::Bool=true, rho0=b.rho0, fold_op=nothing)
+    init_beta_only::Bool=true, rho0=b.rho0, fold_op=nothing, sided::Bool=false)
 
     if !init_beta_only
         error("init_beta on both sides not implemented yet")
@@ -67,10 +71,18 @@ function folded_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index}; LR::Symbol=:right,
         psi[ii] = replaceinds(psi[ii], WWinds, newinds)
     end
 
+    # A non-product boundary is *appended* as its own site; count what each end added, see
+    # the same point in `fw_tMPS`.
+    nb = length(psi)
     attach_boundary_bottom!(psi, rho0, tlinks[1])
-    attach_boundary_top!(psi, something(fold_op, vectorized_identity(tlinks[end])), tlinks[end])
+    nbot = length(psi) - nb
 
-    return psi
+    nb = length(psi)
+    attach_boundary_top!(psi, something(fold_op, vectorized_identity(tlinks[end])), tlinks[end])
+    ntop = length(psi) - nb
+
+    # `sided=true` keeps track of which edge this vector is, see `SidedMPS`
+    return sided ? SidedMPS(psi, LR, nbot, ntop) : psi
 end
 
 
