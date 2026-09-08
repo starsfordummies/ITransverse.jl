@@ -39,9 +39,6 @@ end
 # Positional constructor for backward compatibility: IsingParams(J, g, h)
 IsingParams(Jtwo::Number, gperp::Number, hpar::Number; phys_site::Index=Index(2, "S=1/2")) =
     IsingParams(; Jtwo=Float64(Jtwo), gperp=Float64(gperp), hpar=Float64(hpar), phys_site)
-# Copy constructor
-IsingParams(x::IsingParams; Jtwo=x.Jtwo, gperp=x.gperp, hpar=x.hpar) =
-    IsingParams(; Jtwo, gperp, hpar)
 
 
 """
@@ -62,9 +59,6 @@ end
 # Positional constructor for backward compatibility: PottsParams(J, f)
 PottsParams(JSS::Number, ftau::Number; phys_site::Index=Index(3, "S=1")) =
     PottsParams(; JSS=Float64(JSS), ftau=Float64(ftau), phys_site)
-# Copy constructor
-PottsParams(x::PottsParams; JSS=x.JSS, ftau=x.ftau) =
-    PottsParams(; JSS, ftau)
 
 
 """
@@ -90,6 +84,3 @@ XXZParams(J_XY::Number, J_ZZ::Number, hz::Number=0.0) =
     XXZParams(; J_XY=Float64(J_XY), J_ZZ=Float64(J_ZZ), hz=Float64(hz))
 XXZParams(J_XY::Number, J_ZZ::Number, hz::Number, phys_site::Index) =
     XXZParams(; J_XY=Float64(J_XY), J_ZZ=Float64(J_ZZ), hz=Float64(hz), phys_site)
-# Copy constructor
-XXZParams(x::XXZParams; J_XY=x.J_XY, J_ZZ=x.J_ZZ, hz=x.hz) =
-    XXZParams(; J_XY, J_ZZ, hz, phys_site=x.phys_site)
