@@ -93,7 +93,7 @@ function main_finite_nonproduct(; L=10, Nt=14, dt=0.1, chi0=3, chif=4,
     rr = fw_tMPS(b, time_sites; LR=:right, bl=in0.colR, tr=fin.colR)
     ll = fw_tMPS(b, time_sites; LR=:left,  bl=in0.colL, tr=fin.colL)
 
-    @info "transverse column" nsites=length(rr) Nt n_bottom=n_boundary_bottom(rr) n_top=n_boundary_top(rr)
+@info "transverse column" nsites=length(rr) Nt n_bottom=n_boundary_sites(in0.colR) n_top=n_boundary_sites(fin.colR)
     @assert length(rr) == Nt + 2
     @assert first(siteinds(MPS(rr))) == in0.s
     @assert last(siteinds(MPS(rr)))  == fin.s
