@@ -2,9 +2,9 @@
 """
 Result of a truncated left-right contraction.
 """
-struct TruncLR{TSV}
-    L::MPS
-    R::MPS
+struct TruncLR{TSV, TV <: TMPSorMPS}
+    L::TV
+    R::TV
     sv::Matrix{TSV}
     ov_before::ComplexF64 # overlap before truncation
     ov_after::ComplexF64   # overlap after truncation
@@ -138,8 +138,8 @@ end
 
 
 # Generic wrappers 
-tlapply(ψL::MPS, A::MPO, ψR::MPS; alg=Algorithm(:naiveRTM), kwargs...) = tlapply(Algorithm(alg), ψL, A, ψR; kwargs...)
-trapply(ψL::MPS, A::MPO, ψR::MPS; alg=Algorithm(:naiveRTM), kwargs...) = trapply(Algorithm(alg), ψL, A, ψR; kwargs...)
+tlapply(ψL::TMPSorMPS, A::MPO, ψR::TMPSorMPS; alg=Algorithm(:naiveRTM), kwargs...) = tlapply(Algorithm(alg), unsided(ψL), A, unsided(ψR); kwargs...)
+trapply(ψL::TMPSorMPS, A::MPO, ψR::TMPSorMPS; alg=Algorithm(:naiveRTM), kwargs...) = trapply(Algorithm(alg), unsided(ψL), A, unsided(ψR); kwargs...)
 
 
 """
@@ -149,4 +149,4 @@ Convention: when direction=:left, we PTR over left environments and, going right
 we SVD τ_R = tr_L(τ). \\
 Returns `TruncLR` (destructures as `(LEFT, RIGHT, SV)`)
 """
-tlrapply(ψL::MPS, AL::MPO, AR::MPO, ψR::MPS; alg=Algorithm(:naiveRTM), kwargs...) = tlrapply(Algorithm(alg), ψL, AL, AR, ψR; kwargs...)
+tlrapply(ψL::TMPSorMPS, AL::MPO, AR::MPO, ψR::TMPSorMPS; alg=Algorithm(:naiveRTM), kwargs...) = tlrapply(Algorithm(alg), unsided(ψL), AL, AR, unsided(ψR); kwargs...)

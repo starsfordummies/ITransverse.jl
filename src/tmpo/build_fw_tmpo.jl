@@ -82,7 +82,10 @@ end
 """ Forward (edge) tMPS. `bl`/`tr` are the bottom/top boundary states: product states
 (vectors) or rank-2 edge tensors of a non-product boundary MPS, which add one site
 to the chain (see [`boundary_tensor`](@ref), [`close_boundary`](@ref)).
-`tr` is conjugated unless `dagger_tr=false`; it must match the tMPO it is used with. """
+`tr` is conjugated unless `dagger_tr=false`; it must match the tMPO it is used with.
+
+Returns a [`TransverseMPS`](@ref): the side and the boundary-site counts travel with the
+state. `MPS(...)` unwraps it. """
 function fw_tMPS(
     b::FwtMPOBlocks,
     time_sites::Vector{<:Index};
@@ -92,7 +95,6 @@ function fw_tMPS(
     dagger_tr::Bool=true,
     LR::Symbol = :right,
     init_beta_only::Bool=false,
-    sided::Bool=false
 )
 
     Ntot = length(time_sites)
@@ -133,19 +135,13 @@ function fw_tMPS(
                    delta(dag(rT), arrow_match(rT, dag(rot_links_mps[ii+1])))
     end
 
-    # Contract edges with boundary states. A non-product boundary is *appended* as its own
-    # site, so count what each end added: afterwards nothing in the MPS distinguishes a
-    # boundary site from a time site (see `SidedMPS`).
-    nb = length(tMPS)
+    # Contract edges with boundary states (a non-product one is appended as its own site).
     attach_boundary_bottom!(tMPS, bl, rot_links_mps[1])
-    nbot = length(tMPS) - nb
 
-    nb = length(tMPS)
     attach_boundary_top!(tMPS, tr, rot_links_mps[end]; dagger=dagger_tr)
-    ntop = length(tMPS) - nb
 
-    # `sided=true` keeps track of which edge this vector is, see `SidedMPS`
-    return sided ? SidedMPS(tMPS, LR, nbot, ntop) : tMPS
+    # A transverse boundary vector always carries its side; `unsided` gives the bare state.
+    return TransverseMPS(tMPS, LR)
 end
 
 

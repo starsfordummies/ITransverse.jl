@@ -29,6 +29,10 @@ using NDTensors:
 # Collection of utilities 
 include("ITenUtils/ITenUtils.jl")
 
+# The boundary-vector type the sweeps, entropies and contraction routines accept alongside a
+# plain `MPS` (see `TMPSorMPS`); defined in ITenUtils, which already uses it.
+export TransverseMPS, TMPSorMPS, sided, unsided, side, apply_column, tapply_column, flipside
+
 export mergedicts!, mergedicts, dictfromlist
 
 export halfsite
@@ -172,9 +176,6 @@ export boundary_tensor,
     attach_boundary_bottom!,
     attach_boundary_top!
 
-include("tmpo/sided_mps.jl")
-export SidedMPS, sided, side, apply_column, tapply_column, flipside,
-    n_boundary_bottom, n_boundary_top
 
 include("tmpo/tmpo_params.jl")
 export tMPOParams, ising_tp
@@ -198,6 +199,7 @@ include("tmpo/build_fold_tmpo_in.jl")
 
 export 
     folded_tMPO,
+    folded_tMPO_op,
     folded_tMPS,
     folded_left_tMPS,
     folded_right_tMPS,
@@ -221,7 +223,7 @@ export PMParams, powermethod_op, powermethod_sym
 include("contractions/contract_finite.jl")
 
 include("contractions/expvals_lr.jl")
-export expval_LR, compute_expvals
+export expval_LR, expval_LR_ops, compute_expvals
 
 include("lightcone/cone_tmpo.jl")
 include("lightcone/cone_params.jl")
@@ -238,6 +240,10 @@ include("tebd/tebd.jl")
 
 export tebd
 export observer
+
+# Everything `TransverseMPS` *does* - applying a column from its own side, the pairing
+# guards, and the tag-preserving returns - lives here, after the routines it wraps.
+include("tmpo/transverse_mps_ops.jl")
 
 # legacy functions 
 include("legacy/old_legacy.jl")

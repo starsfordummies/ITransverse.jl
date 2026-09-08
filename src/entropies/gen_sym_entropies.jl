@@ -3,19 +3,22 @@ Generalized entropy for a *symmetric* environment (psiL,psiL)
     Assuming we're in LEFT GENERALIZED canonical form, by default bring the MPS to it
     By default, normalizes the eigenvalues of the symmetric RTM. 
 """
-function generalized_vn_entropy_symmetric(psiL::MPS; bring_gen_can::Bool=true, normalize_eigs::Bool=true)
+function generalized_vn_entropy_symmetric(psiL::TMPSorMPS; bring_gen_can::Bool=true, normalize_eigs::Bool=true)
+    psiL = unsided(psiL)  # accept a tagged boundary vector, work on the MPS
     eigs_rtm = diagonalize_rtm_symmetric(psiL; bring_gen_can, normalize_eigs, sort_by_largest=false)
     return [salpha(eigs, 1) for eigs in eigs_rtm]
 end
 
 
-function generalized_r2_entropy_symmetric(psiL::MPS; bring_gen_can::Bool=true, normalize_eigs::Bool=true)
+function generalized_r2_entropy_symmetric(psiL::TMPSorMPS; bring_gen_can::Bool=true, normalize_eigs::Bool=true)
+    psiL = unsided(psiL)  # accept a tagged boundary vector, work on the MPS
     eigs_rtm = diagonalize_rtm_symmetric(psiL; bring_gen_can, normalize_eigs, sort_by_largest=false)
     return [sum(eigs .^ 2) for eigs in eigs_rtm]
 end
 
 
-function generalized_svd_vn_entropy_symmetric(psi::MPS)
+function generalized_svd_vn_entropy_symmetric(psi::TMPSorMPS)
+    psi = unsided(psi)  # accept a tagged boundary vector, work on the MPS
     _, svs = truncate_sweep_sym(psi; cutoff=1e-12, maxdim=maxlinkdim(psi), use_eig=false)
     return vn_from_matrix(svs)
 end
@@ -23,7 +26,8 @@ end
 
 
 """ We can compute the "SVD" VN entropy by just doing a right (generalized) sweep """
-function generalized_svd_vn_entropy(psi::MPS, phi::MPS)
+function generalized_svd_vn_entropy(psi::TMPSorMPS, phi::TMPSorMPS)
+    psi, phi = unsided(psi), unsided(phi)  # accept a tagged boundary vector, work on the MPS
     truncp = (cutoff=1e-12, maxdim=maxlinkdim(psi)+maxlinkdim(phi), direction=:right)
     _, _, svs = truncate_sweep(psi, phi; truncp...)
     return vn_from_matrix(svs)
@@ -32,7 +36,8 @@ end
 
 """ Given an input MPS `psi`, computes the symmetric generalized entropies by diagonalizing RTM.
 Returns a NamedTuple (; S0, S05, S1, S2, S4). """
-function gensym_renyi_entropies(psiL::MPS; bring_gen_can::Bool=true, normalize_eigs::Bool=true)
+function gensym_renyi_entropies(psiL::TMPSorMPS; bring_gen_can::Bool=true, normalize_eigs::Bool=true)
+    psiL = unsided(psiL)  # accept a tagged boundary vector, work on the MPS
     eigs_rtm = diagonalize_rtm_symmetric(psiL; bring_gen_can, normalize_eigs, sort_by_largest=false)
     return renyi_entropies(eigs_rtm; normalize_eigs=false)
 end
@@ -40,7 +45,8 @@ end
 
 
 """ Computes generalized entropies for a segment by diagonalizing the RTM - expensive!  (chi^4) """
-function gensym_renyi_entropies_segment(psi::MPS, iA::Int, fA::Int; normalize_eigs::Bool=true)
+function gensym_renyi_entropies_segment(psi::TMPSorMPS, iA::Int, fA::Int; normalize_eigs::Bool=true)
+    psi = unsided(psi)  # accept a tagged boundary vector, work on the MPS
 
     psig = ITransverse.gen_canonical(psi, iA+1)
 
@@ -61,7 +67,8 @@ end
 
 """ Computes the generalized SVD entropies: Given input MPS |phi> and <psi|, diagonalizes the RTM |phi><psi|.
 Returns a NamedTuple (; S0, S05, S1, S2, S4). """
-function gensvd_renyi_entropies(psi::MPS, phi::MPS; normalize_eigs::Bool=true)
+function gensvd_renyi_entropies(psi::TMPSorMPS, phi::TMPSorMPS; normalize_eigs::Bool=true)
+    psi, phi = unsided(psi), unsided(phi)  # accept a tagged boundary vector, work on the MPS
  
     mpslen = length(psi)
     phi = sim(linkinds,phi)
@@ -113,7 +120,8 @@ end
 
 
 """ Slow compute generalized Renyi2 for symmetric case RTM (psi,psi) for an interval [iA-fA] """
-function gen_renyi2_sym_interval_manual(psi::MPS, iA::Int, fA::Int)
+function gen_renyi2_sym_interval_manual(psi::TMPSorMPS, iA::Int, fA::Int)
+    psi = unsided(psi)  # accept a tagged boundary vector, work on the MPS
 
     LL = length(psi)
     normalization = overlap_noconj(psi,psi)
@@ -152,7 +160,8 @@ end
 """ For a folded tMPS, this is a cut at the end of the chain (middle of the TN)
 but partial-tracing over all backward legs, leaving only the fw legs open in the RTM.
 Memory cost here is chi^4, algorithm ~chi^5 at least """ 
-function gen_renyi2_sym_openfwonly(psi::MPS, cut::Int)
+function gen_renyi2_sym_openfwonly(psi::TMPSorMPS, cut::Int)
+    psi = unsided(psi)  # accept a tagged boundary vector, work on the MPS
 
     LL = length(psi)
     ss = siteinds(psi)

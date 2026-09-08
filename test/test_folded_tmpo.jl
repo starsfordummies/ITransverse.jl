@@ -39,7 +39,7 @@ mpo_fold =         folded_tMPO(b, time_sites_fold)
 left_fold =   folded_left_tMPS(b, time_sites_fold)
 right_fold = folded_right_tMPS(b, time_sites_fold)
 
-m1 = apply(mpo_fold, right_fold)
+m1 = apply(mpo_fold, unsided(right_fold))
 m1 = overlap_noconj(m1, left_fold)
 
 overlap = expval_LR(left_fold, mpo_fold, right_fold)

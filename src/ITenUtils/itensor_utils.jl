@@ -140,7 +140,8 @@ transpose_arrows(M::AbstractMPS) = hasqns(M) ? dag(conj(M)) : M
 
 """ `true` if `ll` and `rr` cannot be contracted site-by-site because their site indices
 carry the same QN arrows (in which case one of them needs [`transpose_arrows`](@ref)). """
-function arrows_clash(ll::AbstractMPS, rr::AbstractMPS)
+function arrows_clash(ll::TMPSorMPS, rr::TMPSorMPS)
+    ll, rr = unsided(ll), unsided(rr)
     (hasqns(ll) && hasqns(rr)) || return false
     return any(dir(a) == dir(b) for (a, b) in zip(allsiteinds(ll), allsiteinds(rr)))
 end

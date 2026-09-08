@@ -166,9 +166,10 @@ function fwback_tMPS(
                    delta(dag(rT), arrow_match(rT, dag(rot_links_mps[ii+1])))
     end
 
-    # Contract edges with boundary states
+    # Contract edges with boundary states (a non-product one is appended as its own site).
     attach_boundary_bottom!(tMPS, bl, rot_links_mps[1])
+
     attach_boundary_top!(tMPS, tr, rot_links_mps[end]; dagger=dagger_tr)
 
-    return tMPS
+    return TransverseMPS(tMPS, LR)
 end

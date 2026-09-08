@@ -33,7 +33,7 @@ right_mps = fw_tMPS(b, time_sites; LR=:right, tr = final_state)
 # Contract unfolded network 
 ll = left_mps
 rr = right_mps
-rr = applyn(mpo_fw, rr)
+rr = apply_column(mpo_fw, rr)
 
 maxlinkdim(ll)
 maxlinkdim(rr)
@@ -41,7 +41,7 @@ maxlinkdim(rr)
 overlap_noconj(ll,rr)
 expval_LR(left_mps, mpo_fw, right_mps)
 
-expval_LR(dag(left_mps), dag(mpo_fw), dag(right_mps))
+expval_LR(dag(unsided(left_mps)), dag(mpo_fw), dag(unsided(right_mps)))
 
 
 
@@ -83,7 +83,7 @@ right_mps = fw_tMPS(b, time_sites; LR=:right, tr = final_state)
 # Contract unfolded network 
 ll = left_mps
 rr = right_mps
-rr = applyn(mpo_fw, rr)
+rr = apply_column(mpo_fw, rr)
 
 maxlinkdim(ll)
 maxlinkdim(rr)
@@ -91,7 +91,7 @@ maxlinkdim(rr)
 overlap_noconj(ll,rr)
 expval_LR(left_mps, mpo_fw, right_mps)
 
-expval_LR(dag(left_mps), dag(mpo_fw), dag(right_mps))
+expval_LR(dag(unsided(left_mps)), dag(mpo_fw), dag(unsided(right_mps)))
 
 
 

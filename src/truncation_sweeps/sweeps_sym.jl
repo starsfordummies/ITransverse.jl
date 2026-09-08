@@ -3,8 +3,9 @@ Symmetric truncate for MPS optimizing the RTM |psi*><psi|.
 direction = :left  → sweeps 1→N
 direction = :right → sweeps N→1
 """
-function truncate_sweep_sym(in_psi::MPS; 
+function truncate_sweep_sym(in_psi::TMPSorMPS; 
     cutoff::Float64, maxdim::Int, use_eig::Bool=false, direction::Symbol=:right)
+    in_psi = unsided(in_psi)  # accept a tagged boundary vector, work on the MPS
 
     mpslen = length(in_psi)
     eltype_S = use_eig ? ComplexF64 : Float64 
@@ -74,7 +75,8 @@ end
 
 
 """ Truncate <psi*|psi> by explicitly building the symmetric RTMs and computing their SVD decompositions"""
-function truncate_sweep_sym_rtm!(psi::MPS; direction::Symbol=:right, maxdim::Int, kwargs...)
+function truncate_sweep_sym_rtm!(psi::TMPSorMPS; direction::Symbol=:right, maxdim::Int, kwargs...)
+    psi = unsided(psi)  # accept a tagged boundary vector, work on the MPS
 
     # TODO allow for eig here ? 
     ss = siteinds(psi)
@@ -145,8 +147,8 @@ truncate_sweep_sym_rtm(psi; kwargs...) = truncate_sweep_sym_rtm!(copy(psi); kwar
 
 ## Compat for now 
 
-truncate_lsweep_sym(in_psi::MPS; kwargs...) = truncate_sweep_sym(in_psi; direction=:left, kwargs...) 
-truncate_rsweep_sym(in_psi::MPS; kwargs...) = truncate_sweep_sym(in_psi; direction=:right, kwargs...) 
+truncate_lsweep_sym(in_psi::TMPSorMPS; kwargs...) = truncate_sweep_sym(in_psi; direction=:left, kwargs...) 
+truncate_rsweep_sym(in_psi::TMPSorMPS; kwargs...) = truncate_sweep_sym(in_psi; direction=:right, kwargs...) 
 
 
 function tcontract(::Algorithm"naiveRTMsym", A::MPO, ψ::MPS; preserve_tags_mps::Bool=false, kwargs...)

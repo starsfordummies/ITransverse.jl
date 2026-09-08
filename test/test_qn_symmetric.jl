@@ -30,8 +30,8 @@ function setup(Nt::Int; qns::Bool)
 end
 
 """ a complex-symmetric environment, exactly as the RTM sweeps build it """
-function rtm_env(R::MPS)
-    Rc = orthogonalize(R, 1)
+function rtm_env(R::TMPSorMPS)
+    Rc = orthogonalize(unsided(R), 1)
     A = Rc[1]
     sA = only(siteinds(Rc, 1))
     return ITransverse.symmetrize(A * noprime(prime(transpose_arrows(A)), prime(dag(sA))))
@@ -86,7 +86,7 @@ end
 
 @testset "symmetric truncation sweeps with QNs" begin
     T, L, R = setup(6; qns=true)
-    TR = applyn(T, R)
+    TR = apply_column(T, R)
 
     for f in (ITransverse.truncate_sweep_sym,)
         out, sv = f(TR; cutoff=1e-12, maxdim=32)
@@ -98,7 +98,7 @@ end
     @test hasqns(out2)
 
     # tapply with the RTM-symmetric algorithm: must agree with the untruncated result
-    exact = overlap_noconj(L, applyn(T, R))
+    exact = overlap_noconj(L, apply_column(T, R))
     for alg in ("naive", "densitymatrix", "RTMsym")
         out, _ = tapply(T, R; alg, cutoff=1e-14, maxdim=64)
         @test hasqns(out)
@@ -116,7 +116,7 @@ end
         psi, _ = with_logger(NullLogger()) do
             powermethod_sym(R, T, pmp)
         end
-        lead = overlap_noconj(psi, applyn(T, psi)) / overlap_noconj(psi, psi)
+        lead = overlap_noconj(transpose(psi), apply_column(T, psi)) / overlap_noconj(transpose(psi), psi)
         res[qns] = (; psi, lead)
     end
     @test hasqns(res[true].psi)
@@ -133,6 +133,6 @@ end
     # error rather than silently densify. Everything SVD-based above works.
     @test_throws ErrorException symm_oeig(env, ind(env, 1))
     @test_throws ErrorException gen_canonical(R, length(R))
-    @test_throws ErrorException ITransverse.truncate_sweep_sym(applyn(T, R);
+    @test_throws ErrorException ITransverse.truncate_sweep_sym(apply_column(T, R);
                                     cutoff=1e-12, maxdim=16, use_eig=true)
 end

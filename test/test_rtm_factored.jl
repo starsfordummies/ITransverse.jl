@@ -75,8 +75,8 @@ end
     ψR = folded_tMPS(b, ts; LR=:right)
     ψL = folded_tMPS(b, ts; LR=:left)
     for _ in 1:4
-        ψR = first(tapply(ITransverse.Algorithm("densitymatrix"), col, ψR; cutoff=1e-14, maxdim=32))
-        ψL = first(tapplys(ITransverse.Algorithm("densitymatrix"), col, ψL; cutoff=1e-14, maxdim=32))
+        ψR = first(tapply(ITransverse.Algorithm("densitymatrix"), col, unsided(ψR); cutoff=1e-14, maxdim=32))
+        ψL = first(tapplys(ITransverse.Algorithm("densitymatrix"), col, unsided(ψL); cutoff=1e-14, maxdim=32))
     end
     # guard against the checks below going vacuous on product-state environments
     @test maxlinkdim(ψR) > 4
@@ -105,8 +105,8 @@ end
     @test hasqns(col)
 
     for _ in 1:5
-        ψR = first(tapply(ITransverse.Algorithm("densitymatrix"), col, ψR; cutoff=1e-14, maxdim=32))
-        ψL = first(tapplys(ITransverse.Algorithm("densitymatrix"), col, ψL; cutoff=1e-14, maxdim=32))
+        ψR = first(tapply(ITransverse.Algorithm("densitymatrix"), col, unsided(ψR); cutoff=1e-14, maxdim=32))
+        ψL = first(tapplys(ITransverse.Algorithm("densitymatrix"), col, unsided(ψL); cutoff=1e-14, maxdim=32))
     end
     @test maxlinkdim(ψR) > 4
     @test hasqns(ψR[2]) && hasqns(ψL[2])

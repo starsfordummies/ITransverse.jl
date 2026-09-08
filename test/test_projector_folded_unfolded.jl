@@ -58,8 +58,8 @@ ov_folded =  overlap_noconj(left_fold, right_fold)
 ll = left_mps
 rr = right_mps
 for nn = 1:4
-    ll = applys(mpo, ll; cutoff=1e-12, maxdim=maxdim)
-    rr = apply(mpo, rr; cutoff=1e-12, maxdim=maxdim)
+    ll = applys(mpo, unsided(ll); cutoff=1e-12, maxdim=maxdim)
+    rr = apply(mpo, unsided(rr); cutoff=1e-12, maxdim=maxdim)
 end
 maxlinkdim(ll)
 maxlinkdim(rr)
@@ -72,8 +72,8 @@ Lsq = abs2(overlap_noconj(ll,rr))
 ll = left_fold
 rr = right_fold
 for nn = 1:4
-    ll = applys(mpo_fold, ll; cutoff=1e-12, maxdim=maxdim)
-    rr = apply(mpo_fold, rr; cutoff=1e-12, maxdim=maxdim)
+    ll = applys(mpo_fold, unsided(ll); cutoff=1e-12, maxdim=maxdim)
+    rr = apply(mpo_fold, unsided(rr); cutoff=1e-12, maxdim=maxdim)
 end
 maxlinkdim(ll)
 maxlinkdim(rr)
@@ -160,8 +160,8 @@ right_mps = ITransverse.fw_right_tMPS(b, time_sites; tr = [1,0,0])
 ll = left_mps
 rr = right_mps
 for nn = 1:1
-    ll = applyns(mpo, ll) # ;cutoff=1e-12, maxdim=maxdim)
-    rr = applyn(mpo, rr) #; cutoff=1e-12, maxdim=maxdim)
+    ll = apply_column(mpo, ll) # ;cutoff=1e-12, maxdim=maxdim)
+    rr = apply_column(mpo, rr) #; cutoff=1e-12, maxdim=maxdim)
 end
 maxlinkdim(ll)
 maxlinkdim(rr)
@@ -194,8 +194,8 @@ overlap_noconj(left_fold,right_fold)
 ll = left_fold
 rr = right_fold
 for nn = 1:1
-    ll = applyns(mpo_fold, ll)# ; cutoff=1e-10, maxdim=maxdim)
-    rr = applyn(mpo_fold, rr) # ; cutoff=1e-10, maxdim=maxdim)
+    ll = apply_column(mpo_fold, ll)# ; cutoff=1e-10, maxdim=maxdim)
+    rr = apply_column(mpo_fold, rr) # ; cutoff=1e-10, maxdim=maxdim)
 end
 maxlinkdim(ll)
 maxlinkdim(rr)

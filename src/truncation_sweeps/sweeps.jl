@@ -4,12 +4,13 @@
 then perform gauge transformations and truncations. 
 Could call it "naiveRTM" 
 """
-function truncate_sweep(psi::MPS, phi::MPS;
+function truncate_sweep(psi::TMPSorMPS, phi::TMPSorMPS;
         cutoff::Real  = 1e-13,
         maxdim::Int   = max(maxlinkdim(psi), maxlinkdim(phi)),
         direction::Symbol = :right,
         compute_overlaps::Bool = false
     )
+    psi, phi = unsided(psi), unsided(phi)  # accept a tagged boundary vector, work on the MPS
 
     ov_before = compute_overlaps ? overlap_noconj(psi,phi) : NaN
 
@@ -83,7 +84,8 @@ end
 ####### NEW SWEEPS 
 
 # TODO direction 
-function truncate_rsweep_rtm!(psi::MPS, phi::MPS; cutoff::Float64, maxdim::Int)
+function truncate_rsweep_rtm!(psi::TMPSorMPS, phi::TMPSorMPS; cutoff::Float64, maxdim::Int)
+    psi, phi = unsided(psi), unsided(phi)  # accept a tagged boundary vector, work on the MPS
 
     @assert siteinds(psi) == siteinds(phi)
     ss = siteinds(psi)
@@ -167,12 +169,13 @@ truncate_rsweep_rtm(psi, phi; kwargs...) = truncate_rsweep_rtm!(copy(psi), copy(
 """ Alternative algorithm: given two MPS, builds explicitly their RTM and truncates over it 
 in a similar way to the "densitymatrix" algorithm in ITensors
 """
-function truncate_sweep_rtm!(psiL::MPS, psiR::MPS;
+function truncate_sweep_rtm!(psiL::TMPSorMPS, psiR::TMPSorMPS;
         cutoff::Float64,
         maxdim::Int,
         direction::Symbol = :right,
         preserve_mps_tags::Bool = true
     )
+    psiL, psiR = unsided(psiL), unsided(psiR)  # accept a tagged boundary vector, work on the MPS
 
     @assert siteinds(psiL) == siteinds(psiR)
     ss = siteinds(psiR)

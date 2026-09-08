@@ -34,11 +34,11 @@ end
 product states or rank-2 edge tensors of a non-product boundary MPS, which add one site
 to the chain (see [`boundary_tensor`](@ref), [`close_boundary`](@ref), [`fold_boundary`](@ref)).
 
-`sided=true` returns a [`SidedMPS`](@ref), which remembers both the side and how many
-boundary sites each end added - the only reliable way to tell those apart from time sites
-afterwards. """
+Returns a [`TransverseMPS`](@ref), which remembers both the side and how many boundary
+sites each end added - the only reliable way to tell those apart from time sites
+afterwards. `MPS(...)` unwraps it. """
 function folded_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index}; LR::Symbol=:right,
-    init_beta_only::Bool=true, rho0=b.rho0, fold_op=nothing, sided::Bool=false)
+    init_beta_only::Bool=true, rho0=b.rho0, fold_op=nothing)
 
     if !init_beta_only
         error("init_beta on both sides not implemented yet")
@@ -73,16 +73,12 @@ function folded_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index}; LR::Symbol=:right,
 
     # A non-product boundary is *appended* as its own site; count what each end added, see
     # the same point in `fw_tMPS`.
-    nb = length(psi)
     attach_boundary_bottom!(psi, rho0, tlinks[1])
-    nbot = length(psi) - nb
 
-    nb = length(psi)
     attach_boundary_top!(psi, something(fold_op, vectorized_identity(tlinks[end])), tlinks[end])
-    ntop = length(psi) - nb
 
-    # `sided=true` keeps track of which edge this vector is, see `SidedMPS`
-    return sided ? SidedMPS(psi, LR, nbot, ntop) : psi
+    # A transverse boundary vector always carries its side; `unsided` gives the bare state.
+    return TransverseMPS(psi, LR)
 end
 
 
@@ -186,6 +182,35 @@ function folded_tMPO_open_edges(b::FoldtMPOBlocks, ts::Vector{<:Index}; init_bet
 
 end
 
+
+"""
+    folded_tMPO_op(b::FoldtMPOBlocks, ts, op::ITensor)
+
+A folded column over the time sites `ts` whose top is capped by the operator tensor `op`
+rather than by a product `fold_op`.
+
+`op` is one site of a *folded* operator: its `"Site"` leg is the vectorized physical leg
+(dimension `dim(b.iP)`) and goes on the column's top time link; its remaining legs are the
+spatial bonds to the neighbouring columns and stay open, so `k` such columns chain into an
+operator spread over `k` sites. Rank 2 caps the two ends of that operator, rank 3 its bulk.
+
+This is what `expval_LR_ops` builds. It deliberately does *not* go through
+[`attach_boundary_top!`](@ref): that closes a column with a spatial *boundary state*, and
+rejects a rank-2 tensor on an MPO for good reason - an operator cap is a different object,
+and rank 2 is exactly right at the ends.
+"""
+function folded_tMPO_op(b::FoldtMPOBlocks, ts::Vector{<:Index}, op::ITensor;
+                        init_beta_only::Bool=true, rho0=b.rho0)
+    oo, bl_ind, tr_ind = folded_tMPO_open_edges(b, ts; init_beta_only)
+    attach_boundary_bottom!(oo, rho0, bl_ind)
+    ip = only(inds(op, "Site"))
+    dim(ip) == dim(tr_ind) || error("""
+        the operator tensor's Site leg has dimension $(dim(ip)), but this column's top link
+        has $(dim(tr_ind)): a folded operator carries the vectorized physical dimension.""")
+    push!(oo.data, replaceind(op, ip => tr_ind))
+    _reset_ortho_lims!(oo)
+    return oo
+end
 
 """ Builds folded tMPO. Of the `ts` timesites, the first `b.tp.nbeta` ones are imaginary time ones.
  Accepted kwargs: fold_op (default=Identity, accepts Array or ITensor), verbose(=false), init_beta_only(=true).

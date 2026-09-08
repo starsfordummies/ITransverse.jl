@@ -12,12 +12,13 @@ which I think only works with the "naive" algorithm. We don't perform any trunca
         o-o-o-o-o-o
 ``` 
 """
-function run_cone(ll::MPS, rr::MPS,
+function run_cone(ll::TMPSorMPS, rr::TMPSorMPS,
     b::FoldtMPOBlocks,
     cone_pars::ConeParams,
     checkpoint::DoCheckpoint,
     nT_final::Int
 )
+    ll, rr = unsided(ll), unsided(rr)  # accept a tagged boundary vector, work on the MPS
 
     (; opt_method, optimize_op, truncp, vwidth) = cone_pars
 
@@ -95,12 +96,13 @@ function run_cone(ll::MPS, rr::MPS,
 end
 
 """ Single-MPS convenience overload: ll and rr both start as deep copies of `psi`. """
-function run_cone(psi::MPS,
+function run_cone(psi::TMPSorMPS,
     b::FoldtMPOBlocks,
     cone_pars::ConeParams,
     checkpoint::DoCheckpoint,
     nT_final::Int
 )
+    psi = unsided(psi)  # accept a tagged boundary vector, work on the MPS
     run_cone(copy(psi), copy(psi), b, cone_pars, checkpoint, nT_final)
 end
 

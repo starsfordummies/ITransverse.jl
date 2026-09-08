@@ -29,7 +29,8 @@ end
 
 """ Generalized canonical form to diagonalize symmetric RTM |psi^*><psi| 
 bringing gen. orthogonality center in `ortho_center` """
-function gen_canonical(in_psi::MPS, ortho_center::Int; cutoff::Float64=1e-13)
+function gen_canonical(in_psi::TMPSorMPS, ortho_center::Int; cutoff::Float64=1e-13)
+    in_psi = unsided(in_psi)  # accept a tagged boundary vector, work on the MPS
 
     no_qns_supported("gen_canonical (generalized canonical form)", in_psi;
         hint="It relies on `symm_oeig`. Entropies can still be computed with `bring_gen_can=false`.")

@@ -52,8 +52,8 @@ mpo_fw_conj =          dag(fw_tMPO(b, time_sites; tr = up_state))
 ll = left_mps
 rr = right_mps
 for nn = 1:2
-    ll = applyns(mpo_fw, ll)
-    rr = applyn(mpo_fw, rr)
+    ll = apply_column(mpo_fw, ll)
+    rr = apply_column(mpo_fw, rr)
 end
 maxlinkdim(ll)
 maxlinkdim(rr)
@@ -66,8 +66,8 @@ Lsq = abs2(overlap_noconj(ll,rr))
 ll = left_fold
 rr = right_fold
 for nn = 1:2
-    ll = applyns(mpo_fold, ll)
-    rr = applyn(mpo_fold, rr)
+    ll = apply_column(mpo_fold, ll)
+    rr = apply_column(mpo_fold, rr)
 end
 maxlinkdim(ll)
 maxlinkdim(rr)

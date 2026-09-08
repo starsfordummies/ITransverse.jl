@@ -21,10 +21,12 @@ function transverse_setup(Nt::Int; qns::Bool, tr=UP)
     return b, fw_tMPO(b, ts; tr), fw_tMPS(b, ts; LR=:left, tr), fw_tMPS(b, ts; LR=:right, tr)
 end
 
-function contract_columns(ll::MPS, mpo::MPO, rr::MPS, L::Int)
+function contract_columns(ll::TMPSorMPS, mpo::MPO, rr::TMPSorMPS, L::Int)
     r = rr
     for _ in 1:(L-2)
-        r = applyn(mpo, r)
+        # a column is applied from the side the vector is on; `overlap_noconj` then checks
+        # that we are pairing a left with a right
+        r = apply_column(mpo, r)
     end
     return overlap_noconj(ll, r)
 end
@@ -117,7 +119,7 @@ end
         pmp = PMParams(; truncp=(; cutoff=1e-14, maxdim=64, alg="naive"), itermax=60,
                        eps_converged=1e-11, opt_method=:sym, normalization="norm")
         psi, _ = powermethod_sym(RR, T, pmp)
-        lead = overlap_noconj(psi, applyn(T, psi)) / overlap_noconj(psi, psi)
+        lead = overlap_noconj(transpose(psi), apply_column(T, psi)) / overlap_noconj(transpose(psi), psi)
         # gauge-invariant check: the ordinary (conjugating) entanglement spectrum. The
         # *generalized* entropies are only gauge invariant in generalized canonical form,
         # which has no QN implementation, so they are not comparable across the two runs.
@@ -130,17 +132,20 @@ end
     @test isapprox(abs(results[true].lead), abs(results[false].lead); rtol=1e-6)
     @test isapprox(results[true].vn[end÷2], results[false].vn[end÷2]; rtol=1e-4)
 
-    # a state can be contracted with itself again (arrows reversed, data untouched)
+    # a state can be contracted with its own transpose (arrows reversed, data untouched);
+    # pairing it with *itself* is what the side guard now refuses
     psi = results[true].psi
     @test arrows_clash(psi, psi)
-    @test overlap_noconj(psi, psi) ≈ overlap_noconj(transpose_arrows(psi), psi)
+    @test_throws ErrorException overlap_noconj(psi, psi)
+    @test overlap_noconj(transpose(psi), psi) ≈
+          overlap_noconj(transpose_arrows(unsided(psi)), unsided(psi))
 
     # truncation via the ITensors-native algorithms works with QNs
     for alg in ("naive", "densitymatrix")
         b, T, LL, RR = transverse_setup(Nt; qns=true)
         out, _ = tapply(T, RR; alg, cutoff=1e-14, maxdim=32)
         @test hasqns(out)
-        @test overlap_noconj(LL, out) ≈ overlap_noconj(LL, applyn(T, RR))
+        @test overlap_noconj(LL, out) ≈ overlap_noconj(LL, apply_column(T, RR))
     end
 end
 

@@ -17,12 +17,13 @@ Diagonalize the symmetric RTM |psi*><psi| by sweeping from one end.
 
 Returns a length N-1 vector of eigenvalue vectors, ordered bond 1 … N-1.
 """
-function diagonalize_rtm_symmetric(psi::MPS;
+function diagonalize_rtm_symmetric(psi::TMPSorMPS;
     direction::Symbol        = :right,
     bring_gen_can::Bool      = true,
     normalize_eigs::Bool     = true,
     sort_by_largest::Bool    = true,
     cutoff::Float64          = 1e-12)
+    psi = unsided(psi)  # accept a tagged boundary vector, work on the MPS
 
     mpslen = length(psi)
 
@@ -76,15 +77,16 @@ function diagonalize_rtm_symmetric(psi::MPS;
 end
 
 # Thin wrapper kept for backward compatibility
-diagonalize_rtm_right_gen_sym(psi::MPS; bring_right_gen::Bool=false, kwargs...) =
+diagonalize_rtm_right_gen_sym(psi::TMPSorMPS; bring_right_gen::Bool=false, kwargs...) =
     diagonalize_rtm_symmetric(psi; direction=:left, bring_gen_can=bring_right_gen, kwargs...)
 
 
 """ Alt recipe for diagonalizing symmetric RTM, maybe more stable but slower """
-function diagonalize_rtm_symmetric_alt(psi::MPS; 
+function diagonalize_rtm_symmetric_alt(psi::TMPSorMPS; 
     direction::Symbol=:right,
     maxdim = maxlinkdim(psi),
     kwargs...)
+    psi = unsided(psi)  # accept a tagged boundary vector, work on the MPS
 
     ss = siteinds(psi)
     N = length(ss)

@@ -38,10 +38,12 @@ function overlap_mps_noconj(phi::MPS, psi::MPS)
 end
 
 """ Contract the transverse network of `L` columns: 2 edge tMPS + (L-2) bulk tMPO """
-function contract_columns(ll::MPS, mpo::MPO, rr::MPS, L::Int)
+function contract_columns(ll::TMPSorMPS, mpo::MPO, rr::TMPSorMPS, L::Int)
     r = rr
     for _ in 1:(L-2)
-        r = applyn(mpo, r)
+        # a column is applied from the side the vector is on; `overlap_noconj` then checks
+        # that we are pairing a left with a right
+        r = apply_column(mpo, r)
     end
     return overlap_noconj(ll, r)
 end
@@ -321,13 +323,13 @@ end
         rrn = rr_f
         lln = ll_f
         for _ in 1:2
-            rrn = applyn(mpo_f, rrn)
-            lln = applyns(mpo_f, lln)
+            rrn = apply_column(mpo_f, rrn)
+            lln = apply_column(mpo_f, lln)
         end
 
         idv = ITransverse.vectorized_identity(Index(4))
         norm_LR = expval_LR(lln, rrn, ITransverse.itensor_to_vector(idv), bf)
-        @test norm_LR ≈ overlap_noconj(lln, applyn(folded_tMPO(bf, tsf), rrn))
+        @test norm_LR ≈ overlap_noconj(lln, apply_column(folded_tMPO(bf, tsf), rrn))
 
         evs = compute_expvals(lln, rrn, ["Z", "X"], bf)
         @test all(isfinite, values(evs))
@@ -411,7 +413,7 @@ end
     rr = fw_tMPS(b, ts; LR=:right, bl=close_boundary(bl, vR; side=:right), tr=vf)
 
     # untruncated reference for one column application
-    exact = overlap_noconj(ll, applyn(mpo, rr))
+    exact = overlap_noconj(ll, apply_column(mpo, rr))
 
     # generic MPS machinery must cope with the extra (differently sized) site
     @test length(gensym_renyi_entropies(rr)) == length(rr)
@@ -426,7 +428,7 @@ end
     ll_t, rr_t, _ = tlrapply(ll, mpo, mpo, rr; alg="naiveRTM", cutoff=1e-14, maxdim=64)
     @test length(ll_t) == length(rr_t) == length(rr)
     @test isapprox(overlap_noconj(ll_t, rr_t),
-                   overlap_noconj(applyns(mpo, ll), applyn(mpo, rr)); rtol=1e-6)
+                   overlap_noconj(apply_column(mpo, ll), apply_column(mpo, rr)); rtol=1e-6)
 
     # the power method keeps the extra boundary site around
     pm_params = PMParams(; truncp=(; cutoff=1e-12, maxdim=32, alg="naive"),

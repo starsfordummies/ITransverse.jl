@@ -83,8 +83,12 @@ and link indices. Assumes the standard `(p, p')` structure for physical indices.
 - `comb_ps`: vector of combiners used to merge the primed (`p'`) physical indices (MPO only;
   `nothing` for MPS inputs).
 """
-function combine_and_fold(W1::AbstractMPS, W2::AbstractMPS; dag_W2::Bool=false,
+function combine_and_fold(W1::Union{AbstractMPS, TransverseMPS},
+    W2::Union{AbstractMPS, TransverseMPS}; dag_W2::Bool=false,
     fold_op=nothing, fold_init_state=nothing,  new_siteinds=nothing)
+    # a folding primitive, not a boundary-vector routine: it also takes MPOs, and returns the
+    # combiners alongside the sheet, so it unwraps and hands back a plain MPS/MPO
+    W1, W2 = unsided(W1), unsided(W2)
 
     LL = length(W1)
 

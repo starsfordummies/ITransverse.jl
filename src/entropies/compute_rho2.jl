@@ -2,7 +2,8 @@
 computes tr(τₜ^2) the trace of the reduced transition matrices |phi><psi| at the various cuts,
  by contracting left and right MPS (see also below). 
  The normalization must be given via `normalization_factor` """
-function rtm2_contracted(psi::MPS, phi::MPS; normalize_factor::Number=1.0, match_siteinds::Bool=true)
+function rtm2_contracted(psi::TMPSorMPS, phi::TMPSorMPS; normalize_factor::Number=1.0, match_siteinds::Bool=true)
+    psi, phi = unsided(psi), unsided(phi)  # accept a tagged boundary vector, work on the MPS
     LL = length(psi)
     inv_norm2 = 1.0 / normalize_factor^2
 
@@ -76,7 +77,8 @@ tr(--[LEFT]==[RIGHT]--[LEFT]==[RIGHT]--)
 
 ```
 """
-function rtm2_contracted(psi::MPS, phi::MPS, cut::Int; normalize_factor::Number=1.0, match_siteinds::Bool=true)
+function rtm2_contracted(psi::TMPSorMPS, phi::TMPSorMPS, cut::Int; normalize_factor::Number=1.0, match_siteinds::Bool=true)
+    psi, phi = unsided(psi), unsided(phi)  # accept a tagged boundary vector, work on the MPS
 
     # valid cuts go from 1 to L-1
     @assert cut < length(psi)
@@ -118,7 +120,8 @@ end
 
 
 """ Same as before but using matrices - result should be the same, useful for debugging """
-function rtm2_contracted_m(psi::MPS, phi::MPS, cut::Int; normalize_factor::Number=1.0)
+function rtm2_contracted_m(psi::TMPSorMPS, phi::TMPSorMPS, cut::Int; normalize_factor::Number=1.0)
+    psi, phi = unsided(psi), unsided(phi)  # accept a tagged boundary vector, work on the MPS
 
     # valid cuts go from 1 to L-1
     @assert cut < length(psi)
@@ -176,7 +179,8 @@ end
 
 # Brute-force diagonalization
 """ Brute-force diagonalization of the RTM built from the input MPS psi and phi. Only does it for small chains """
-function rtm2_bruteforce(psi::MPS, phi::MPS)
+function rtm2_bruteforce(psi::TMPSorMPS, phi::TMPSorMPS)
+    psi, phi = unsided(psi), unsided(phi)  # accept a tagged boundary vector, work on the MPS
 
     @assert length(psi) < 14  # don't do this otherwise..
 
@@ -218,7 +222,8 @@ end
 
 
 """ Returns generalized Tsallis 2 entropy from the RTM tau~tr|PHI><PSI| """
-function gen_tsallis2(psi::MPS, phi::MPS; normalization="overlap")
+function gen_tsallis2(psi::TMPSorMPS, phi::TMPSorMPS; normalization="overlap")
+    psi, phi = unsided(psi), unsided(phi)  # accept a tagged boundary vector, work on the MPS
 
     psi, phi = if normalization == "overlap"
         sqrt_ov = sqrt(overlap_noconj(psi,phi))
@@ -236,7 +241,8 @@ function gen_tsallis2(psi::MPS, phi::MPS; normalization="overlap")
 end
 
 """ Returns generalized Renyi 2 entropy from the RTM tau~tr|PHI><PSI|/ """
-function gen_renyi2(psi::MPS, phi::MPS; normalization="overlap")
+function gen_renyi2(psi::TMPSorMPS, phi::TMPSorMPS; normalization="overlap")
+    psi, phi = unsided(psi), unsided(phi)  # accept a tagged boundary vector, work on the MPS
 
     psi, phi = if normalization == "overlap"
         sqrt_ov = sqrt(overlap_noconj(psi,phi))

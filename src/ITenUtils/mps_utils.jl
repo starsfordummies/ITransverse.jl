@@ -47,7 +47,8 @@ end
 """ Computes the overlap (ll,rr) between two MPS *without* conjugating either one.
 If siteinds(ll) and siteinds(rr) do not match, it matches them before contracting.
 """
-function overlap_noconj_ite(ll::MPS, rr::MPS)
+function overlap_noconj_ite(ll::TMPSorMPS, rr::TMPSorMPS)
+    ll, rr = unsided(ll), unsided(rr)  # accept a tagged boundary vector, work on the MPS
     siteinds(ll) != siteinds(rr) ? rr = replace_siteinds(rr, siteinds(ll)) : nothing
     overlap = inner(dag(ll),rr) 
     return overlap
@@ -56,7 +57,8 @@ end
 """ Computes the overlap (ll,rr) between two MPS *without* conjugating either one.
 The "generalized norm" of an MPS should be sqrt(overlap_noconj(psi,psi)).
 """
-function overlap_noconj(ll::MPS, rr::MPS, reverse_qn_ll::Bool=false; fast::Bool=false)
+function overlap_noconj(ll::TMPSorMPS, rr::TMPSorMPS, reverse_qn_ll::Bool=false; fast::Bool=false)
+    ll, rr = unsided(ll), unsided(rr)  # accept a tagged boundary vector, work on the MPS
 
     if reverse_qn_ll
         return inner(conj(ll),rr)
@@ -90,13 +92,15 @@ end
 """ Given `mps1` and `mps2`, returns a copy of `mps2`
 with physical indices matching those of the first one
 """
-function match_siteinds(mps1::MPS, mps2::MPS)
+function match_siteinds(mps1::TMPSorMPS, mps2::TMPSorMPS)
+    mps1, mps2 = unsided(mps1), unsided(mps2)  # accept a tagged boundary vector, work on the MPS
     replace_siteinds(mps2, siteinds(mps1))
 end
 
 """ Given `mps1` and `mps2`, replaces `mps2` siteinds with those of `mps1`
 """
-function match_siteinds!(mps1::MPS, mps2::MPS)
+function match_siteinds!(mps1::TMPSorMPS, mps2::TMPSorMPS)
+    mps1, mps2 = unsided(mps1), unsided(mps2)  # accept a tagged boundary vector, work on the MPS
     replace_siteinds!(mps2, siteinds(mps1))
 end
 
@@ -110,7 +114,8 @@ function match_siteinds!(mpo1::MPO, mpo2::MPO)
     end
 end
 
-function replace_linkinds!(psi::MPS, newtags::String="")
+function replace_linkinds!(psi::TMPSorMPS, newtags::String="")
+    psi = unsided(psi)  # accept a tagged boundary vector, work on the MPS
     li = linkinds(psi)
     newli = [removetags(l, tags(l)) for l in li]
     newli2 = [addtags(newli[ii], newtags*"$ii") for ii in eachindex(newli)]
@@ -202,7 +207,8 @@ end
 2) the first tensor contracts with its conj to a diagonal matrix 
 
 """
-function gaugefix_left(psi::MPS)
+function gaugefix_left(psi::TMPSorMPS)
+    psi = unsided(psi)  # accept a tagged boundary vector, work on the MPS
     psi_work = orthogonalize(psi,length(psi))
     orthogonalize!(psi_work,1)
 
@@ -283,7 +289,8 @@ function delete_link_from_prodMPS!(psi::AbstractMPS)
 end
 
 
-function fidelity(psi::MPS, phi::MPS; match_inds::Bool=true)
+function fidelity(psi::TMPSorMPS, phi::TMPSorMPS; match_inds::Bool=true)
+    psi, phi = unsided(psi), unsided(phi)  # accept a tagged boundary vector, work on the MPS
     if match_inds 
         phi = replace_siteinds(phi, siteinds(psi))
     end
@@ -291,7 +298,8 @@ function fidelity(psi::MPS, phi::MPS; match_inds::Bool=true)
 end
 
 
-function gen_fidelity(psi::MPS, phi::MPS; match_inds::Bool=true)
+function gen_fidelity(psi::TMPSorMPS, phi::TMPSorMPS; match_inds::Bool=true)
+    psi, phi = unsided(psi), unsided(phi)  # accept a tagged boundary vector, work on the MPS
     if match_inds 
         phi = replace_siteinds(phi, siteinds(psi))
     end
@@ -299,7 +307,8 @@ function gen_fidelity(psi::MPS, phi::MPS; match_inds::Bool=true)
 end
 
 """ Returns log10-fidelity *per site* of two MPS """
-function logfidelity(psi::MPS, phi::MPS; match_inds::Bool=true)
+function logfidelity(psi::TMPSorMPS, phi::TMPSorMPS; match_inds::Bool=true)
+    psi, phi = unsided(psi), unsided(phi)  # accept a tagged boundary vector, work on the MPS
     if match_inds 
         phi = replace_siteinds(phi, siteinds(psi))
     end
@@ -307,14 +316,16 @@ function logfidelity(psi::MPS, phi::MPS; match_inds::Bool=true)
 end
 
 """ Measures infidelity 1 - sqrt(|<psi|phi>|^2/(<psi|psi><phi|phi>)) """
-function infidelity(psi::MPS, phi::MPS)
+function infidelity(psi::TMPSorMPS, phi::TMPSorMPS)
+    psi, phi = unsided(psi), unsided(phi)  # accept a tagged boundary vector, work on the MPS
     return 1. - fidelity(psi,phi)
 end
 
 
 
 
-function check_mps_sanity(psi::MPS; verbose::Bool=true)
+function check_mps_sanity(psi::TMPSorMPS; verbose::Bool=true)
+    psi = unsided(psi)  # accept a tagged boundary vector, work on the MPS
     N = length(psi)
     issues = String[]
     flag(msg) = push!(issues, msg)
