@@ -81,7 +81,7 @@ function main_ti_pow_nonproduct(; Nt=12, dt=0.1, chi0=5, chif=7, eps=0.2,
     # `powermethod_lr` is not exported yet, hence the qualified call
     ll, rr, info = ITransverse.powermethod_lr(seed, T, T, pm_params)
 
-    lambda = overlap_noconj(ll, applyn(T, rr)) / overlap_noconj(ll, rr)
+lambda = overlap_noconj(ll, apply_column(T, rr)) / overlap_noconj(ll, rr)
     @info "power method" lambda chi_l=maxlinkdim(ll) chi_r=maxlinkdim(rr) nsites=length(rr)
 
     ## ------------------------------------------------ finite-L cross-check
