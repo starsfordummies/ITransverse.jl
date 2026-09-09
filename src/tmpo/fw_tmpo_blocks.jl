@@ -49,7 +49,8 @@ function FwtMPOBlocks(tp::tMPOParams; init_state=nothing)
 end
 
 function FwtMPOBlocks(eH::MPO; init_state)
-    tp = tMPOParams(nothing; bl=init_state)
+    blt = to_boundary(init_state)
+    tp = tMPOParams(NaN, NaN, NoParams(Index(dim(blt))), Murg(), 0, blt)
     Wl, Wc, Wr, iL, iR, iP, iPs = make_fwtmpoblocks(eH)
     return FwtMPOBlocks(Wl, Wc, Wr, Wl, Wc, Wr, tp, iL, iR, iP, iPs)
 end

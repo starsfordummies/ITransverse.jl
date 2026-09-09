@@ -28,11 +28,6 @@ end
 
 
 
-function tMPOParams(x::Nothing; bl)
-    blt = to_boundary(bl)
-    return tMPOParams(NoParams(Index(dim(blt))); dt=NaN, dbeta=nothing, scheme=Murg(), init_state=blt)
-end
-
 """ Quick defaults for parallel field Ising (kept for backward compatibility). """
 ising_tp(; hz=0.4, integrable::Bool=true, init_state=[1,0]) =
     tMPOParams(integrable ? IsingParams(1.0, hz, 0.0) : IsingParams(1.0, -1.05, 0.5); init_state)
