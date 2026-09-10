@@ -43,7 +43,8 @@ operators are inserted by the expval machinery rather than built into the vector
 
 [`unsided`](@ref) (or `MPS(s)`) and `side(s)` get the parts back; the read-only MPS methods
 are forwarded, and so are the transforms that leave the side alone (`orthogonalize`,
-`normalize`, `replace_siteinds`).
+`normalize`, `replace_siteinds`) and the arithmetic (`psi * α`, `psi / α`, unary `-`, and
+`+`/`-` between same-side vectors).
 
 Passing one around needs no unwrapping at the call site: the routines that take a boundary
 vector are typed [`TMPSorMPS`](@ref) and unwrap themselves, and those that *return* one
@@ -116,6 +117,8 @@ Base.eachindex(s::TransverseMPS) = eachindex(s.psi)
 Base.copy(s::TransverseMPS) = TransverseMPS(copy(s.psi), s.side)
 ITensorMPS.siteinds(s::TransverseMPS) = siteinds(s.psi)
 ITensorMPS.linkinds(s::TransverseMPS) = linkinds(s.psi)
+ITensorMPS.linkdim(s::TransverseMPS, b::Integer) = linkdim(s.psi, b)
+ITensorMPS.linkdims(s::TransverseMPS) = linkdims(s.psi)
 ITensorMPS.maxlinkdim(s::TransverseMPS) = maxlinkdim(s.psi)
 ITensors.hasqns(s::TransverseMPS) = hasqns(s.psi)
 LinearAlgebra.norm(s::TransverseMPS) = norm(s.psi)
@@ -131,6 +134,37 @@ ITensorMPS.ortho_lims(s::TransverseMPS) = ortho_lims(s.psi)
 ITensorMPS.replace_siteinds(s::TransverseMPS, sites) =
     TransverseMPS(replace_siteinds(s.psi, sites), s.side)
 ITensorMPS.replace_siteinds!(s::TransverseMPS, sites) = (replace_siteinds!(s.psi, sites); s)
+ITensorMPS.truncate(s::TransverseMPS; kw...) = TransverseMPS(truncate(s.psi; kw...), s.side)
+ITensorMPS.truncate!(s::TransverseMPS; kw...) = (truncate!(s.psi; kw...); s)
+
+# Arithmetic: rescaling by a scalar changes neither the side nor which site is the
+# orthogonality center, so it forwards to the same `_apply_to_orthocenter` machinery that
+# backs `psi * α` / `psi / α` for a plain MPS.
+Base.:*(s::TransverseMPS, α::Number) = TransverseMPS(s.psi * α, s.side)
+Base.:*(α::Number, s::TransverseMPS) = TransverseMPS(α * s.psi, s.side)
+Base.:/(s::TransverseMPS, α::Number) = TransverseMPS(s.psi / α, s.side)
+Base.:-(s::TransverseMPS) = TransverseMPS(-s.psi, s.side)
+
+"""
+    +(s⃗::TransverseMPS...; kwargs...)
+    -(s::TransverseMPS, t::TransverseMPS; kwargs...)
+
+Linear combination of boundary vectors, forwarding to the `AbstractMPS` `+`/`-` (density-
+matrix sum, or pass `alg = "directsum"`). All operands must be on the same side - mixing
+`:left` and `:right` here is the same mistake [`overlap_noconj`](@ref) already refuses - and
+the result carries that common side.
+"""
+function Base.:+(s⃗::TransverseMPS...; kwargs...)
+    sd = s⃗[1].side
+    all(s -> s.side === sd, s⃗) ||
+        error("cannot add TransverseMPS on different sides: $(unique(side.(s⃗)))")
+    return TransverseMPS(+(map(s -> s.psi, s⃗)...; kwargs...), sd)
+end
+function Base.:-(s::TransverseMPS, t::TransverseMPS; kwargs...)
+    s.side === t.side ||
+        error("cannot subtract TransverseMPS on different sides: :$(s.side) and :$(t.side)")
+    return TransverseMPS(-(s.psi, t.psi; kwargs...), s.side)
+end
 
 """
     dag(s::TransverseMPS)
