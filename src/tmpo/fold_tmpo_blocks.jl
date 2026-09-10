@@ -53,13 +53,19 @@ function FoldtMPOBlocks(x::Union{tMPOParams, MPO}; init_state=nothing, check_sym
     time_R = Index(dim(Ps), "Link,time")
 
     if check_sym
-        if check_symmetry_swap(WWc, P, Ps; verbose=false)
+        symP = check_symmetry_swap(WWc, P, Ps; verbose=false)
+        if ismissing(symP)
+            @info "Symmetry checks skipped (QN tensor)"
+        elseif symP
             @info "MPO tensor symmetric in physical(space)  [=bond(time)] indices"
         else
             @warn "MPO tensor *not* symmetric in physical(space)  [=bond(time)] indices"
         end
 
-        if check_symmetry_swap(WWc, link1, link2; verbose=false)
+        symL = check_symmetry_swap(WWc, link1, link2; verbose=false)
+        if ismissing(symL)
+            # already reported above
+        elseif symL
             @info "MPO tensor symmetric in bond(space) [=phys(time)]  indices"
         else
             @warn "MPO tensor *not* symmetric in bond(space) [=phys(time)] indices"
@@ -78,7 +84,7 @@ function FoldtMPOBlocks(x::Union{tMPOParams, MPO}; init_state=nothing, check_sym
         if isnothing(init_state)
             error("Need to specify initial state if we don't pass tp")
         else
-            init_state = to_itensor(init_state, "Site")
+            init_state = to_boundary(init_state)
         end
         # If the input is an MPO, we don't build anyting else, just put placeholders in tp 
         phys_site = siteind(x,2)
@@ -92,7 +98,7 @@ function FoldtMPOBlocks(x::Union{tMPOParams, MPO}; init_state=nothing, check_sym
             init_state = x.bl
         end
 
-        tp = tMPOParams(x.dt, x.dbeta, x.mp, x.scheme, x.nbeta, to_itensor(init_state, "Site"))
+        tp = tMPOParams(x.dt, x.dbeta, x.mp, x.scheme, x.nbeta, to_boundary(init_state))
 
         
         WWl_im, WWc_im, WWr_im, unrotated_inds = build_WW(tp; build_imag=true)
@@ -105,40 +111,9 @@ function FoldtMPOBlocks(x::Union{tMPOParams, MPO}; init_state=nothing, check_sym
 
     end
 
-    init_state = tp.bl
-
-    iP = phys_ind(init_state)
-    physdim_init = dim(iP)
-    @assert ndims(init_state) == 1 || ndims(init_state) == 3
-
-    lrinds = uniqueinds(inds(init_state), iP)
-    if !isempty(lrinds)
-        @assert dim(lrinds[1]) == dim(lrinds[2])
-    end
-
-    # Folding logic
-    if physdim_init == dim(P)
-        rho0 = init_state * delta(iP, Index(dim(P),"Site,rho0"))
-        if !isempty(lrinds)
-            iP_rho0 = Index(dim(rho0,1),"Link,rho0")
-            rho0 = replaceinds(rho0, lrinds, (iP_rho0, iP_rho0'))
-        end
-    elseif physdim_init == isqrt(dim(P))
-        rho0 = (init_state) * dag(init_state')
-        comb_phys = combiner(iP, iP')
-        rho0 *= comb_phys
-        if !isempty(lrinds)
-            ciileft = combiner(lrinds[1], lrinds[1]')
-            rho0 *= ciileft
-            ciiright = combiner(lrinds[2], lrinds[2]')
-            rho0 *= ciiright
-            iP_rho0 = Index(dim(combinedind(ciileft)),"Link,rho0")
-            rho0 = replaceinds(rho0, (combinedind(ciileft), combinedind(ciiright)), (iP_rho0, iP_rho0'))
-        end
-        rho0 *= delta(combinedind(comb_phys), Index(dim(P), "Site,rho0"))
-    else
-        @error "Dimension of init_state is $(physdim_init) vs linkdim $(dim(P))"
-    end
+    # Fold the initial state (if it isn't folded/vectorized already).
+    # Non-product initial states keep their (doubled) bond legs, see `boundary_tensor`.
+    rho0 = fold_boundary(tp.bl; folded_dim=dim(P), tags="Site,rho0")
 
     return FoldtMPOBlocks(WWl, WWc, WWr, WWl_im, WWc_im, WWr_im, rho0, tp, time_L, time_R, time_P, time_P')
 end

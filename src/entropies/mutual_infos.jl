@@ -1,6 +1,7 @@
 """ Partial traces the input `psi` seen as a fw-back density matrix
 in the intervals iA:fA and iB:fB """
-function trrho_fwback(psi::MPS, iA::Int, fA::Int, iB::Int=length(psi)+1, fB::Int=length(psi)+1)
+function trrho_fwback(psi::TMPSorMPS, iA::Int, fA::Int, iB::Int=length(psi)+1, fB::Int=length(psi)+1)
+    psi = unsided(psi)  # accept a tagged boundary vector, work on the MPS
 
     LL = length(psi)
     ss = siteinds(psi)
@@ -38,7 +39,8 @@ end
 
 
 """ Computes left-right RDM purities for symmetric case L=R """
-function mutuals_fwback_segment(psi::MPS, iA::Int, fA::Int, iB::Int, fB::Int)
+function mutuals_fwback_segment(psi::TMPSorMPS, iA::Int, fA::Int, iB::Int, fB::Int)
+    psi = unsided(psi)  # accept a tagged boundary vector, work on the MPS
 
     LL = length(psi)
     ss = siteinds(psi)

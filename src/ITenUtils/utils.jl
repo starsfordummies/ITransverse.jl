@@ -99,7 +99,7 @@ function choparr(arr::AbstractArray; tol=1e-12)
             abs(imag(z)) < tol ? real(z) + 0im :
             z for z in arr]
 end
-choparr(ten::ITensor; kwargs...) = choparr(array(ten), kwargs...)
+choparr(ten::ITensor; kwargs...) = choparr(array(ten); kwargs...)
 
 
 halfsite(L::Int) = div(L+1,2)

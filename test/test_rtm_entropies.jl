@@ -81,7 +81,7 @@ end
     
             rtm_full = lenv * renv
             #@info "RTM full size: $(size(rtm_full))"
-            vals_full, _ = eigen(rtm_full, inds(rtm_full,plev=0), inds(rtm_full,plev=1))
+            vals_full, _ = ceigen(rtm_full, inds(rtm_full,plev=0), inds(rtm_full,plev=1))
     
             #@show jj 
             @show vals 

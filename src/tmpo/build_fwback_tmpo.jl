@@ -43,24 +43,25 @@ function fwback_tMPO_open_edges(b::FwtMPOBlocks, time_sites::Vector{<:Index}, nb
     # Make same indices for real and imag, it's easier aftwards 
     replaceinds!(Wc_im, inds(Wc_im), inds(Wc))
 
-    time_links = [Index(dim(iL), "Link,rotl=$(ii-1)") for ii in 1:(Ntot+1)]
+    # `sim` + `dag` keep QN blocks and arrows; both inert without QNs
+    time_links = [sim(iR, tags="Link,rotl=$(ii-1)") for ii in 1:(Ntot+1)]
 
     tMPO =  MPO(Ntot)
 
     for ii = 1:nbetai
         #@info "$(ii) imag"
-        tMPO[ii] = replaceinds(Wc_im, (iP, iPs, iL, iR), (time_sites[ii],time_sites[ii]', time_links[ii],time_links[ii+1]))
+        tMPO[ii] = replaceinds(Wc_im, (iP, iPs, iL, iR), (time_sites[ii],dag(time_sites[ii])', dag(time_links[ii]),time_links[ii+1]))
     end
     for ii = nbetai+1:nbetai+nfw
-        tMPO[ii] = replaceinds(Wc, (iP, iPs, iL, iR), (time_sites[ii],time_sites[ii]', time_links[ii],time_links[ii+1]))
+        tMPO[ii] = replaceinds(Wc, (iP, iPs, iL, iR), (time_sites[ii],dag(time_sites[ii])', dag(time_links[ii]),time_links[ii+1]))
     end
 
     for ii = nbetai+nfw+1:nbetai+nfw+nback
-        tMPO[ii] = replaceinds(dag(Wc), (iP, iPs, iL, iR), (time_sites[ii]',time_sites[ii], time_links[ii],time_links[ii+1]))  # TODO Check [ts',ts] order
+        tMPO[ii] = replaceinds(dag(Wc), (iP, iPs, iL, iR), (dag(time_sites[ii])',time_sites[ii], dag(time_links[ii]),time_links[ii+1]))  # TODO Check [ts',ts] order
     end
     for ii = nbetai+nfw+nback+1:Ntot
         #@info "$(ii) imag"
-        tMPO[ii] = replaceinds(dag(Wc_im), (iP, iPs, iL, iR), (time_sites[ii]',time_sites[ii], time_links[ii],time_links[ii+1])) # TODO Check [ts',ts] order
+        tMPO[ii] = replaceinds(dag(Wc_im), (iP, iPs, iL, iR), (dag(time_sites[ii])',time_sites[ii], dag(time_links[ii]),time_links[ii+1])) # TODO Check [ts',ts] order
     end
 
 
@@ -81,24 +82,17 @@ end
 -  (optionally) a `mid_op` operator insertion 
 - `nback` steps of backwards time evolution
 - `nbetaf` steps of imaginary time evolution
+
+The top boundary `tr` closes the backward branch, ie. it is the bra ⟨tr|, so it is
+conjugated by default (`dagger_tr=true`); pass `dagger_tr=false` to use it as given.
+Use the same value for the tMPO and for the edge tMPS built with `fwback_tMPS`.
 """
 function fwback_tMPO(b::FwtMPOBlocks, time_sites::Vector{<:Index}, nbetai::Int, nfw::Int, nback::Int, nbetaf::Int; 
-    bl::ITensor = b.tp.bl, tr = b.tp.bl, kwargs...)
+    bl = b.tp.bl, tr = b.tp.bl, dagger_tr::Bool=true, kwargs...)
     oo, bl_ind, tr_ind = fwback_tMPO_open_edges(b, time_sites, nbetai, nfw, nback, nbetaf; kwargs...)
 
-    trt = to_itensor(tr)
-
-    if ndims(bl) == 1
-        oo[1] = contract(oo[1], bl, bl_ind, only(inds(bl)))
-    else
-        pushfirst!(oo.data, replaceind(bl, only(inds(bl, "Site")) => bl_ind)) 
-    end
-
-    if ndims(tr) == 1
-        oo[end] = contract(oo[end], trt, tr_ind, only(inds(tr)))
-    else
-        push!(oo.data, replaceind(trt, only(inds(trt, "Site")) => tr_ind))
-    end
+    attach_boundary_bottom!(oo, bl, bl_ind)
+    attach_boundary_top!(oo, tr, tr_ind; dagger=dagger_tr)
 
     return oo
 end
@@ -119,81 +113,63 @@ function fwback_tMPS(
     time_sites::Vector{<:Index};
     bl = b.tp.bl,
     tr,
+    dagger_tr::Bool=true,
     LR::Symbol = :right,
     init_beta_only::Bool=false
 )
 
 
-    Ntot = length(time_sites) 
-    @assert Ntot % 2 == 0 
-    Nt = div(Ntot,2)
+    Ntot = length(time_sites)
 
-
-    bl = to_itensor(bl, "bl")
-    tr = to_itensor(tr, "tr")
     tp = b.tp
     nbeta = tp.nbeta
 
     @assert nbeta <= Ntot
 
+    # Same convention as fwback_tMPO: nbeta imag steps, then Nfw forward and Nfw backward
+    Nt = Ntot - nbeta
+    @assert Nt >= 0 && iseven(Nt)
+    Nfw = div(Nt, 2)
+    betai, betaf = init_beta_only ? (nbeta, 0) : (div(nbeta,2), div(nbeta,2))
+    @assert betai + 2*Nfw + betaf == Ntot
+
     # Choose direction-dependent fields and indices
-    (iL, iR, iP) = if LR == :left
-        W = b.Wl
-        W_im = b.Wl_im
-        (b.iL, b.iR, b.iPs)
+    (W, W_im, iL, iR, iP) = if LR == :left
+        (b.Wl, b.Wl_im, b.iL, b.iR, b.iPs)
     elseif LR == :right
-        W = b.Wr
-        W_im = b.Wr_im
-        (b.iL, b.iR, b.iP)
+        (b.Wr, b.Wr_im, b.iL, b.iR, b.iP)
     else
         error("Unknown LR: $(LR)")
     end
 
-
-    # Corner case length-1 tMPS 
-    if Ntot == 1
-        @assert nbeta == 0 # or we need to think more 
-        A = replaceinds(W, (iL, iR, iP), (inds(bl)[1], inds(tr)[1], time_sites[1]))
-        A *= bl 
-        return MPS([A*tr])
-    end
-
-
-
-    # Make same indices for real and imag, it's easier afterwards 
+    # Make same indices for real and imag, it's easier afterwards
     replaceinds!(W_im, inds(W_im), inds(W))
 
-    b1,b2 = beta_lims(Ntot, nbeta, init_beta_only)
-
-    rot_links_mps = [Index(dim(iL), "Link,rotl=$ii") for ii in 1:(Ntot - 1)]
+    rot_links_mps = [sim(iR, tags="Link,rotl=$(ii-1)") for ii in 1:(Ntot + 1)]
+    site_of(ii) = LR == :right ? dag(time_sites[ii]) : time_sites[ii]
 
     tMPS = MPS(Ntot)
 
-    for ii = 1:b1
-        #@info "$(ii) im" 
-        tMPS[ii] = W_im * delta(iP, time_sites[ii])
-    end
-    for ii = b1+1:Nt
-        #@info "$(ii) re" 
-        tMPS[ii] = W * delta(iP, time_sites[ii])
-    end
-        for ii = Nt+1:b2
-        #@info "$(ii) re" 
-        tMPS[ii] = dag(W) * delta(iP, time_sites[ii])
-    end
-    for ii = b2+1:Ntot
-        #@info "$(ii) im" 
-        tMPS[ii] = dag(W_im) * delta(iP, time_sites[ii])
-    end
-
-    # Contract edges with boundary states, label linkinds
-    tMPS[1] = tMPS[1] * bl * delta(ind(bl,1), iL) * delta(iR, rot_links_mps[1])
-
-    for ii = 2:Ntot-1
-        tMPS[ii] = tMPS[ii] * delta(iL, rot_links_mps[ii-1]) * delta(iR, rot_links_mps[ii])
+    for ii = 1:Ntot
+        Wii = if ii <= betai
+            W_im
+        elseif ii <= betai + Nfw
+            W
+        elseif ii <= betai + 2*Nfw
+            dag(W)
+        else
+            dag(W_im)
+        end
+        sT, lT, rT = stored_ind(Wii, iP), stored_ind(Wii, iL), stored_ind(Wii, iR)
+        tMPS[ii] = Wii * delta(dag(sT), arrow_match(sT, site_of(ii))) *
+                   delta(dag(lT), arrow_match(lT, rot_links_mps[ii])) *
+                   delta(dag(rT), arrow_match(rT, dag(rot_links_mps[ii+1])))
     end
 
-    tMPS[end] = (tMPS[end] * delta(iL, rot_links_mps[Ntot-1])) * (dag(tr) * delta(ind(tr,1), iR))
+    # Contract edges with boundary states (a non-product one is appended as its own site).
+    attach_boundary_bottom!(tMPS, bl, rot_links_mps[1])
 
-    return tMPS
+    attach_boundary_top!(tMPS, tr, rot_links_mps[end]; dagger=dagger_tr)
+
+    return TransverseMPS(tMPS, LR)
 end

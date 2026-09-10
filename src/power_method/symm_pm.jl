@@ -7,7 +7,8 @@ Keyword arguments:
 - `observer!`: optional `Observers.jl` observer updated at each iteration with
     `state`, `step`, `ds`, `chi`, `fidelity`, `singular_values`.
 """
-function powermethod_sym(in_mps::MPS, in_mpo::MPO, pm_params::PMParams; normalize_psi0::Bool=false, (observer!)=nothing)
+function powermethod_sym(in_mps::TMPSorMPS, in_mpo::MPO, pm_params::PMParams; normalize_psi0::Bool=false, (observer!)=nothing)
+    in_mps = unsided(in_mps)  # accept a tagged boundary vector, work on the MPS
 
     (; itermax, truncp, cutoffs, maxdims, normalization, compute_fidelity) = pm_params
 

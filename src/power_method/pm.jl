@@ -2,7 +2,8 @@
 Power method developed for the folding algorithm, takes as input TWO MPOs, 
     one meant to be with an additional operator (X), the other likely with an identity (1)
 """
-function powermethod_op(in_mps::MPS; mpo_id::MPO, mpo_op::MPO, pm_params::PMParams)
+function powermethod_op(in_mps::TMPSorMPS; mpo_id::MPO, mpo_op::MPO, pm_params::PMParams)
+    in_mps = unsided(in_mps)  # accept a tagged boundary vector, work on the MPS
 
     (; opt_method, itermax, maxdims, cutoffs, normalization, compute_fidelity) = pm_params
 
@@ -35,7 +36,12 @@ function powermethod_op(in_mps::MPS; mpo_id::MPO, mpo_op::MPO, pm_params::PMPara
                 rright, SVs
             end
 
-            sim(linkinds, rright), rright, SVs
+            # The left vector *is* the transpose of the right one: same data, QN arrows
+            # reversed (`transpose_arrows`, inert without QNs). Doing it here rather than
+            # leaving it to `overlap_noconj`'s `arrows_clash` fallback is what makes the
+            # pair a genuine left/right pair. `sim(linkinds, ...)` then gives it its own
+            # link Indices, so the two can be contracted in the next iteration.
+            sim(linkinds, transpose_arrows(rright)), rright, SVs
 
         else # not sym  
 
@@ -100,7 +106,8 @@ builds <L| = <ψ0|(in_mpo_L)^N->inf
 and  |R> = (in_mpo_R)^N|ψ0>
 
 """
-function powermethod_lr(in_mps::MPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::PMParams)
+function powermethod_lr(in_mps::TMPSorMPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::PMParams)
+    in_mps = unsided(in_mps)  # accept a tagged boundary vector, work on the MPS
 
     (;itermax, cutoffs, maxdims, truncp, normalization, compute_fidelity) = pm_params
 

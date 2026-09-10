@@ -49,7 +49,8 @@ function FwtMPOBlocks(tp::tMPOParams; init_state=nothing)
 end
 
 function FwtMPOBlocks(eH::MPO; init_state)
-    tp = tMPOParams(nothing; bl=init_state)
+    blt = to_boundary(init_state)
+    tp = tMPOParams(NaN, NaN, NoParams(Index(dim(blt))), Murg(), 0, blt)
     Wl, Wc, Wr, iL, iR, iP, iPs = make_fwtmpoblocks(eH)
     return FwtMPOBlocks(Wl, Wc, Wr, Wl, Wc, Wr, tp, iL, iR, iP, iPs)
 end
@@ -85,18 +86,25 @@ function make_fwtmpoblocks(eH::MPO; check_sym::Bool=true)
         check_symmetry_swap(Wc, iLink1, iLink2)
     end
 
-    time_P = sim(iLink1, tags="Site,time")
+    # Rotated indices. With QNs the arrows matter: the two temporal *site* legs must be
+    # opposite (as for any MPO), and so must the two temporal *links*. We take the arrows
+    # from the legs as they are stored in the bulk tensor `Wc` - note that `icP'` (the
+    # prime of the site index) carries the *same* arrow as `icP`, whereas the leg actually
+    # sitting in `Wc` is its dagger, so we cannot sim() it directly.
+    # `dag` is a no-op without QNs, so this reproduces the old indices exactly.
+    time_P  = sim(iLink2, tags="Site,time")
+    time_Ps = dag(time_P)'
     time_vL = sim(icP, tags="Link,time")
-    time_vR = sim(icP', tags="Link,time")
+    time_vR = dag(sim(icP, tags="Link,time"))
 
 
     """  (L,R,P,P') => (P',P,L,R) """
-    Wl = replaceinds(Wl, (iLink1,ilP,ilP'), (time_P', time_vL, time_vR))
-    Wc = replaceinds(Wc, (iLink1,iLink2,icP,icP'), (time_P', time_P,time_vL, time_vR))
+    Wl = replaceinds(Wl, (iLink1,ilP,ilP'), (time_Ps, time_vL, time_vR))
+    Wc = replaceinds(Wc, (iLink1,iLink2,icP,icP'), (time_Ps, time_P,time_vL, time_vR))
     Wr = replaceinds(Wr, (iLink2,irP,irP'), (time_P,time_vL, time_vR))
 
 
-    return Wl, Wc, Wr, time_vL, time_vR, time_P, time_P'
+    return Wl, Wc, Wr, time_vL, time_vR, time_P, time_Ps
 end
 
 
