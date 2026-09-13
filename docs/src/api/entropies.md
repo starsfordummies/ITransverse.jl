@@ -8,6 +8,7 @@ Functions for computing entanglement and Rényi entropies from an MPS or reduced
 vn_entanglement_entropy
 renyi_entropies
 gensym_renyi_entropies
+gen_renyi_entropies
 gen_renyi2
 ```
 
@@ -23,6 +24,7 @@ generalized_svd_vn_entropy
 ```@docs
 diagonalize_rdm
 diagonalize_rtm_symmetric
+diagonalize_rtm_lr
 rho2
 rtm2_contracted
 ```

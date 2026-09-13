@@ -126,13 +126,14 @@ include("truncation_sweeps/trunclr_apply.jl")
 include("truncation_sweeps/rtm_svd.jl")
 include("truncation_sweeps/rtm_r_contract.jl")
 include("truncation_sweeps/rtm_lr_contract.jl")
+include("truncation_sweeps/rtm_eig.jl")
 
 export truncate_sweep, truncate_sweep_rtm
 export truncate_lsweep_sym, truncate_rsweep_sym, truncate_sweep_sym
 
 export tlapply, trapply, tlrapply
 export TruncLR
-export svd_rtm
+export svd_rtm, eig_rtm
 
 export gen_canonical
 
@@ -142,6 +143,7 @@ include("entropies/rdm_svd_entropies.jl")
 include("entropies/gen_sym_entropies.jl")
 include("entropies/diagonalize_sym_rtm.jl")
 include("entropies/compute_rho2.jl")
+include("entropies/diagonalize_rtm_lr.jl")
 
 include("entropies/mutual_infos.jl")
 include("entropies/fwback_ents.jl")
@@ -153,7 +155,9 @@ export vn_entanglement_entropy,
     generalized_vn_entropy_symmetric,
     generalized_svd_vn_entropy,
     diagonalize_rtm_symmetric,
-    gen_renyi2
+    gen_renyi2,
+    diagonalize_rtm_lr,
+    gen_renyi_entropies
 
 
 # from compute_rho2.jl
