@@ -21,9 +21,6 @@ using ITensorMPS: setleftlim!, setrightlim!, set_ortho_lims!
 
 using NDTensors:
     replace_nothing,
-    default_use_absolute_cutoff,
-    default_use_relative_cutoff,
-    expose,
     truncate!!
 
 # Collection of utilities 
@@ -33,7 +30,7 @@ include("ITenUtils/ITenUtils.jl")
 # plain `MPS` (see `TMPSorMPS`); defined in ITenUtils, which already uses it.
 export TransverseMPS, TMPSorMPS, sided, unsided, side, apply_column, tapply_column, flipside
 
-export mergedicts!, mergedicts, dictfromlist
+#export mergedicts!, mergedicts, dictfromlist
 
 export halfsite
 
@@ -54,33 +51,35 @@ export pMPS,
     tcontract,
     arrow_match,
     transpose_arrows,
-    no_qns_supported,
-    spectrum_vector,
-    transpose_matrix,
-    blockwise_sqrt,
-    blockwise_matfun,
-    blockwise_invsqrt,
-    arrows_clash,
-    stored_ind,
-    dominant_eigenvectors
+    #no_qns_supported,
+    #spectrum_vector,
+    #transpose_matrix,
+    #blockwise_sqrt,
+    #blockwise_matfun,
+    #blockwise_invsqrt,
+    #arrows_clash,
+    #stored_ind,
+    #dominant_eigenvectors
 
-export randsymITensor,
+export 
+    #randsymITensor,
     isid, isdiag,
-    pinvten,
-    randITensor_decayspec
+    #pinvten,
+    #randITensor_decayspec
 
 export symmetrize,
     check_id_matrix,
     isapproxdiag,
-    randmat_decayspec,
-    matrix_svd,
-    truncated_svd,
-    vectorized_identity,
-    itensor_to_vector,
-    to_itensor,
+    #randmat_decayspec,
+    #matrix_svd,
+    #truncated_svd,
+    #vectorized_identity,
+    #itensor_to_vector,
+    #to_itensor,
     vectorized_op,
-    trace_mpo, trace_mpo_squared,
-    max_diff
+    trace_mpo, 
+    trace_mpo_squared
+    #max_diff
 
 export symm_svd, symm_oeig, mytrunc_eig, ceigen
 
@@ -130,12 +129,13 @@ include("truncation_sweeps/rtm_eig.jl")
 
 export truncparams 
 
-export truncate_sweep, truncate_sweep_rtm
-export truncate_lsweep_sym, truncate_rsweep_sym, truncate_sweep_sym
+#export truncate_sweep, truncate_sweep_rtm
+#export truncate_lsweep_sym, truncate_rsweep_sym, truncate_sweep_sym
 
 export tlapply, trapply, tlrapply
 export TruncLR
-export svd_rtm, eig_rtm
+
+#export svd_ERL, eig_rtm # likely don't need to export these
 
 export gen_canonical
 
@@ -169,18 +169,19 @@ include("tmpo/construct-tMPO-tMPS.jl")
 export construct_tMPS_tMPO
 
 include("tmpo/boundary_states.jl")
-export boundary_tensor,
-    close_boundary,
-    fold_boundary,
-    to_boundary,
-    check_boundary,
-    boundary_phys_ind,
-    boundary_bond_ind,
-    boundary_linkdim,
-    is_product_boundary,
-    n_boundary_sites,
-    attach_boundary_bottom!,
-    attach_boundary_top!
+# Probably can stay internals 
+# export boundary_tensor,
+#     close_boundary,
+#     fold_boundary,
+#     to_boundary,
+#     check_boundary,
+#     boundary_phys_ind,
+#     boundary_bond_ind,
+#     boundary_linkdim,
+#     is_product_boundary,
+#     n_boundary_sites,
+#     attach_boundary_bottom!,
+#     attach_boundary_top!
 
 
 include("tmpo/tmpo_params.jl")
@@ -196,6 +197,7 @@ include("tmpo/build_ww.jl")
 
 include("tmpo/build_fw_tmpo.jl")
 export fw_tMPO, fw_tMPS
+
 include("tmpo/build_fwback_tmpo.jl")
 export fwback_tMPO, fwback_tMPS
 

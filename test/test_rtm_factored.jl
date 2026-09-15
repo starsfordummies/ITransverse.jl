@@ -132,7 +132,7 @@ end
     end
 end
 
-@testset "factored RTM SVD: svd_rtm kernel" begin
+@testset "factored RTM SVD: svd_ERL kernel" begin
     # rho[a,b] = R[a,i] E[i,j] L[b,j] with a deficient internal leg on the L side
     D, chi, d, k = 4, 8, 4, 3
     sa, ua = Index(D, "Site,a"), Index(chi, "Link,ua")
@@ -145,9 +145,9 @@ end
     L = random_itensor(ComplexF64, sb, ub, j1)
 
     tk = (cutoff=0.0, maxdim=D*chi, mindim=1, lefttags="Link,u", righttags="Link,v")
-    U1, S1, V1, _ = svd_rtm(E, R, L, IndexSet(sa, ua); factored=false, tk...)
-    U2, S2, V2, _ = svd_rtm(E, R, L, IndexSet(sa, ua); factored=true,  tk...)
-    U3, S3, V3, _ = svd_rtm(E, R, L, IndexSet(sa, ua); factored=:always, tk...)
+    U1, S1, V1, _ = svd_ERL(E, R, L, IndexSet(sa, ua); factored=false, tk...)
+    U2, S2, V2, _ = svd_ERL(E, R, L, IndexSet(sa, ua); factored=true,  tk...)
+    U3, S3, V3, _ = svd_ERL(E, R, L, IndexSet(sa, ua); factored=:always, tk...)
     # no QNs here, so `true` and `:always` take the same route (fresh Index ids
     # each call, so compare the spectra, not the ITensors)
     @test diag(Array(S2, inds(S2))) == diag(Array(S3, inds(S3)))

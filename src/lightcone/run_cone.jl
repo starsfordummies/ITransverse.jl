@@ -1,16 +1,5 @@
 
-""" Given an MPO A and a MPS ψ, with length(A) = length(ψ)+1, 
-Extends MPS ψ to the *right* by one site by applying the MPO,
-Returns a new MPS which is the extension of ψ, with siteinds matching those of A.
-In its current version, we allow to apply an MPO with a two-legged tensor at its right edge,
-which I think only works with the "naive" algorithm. We don't perform any truncation here 
-
-```
-        | | | | | |  |
-        o-o-o-o-o-o--o
-        | | | | | |  
-        o-o-o-o-o-o
-``` 
+""" Runs the light cone algorithm up to a length of nT_final timesteps
 """
 function run_cone(ll::TMPSorMPS, rr::TMPSorMPS,
     b::FoldtMPOBlocks,

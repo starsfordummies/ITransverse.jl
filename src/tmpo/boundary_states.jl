@@ -353,7 +353,7 @@ function attach_boundary_top!(psi::AbstractMPS, tr, hook::Index; dagger::Bool=fa
     if is_product_boundary(trt)
         psi[end] = psi[end] * replaceind(trt, ip => dag(stored_ind(psi[end], hook)))
     else
-        push!(psi.data, replaceind(trt, ip => hook))
+        push!(psi.data, replaceind(trt, ip => hook)) # TODO or: dag(stored_ind(psi[end], hook) ?
         _reset_ortho_lims!(psi)
     end
     return psi

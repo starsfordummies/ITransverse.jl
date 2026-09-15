@@ -101,6 +101,6 @@ function choparr(arr::AbstractArray; tol=1e-12)
 end
 choparr(ten::ITensor; kwargs...) = choparr(array(ten); kwargs...)
 
-
+""" Half-point of a given length or vector (anything that accepts length(v)) """
 halfsite(L::Int) = div(L+1,2)
 halfsite(v) = halfsite(length(v))

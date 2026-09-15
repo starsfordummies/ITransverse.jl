@@ -10,11 +10,11 @@ end
 
 function ctruncate!(
     P::AbstractVector;
-    mindim=1,
-    maxdim=length(P),
-    cutoff=0.0,
-    use_absolute_cutoff=default_use_absolute_cutoff(P),
-    use_relative_cutoff=default_use_relative_cutoff(P),
+    mindim=nothing,
+    maxdim=nothing,
+    cutoff=nothing,
+    use_absolute_cutoff=nothing,
+    use_relative_cutoff=nothing
 )
 
     mindim = replace_nothing(mindim, 1)
@@ -22,8 +22,8 @@ function ctruncate!(
     #cutoff = replace_nothing(cutoff, typemin(eltype(P)))
     cutoff = replace_nothing(cutoff, 0.)
 
-    use_absolute_cutoff = replace_nothing(use_absolute_cutoff, default_use_absolute_cutoff(P))
-    use_relative_cutoff = replace_nothing(use_relative_cutoff, default_use_relative_cutoff(P))
+    use_absolute_cutoff = replace_nothing(use_absolute_cutoff, NDTensors.default_use_absolute_cutoff(P))
+    use_relative_cutoff = replace_nothing(use_relative_cutoff, NDTensors.default_use_relative_cutoff(P))
 
     origm = length(P)
     absP  = abs.(Array(P))   

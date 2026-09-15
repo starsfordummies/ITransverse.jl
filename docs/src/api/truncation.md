@@ -24,13 +24,13 @@ truncate_sweep_sym
 ## RTM bond kernels
 
 The per-bond decomposition the RTM sweeps (`alg = "RTM"` / `"RTMeig"`) hand their local
-reduced transition matrix to. `svd_rtm` keeps the dominant singular subspaces and inserts two
+reduced transition matrix to. `svd_ERL` keeps the dominant singular subspaces and inserts two
 isometries; `eig_rtm` keeps the dominant eigenvalues and inserts the RTM's oblique spectral
 projector, which makes the truncated overlap exactly the sum of the kept eigenvalues at the
 cost of an accuracy floor set by `cond(X)`.
 
 ```@docs
-svd_rtm
+svd_ERL
 eig_rtm
 ```
 

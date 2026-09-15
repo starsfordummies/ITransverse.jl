@@ -95,7 +95,7 @@ function _trcontract_rtm_left(ψL::MPS, AR::MPO, ψR::MPS;
         tsL = preserve_mps_tags ? tags(linkind(ψL, j)) : "Link,l=$(j)"
 
         Ris = isnothing(r_renorm) ? IndexSet(sR[j+1]) : IndexSet(sR[j+1], r_renorm)
-        U, S, V, r_renorm = svd_rtm(E[j], R, L, Ris; factored, cutoff, maxdim, mindim,
+        U, S, V, r_renorm = svd_ERL(E[j], R, L, Ris; factored, cutoff, maxdim, mindim,
                                     lefttags=tsR, righttags=tsL, kwargs...)
 
         ψR_out[j+1] = U
@@ -177,7 +177,7 @@ function _trcontract_rtm_right(ψL::MPS, AR::MPO, ψR::MPS;
         end
 
         Lis = isnothing(l_renorm) ? IndexSet(sR[j-1]) : IndexSet(sR[j-1], l_renorm)
-        U, S, V, l_renorm = svd_rtm(E[j], R, L, Lis; factored, cutoff, maxdim, mindim,
+        U, S, V, l_renorm = svd_ERL(E[j], R, L, Lis; factored, cutoff, maxdim, mindim,
                                     lefttags=tsR, righttags=tsL, kwargs...)
 
         ψR_out[j-1] = U

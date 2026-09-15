@@ -92,7 +92,7 @@ function _tlrcontract_rtm_left(ψL::MPS, AL::MPO, AR::MPO, ψR::MPS;
         Ris = isnothing(renorm_idx) ? IndexSet(sR[j+1]) : IndexSet(sR[j+1], renorm_idx)
 
         # We associate the "U" SVD branch to the R, the "V" to the L
-        U, S, V, renorm_idx = svd_rtm(E[j], R, L, Ris; factored, cutoff, maxdim, mindim,
+        U, S, V, renorm_idx = svd_ERL(E[j], R, L, Ris; factored, cutoff, maxdim, mindim,
                                       lefttags=tsR, righttags=tsL, kwargs...)
 
         ψR_out[j+1] = U
@@ -170,7 +170,7 @@ function _tlrcontract_rtm_right(ψL::MPS, AL::MPO, AR::MPO, ψR::MPS;
 
         Ris = isnothing(renorm_idx) ? IndexSet(sR[j-1]) : IndexSet(sR[j-1], renorm_idx)
 
-        U, S, V, renorm_idx = svd_rtm(E[j], R, L, Ris; factored, cutoff, maxdim, mindim,
+        U, S, V, renorm_idx = svd_ERL(E[j], R, L, Ris; factored, cutoff, maxdim, mindim,
                                       lefttags=tsR, righttags=tsL, kwargs...)
 
         ψR_out[j-1] = U

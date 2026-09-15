@@ -187,7 +187,10 @@ end
 Base.conj(s::TransverseMPS) = TransverseMPS(conj(s.psi), s.side)
 
 function Base.show(io::IO, s::TransverseMPS)
-    println(io, "TransverseMPS[$(s.side)] of length $(length(s.psi)), χ=$(maxlinkdim(s.psi))",
+    stringLR = s.side == :left ? "<L|" : (s.side == :right ? "|R>" : "[unsided?]")
+    #println(io, "TransverseMPS[$(s.side)]  N=$(length(s.psi)), χ=$(maxlinkdim(s.psi))",
+    #        hasqns(s.psi) ? " (QN)" : "")
+    println(io, "$(stringLR) TransverseMPS  N=$(length(s.psi)), χ=$(maxlinkdim(s.psi))",
             hasqns(s.psi) ? " (QN)" : "")
 end
 

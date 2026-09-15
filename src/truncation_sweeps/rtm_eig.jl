@@ -70,7 +70,7 @@ Two further cautions, both enforced here:
     eig_rtm(E, R, L, Ris; cutoff, maxdim, mindim, lefttags, righttags)
         -> (U, D, V, DU, DV, u, v, condX)
 
-Eigen-counterpart of [`svd_rtm`](@ref) for one bond of an RTM sweep.
+Eigen-counterpart of [`svd_ERL`](@ref) for one bond of an RTM sweep.
 
 `ρ = E * R * L` is the local RTM with `Ris` the open indices of `R` (ψR's side) and
 `uniqueinds(L, E)` those of `L` (ψL's side). Returns
@@ -92,7 +92,7 @@ Eigen-counterpart of [`svd_rtm`](@ref) for one bond of an RTM sweep.
 
 The left eigenvectors come from a second `geev` on `transpose(ρ)`, *not* from inverting the
 eigenvector matrix. That matters: `ρ` is rank deficient whenever an internal leg is smaller
-than an open group (the same rank bound `svd_rtm` exploits), so the full eigenvector matrix
+than an open group (the same rank bound `svd_ERL` exploits), so the full eigenvector matrix
 includes kernel directions and `inv` of it is ill-conditioned even when only the leading few
 columns are wanted. Taking the `m` leading left eigenvectors directly confines the
 conditioning to the `m x m` overlap `G`, which is only ill-conditioned when the kept and
