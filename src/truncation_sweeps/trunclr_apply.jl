@@ -1,3 +1,10 @@
+# Truncation defaults
+
+function truncparams(tp::NamedTuple)
+    DEFAULT_TRUNCPARAMS = (; alg=:RTM, cutoff=1e-10, maxdim=200, direction=:right, mindim=1)
+    merge(DEFAULT_TRUNCPARAMS, tp)  # user values override defaults
+end
+truncparams() = (; alg=:RTM, cutoff=1e-10, maxdim=200, direction=:right, mindim=1)
 
 """
 Result of a truncated left-right contraction.
@@ -138,8 +145,11 @@ end
 
 
 # Generic wrappers 
-tlapply(ψL::TMPSorMPS, A::MPO, ψR::TMPSorMPS; alg=Algorithm(:naiveRTM), kwargs...) = tlapply(Algorithm(alg), unsided(ψL), A, unsided(ψR); kwargs...)
-trapply(ψL::TMPSorMPS, A::MPO, ψR::TMPSorMPS; alg=Algorithm(:naiveRTM), kwargs...) = trapply(Algorithm(alg), unsided(ψL), A, unsided(ψR); kwargs...)
+# tlapply(ψL::TMPSorMPS, A::MPO, ψR::TMPSorMPS; alg=Algorithm(:naiveRTM), kwargs...) = tlapply(Algorithm(alg), unsided(ψL), A, unsided(ψR); kwargs...)
+# trapply(ψL::TMPSorMPS, A::MPO, ψR::TMPSorMPS; alg=Algorithm(:naiveRTM), kwargs...) = trapply(Algorithm(alg), unsided(ψL), A, unsided(ψR); kwargs...)
+
+tlapply(ψL::TMPSorMPS, A::MPO, ψR::TMPSorMPS; alg, kwargs...) = tlapply(Algorithm(alg), unsided(ψL), A, unsided(ψR); kwargs...)
+trapply(ψL::TMPSorMPS, A::MPO, ψR::TMPSorMPS; alg, kwargs...) = trapply(Algorithm(alg), unsided(ψL), A, unsided(ψR); kwargs...)
 
 
 """
@@ -149,4 +159,4 @@ Convention: when direction=:left, we PTR over left environments and, going right
 we SVD τ_R = tr_L(τ). \\
 Returns `TruncLR` (destructures as `(LEFT, RIGHT, SV)`)
 """
-tlrapply(ψL::TMPSorMPS, AL::MPO, AR::MPO, ψR::TMPSorMPS; alg=Algorithm(:naiveRTM), kwargs...) = tlrapply(Algorithm(alg), unsided(ψL), AL, AR, unsided(ψR); kwargs...)
+tlrapply(ψL::TMPSorMPS, AL::MPO, AR::MPO, ψR::TMPSorMPS; alg, kwargs...) = tlrapply(Algorithm(alg), unsided(ψL), AL, AR, unsided(ψR); kwargs...)

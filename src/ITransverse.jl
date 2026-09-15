@@ -128,6 +128,8 @@ include("truncation_sweeps/rtm_r_contract.jl")
 include("truncation_sweeps/rtm_lr_contract.jl")
 include("truncation_sweeps/rtm_eig.jl")
 
+export truncparams 
+
 export truncate_sweep, truncate_sweep_rtm
 export truncate_lsweep_sym, truncate_rsweep_sym, truncate_sweep_sym
 

@@ -83,7 +83,7 @@ function run_cone(ll::TMPSorMPS, rr::TMPSorMPS,
         ll *= sqrt(1/overlapLR)
         rr *= sqrt(1/overlapLR)
 
-        state = (L=ll, R=rr, b=b)
+        state = (L=ll, R=rr, b=b, sv=sv)  # sv is TruncLR.sv: χ x ncuts SVD singular values matrix
         checkpoint(state, nt)
 
 
