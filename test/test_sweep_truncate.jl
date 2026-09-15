@@ -2,6 +2,7 @@ using ITensors, ITensorMPS
 using ITransverse
 using Test
 
+using ITransverse: truncate_sweep 
 
 """ Ideally here we'd like to truncate a left and a right MPS
 in order to optimize their overlap. How close are the resulting two 

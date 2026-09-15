@@ -1,5 +1,9 @@
 # ITenUtils — files included directly in ITransverse (no submodule)
 
+# First: `mps_utils.jl` and below already take a `TMPSorMPS`, so the type has to exist by
+# then. The operations that need those utilities in turn live in `tmpo/transverse_mps_ops.jl`.
+include("transverse_mps.jl")
+
 include("ctruncate.jl")
 include("ceigen.jl")
 

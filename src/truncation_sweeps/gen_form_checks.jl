@@ -1,5 +1,6 @@
 """ Check that two MPS are in (generalized-symmetric) *left* canonical form """
-function check_gencan_left(psi::MPS, phi::MPS=psi; verbose::Bool=false)
+function check_gencan_left(psi::TMPSorMPS, phi::TMPSorMPS=psi; verbose::Bool=false)
+    psi, phi = unsided(psi), unsided(phi)  # accept a tagged boundary vector, work on the MPS
 
     mpslen = length(psi)
 
@@ -42,7 +43,8 @@ end
 
 
 """ Check that two MPS are in (generalized-symmetric) *right* canonical form"""
-function check_gencan_right(psi::MPS, phi::MPS=psi; verbose::Bool=false)
+function check_gencan_right(psi::TMPSorMPS, phi::TMPSorMPS=psi; verbose::Bool=false)
+    psi, phi = unsided(psi), unsided(phi)  # accept a tagged boundary vector, work on the MPS
 
     mpslen = length(psi)
 

@@ -11,6 +11,7 @@ function mem_req(N::Int, chi::Int, phys_dim::Int=2, dtyp::Type=ComplexF64)
     return mps_size_gb
 end
 
-function mem_req(psi::MPS)
+function mem_req(psi::TMPSorMPS)
+    psi = unsided(psi)  # accept a tagged boundary vector, work on the MPS
     Base.summarysize(psi)/1024/1024/1024
 end

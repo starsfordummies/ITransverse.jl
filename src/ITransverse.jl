@@ -17,19 +17,20 @@ using ITensors: @Algorithm_str, Algorithm
 
 using ITensors.Adapt: adapt
 
-using ITensorMPS: setleftlim!, setrightlim!
+using ITensorMPS: setleftlim!, setrightlim!, set_ortho_lims!
 
 using NDTensors:
     replace_nothing,
-    default_use_absolute_cutoff,
-    default_use_relative_cutoff,
-    expose,
     truncate!!
 
 # Collection of utilities 
 include("ITenUtils/ITenUtils.jl")
 
-export mergedicts!, mergedicts, dictfromlist
+# The boundary-vector type the sweeps, entropies and contraction routines accept alongside a
+# plain `MPS` (see `TMPSorMPS`); defined in ITenUtils, which already uses it.
+export TransverseMPS, TMPSorMPS, sided, unsided, side, apply_column, tapply_column, flipside
+
+#export mergedicts!, mergedicts, dictfromlist
 
 export halfsite
 
@@ -48,27 +49,39 @@ export pMPS,
     normalize_for_overlap!,
     allsiteinds,
     tcontract,
-    dominant_eigenvectors
+    arrow_match,
+    transpose_arrows,
+    #no_qns_supported,
+    #spectrum_vector,
+    #transpose_matrix,
+    #blockwise_sqrt,
+    #blockwise_matfun,
+    #blockwise_invsqrt,
+    #arrows_clash,
+    #stored_ind,
+    #dominant_eigenvectors
 
-export randsymITensor,
+export 
+    #randsymITensor,
     isid, isdiag,
-    pinvten,
-    randITensor_decayspec
+    #pinvten,
+    #randITensor_decayspec
 
 export symmetrize,
     check_id_matrix,
     isapproxdiag,
-    randmat_decayspec,
-    matrix_svd,
-    truncated_svd,
-    vectorized_identity,
-    itensor_to_vector,
-    to_itensor,
+    #randmat_decayspec,
+    #matrix_svd,
+    #truncated_svd,
+    #vectorized_identity,
+    #itensor_to_vector,
+    #to_itensor,
     vectorized_op,
-    trace_mpo, trace_mpo_squared,
-    max_diff
+    trace_mpo, 
+    trace_mpo_squared
+    #max_diff
 
-export symm_svd, symm_oeig, mytrunc_eig
+export symm_svd, symm_oeig, mytrunc_eig, ceigen
 
 export beta_lims
 
@@ -109,14 +122,20 @@ include("truncation_sweeps/sweeps_sym.jl")
 include("truncation_sweeps/gen_orthogonalize.jl")
 include("truncation_sweeps/gen_form_checks.jl")
 include("truncation_sweeps/trunclr_apply.jl")
+include("truncation_sweeps/rtm_svd.jl")
 include("truncation_sweeps/rtm_r_contract.jl")
 include("truncation_sweeps/rtm_lr_contract.jl")
+include("truncation_sweeps/rtm_eig.jl")
 
-export truncate_sweep, truncate_sweep_rtm
-export truncate_lsweep_sym, truncate_rsweep_sym, truncate_sweep_sym
+export truncparams 
+
+#export truncate_sweep, truncate_sweep_rtm
+#export truncate_lsweep_sym, truncate_rsweep_sym, truncate_sweep_sym
 
 export tlapply, trapply, tlrapply
 export TruncLR
+
+#export svd_ERL, eig_rtm # likely don't need to export these
 
 export gen_canonical
 
@@ -126,6 +145,7 @@ include("entropies/rdm_svd_entropies.jl")
 include("entropies/gen_sym_entropies.jl")
 include("entropies/diagonalize_sym_rtm.jl")
 include("entropies/compute_rho2.jl")
+include("entropies/diagonalize_rtm_lr.jl")
 
 include("entropies/mutual_infos.jl")
 include("entropies/fwback_ents.jl")
@@ -137,7 +157,9 @@ export vn_entanglement_entropy,
     generalized_vn_entropy_symmetric,
     generalized_svd_vn_entropy,
     diagonalize_rtm_symmetric,
-    gen_renyi2
+    gen_renyi2,
+    diagonalize_rtm_lr,
+    gen_renyi_entropies
 
 
 # from compute_rho2.jl
@@ -145,6 +167,22 @@ export rho2, rtm2_contracted
 
 include("tmpo/construct-tMPO-tMPS.jl")
 export construct_tMPS_tMPO
+
+include("tmpo/boundary_states.jl")
+# Probably can stay internals 
+export boundary_tensor,
+     close_boundary
+     fold_boundary,
+     to_boundary
+#     check_boundary,
+#     boundary_phys_ind,
+#     boundary_bond_ind,
+#     boundary_linkdim,
+#     is_product_boundary,
+#     n_boundary_sites,
+#     attach_boundary_bottom!,
+#     attach_boundary_top!
+
 
 include("tmpo/tmpo_params.jl")
 export tMPOParams, ising_tp
@@ -159,6 +197,7 @@ include("tmpo/build_ww.jl")
 
 include("tmpo/build_fw_tmpo.jl")
 export fw_tMPO, fw_tMPS
+
 include("tmpo/build_fwback_tmpo.jl")
 export fwback_tMPO, fwback_tMPS
 
@@ -168,10 +207,13 @@ include("tmpo/build_fold_tmpo_in.jl")
 
 export 
     folded_tMPO,
+    folded_tMPO_op,
     folded_tMPS,
     folded_left_tMPS,
     folded_right_tMPS,
-    folded_tMPO_in
+    folded_tMPO_in,
+    fw_tMPO_in,
+    tMPO_in
 
 include("folding/foldings.jl")
 include("folding/vectorize_mpo.jl")
@@ -189,7 +231,7 @@ export PMParams, powermethod_op, powermethod_sym
 include("contractions/contract_finite.jl")
 
 include("contractions/expvals_lr.jl")
-export expval_LR, compute_expvals
+export expval_LR, expval_LR_ops, compute_expvals
 
 include("lightcone/cone_tmpo.jl")
 include("lightcone/cone_params.jl")
@@ -206,6 +248,10 @@ include("tebd/tebd.jl")
 
 export tebd
 export observer
+
+# Everything `TransverseMPS` *does* - applying a column from its own side, the pairing
+# guards, and the tag-preserving returns - lives here, after the routines it wraps.
+include("tmpo/transverse_mps_ops.jl")
 
 # legacy functions 
 include("legacy/old_legacy.jl")

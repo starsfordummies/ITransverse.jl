@@ -24,7 +24,7 @@ function main_cone()
 
     optimize_op = vZ
     
-    truncp = (;cutoff, maxdim, direction, alg=:RTM)
+    truncp = (;cutoff, maxdim, direction, alg="RTM")
 
     Nsteps = 20
 

@@ -1,23 +1,13 @@
 
-""" Given an MPO A and a MPS ψ, with length(A) = length(ψ)+1, 
-Extends MPS ψ to the *right* by one site by applying the MPO,
-Returns a new MPS which is the extension of ψ, with siteinds matching those of A.
-In its current version, we allow to apply an MPO with a two-legged tensor at its right edge,
-which I think only works with the "naive" algorithm. We don't perform any truncation here 
-
-```
-        | | | | | |  |
-        o-o-o-o-o-o--o
-        | | | | | |  
-        o-o-o-o-o-o
-``` 
+""" Runs the light cone algorithm up to a length of nT_final timesteps
 """
-function run_cone(ll::MPS, rr::MPS,
+function run_cone(ll::TMPSorMPS, rr::TMPSorMPS,
     b::FoldtMPOBlocks,
     cone_pars::ConeParams,
     checkpoint::DoCheckpoint,
     nT_final::Int
 )
+    ll, rr = unsided(ll), unsided(rr)  # accept a tagged boundary vector, work on the MPS
 
     (; opt_method, optimize_op, truncp, vwidth) = cone_pars
 
@@ -82,7 +72,7 @@ function run_cone(ll::MPS, rr::MPS,
         ll *= sqrt(1/overlapLR)
         rr *= sqrt(1/overlapLR)
 
-        state = (L=ll, R=rr, b=b)
+        state = (L=ll, R=rr, b=b, sv=sv)  # sv is TruncLR.sv: χ x ncuts SVD singular values matrix
         checkpoint(state, nt)
 
 
@@ -95,12 +85,13 @@ function run_cone(ll::MPS, rr::MPS,
 end
 
 """ Single-MPS convenience overload: ll and rr both start as deep copies of `psi`. """
-function run_cone(psi::MPS,
+function run_cone(psi::TMPSorMPS,
     b::FoldtMPOBlocks,
     cone_pars::ConeParams,
     checkpoint::DoCheckpoint,
     nT_final::Int
 )
+    psi = unsided(psi)  # accept a tagged boundary vector, work on the MPS
     run_cone(copy(psi), copy(psi), b, cone_pars, checkpoint, nT_final)
 end
 

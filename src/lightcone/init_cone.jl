@@ -1,8 +1,7 @@
-""" Initializes the light cone folded and rotated temporal MPS |R> given `tMPOParams`
-builds a (length n) tMPS with (time_fold)  legs.
-Returns (psi[the light cone right MPS], b[the folded tMPO building blocks])"""
-
-
+""" 
+Initializes the  (left/right, according to LR) light cone folded and rotated temporal MPS 
+builds a (length n) tMPS with "time_fold"-labelled legs.
+"""
 function init_cone(b::FoldtMPOBlocks, n::Int=6; LR::Symbol=:right, full::Bool=true)
 
     @assert b.tp.nbeta == 0  # not implemented yet otherwise
@@ -19,11 +18,11 @@ function init_cone(b::FoldtMPOBlocks, ts::Vector{Index{Int64}}; LR::Symbol, full
 
     @assert b.tp.nbeta == 0  # not implemented yet otherwise
     
-    if full 
+    if full
         psi = folded_tMPS(b, ts; LR)
+        m = folded_tMPO(b, ts)
         for jj = 2:length(ts)
-            m = folded_tMPO(b,ts)
-            psi = applyn(m, psi)
+            psi = apply_column(m, psi)
             orthogonalize!(psi, length(psi))
             orthogonalize!(psi,1)
         end
@@ -34,7 +33,7 @@ function init_cone(b::FoldtMPOBlocks, ts::Vector{Index{Int64}}; LR::Symbol, full
         for jj = 2:length(ts)
 
             m = folded_tMPO_ext(b,ts[1:jj]; LR)
-            psi = applyn(m, psi)
+            psi = apply_column(m, psi)
             orthogonalize!(psi, length(psi))
         end
     end
@@ -43,7 +42,8 @@ function init_cone(b::FoldtMPOBlocks, ts::Vector{Index{Int64}}; LR::Symbol, full
 end
 
 # Alternatively, apply a column Nt times to the edge and it should be enough
-function init_cone(edge::MPS, column::MPO)
+function init_cone(edge::TMPSorMPS, column::MPO)
+    edge = unsided(edge)  # accept a tagged boundary vector, work on the MPS
     
     Nt = length(edge)
     for _ = 1:Nt

@@ -1,6 +1,7 @@
 using ITensors
 using LinearAlgebra
 using ITransverse
+using ITransverse: randsymITensor
 using Test
 
 

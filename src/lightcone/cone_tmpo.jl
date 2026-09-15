@@ -76,13 +76,9 @@ function folded_tMPO_ext(b::FoldtMPOBlocks, ts::Vector{<:Index};
 
     =# 
 
-    # Contract first tensor with initial state
-    dttype = NDTensors.unwrap_array_type(b.WWc)
-    oo[1] *= b.rho0 * delta(ind(b.rho0,1), tl[1])
-
-    # Contract last tensor with operator, default to Identity
-    fold_op = something(fold_op, vectorized_identity(dim_virtual_inds))
-    oo[end] *= adapt(dttype, ITensor(fold_op, tl[end]))
+    # Contract first tensor with initial state, last one with the operator (default Identity)
+    attach_boundary_bottom!(oo, b.rho0, tl[1])
+    attach_boundary_top!(oo, something(fold_op, vectorized_identity(tl[end])), tl[end])
 
     return oo
 

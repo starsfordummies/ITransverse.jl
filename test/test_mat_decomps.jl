@@ -2,7 +2,7 @@ using LinearAlgebra
 using ITensors
 using ITransverse
 using ITransverse
-using ITransverse: truncated_svd
+using ITransverse: truncated_svd, randITensor_decayspec, randsymITensor
 using Test
 
 @testset "Testing symmetric SVD/EIG" begin

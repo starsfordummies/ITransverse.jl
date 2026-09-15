@@ -12,7 +12,11 @@ function _siteinds_from_tp(N::Int, tp::tMPOParams)
 end
 
 """ Build product initial state from `tp.bl` tensor. """
-_psi0_from_tp(ss, tp::tMPOParams) = pMPS(ss, storage(tp.bl))
+function _psi0_from_tp(ss, tp::tMPOParams)
+    is_product_boundary(tp.bl) ||
+        error("tebd needs a product initial state, but tp.bl is a non-product boundary state (χ=$(boundary_linkdim(tp.bl))). Pass the initial MPS explicitly.")
+    pMPS(ss, storage(tp.bl))
+end
 
 # ── core time evolution ──────────────────────────────────────────────────────
 

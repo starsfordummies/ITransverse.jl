@@ -133,7 +133,17 @@ end
 
 
 
-""" New version """
+"""
+    symm_svd(a::ITensor, linds, rinds = uniqueinds(a, linds); kwargs...)
+
+Complex-*symmetric* SVD: returns `TruncSVD(U, S, Uᵀ, ...)` with `a ≈ U * S * transpose(U)`,
+built from an ordinary SVD plus the unitary fix-up `z = U† V` (`a = U √z · S · (U √z)ᵀ`).
+
+Works with QNs: the ordinary `svd` and the combiners are block-sparse already, `√z` is taken
+block by block ([`blockwise_sqrt`](@ref)) and the two `transpose_arrows` reverse the arrows
+that the transposition implies. Both are exact no-ops without QNs, so the plain path is
+unchanged - see `test_qn_symmetric.jl` for the reconstruction checks.
+"""
 function symm_svd(a::ITensor, linds, rinds = uniqueinds(a, linds) ; kwargs...)
 
     cL = combiner(linds)
@@ -146,17 +156,20 @@ function symm_svd(a::ITensor, linds, rinds = uniqueinds(a, linds) ; kwargs...)
 
     ac = symmetrize(ac)
 
-    # u * s * vd ≈ a 
+    # u * s * vd ≈ a
     F = svd(ac, iL; kwargs...)
-   
-    z = noprime(dag(F.U) * replaceind(F.V' , iR' => iL))
 
-    # Best way is probably still to rely on Schur decomposition from Julia's matrix utils !? 
-    sq_z = sqrt(z) # ITensor(sqrt(matrix(z)), inds(z))
+    # z = U^dag * V as a (u,v) matrix. With QNs `dag(U)` would flip the arrow of the leg we
+    # contract over, so conjugate the data instead and reverse the arrows afterwards - that
+    # is exactly what the transposition in `a = U S Uᵀ` demands.
+    z = transpose_arrows(conj(F.U) * replaceind(F.V, iR => iL))
+
+    # Best way is probably still to rely on Schur decomposition from Julia's matrix utils !?
+    sq_z = sqrt(z) # block-diagonal for QN tensors
 
     uS = F.U * sq_z
     u = replaceinds(uS, F.v => F.u)* dag(cL)
-    uS = replaceinds(uS, iL => iR) * dag(cR)
+    uS = transpose_arrows(replaceinds(uS, iL => iR)) * dag(cR)
 
     return ITensors.TruncSVD(u,F.S,uS, F.spec, F.u, F.v)
 end

@@ -1,6 +1,7 @@
 """ Given an input MPS, computes the spectra of its (normalized) RDM via SVD decompositions - these
 can be used to calculate the usual entanglement entropies""" 
-function diagonalize_rdm(psi::MPS)
+function diagonalize_rdm(psi::TMPSorMPS)
+    psi = unsided(psi)  # accept a tagged boundary vector, work on the MPS
 
     workpsi = orthogonalize(psi,1) 
     workpsi = normalize(workpsi)
@@ -24,7 +25,8 @@ function LinearAlgebra.svdvals(a::ITensor, linds; kwargs...)
 end
 
 """ At a given cut, performs SVD and returns the squares of the SVs, ie. the eigenvalues of the RDM"""
-function diagonalize_rdm!(psi::MPS, cut::Int)
+function diagonalize_rdm!(psi::TMPSorMPS, cut::Int)
+    psi = unsided(psi)  # accept a tagged boundary vector, work on the MPS
 
     orthogonalize!(psi, cut)
 
@@ -50,7 +52,8 @@ function vn_from_sv(sv; normalize::Bool)
 end
 
 """ MPS-modifying VN entropy (orthogonalizes), by default assumes that MPS is already normalized """ 
-function vn_entanglement_entropy!(psi::MPS, bond::Int; normalize::Bool=false)
+function vn_entanglement_entropy!(psi::TMPSorMPS, bond::Int; normalize::Bool=false)
+    psi = unsided(psi)  # accept a tagged boundary vector, work on the MPS
     orthogonalize!(psi, bond)
     S = svdvals(psi[bond], uniqueinds(psi[bond],psi[bond+1]))
     return vn_from_sv(S; normalize) 
@@ -60,7 +63,8 @@ end
 """ Computes the Von Neumann entanglement entropy of an MPS `psi` at all links (normalizing if necessary), 
 returns a vector of floats containing the VN entropies 
 """
-function vn_entanglement_entropy(psi::MPS)
+function vn_entanglement_entropy(psi::TMPSorMPS)
+    psi = unsided(psi)  # accept a tagged boundary vector, work on the MPS
 
     workpsi = orthogonalize(psi,1)
     workpsi = workpsi/norm(workpsi)
@@ -77,7 +81,8 @@ function vn_entanglement_entropy(psi::MPS)
 end
 
 
-function renyi_entropy(in_psi::MPS, cut::Int, αr::Number)
+function renyi_entropy(in_psi::TMPSorMPS, cut::Int, αr::Number)
+    in_psi = unsided(in_psi)  # accept a tagged boundary vector, work on the MPS
 
     S_ren = 0.0
 
@@ -112,7 +117,8 @@ end
 S_α = -log(sum λ^α), where λ are the eigenvalues of the RDM (=SV^2 ).
 returns a vector of floats containing the entropies 
 """
-function renyi_entropy(psi::MPS, α::Number=2)
+function renyi_entropy(psi::TMPSorMPS, α::Number=2)
+    psi = unsided(psi)  # accept a tagged boundary vector, work on the MPS
 
     workpsi = normalize(psi)
 
@@ -127,7 +133,8 @@ function renyi_entropy(psi::MPS, α::Number=2)
 end
 
 
-function renyi_entropies(in_psi::MPS)
+function renyi_entropies(in_psi::TMPSorMPS)
+    in_psi = unsided(in_psi)  # accept a tagged boundary vector, work on the MPS
     renyi_entropies(diagonalize_rdm(in_psi))
 end
 
