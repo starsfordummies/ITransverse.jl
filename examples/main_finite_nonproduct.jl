@@ -28,6 +28,8 @@ using ITransverse
 using LinearAlgebra
 using Random
 
+using ITransverse: n_boundary_sites
+
 Random.seed!(4321)
 
 """

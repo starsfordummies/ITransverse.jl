@@ -170,10 +170,10 @@ export construct_tMPS_tMPO
 
 include("tmpo/boundary_states.jl")
 # Probably can stay internals 
-# export boundary_tensor,
-#     close_boundary,
-#     fold_boundary,
-#     to_boundary,
+export boundary_tensor,
+     close_boundary
+     fold_boundary,
+     to_boundary
 #     check_boundary,
 #     boundary_phys_ind,
 #     boundary_bond_ind,

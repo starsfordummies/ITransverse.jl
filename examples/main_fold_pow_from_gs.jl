@@ -1,6 +1,6 @@
 using ITensors, ITensorMPS
 using ITransverse
-using ITensors.Adapt: adapt
+using ITransverse: fold_boundary
 
 function main_folded_pm()
 

@@ -87,7 +87,7 @@ function powermethod_sym(in_mps::TMPSorMPS, in_mpo::MPO, pm_params::PMParams; no
             @warn "PM **not** converged after $(jj) steps | ds=$(last(info_iterations[:ds])) | chi=$(maxlinkdim(psi_work))"
         end
 
-        next!(p; showvalues = [(:Info,"[$(jj)]  chi=$(maxlinkdim(psi_work)) | ds2=$(last(info_iterations[:ds])) | <R|Rprev> = $(fidelity)" )])
+        next!(p; showvalues = [(:Info,"[$(jj)]  chi=$(maxlinkdim(psi_work)) | ds2=$(last(info_iterations[:ds])) | logfidelity(<R|Rprev>) = $(fidelity)" )])
 
     end
 
