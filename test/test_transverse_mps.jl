@@ -3,7 +3,7 @@ using Test
 using LinearAlgebra
 using Logging
 
-using ITransverse: transpose_arrows
+using ITransverse: transpose_arrows, truncate_sweep_sym
 
 # `TransverseMPS` keeps the `LR` choice attached to a boundary vector, so that a column can only
 # be applied from the correct side and two same-side vectors cannot be paired.

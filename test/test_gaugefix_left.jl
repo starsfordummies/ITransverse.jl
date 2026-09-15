@@ -1,6 +1,7 @@
 using ITensors, ITensorMPS
 using Test
 using ITransverse
+using ITransverse: isid, isdiag
 
 s = siteinds("S=1/2", 30)
 psi = random_mps(s, linkdims=50)

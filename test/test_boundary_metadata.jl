@@ -14,7 +14,7 @@ equal to the folded physical dimension.
 """
 
 using ITensors, ITensorMPS, ITransverse
-using ITransverse: _time_sites, is_product_boundary, n_boundary_sites
+using ITransverse: _time_sites, is_product_boundary, n_boundary_sites, boundary_tensor
 using Test
 
 const MP = IsingParams(1.0, 0.95, 1.4)

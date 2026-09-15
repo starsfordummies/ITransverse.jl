@@ -13,6 +13,7 @@ where D = d = 4.
 using ITensors, ITensorMPS, ITransverse
 using LinearAlgebra
 using Test
+using ITransverse: svd_ERL
 
 """ Random complex MPO of the given bond dimension (`random_mpo` is real, m==1). """
 function _crandom_mpo(ss, chi)
