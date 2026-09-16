@@ -1,5 +1,6 @@
 using ITensors
 using ITransverse 
+using ITransverse: dominant_eigenvectors
 using Test 
 
 @testset "dominant eigenvectors" begin 

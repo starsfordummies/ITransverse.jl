@@ -22,19 +22,21 @@ function ising_loschmidt(b::FwtMPOBlocks, ts::Int, pm_params)
         "X_mid" => (; state) -> real(expect(state, "X")[halfsite(state)]),
     )
 
-    psi_trunc, ds2 = powermethod_sym(start_mps, mpo, pm_params; (observer!)=pm_observer)
+    right, ds2 = powermethod_sym(start_mps, mpo, pm_params; (observer!)=pm_observer)
 
-    normalization = overlap_noconj(psi_trunc, psi_trunc)
-    psi_trunc     = psi_trunc / sqrt(normalization)
+    left = transpose(right)
+    normalization = overlap_noconj(left, right)
+    right     = right / sqrt(normalization)
+    left     = left / sqrt(normalization)
 
-    sgen        = gensym_renyi_entropies(psi_trunc)
-    leading_eig = inner(conj(psi_trunc'), mpo, psi_trunc)
+    sgen        = gensym_renyi_entropies(right)
+    leading_eig = expval_LR(left, mpo, right)
 
     # extra check: (LTTR) = lambda^2 (LR)
-    OL         = apply(mpo, psi_trunc, alg="naive", truncate=false)
-    leading_sq = overlap_noconj(OL, OL)
+    OL         = apply_column(mpo, right, alg="naive", truncate=false)
+    leading_sq = overlap_noconj(transpose(OL), OL)
 
-    return psi_trunc, (; ds2, leading_eig, leading_sq, normalization, entropy=sgen, pm_observer)
+    return right, (; ds2, leading_eig, leading_sq, normalization, entropy=sgen, pm_observer)
 end
 
 
@@ -45,7 +47,7 @@ function main_losch(Ntmin = 10, Ntmax  = 80; Ntstep = 2)
     gx  = 0.0
 
     dt    = 0.05
-    dbeta = -im*dt   # reversed sign beta imag time
+    dbeta = -im*dt   
 
     nbeta      = 4
     init_state = up_state

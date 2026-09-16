@@ -2,7 +2,8 @@
 so expensive to store. Allows to start from a `prev_chunk` ITensor. 
 If `flip_fb=true`, it unfolds and partial transposes before contracting physical legs,
 so contracts fw leg with backward legs (useful for building rho2 with `psi` seen as fw-vs-back TM) """
-function tm_chunk(psi::MPS, i1::Int, i2::Int, prev_chunk::ITensor=ITensor(1); flip_fb::Bool, contract_from_right::Bool=false)
+function tm_chunk(psi::TMPSorMPS, i1::Int, i2::Int, prev_chunk::ITensor=ITensor(1); flip_fb::Bool, contract_from_right::Bool=false)
+    psi = unsided(psi)  # accept a tagged boundary vector, work on the MPS
     tm = prev_chunk
     ss = siteinds(psi)
     psi2 = prime(linkinds, psi)
@@ -25,7 +26,8 @@ end
 
 
 """ Takes an input MPS and returns a chunk of it partial-traced over its folded indices between `n1` and `n2` """
-function ptr_chunk(psi::MPS, n1::Int, n2::Int; contract_from_right::Bool=false)
+function ptr_chunk(psi::TMPSorMPS, n1::Int, n2::Int; contract_from_right::Bool=false)
+    psi = unsided(psi)  # accept a tagged boundary vector, work on the MPS
     ss = siteinds(psi)
 
     chunk = ITensor(1)
@@ -43,7 +45,8 @@ end
 
 """ Given input a folded `psi`, we reopen its legs to view it as a fw-back density matrix `rho`,
 then compute its purity tr_A(rho^2) for a bipartition A=1:cut, B=cut+1:N """
-function rho2_fwback(psi::MPS, cut::Int)
+function rho2_fwback(psi::TMPSorMPS, cut::Int)
+    psi = unsided(psi)  # accept a tagged boundary vector, work on the MPS
 
     LL = length(psi)
 
@@ -65,7 +68,8 @@ end
 
 """ Given input a folded `psi`, we reopen its legs to view it as a fw-back density matrix `rho`,
 then compute its purity tr_A(rho^4) for a bipartition A=1:cut, B=cut+1:N """
-function rho4_fwback_apply(psi::MPS, cut::Int; alg="zipup", cutoff=1e-12, maxdim=maxlinkdim(psi))
+function rho4_fwback_apply(psi::TMPSorMPS, cut::Int; alg="zipup", cutoff=1e-12, maxdim=maxlinkdim(psi))
+    psi = unsided(psi)  # accept a tagged boundary vector, work on the MPS
 
     LL = length(psi)
 
@@ -98,7 +102,8 @@ end
 """ Given input a folded `psi`, we reopen its legs to view it as a fw-back density matrix `rho`,
 then compute its purity tr_A(rho^4) for a bipartition A=1:cut, B=cut+1:N 
 has chi^4 cost for storage """
-function rho4_fwback(psi::MPS, cut::Int; alg="zipup", cutoff=1e-12, maxdim=maxlinkdim(psi))
+function rho4_fwback(psi::TMPSorMPS, cut::Int; alg="zipup", cutoff=1e-12, maxdim=maxlinkdim(psi))
+    psi = unsided(psi)  # accept a tagged boundary vector, work on the MPS
 
     LL = length(psi)
 
@@ -130,42 +135,10 @@ function rho4_fwback(psi::MPS, cut::Int; alg="zipup", cutoff=1e-12, maxdim=maxli
 
 end
 
-function rho4_fwback_alt(psi::MPS, cut::Int; alg="densitymatrix", cutoff=1e-12, maxdim=maxlinkdim(psi))
-
-    LL = length(psi)
-
-    # Normalization: tr(rho) = 1 
-    tr_rho = scalar(ptr_chunk(psi, 1, LL))
-
-    psit = if cut < LL
-        # tr_B
-        blockB = ptr_chunk(psi, cut+1, LL, contract_from_right=true)
-
-        psimats = psi[1:cut]
-        psimats[end] *= blockB
-        MPS(psimats)
-    else
-        psi 
-    end
-
-    psit = reopen_inds(psit;  different_fwback_inds=false)
-
-    rho4 = ITensor(1)
-    for psik in psit 
-        rho4 *= psik
-        rho4 *= psik'
-        rho4 *= psik''
-        rho4 *= replaceprime(psik''', 4 =>0)
-    end
-
-    return scalar(rho4)/(tr_rho^4)
-
-end
-
-
 """ Given input a folded `psi`, we reopen its legs to view it as a fw-back density matrix `rho`,
 then compute its purity tr(rho^2) for a segment """
-function rho2_fwback_segment(psi::MPS, iA::Int, fA::Int, iB::Int, fB::Int)
+function rho2_fwback_segment(psi::TMPSorMPS, iA::Int, fA::Int, iB::Int, fB::Int)
+    psi = unsided(psi)  # accept a tagged boundary vector, work on the MPS
 
     LL = length(psi)
 
@@ -226,7 +199,9 @@ end
 
 
 
-function compute_sn_cut(psi::MPS, n::Int; cut::Int=halfsite(psi), cutoff=1e-10, maxdim=maxlinkdim(psi))
+function compute_sn_cut(psi::TMPSorMPS, n::Int; cut::Int=halfsite(psi), cutoff=1e-10, maxdim=maxlinkdim(psi))
+    psi = unsided(psi)  # accept a tagged boundary vector, work on the MPS
+    psi = copy(psi)
     ss = siteinds(psi)
 
     for kk = length(psi):-1:cut
@@ -237,47 +212,15 @@ function compute_sn_cut(psi::MPS, n::Int; cut::Int=halfsite(psi), cutoff=1e-10, 
 
     orthogonalize!(psi,1)
 
-    @show length(psi)
-
     oo = reopen_inds!(psi, different_fwback_inds=false)
 
     oo = oo/trace_mpo(oo)
 
-    @show siteinds(oo)
-    @show linkinds(oo)
-
     rho2 = copy(oo)
     for kk = 2:n
-        @show kk
         rho2 = apply(oo, rho2; cutoff,maxdim)
     end
 
     trace_mpo(rho2)
 end
-
-
-function t4mid_slice(psi::MPS)
-    NN = length(psi)
-    cut = halfsite(NN)
-
-
-    ll = linkinds(psi)
-    phi = prime(linkinds,psi)
-
-    for ii = 1:dim(ll[cut])
-        for jj = 1:dim(ll[cut])
-                
-            lenv = ITensors.OneITensor()
-            for kk = 1:4
-                lenv *= psi[kk]
-                lenv *= phi[kk]
-            end
-
-        end
-
-    end
-
-    return 
-end
-
 

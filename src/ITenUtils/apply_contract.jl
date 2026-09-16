@@ -62,9 +62,12 @@ function contract_dangling!(psi::AbstractMPS)
         if ITensorMPS.rightlim(psi) > length(psi)+1
             setrightlim!(psi, length(psi)+1)
         end
+        if ITensorMPS.leftlim(psi) > length(psi)
+            setleftlim!(psi, length(psi))
+        end
     end
-    #@show ortho_lims(psi)
 
+    return psi
 end
 
 

@@ -8,7 +8,9 @@ function _gen_canonical_sweep!(psi::MPS, sweep_range, sits, sits_prime; cutoff, 
         Ai = XUinv * psi[ii]
 
         env *= Ai
-        env *= replaceind(Ai', sits_prime[ii] => sits[ii])
+        # bra copy of Ai: arrows reversed (QNs only), data *not* conjugated. `dag` on the
+        # site index keeps it contractible with Ai's; both are no-ops without QNs.
+        env *= replaceind(transpose_arrows(Ai)', sits_prime[ii] => dag(sits[ii]))
 
         @assert order(env) == 2
         F = symm_oeig(env, ind(env, 1); cutoff, maxdim, lefttags=tags(ind(env, 1)))
@@ -27,7 +29,11 @@ end
 
 """ Generalized canonical form to diagonalize symmetric RTM |psi^*><psi| 
 bringing gen. orthogonality center in `ortho_center` """
-function gen_canonical(in_psi::MPS, ortho_center::Int; cutoff::Float64=1e-13)
+function gen_canonical(in_psi::TMPSorMPS, ortho_center::Int; cutoff::Float64=1e-13)
+    in_psi = unsided(in_psi)  # accept a tagged boundary vector, work on the MPS
+
+    no_qns_supported("gen_canonical (generalized canonical form)", in_psi;
+        hint="It relies on `symm_oeig`. Entropies can still be computed with `bring_gen_can=false`.")
 
     mpslen  = length(in_psi)
     sits    = siteinds(in_psi)

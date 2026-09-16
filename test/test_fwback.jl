@@ -41,13 +41,13 @@ function ising_fwb(tp::tMPOParams, TT::Int)
 
     #svn = vn_entanglement_entropy(psi_trunc)
 
-    leading_eig = inner(conj(psi_trunc'), mpo, psi_trunc)
+    leading_eig = inner(conj(unsided(psi_trunc)'), mpo, unsided(psi_trunc))
 
     # silly extra check so we can see that (LTTR) = lambda^2 (LR)
-    OL = apply(mpo, psi_trunc,  alg="naive", truncate=false)
+    OL = apply(mpo, unsided(psi_trunc),  alg="naive", truncate=false)
     leading_sq = overlap_noconj(OL, OL)
 
-    normalization = overlap_noconj(psi_trunc,psi_trunc)
+    normalization = overlap_noconj(transpose(psi_trunc), psi_trunc)
     leading_eig, leading_sq, normalization
 
     return psi_trunc, b
@@ -115,7 +115,7 @@ for TT = 10:10:30
 
     psi, b = ising_fwb(tp,2*TT)
     tmpo_z = fwback_tMPO(b, siteinds(psi); mid_op = [1,0,0,-1], tr=b.tp.bl)
-    ev_unfold = expval_LR(psi, tmpo_z, psi)/overlap_noconj(psi,psi)
+    ev_unfold = expval_LR(transpose(psi), tmpo_z, psi)/overlap_noconj(transpose(psi), psi)
 
 
     ##### Folded 

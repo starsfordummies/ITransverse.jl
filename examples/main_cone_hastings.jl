@@ -21,7 +21,7 @@ function main_cone()
 
     optimize_op = vI
     
-    truncp = (;cutoff, maxdim, direction=:left, alg=:naiveRTM)
+    truncp = (;cutoff, maxdim, direction=:left, alg="naiveRTM")
 
     Nsteps = 16
 

@@ -10,7 +10,7 @@ b = FoldtMPOBlocks(tp)
 evs_X = ComplexF64[]
 for nn = 1:6
     c0 = init_cone(b,nn)
-    push!(evs_X, expval_LR(c0,c0,[0,1,1,0], b))
+    push!(evs_X, expval_LR(transpose(c0), c0, [0,1,1,0], b))
 end
 
 @test norm(evs_X - ITransverse.BenchData.bench_X_04_plus[1:6]) < 1e-12

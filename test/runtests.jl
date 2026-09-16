@@ -1,4 +1,10 @@
 using Test
+using Random
+
+# Many test files draw random states and compare against tolerances. Seed once here so the
+# whole suite is reproducible; individual files seed themselves as well, so they are also
+# reproducible when run on their own.
+Random.seed!(20250803)
 
 @info "Running all tests"
 

@@ -13,21 +13,20 @@ function tMPOParams(mp::ModelParams;
     scheme=default_scheme(mp), 
     nbeta=0, 
     init_state)
-    tMPOParams(dt, dbeta, mp, scheme, nbeta, to_itensor(init_state, "bl"))
+    tMPOParams(dt, dbeta, mp, scheme, nbeta, to_boundary(init_state))
 end
 
 function Base.show(io::IO, tp::tMPOParams)
     println(io, "tMPOParams:   dt: $(tp.dt) | dbeta: $(tp.dbeta)  || nbeta : $(tp.nbeta)")
     println(io, "scheme:       $(tp.scheme)  |  Model params: $(tp.mp)")
-    println(io, "Init state:   $(array(tp.bl))")
+    if is_product_boundary(tp.bl)
+        println(io, "Init state:   $(array(tp.bl))")
+    else
+        println(io, "Init state:   non-product, χ=$(boundary_linkdim(tp.bl)), inds $(inds(tp.bl))")
+    end
 end
 
 
-
-function tMPOParams(x::Nothing; bl)
-    blt = to_itensor(bl, "bl")
-    return tMPOParams(NoParams(Index(dim(blt))); dt=NaN, dbeta=nothing, scheme=Murg(), init_state=blt)
-end
 
 """ Quick defaults for parallel field Ising (kept for backward compatibility). """
 ising_tp(; hz=0.4, integrable::Bool=true, init_state=[1,0]) =

@@ -1,87 +1,65 @@
-""" Build folded tMPO with an extra site at the beginning for the initial state, which we specify as `init_tensor`
-with a physical index `init_physidx`.
-The extra site should already be incorporated in the `ts` index list (and we check whether the dimensions match),
- so effectively we're building a tMPO for Nt = length(ts)-1 timesteps  """
-function folded_tMPO_in(b::FoldtMPOBlocks, ts::Vector{<:Index}; init_tensor::ITensor, init_physidx::Index, kwargs...) 
+"""
+    tMPO_in(b, ts; init_tensor, init_physidx, left=nothing, right=nothing, kwargs...)
 
-    dttype = NDTensors.unwrap_array_type(b.WWc)
+Build a tMPO (folded or forward, depending on `b`) on the `length(ts)` time sites `ts`,
+with a **non-product initial state**: the tensor `init_tensor` (one column of the initial
+boundary MPS, e.g. a tensor of a DMRG ground state) is added as an extra site at the
+bottom, so the resulting tMPO has `length(ts)+1` sites.
 
-    init_tensor = adapt(dttype, init_tensor)
-    links_rho0 = uniqueinds(inds(init_tensor), init_physidx)
+`init_physidx` is the physical (space) index of `init_tensor`, `left`/`right` its bond
+indices - if not given they are taken in the order they appear in the tensor, which is
+error prone, so better pass them explicitly. For `FoldtMPOBlocks` the tensor is folded
+(`A ⊗ conj(A)`) here.
 
-    # Just build an extended folded_tMPO and replace the first tensor with the initial state 
+The boundary bond index of the resulting tMPO is the (unprimed) `"bdry"`-tagged index built by
+[`boundary_tensor`](@ref); use [`close_boundary`](@ref) on the same tensor to build matching
+edge tMPS.
 
-    tp_ext = tMPOParams(b.tp.mp; dt=b.tp.dt, dbeta=b.tp.dbeta, scheme=b.tp.scheme, nbeta=b.tp.nbeta+1, init_state=b.tp.bl)
-    ww = folded_tMPO(FoldtMPOBlocks(b; tp=tp_ext), ts; kwargs...)
+!!! note
+    Each call builds (and, for the folded case, folds) its own boundary tensor, hence its own
+    boundary bond index. To get several columns sharing it - e.g. an operator column and an
+    identity column - build the boundary state once and pass it directly:
+    `bl = boundary_tensor(A; phys, left, right)`, then `fw_tMPO(b, ts; bl, ...)`, or for the
+    folded case `rho0 = fold_boundary(bl; folded_dim=dim(b.iL))` and `folded_tMPO(b, ts; rho0, ...)`.
+"""
+function tMPO_in(b, ts::Vector{<:Index}; init_tensor::ITensor, init_physidx::Index,
+                 left=nothing, right=nothing, kwargs...)
 
-    init_tensor = init_tensor * delta(init_physidx, linkind(ww,1))
-    init_tensor = init_tensor * delta(links_rho0[1], siteind(ww,1)')
-    init_tensor = init_tensor * delta(links_rho0[2], siteind(ww,1))
+    bl = _boundary_from_column(init_tensor, init_physidx, left, right)
 
-    replace!(ww.data, ww[1] => init_tensor)
-
-    return ww
-
-end
-
-""" Build folded tMPO with an extra site at the beginning for the initial state, which we specify as `init_tensor`
-with a physical index `init_physidx`.
-The extra site should already be incorporated in the `ts` index list (and we check whether the dimensions match),
- so effectively we're building a tMPO for Nt = length(ts)-1 timesteps  """
-function fw_tMPO_in(b::FwtMPOBlocks, ts::Vector{<:Index}; init_tensor::ITensor, init_physidx::Index, kwargs...) 
-
-    dttype = NDTensors.unwrap_array_type(b.Wc)
-
-    init_tensor = adapt(dttype, init_tensor)
-    links_psi0 = uniqueinds(inds(init_tensor), init_physidx)
-
-    # Just build an extended folded_tMPO and replace the first tensor with the initial state 
-
-    tp_ext = tMPOParams(b.tp.mp; dt=b.tp.dt, dbeta=b.tp.dbeta, scheme=b.tp.scheme, nbeta=b.tp.nbeta+1, init_state=b.tp.bl)
-    ww = folded_tMPO(FwtMPOBlocks(b; tp=tp_ext), ts; kwargs...)
-
-    init_tensor = init_tensor * delta(init_physidx, linkind(ww,1))
-    init_tensor = init_tensor * delta(links_psi0[1], siteind(ww,1)')
-    init_tensor = init_tensor * delta(links_psi0[2], siteind(ww,1))
-
-    #@show ww[1][1,1,1]
-    ww.data[1] = init_tensor
-    #@show ww[1][1,1,1]
-
-    return ww
-
-end
-
-
-
-""" Build folded tMPO with an extra site at the beginning for the initial state, which we specify as `init_tensor`
-with a physical index `init_physidx`.
-The extra site should already be incorporated in the `ts` index list (and we check whether the dimensions match),
- so effectively we're building a tMPO for Nt = length(ts)-1 timesteps  """
-function tMPO_in(b, ts::Vector{<:Index}; init_tensor::ITensor, init_physidx::Index, kwargs...) 
-
-    tp_ext = tMPOParams(b.tp.mp; dt=b.tp.dt, dbeta=b.tp.dbeta, scheme=b.tp.scheme, nbeta=b.tp.nbeta+1, init_state=b.tp.bl)
-
-    ww, dttype = if b isa FwtMPOBlocks
-        fw_tMPO(FwtMPOBlocks(b; tp=tp_ext), ts; kwargs...), NDTensors.unwrap_array_type(b.Wc)
-    elseif b isa FoldtMPOBlocks
-        folded_tMPO(FoldtMPOBlocks(b; tp=tp_ext), ts; kwargs...), NDTensors.unwrap_array_type(b.WWc)
+    if b isa FoldtMPOBlocks
+        rho0 = fold_boundary(bl; folded_dim=dim(b.iL), tags="Site,rho0")
+        return folded_tMPO(b, ts; rho0, kwargs...)
+    elseif b isa FwtMPOBlocks
+        return fw_tMPO(b, ts; bl, kwargs...)
+    else
+        error("Unknown tMPO blocks type $(typeof(b))")
     end
+end
 
-    init_tensor = adapt(dttype, init_tensor)
-    links_psi0 = uniqueinds(inds(init_tensor), init_physidx)
-    @assert length(links_psi0) == 2 
+""" Folded tMPO with a non-product initial state, see [`tMPO_in`](@ref) """
+folded_tMPO_in(b::FoldtMPOBlocks, ts::Vector{<:Index}; kwargs...) = tMPO_in(b, ts; kwargs...)
 
-    # Just build an extended tMPO and replace the first tensor with the initial state 
-
-    init_tensor = replaceind(init_tensor, init_physidx, linkind(ww,1))
-    init_tensor = replaceind(init_tensor, links_psi0[1], links_psi0[2]')
-
-    #@show ww[1][1,1,1]
-    ww.data[1] = init_tensor
-    #@show ww[1][1,1,1]
+""" Forward (unfolded) tMPO with a non-product initial state, see [`tMPO_in`](@ref) """
+fw_tMPO_in(b::FwtMPOBlocks, ts::Vector{<:Index}; kwargs...) = tMPO_in(b, ts; kwargs...)
 
 
-    return ww
-
+""" Put one column of a boundary MPS in the boundary-state convention, guessing the
+left/right bonds from the index order if they are not given explicitly. """
+function _boundary_from_column(A::ITensor, phys::Index, left, right)
+    if isnothing(left) && isnothing(right)
+        bonds = uniqueinds(inds(A), phys)
+        # already in the convention (bonds are a prime pair): keep the bond index as is
+        if length(bonds) == 2 && noprime(bonds[1]) == noprime(bonds[2])
+            return check_boundary(settags(A, "Site", phys))
+        end
+        if length(bonds) == 2
+            left, right = bonds
+        elseif length(bonds) == 1
+            right = only(bonds)   # single bond: edge column, side is irrelevant
+        elseif !isempty(bonds)
+            error("Boundary column tensor has $(length(bonds)) bonds besides $(phys)")
+        end
+    end
+    return boundary_tensor(A; phys, left, right)
 end

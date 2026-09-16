@@ -1,5 +1,5 @@
 """ Eigenvalue of matrix M with truncation. Returns Eigen() struct and spectrum
-The cutoff is applied to the sum of the abs() of the eigenvalues, so that 
+The cutoff is applied to the sum of the abs() of the eigenvalues, so that
 the norm error on the truncated object is ~ sqrt(cutoff) """
 function mytrunc_eig(
     M::AbstractMatrix;
@@ -8,9 +8,26 @@ function mytrunc_eig(
     cutoff=nothing,
     use_absolute_cutoff=nothing,
     use_relative_cutoff=true,
-) 
+)
 
-DM, VM = eigen(M)
+if any(!isfinite, M)
+  throw(ArgumentError("mytrunc_eig: input matrix contains NaNs or Infs"))
+end
+
+# LAPACK geev is noticeably less reliable in single precision
+if eltype(M) <: Union{Float32, ComplexF32}
+  M = ComplexF64.(M)
+end
+
+DM, VM = try
+  eigen(M)
+catch err
+  err isa LinearAlgebra.LAPACKException || rethrow()
+  # rare geev non-convergence: retry once on a perturbed copy
+  # (perturbation ~ eps*|M|, well below any truncation scale)
+  Mp = M .+ (eps(real(float(eltype(M)))) * norm(M)) .* randn(ComplexF64, size(M))
+  eigen(Mp)
+end
 
 # Sort by largest to smallest eigenvalues
 p = sortperm(DM; by=abs, rev = true)
@@ -18,8 +35,8 @@ DM = DM[p]
 VM = VM[:,p]
 
 if any(!isnothing, (maxdim, cutoff))
-  #println("TRUNCATING @ $maxdim, $cutoff, last eig  = $(DM[end]) ")
-  truncerr, _ = ctruncate!( # ) NDTensors.truncate!!(
+  # truncerr from ctruncate! can be complex in corner cases, hence the abs() below
+  truncerr, _ = ctruncate!(
     DM; mindim, maxdim, cutoff, use_absolute_cutoff, use_relative_cutoff
   )
   dD = length(DM)
@@ -27,18 +44,12 @@ if any(!isnothing, (maxdim, cutoff))
     VM = VM[:, 1:dD]
   end
 else
-  #println("**NOT**TRUNCATING @ $maxdim, $cutoff,  last eig  = $(DM[end])  ")
   dD = length(DM)
   truncerr = 0.0
 end
 
-# TODO it seems that truncate!! can return complex truncerr for corner cases
-spec = try
-  Spectrum(abs.(DM), abs(truncerr))
-catch e
-  @error("not good, $e, $(abs.(DM)), $truncerr")
-  Spectrum(zeros(length(DM)), 0.0)
-end
+truncerr_r = abs(truncerr)
+spec = Spectrum(abs.(DM), isfinite(truncerr_r) ? truncerr_r : 0.0)
 
 return Eigen(DM, VM), spec
 
@@ -89,6 +100,7 @@ end
 
 """ When called on ITensors, `symm_oeig`` returns a single `TruncEigen` object""" 
 function symm_oeig(a::ITensor, linds, rinds = uniqueinds(a, linds) ; cutoff=nothing, maxdim=nothing, lefttags="eig_sym")
+    no_qns_supported("symm_oeig (complex-symmetric eigendecomposition)", a)
 
     cL = combiner(linds)
     cR = combiner(rinds)
