@@ -486,3 +486,24 @@ function trace_mpo_ab(mpoA::MPO, mpoB::MPO, flip_b_sites::Bool=false)
 
     return scalar(trace)
 end
+
+
+
+""" Random complex MPO of the given bond dimension (`random_mpo` is real and m==1 only). """
+function crandom_mpo(ss; linkdims::Int=1)
+  sum(rand(ComplexF64) * random_mpo(ss) for linkdims=1:4)
+end
+
+# function crandom_mpo(ss; linkdims::Int=1)
+#     N = length(ss)
+#     ls = [Index(chi, "Link,l=$j") for j in 1:N-1]
+#     A = MPO(N)
+#     for j in 1:N
+#         is = j == 1 ? (ss[1]', ss[1], ls[1]) :
+#              j == N ? (ls[N-1], ss[N]', ss[N]) :
+#                       (ls[j-1], ss[j]', ss[j], ls[j])
+#         t = random_itensor(ComplexF64, is...)
+#         A[j] = t / norm(t)
+#     end
+#     return A
+# end

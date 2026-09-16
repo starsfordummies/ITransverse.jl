@@ -120,19 +120,11 @@ function fwback_tMPS(
 
 
     Ntot = length(time_sites)
-    Ntot = length(time_sites)
 
     tp = b.tp
     nbeta = tp.nbeta
 
     @assert nbeta <= Ntot
-
-    # Same convention as fwback_tMPO: nbeta imag steps, then Nfw forward and Nfw backward
-    Nt = Ntot - nbeta
-    @assert Nt >= 0 && iseven(Nt)
-    Nfw = div(Nt, 2)
-    betai, betaf = init_beta_only ? (nbeta, 0) : (div(nbeta,2), div(nbeta,2))
-    @assert betai + 2*Nfw + betaf == Ntot
 
     # Same convention as fwback_tMPO: nbeta imag steps, then Nfw forward and Nfw backward
     Nt = Ntot - nbeta
