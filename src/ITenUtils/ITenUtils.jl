@@ -28,3 +28,5 @@ include("eig_sym.jl")
 include("sqrt_itensor.jl")
 
 include("size_estimate.jl")
+
+include("varopt.jl")
