@@ -507,3 +507,21 @@ end
 #     end
 #     return A
 # end
+
+
+""" Inplace inserts an operator in the *virtual* leg of an MPO between sites llink and llink+1""" 
+function insert_op_in_mpo!(op::Array, ww::MPO, llink::Int)
+    insert_link = linkind(ww,llink)
+
+    @assert !isnothing(insert_link)  "No valid link found for op insertion" 
+  
+    iop = adapt(mapreduce(NDTensors.unwrap_array_type, promote_type, ww), ITensor(op, insert_link, insert_link' ))
+    ww[llink] = apply(iop, ww[llink])
+    #ww[llink] = noprime(iop * ww[llink], insert_link')
+    return ww
+end
+
+""" Returns a new MPO with insertion of an operator in the *virtual* leg between sites llink and llink+1""" 
+function insert_op_in_mpo(op::Array, ww::MPO, llink::Int)
+    insert_op_in_mpo!(op, copy(ww), llink)
+end
