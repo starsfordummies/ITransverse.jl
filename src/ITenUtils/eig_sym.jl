@@ -55,7 +55,24 @@ return Eigen(DM, VM), spec
 
 end
 
-function symm_oeig(M::AbstractMatrix; maxdim=nothing, cutoff=nothing, use_absolute_cutoff=nothing, use_relative_cutoff=nothing)
+"""
+    symm_oeig(M::AbstractMatrix; kwargs...) -> Eigen(vals, O), spec
+
+Complex-*orthogonal* eigendecomposition of a complex symmetric `M`: `M = O * Λ * transpose(O)`
+with `transpose(O) * O = I` 
+
+`Z = transpose(V) * V` and `O = V * Z^(-1/2)`
+
+ Eigenvectors belonging to distinct
+eigenvalues are already complex-orthogonal - `(λi - λj) * viᵀvj = 0` - so `Z` is diagonal
+unless eigenvalues coincide
+
+`O` is complex-orthogonal rather than unitary, so it can be arbitrarily ill-conditioned:
+ `cond_warn` bounds the tolerated `cond(O)`, its default chosen so that the warning fires at around a 1e-10 relative error in
+`O * Λ * transpose(O)`.
+"""
+function symm_oeig(M::AbstractMatrix; maxdim=nothing, cutoff=nothing, use_absolute_cutoff=nothing,
+                   use_relative_cutoff=nothing, cond_warn=1e3)
 
     M = symmetrize(M)
     F, spec = mytrunc_eig(M; maxdim, cutoff, use_absolute_cutoff, use_relative_cutoff)
@@ -64,38 +81,33 @@ function symm_oeig(M::AbstractMatrix; maxdim=nothing, cutoff=nothing, use_absolu
 
     Z = transpose(vecs) * vecs
 
-    # TODO this is a hack to enforce sqrt of diagonal matrix even when it's only approx diagonal
-    diagz = Diagonal(diag(Z))
-
-    if norm(Z - diagz) < 1e-10
-        isq_z = diagz^-0.5
+    isq_z = if isapproxdiag(Z; tol=1e-10)
+        # `isapproxdiag` is relative to ||Z||; the previous `norm(Z - diagz) < 1e-10` was an
+        # absolute threshold, which only happened to work because `eigen` hands back columns
+        # of unit Euclidean norm and so bounds ||Z|| by the matrix size.
+        Diagonal(inv.(sqrt.(diag(Z))))
     else
-        #@warn "not diag"
-        # isq_z_1 = Z^(-0.5)  # Old version giving GPU headaches, do it manually instead:
+        # Z^(-1/2) as a matrix function, hence commuting with everything Z commutes with -
+        # in particular Λ, which is what makes `O Λ Oᵀ = M` come out right. Done through
+        # `eigen` rather than `Z^-0.5` because the latter has no GPU path.
         Fz = eigen(Z)
-        isq_z = (Fz.vectors * Diagonal(Fz.values .^ -0.5)) / Fz.vectors 
+        (Fz.vectors * Diagonal(inv.(sqrt.(complex.(Fz.values))))) / Fz.vectors
     end
-    O = vecs*isq_z
 
-    # M_rec = O * Diagonal(vals) * transpose(O)
-    #norm_err = norm(M_rec-M)/norm(M)
+    O = vecs * isq_z
 
-    # if !isnothing(cutoff)
-    #     if norm_err > max(sqrt(cutoff), 1e-12)
-    #         @warn("Ortho/EIG decomp maybe not accurate, norm error $norm_err (cutoff = $cutoff) sqrt=$(sqrt(cutoff))")
-    #     else
-    #         @debug("Ortho/EIG decomp with norm error $(norm_err) < $(sqrt(cutoff)), [norm = $(norm(M))| normS = $(norm(vals))]")
-    #     end
-    # else
-    #     @warn "No cutoff given"
-    # end
-
+    # `transpose(O)*O = I` makes `inv(O) = transpose(O)`, so cond(O) = σmax(O)^2, bounded by
+    # ||O||_F^2. Costs a reduction over O and replaces the reconstruction check that used to
+    # sit here commented out (that one needed a full n³ product).
+    amp = norm(O)^2 / size(O, 2)
+    if !isfinite(amp) || amp > cond_warn
+        @warn "symm_oeig: ill-conditioned complex-orthogonal eigenbasis (cond(O) ≳ $(round(amp; sigdigits=3))). \
+               M is close to defective: as it approaches an exceptional point this decomposition \
+               ceases to exist, and `O * Λ * transpose(O)` loses accuracy accordingly."
+    end
 
     return Eigen(vals, O), spec
 end
-
-
-
 
 
 """ When called on ITensors, `symm_oeig`` returns a single `TruncEigen` object""" 

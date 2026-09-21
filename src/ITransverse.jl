@@ -73,7 +73,7 @@ export symmetrize,
     #randmat_decayspec,
     #matrix_svd,
     #truncated_svd,
-    #vectorized_identity,
+    vectorized_identity,
     #itensor_to_vector,
     #to_itensor,
     vectorized_op,
@@ -255,6 +255,7 @@ include("tmpo/transverse_mps_ops.jl")
 
 # legacy functions 
 include("legacy/old_legacy.jl")
+include("legacy/symm_svd_legacy.jl")
 
 function togpu end
 
