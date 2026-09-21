@@ -1,14 +1,11 @@
-""" Checks if a matrix is diagonal within a given cutoff.
-Computes the off-diagonal Frobenius norm in a single allocation-free pass.
+""" Checks if a matrix is diagonal within a given cutoff, should be GPU compatible
 """
 function isapproxdiag(d::AbstractMatrix; tol::Float64=1e-8, verbose::Bool=false)
     T = real(eltype(d))
-    off_sq  = zero(T)
-    diag_sq = zero(T)
-    for j in axes(d, 2), i in axes(d, 1)
-        v = abs2(d[i, j])
-        i == j ? (diag_sq += v) : (off_sq += v)
-    end
+    rows = reshape(1:size(d, 1), :, 1)
+    cols = reshape(1:size(d, 2), 1, :)
+    diag_sq = sum(abs2, diag(d))
+    off_sq  = sum(abs2.(d) .* (rows .!= cols))
     off_diag_norm = sqrt(off_sq)
     matrix_norm   = sqrt(diag_sq + off_sq)
     threshold = tol * max(matrix_norm, one(T))

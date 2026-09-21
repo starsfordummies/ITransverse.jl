@@ -109,6 +109,8 @@ unsided(s::TransverseMPS) = s.psi
 """ Which side of the transverse network a [`TransverseMPS`](@ref) lives on. """
 side(s::TransverseMPS) = s.side
 
+Adapt.adapt_structure(to, s::TransverseMPS) = TransverseMPS(adapt(to, s.psi), s.side)
+
 
 # read-only forwarding, so a TransverseMPS can be inspected like an MPS
 Base.length(s::TransverseMPS) = length(s.psi)
