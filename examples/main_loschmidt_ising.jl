@@ -64,9 +64,10 @@ function main_losch(Ntmin = 10, Ntmax  = 80; Ntstep = 2)
     @info "Optimizing for T=$(allts) with $(tp.nbeta) imag steps"
 
     pm_params = PMParams(;
-        cutoffs       = [1e-12],
+        cutoffs       = [1e-10],
         maxdims       = 2:2:256,
         itermax       = 2000,
+        alg           = "RTM",
         eps_converged = 1e-7,
         normalization = "overlap",
         stuck_after   = 200,
