@@ -1,11 +1,13 @@
 """
-    PMParams(; truncp, opt_method, itermin, itermax, eps_converged, ...)
+    PMParams(; truncp, alg, direction, opt_method, itermin, itermax, eps_converged, ...)
 
 Hyper-parameters for the power-method solver ([`powermethod_op`](@ref), [`powermethod_sym`](@ref)).
 
 Fields:
 - `truncp`          – named tuple of truncation parameters forwarded to `tcontract`
   (keys: `cutoff`, `maxdim`, `alg`, `direction`).
+- `alg`             – convenience override for `truncp.alg` (e.g. `"RTM"`, `"densitymatrix"`, `"naive"`).
+- `direction`       – convenience override for `truncp.direction` (`:left` or `:right`).
 - `opt_method`      – `:sym` (symmetric, two-MPS) or `:asym` (single MPS).
 - `itermin`         – minimum number of iterations before convergence can be declared (default 20).
 - `itermax`         – maximum number of iterations (default 600).
@@ -16,18 +18,42 @@ Fields:
 - `compute_fidelity`– whether to track the fidelity at each step.
 - `stuck_after`     – declare convergence stuck after this many non-improving iterations.
 """
-Base.@kwdef mutable struct PMParams{TP,TChis,TCutoffs}
-    truncp::TP = (cutoff=1e-12, maxdim=256, direction=:right, alg="densitymatrix")
-    opt_method::Symbol = :sym  # either R or LR
-    itermin::Int = 20
-    itermax::Int = 600
-    eps_converged::Float64 = 1e-6
-    maxdims::TChis = 2:2:truncp.maxdim
-    cutoffs::TCutoffs = [truncp.cutoff]
-    normalization::String = "norm"
-    compute_fidelity::Bool = true
-    stuck_after::Int = itermax
-    quiet::Bool = false
+mutable struct PMParams{TP,TChis,TCutoffs}
+    truncp::TP
+    opt_method::Symbol  # either R or LR
+    itermin::Int
+    itermax::Int
+    eps_converged::Float64
+    maxdims::TChis
+    cutoffs::TCutoffs
+    normalization::String
+    compute_fidelity::Bool
+    stuck_after::Int
+    quiet::Bool
+end
+
+# `alg`/`direction` are merged into `truncp` here, so callers don't need to build the
+# `truncp` NamedTuple by hand just to pick an algorithm or sweep direction.
+function PMParams(; truncp=(cutoff=1e-12, maxdim=256, direction=:right, alg="densitymatrix"),
+                     alg=nothing, direction=nothing,
+                     opt_method::Symbol=:sym,
+                     itermin::Int=20,
+                     itermax::Int=600,
+                     eps_converged::Float64=1e-6,
+                     maxdims=2:2:truncp.maxdim,
+                     cutoffs=[truncp.cutoff],
+                     normalization::String="norm",
+                     compute_fidelity::Bool=true,
+                     stuck_after::Int=itermax,
+                     quiet::Bool=false)
+
+    overrides = NamedTuple()
+    alg       !== nothing && (overrides = merge(overrides, (; alg)))
+    direction !== nothing && (overrides = merge(overrides, (; direction)))
+    truncp = merge(truncp, overrides)
+
+    return PMParams(truncp, opt_method, itermin, itermax, eps_converged, maxdims, cutoffs,
+                     normalization, compute_fidelity, stuck_after, quiet)
 end
 
 function Base.show(io::IO, p::PMParams)
