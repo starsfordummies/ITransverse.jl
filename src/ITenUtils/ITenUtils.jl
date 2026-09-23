@@ -22,6 +22,7 @@ include("custom_svd.jl")
 # Symmetric SVD/EIG decompositions
 include("svd_sym.jl")
 include("eig_sym.jl")
+include("orthogonal_qr.jl")
 
 #include("symmsvd_iten.jl")
 

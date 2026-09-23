@@ -120,6 +120,7 @@ export build_H, build_Ut
 include("truncation_sweeps/sweeps.jl")
 include("truncation_sweeps/sweeps_sym.jl")
 include("truncation_sweeps/gen_orthogonalize.jl")
+include("truncation_sweeps/gen_orthogonalize_qr.jl")
 include("truncation_sweeps/gen_form_checks.jl")
 include("truncation_sweeps/trunclr_apply.jl")
 include("truncation_sweeps/rtm_svd.jl")
@@ -137,7 +138,7 @@ export TruncLR
 
 #export svd_ERL, eig_rtm # likely don't need to export these
 
-export gen_canonical
+export gen_canonical, gen_orthogonalize!, gen_orthogonalize, complex_orthogonal_qr
 
 include("entropies/build_entropies.jl")
 

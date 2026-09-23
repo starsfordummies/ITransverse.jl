@@ -154,7 +154,7 @@ end
     b, T, LL, RR = transverse_setup(4; qns=true)
 
     @test_throws ErrorException gen_canonical(RR, length(RR))
-    @test_throws ErrorException diagonalize_rtm_symmetric(RR; bring_gen_can=true)
+    @test_throws ErrorException diagonalize_rtm_symmetric(RR; gen_can_method=:oeig)
 
     i = Index([QN("SzParity", 0, 2) => 2, QN("SzParity", 1, 2) => 2], "i")
     a = random_itensor(ComplexF64, i, dag(prime(i)))
@@ -165,5 +165,8 @@ end
 
     # ... while the QN-capable paths still work on the same state
     @test length(diagonalize_rtm_symmetric(RR; bring_gen_can=false)) == length(RR) - 1
+    # ... including the generalized canonical form, through complex-orthogonal QR (the default)
+    @test length(diagonalize_rtm_symmetric(RR)) == length(RR) - 1
+    @test gensym_renyi_entropies(RR) isa NamedTuple
     @test length(vn_entanglement_entropy(RR)) == length(RR) - 1
 end

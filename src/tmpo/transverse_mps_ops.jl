@@ -105,6 +105,8 @@ end
 gen_canonical(s::TransverseMPS, ortho_center::Int; kwargs...) =
     _retag(gen_canonical(unsided(s), ortho_center; kwargs...), s)
 
+gen_orthogonalize(s::TransverseMPS, center::Int) = _retag(gen_orthogonalize(unsided(s), center), s)
+
 function powermethod_sym(s::TransverseMPS, O::MPO, pm_params::PMParams; kwargs...)
     psi, info = powermethod_sym(unsided(s), O, pm_params; kwargs...)
     return _retag(psi, s), info

@@ -77,9 +77,15 @@ end
     s = siteinds(4, 16)
     psi = random_mps(ComplexF64, s; linkdims = 20)
     e_lr  = diagonalize_rtm_lr(psi, psi)
-    e_sym = diagonalize_rtm_symmetric(psi; direction = :left)
+    e_sym = diagonalize_rtm_symmetric(psi; direction = :left, gen_can_method = :oeig)
     @test all(spectra_match(a, b; rtol = 1e-8) for (a, b) in zip(e_lr, e_sym))
-    @test gen_renyi_entropies(psi, psi).S2 ≈ gensym_renyi_entropies(psi).S2 rtol = 1e-8
+    @test gen_renyi_entropies(psi, psi).S2 ≈ gensym_renyi_entropies(psi; gen_can_method = :oeig).S2 rtol = 1e-8
+    # complex-orthogonal QR (the default) is a worse-conditioned gauge: ~3 digits less
+    e_qr = diagonalize_rtm_symmetric(psi; direction = :left)
+    @test all(spectra_match(a, b; rtol = 1e-6) for (a, b) in zip(e_lr, e_qr))
+    @test gen_renyi_entropies(psi, psi).S2 ≈ gensym_renyi_entropies(psi).S2 rtol = 1e-6
+    # rank-deficient bonds (bond 1 has rank 4 < χ): no spurious null eigenvalues, so S0 agrees
+    @test gensym_renyi_entropies(psi).S0 ≈ gensym_renyi_entropies(psi; gen_can_method = :oeig).S0
 end
 
 @testset "real inputs with negative eigenvalues give complex entropies, not a DomainError" begin

@@ -15,30 +15,46 @@ Diagonalize the symmetric RTM |psi*><psi| by sweeping from one end.
 - `direction = :left`  sweeps 1→N-1, building left environments
   (gen. right canonical form: ortho center at site 1)
 
+With `bring_gen_can=true` the state is first brought to generalized canonical form, either by
+complex-orthogonal QR (`gen_can_method=:qr`, default; QN-compatible, see [`gen_orthogonalize`](@ref))
+or by `symm_oeig` sweeps (`gen_can_method=:oeig`; truncating, no QN implementation). QR does not
+truncate, so with it (normalized) eigenvalues below `max(cutoff, null_cutoff)` are treated as numerical
+zeros and dropped, even with `sort_by_largest=false` (order is kept).
+
 Returns a length N-1 vector of eigenvalue vectors, ordered bond 1 … N-1.
 """
 function diagonalize_rtm_symmetric(psi::TMPSorMPS;
     direction::Symbol        = :right,
     bring_gen_can::Bool      = true,
+    gen_can_method::Symbol   = :qr,
     normalize_eigs::Bool     = true,
     sort_by_largest::Bool    = true,
-    cutoff::Float64          = 1e-12)
+    cutoff::Float64          = 1e-12,
+    null_cutoff::Float64     = 1e-10)
     psi = unsided(psi)  # accept a tagged boundary vector, work on the MPS
 
     mpslen = length(psi)
 
-    if bring_gen_can && hasqns(psi)
+    gen_can_method in (:qr, :oeig) ||
+        throw(ArgumentError("gen_can_method must be :qr or :oeig, got :$gen_can_method"))
+    if bring_gen_can && gen_can_method == :oeig && hasqns(psi)
         error("""
-            diagonalize_rtm_symmetric with `bring_gen_can=true` needs the generalized canonical
-            form, which has no QN implementation (it goes through `symm_oeig`). Pass
-            `bring_gen_can=false` to diagonalize the RTM of the state as given.""")
+            diagonalize_rtm_symmetric with `gen_can_method=:oeig` needs `gen_canonical`, which has
+            no QN implementation (it goes through `symm_oeig`). Use the default `gen_can_method=:qr`,
+            or pass `bring_gen_can=false` to diagonalize the RTM of the state as given.""")
     end
 
     if bring_gen_can
         ortho_center = direction == :left ? 1 : mpslen
-        psi = gen_canonical(psi, ortho_center)
+        psi = gen_can_method == :qr ? gen_orthogonalize(psi, ortho_center) :
+                                      gen_canonical(psi, ortho_center)
         psi[end] /= sqrt(overlap_noconj(psi, psi))
     end
+
+    # QR keeps every direction (no truncation), so rank-deficient bonds carry ~1e-11 noise
+    # eigenvalues that `symm_oeig` would have cut, and which would inflate S0 = log(#eigs)
+    qr_gauge = bring_gen_can && gen_can_method == :qr
+    thr = qr_gauge ? max(cutoff, null_cutoff) : cutoff
 
     overlap_val = overlap_noconj(psi, psi)
     if abs(1 - overlap_val) > 1e-4 && !normalize_eigs
@@ -67,7 +83,9 @@ function diagonalize_rtm_symmetric(psi::TMPSorMPS;
         end
 
         if sort_by_largest
-            eigss = sort(filter(x -> abs(x) >= cutoff, eigss), by=abs, rev=true)
+            eigss = sort(filter(x -> abs(x) >= thr, eigss), by=abs, rev=true)
+        elseif qr_gauge
+            eigss = filter(x -> abs(x) >= thr, eigss)
         end
 
         eigenvalues_rtm[direction == :left ? ii : ii - 1] = eigss

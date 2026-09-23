@@ -26,10 +26,10 @@ s = siteinds(4, 20)
 ll = random_mps(ComplexF64, s, linkdims=40)
 
 @info "Checking whether eigenvalues computed in left and right gauges match"
-eigs_l = diagonalize_rtm_symmetric(ll; direction=:left, bring_gen_can=true)
+eigs_l = diagonalize_rtm_symmetric(ll; direction=:left, bring_gen_can=true, gen_can_method=:oeig)
 
 # eigs_r sweeps from left to right, eigs_l the other way around
-eigs_r = diagonalize_rtm_symmetric(ll; direction=:right, bring_gen_can=true)
+eigs_r = diagonalize_rtm_symmetric(ll; direction=:right, bring_gen_can=true, gen_can_method=:oeig)
 
 eigs_alt_l = ITransverse.diagonalize_rtm_symmetric_alt(ll; direction=:left)
 eigs_alt_r = ITransverse.diagonalize_rtm_symmetric_alt(ll; direction=:right)
@@ -45,7 +45,14 @@ eigs_alt_r = ITransverse.diagonalize_rtm_symmetric_alt(ll; direction=:right)
 @test nonzero_match(eigs_l[5], eigs_r[5]; tol=1e-9)
 @test nonzero_match(eigs_l[10], eigs_r[10]; tol=1e-9)
 @test nonzero_match(eigs_l[14], eigs_r[14]; tol=1e-9)
-# @test eigs_l ≈ eigs_r 
+# @test eigs_l ≈ eigs_r
+
+# default gauge (complex-orthogonal QR): same spectra, to ~1e-7 rather than 1e-9
+eigs_lq = diagonalize_rtm_symmetric(ll; direction=:left)
+eigs_rq = diagonalize_rtm_symmetric(ll; direction=:right)
+@test nonzero_match(eigs_lq[5], eigs_rq[5]; tol=1e-6)
+@test nonzero_match(eigs_lq[10], eigs_rq[10]; tol=1e-6)
+@test nonzero_match(eigs_lq[14], eigs_rq[14]; tol=1e-6) 
 
 
 end
