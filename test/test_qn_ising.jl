@@ -165,7 +165,7 @@ end
 
     # ... while the QN-capable paths still work on the same state
     @test length(diagonalize_rtm_symmetric(RR; bring_gen_can=false)) == length(RR) - 1
-    # ... including the generalized canonical form, through complex-orthogonal QR (the default)
+    # ... including the generalized canonical form, through complex-orthogonal QR (the `:auto` default for QNs)
     @test length(diagonalize_rtm_symmetric(RR)) == length(RR) - 1
     @test gensym_renyi_entropies(RR) isa NamedTuple
     @test length(vn_entanglement_entropy(RR)) == length(RR) - 1

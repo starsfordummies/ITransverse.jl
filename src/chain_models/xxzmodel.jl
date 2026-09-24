@@ -1,5 +1,5 @@
-""" Convention 
-H = -( J(XX+YY+ Δ*ZZ) + 2*hZ ) 
+""" Convention (spin-1/2 operators, S = σ/2)
+H = -( J(SxSx+SySy+ Δ*SzSz) + 2*hz*Sz )
 specify JXX, ΔZZ and hZ as input params 
 """
 
@@ -32,7 +32,7 @@ end
 
 
 """ Builds with autompo H XXZ Hamiltonian using S+ and S- operators, convention 
-H = -( J(XX+YY+ Δ*ZZ) + 2*hZ ) 
+H = -( J(SxSx+SySy+ Δ*SzSz) + 2*hz*Sz )
 specify JXX, ΔZZ and hZ as input params 
 """
 function H_XXZ_SpSm(sites, JXX::Real, ΔZZ::Real, hz::Real)
@@ -51,7 +51,7 @@ function H_XXZ_SpSm(sites, JXX::Real, ΔZZ::Real, hz::Real)
 
     if abs(hz) > 1e-10
         for j in 1:N
-            os += -2*hz, "Z", j
+            os += -2*hz, "Sz", j
         end
     end
 
@@ -62,7 +62,7 @@ end
 
 ########### U(t) #############
 
-""" exp(-i*H_XX*t) using symmetric SVD - TODO Check """
+""" exp(-i*H_XX*dt) for H = -J(SxSx+SySy), using symmetric SVD - TODO Check """
 function expH_XX_svd(
     in_space_sites,
     mp::XXZParams;
@@ -82,11 +82,11 @@ function expH_XX_svd(
 
     for n = 1:N-1 # TODO CHECK THIS
     
-        Xi = op(in_space_sites, "X", n)
-        Yi = op(in_space_sites, "Y", n)
+        Xi = op(in_space_sites, "Sx", n)
+        Yi = op(in_space_sites, "Sy", n)
     
-        Xj = op(in_space_sites, "X", n+1)
-        Yj = op(in_space_sites, "Y", n+1)
+        Xj = op(in_space_sites, "Sx", n+1)
+        Yj = op(in_space_sites, "Sy", n+1)
     
     
         e1 = exp(ϵ*(Xi * Xj + Yi * Yj))
@@ -133,7 +133,7 @@ function expH_XX_svd(
 end
 
 
-""" exp(-i*H_XX*t) using symmetric SVD - TODO Check """
+""" exp(-i*H*dt) for the XXZ chain (convention of `H_XXZ`, hz included), using symmetric SVD """
 function expH_XXZ_svd(
     in_space_sites,
     mp::XXZParams;
@@ -200,7 +200,17 @@ function expH_XXZ_svd(
 
     
     U_t[N] = uT_open
-    
+
+    # field term -2*hz*Sz per site: exp(+i*hz*dt*Z) split as a half-step on each side
+    if abs(mp.hz) > 1e-10
+        for n = 1:N
+            zz = 2 * op(in_space_sites, "Sz", n)
+            expZ = exp(im * mp.hz * dt/2 * zz)
+
+            U_t[n] = prime(U_t[n], "Site") * expZ
+            U_t[n] = noprime(U_t[n] * prime(expZ, "Site"), 2)
+        end
+    end
 
     return U_t
 

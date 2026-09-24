@@ -16,8 +16,9 @@ Diagonalize the symmetric RTM |psi*><psi| by sweeping from one end.
   (gen. right canonical form: ortho center at site 1)
 
 With `bring_gen_can=true` the state is first brought to generalized canonical form, either by
-complex-orthogonal QR (`gen_can_method=:qr`, default; QN-compatible, see [`gen_orthogonalize`](@ref))
-or by `symm_oeig` sweeps (`gen_can_method=:oeig`; truncating, no QN implementation). QR does not
+complex-orthogonal QR (`gen_can_method=:qr`; QN-compatible, ~1e-8..1e-11 accurate, see
+[`gen_orthogonalize`](@ref)) or by `symm_oeig` sweeps (`gen_can_method=:oeig`; truncating, more accurate,
+no QN implementation). The default `:auto` picks `:qr` for states with QNs and `:oeig` otherwise. QR does not
 truncate, so with it (normalized) eigenvalues below `max(cutoff, null_cutoff)` are treated as numerical
 zeros and dropped, even with `sort_by_largest=false` (order is kept).
 
@@ -26,7 +27,7 @@ Returns a length N-1 vector of eigenvalue vectors, ordered bond 1 … N-1.
 function diagonalize_rtm_symmetric(psi::TMPSorMPS;
     direction::Symbol        = :right,
     bring_gen_can::Bool      = true,
-    gen_can_method::Symbol   = :qr,
+    gen_can_method::Symbol   = :auto,
     normalize_eigs::Bool     = true,
     sort_by_largest::Bool    = true,
     cutoff::Float64          = 1e-12,
@@ -35,12 +36,13 @@ function diagonalize_rtm_symmetric(psi::TMPSorMPS;
 
     mpslen = length(psi)
 
-    gen_can_method in (:qr, :oeig) ||
-        throw(ArgumentError("gen_can_method must be :qr or :oeig, got :$gen_can_method"))
+    gen_can_method in (:auto, :qr, :oeig) ||
+        throw(ArgumentError("gen_can_method must be :auto, :qr or :oeig, got :$gen_can_method"))
+    gen_can_method == :auto && (gen_can_method = hasqns(psi) ? :qr : :oeig)
     if bring_gen_can && gen_can_method == :oeig && hasqns(psi)
         error("""
             diagonalize_rtm_symmetric with `gen_can_method=:oeig` needs `gen_canonical`, which has
-            no QN implementation (it goes through `symm_oeig`). Use the default `gen_can_method=:qr`,
+            no QN implementation (it goes through `symm_oeig`). Use `gen_can_method=:qr` (the default for QN states),
             or pass `bring_gen_can=false` to diagonalize the RTM of the state as given.""")
     end
 

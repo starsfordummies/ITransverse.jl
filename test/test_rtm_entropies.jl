@@ -47,9 +47,9 @@ eigs_alt_r = ITransverse.diagonalize_rtm_symmetric_alt(ll; direction=:right)
 @test nonzero_match(eigs_l[14], eigs_r[14]; tol=1e-9)
 # @test eigs_l ≈ eigs_r
 
-# default gauge (complex-orthogonal QR): same spectra, to ~1e-7 rather than 1e-9
-eigs_lq = diagonalize_rtm_symmetric(ll; direction=:left)
-eigs_rq = diagonalize_rtm_symmetric(ll; direction=:right)
+# complex-orthogonal QR gauge: same spectra, to ~1e-7 rather than 1e-9
+eigs_lq = diagonalize_rtm_symmetric(ll; direction=:left, gen_can_method=:qr)
+eigs_rq = diagonalize_rtm_symmetric(ll; direction=:right, gen_can_method=:qr)
 @test nonzero_match(eigs_lq[5], eigs_rq[5]; tol=1e-6)
 @test nonzero_match(eigs_lq[10], eigs_rq[10]; tol=1e-6)
 @test nonzero_match(eigs_lq[14], eigs_rq[14]; tol=1e-6) 

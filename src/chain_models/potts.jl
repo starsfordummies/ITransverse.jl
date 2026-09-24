@@ -284,7 +284,7 @@ function expH_potts_murg(sites, mp::PottsParams; dt::Number)
         if abs(fdt) > 1e-10
 
             ttdag = op(sites, "τplusτdag",  n)
-            expT = exp(ϵ * ttdag * fdt/2)
+            expT = exp(im * ttdag * fdt/2)
 
             U_t[n] = prime(U_t[n]) * expT
             U_t[n] = noprime(U_t[n] * prime(expT), 2)
@@ -457,7 +457,7 @@ function expH_potts_symmetric_svd(in_space_sites, mp::PottsParams; dt::Number)
         for n = 1:N
 
             ttdag = op(in_space_sites, "τplusτdag",  n)
-            expT = exp(ϵ * ttdag * fdt/2)
+            expT = exp(im * ttdag * fdt/2)
 
             U_t[n] = prime(U_t[n], "Site") * expT
             U_t[n] = noprime(U_t[n] * prime(expT, "Site"), 2)

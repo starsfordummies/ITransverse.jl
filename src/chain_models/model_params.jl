@@ -65,7 +65,8 @@ PottsParams(JSS::Number, ftau::Number; phys_site::Index=Index(3, "S=1")) =
     XXZParams(J_XY, J_ZZ, hz=0; phys_site=Index(2,"S=1/2"))
 
 Parameters for the XXZ spin-1/2 chain
-``H = J_{XY}(S^+_i S^-_{i+1} + \\text{h.c.}) + J_{ZZ} S^z_i S^z_{i+1} - h_z \\sum_i S^z_i``.
+``H = -J_{XY}\\sum_i (S^x_i S^x_{i+1} + S^y_i S^y_{i+1} + J_{ZZ} S^z_i S^z_{i+1}) - 2 h_z \\sum_i S^z_i``
+(spin-1/2 operators, ``S=\\sigma/2``; same overall-minus convention as [`IsingParams`](@ref)).
 
 Fields:
 - `J_XY` – XY coupling (default 1.0)

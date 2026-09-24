@@ -20,7 +20,8 @@ struct Murg    <: ExpHRecipe end
 assembled via SVD. Supported for [`IsingParams`](@ref), [`PottsParams`](@ref), and [`XXZParams`](@ref). """
 struct SymSVD  <: ExpHRecipe end
 
-""" Floquet (stroboscopic) gates: ``\\exp(-i J XX)\\exp(-i \\lambda X)\\exp(-i g Z)``.
+""" Floquet (stroboscopic) gates: ``\\exp(i g Z\\,dt)\\exp(i h X\\,dt)\\exp(i J XX\\,dt)``,
+a first-order splitting of ``\\exp(-iH dt)`` with the usual ``H=-(J XX+gZ+hX)``.
 Only valid for [`IsingParams`](@ref). """
 struct Floquet <: ExpHRecipe end
 

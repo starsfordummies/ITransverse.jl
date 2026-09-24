@@ -115,17 +115,28 @@ end
         end
 
         # RTM spectra match the same state without QNs
-        r_qn = diagonalize_rtm_symmetric(psi; sort_by_largest=false)
+        r_qn = diagonalize_rtm_symmetric(psi; sort_by_largest=false, gen_can_method=:qr)
         # dense copy: same tensors with the QN structure stripped
         psid = MPS([dense(psi[j]) for j in 1:N])
-        r_d  = diagonalize_rtm_symmetric(psid; sort_by_largest=false)
+        r_d  = diagonalize_rtm_symmetric(psid; sort_by_largest=false, gen_can_method=:qr)
         for b in 1:N-1
             a = sort(r_qn[b], by=abs, rev=true); d = sort(r_d[b], by=abs, rev=true)
             k = min(length(a), length(d), 6)
             @test a[1:k] ≈ d[1:k]  atol=1e-9
         end
-        @test gensym_renyi_entropies(psi).S2 ≈ gensym_renyi_entropies(psid).S2
-        @test gensym_renyi_entropies(psid).S2 ≈ gensym_renyi_entropies(psid; gen_can_method=:oeig).S2
+        @test gensym_renyi_entropies(psi).S2 ≈ gensym_renyi_entropies(psid; gen_can_method=:qr).S2   # :auto = :qr with QNs
+        @test gensym_renyi_entropies(psid; gen_can_method=:qr).S2 ≈ gensym_renyi_entropies(psid; gen_can_method=:oeig).S2
     end
 end
 
+
+@testset "gen_can_method :auto" begin
+    ss = siteinds("S=1/2", 8; conserve_szparity=true)
+    psiq = random_mps(ComplexF64, ss, [isodd(n) ? "Up" : "Dn" for n in 1:8]; linkdims=6)
+    # QNs: :auto = :qr (and :oeig errors); no QNs: :auto = :oeig
+    @test diagonalize_rtm_symmetric(psiq) == diagonalize_rtm_symmetric(psiq; gen_can_method=:qr)
+    @test_throws ErrorException diagonalize_rtm_symmetric(psiq; gen_can_method=:oeig)
+    psid = MPS([dense(psiq[j]) for j in 1:8])
+    @test diagonalize_rtm_symmetric(psid) == diagonalize_rtm_symmetric(psid; gen_can_method=:oeig)
+    @test_throws ArgumentError diagonalize_rtm_symmetric(psid; gen_can_method=:foo)
+end

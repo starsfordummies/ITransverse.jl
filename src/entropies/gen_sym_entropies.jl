@@ -3,14 +3,14 @@ Generalized entropy for a *symmetric* environment (psiL,psiL)
     Assuming we're in LEFT GENERALIZED canonical form, by default bring the MPS to it
     By default, normalizes the eigenvalues of the symmetric RTM. 
 """
-function generalized_vn_entropy_symmetric(psiL::TMPSorMPS; bring_gen_can::Bool=true, gen_can_method::Symbol=:qr, normalize_eigs::Bool=true)
+function generalized_vn_entropy_symmetric(psiL::TMPSorMPS; bring_gen_can::Bool=true, gen_can_method::Symbol=:auto, normalize_eigs::Bool=true)
     psiL = unsided(psiL)  # accept a tagged boundary vector, work on the MPS
     eigs_rtm = diagonalize_rtm_symmetric(psiL; bring_gen_can, gen_can_method, normalize_eigs, sort_by_largest=false)
     return [salpha(eigs, 1) for eigs in eigs_rtm]
 end
 
 
-function generalized_r2_entropy_symmetric(psiL::TMPSorMPS; bring_gen_can::Bool=true, gen_can_method::Symbol=:qr, normalize_eigs::Bool=true)
+function generalized_r2_entropy_symmetric(psiL::TMPSorMPS; bring_gen_can::Bool=true, gen_can_method::Symbol=:auto, normalize_eigs::Bool=true)
     psiL = unsided(psiL)  # accept a tagged boundary vector, work on the MPS
     eigs_rtm = diagonalize_rtm_symmetric(psiL; bring_gen_can, gen_can_method, normalize_eigs, sort_by_largest=false)
     return [sum(eigs .^ 2) for eigs in eigs_rtm]
@@ -36,7 +36,7 @@ end
 
 """ Given an input MPS `psi`, computes the symmetric generalized entropies by diagonalizing RTM.
 Returns a NamedTuple (; S0, S05, S1, S2, S4). """
-function gensym_renyi_entropies(psiL::TMPSorMPS; bring_gen_can::Bool=true, gen_can_method::Symbol=:qr, normalize_eigs::Bool=true)
+function gensym_renyi_entropies(psiL::TMPSorMPS; bring_gen_can::Bool=true, gen_can_method::Symbol=:auto, normalize_eigs::Bool=true)
     psiL = unsided(psiL)  # accept a tagged boundary vector, work on the MPS
     eigs_rtm = diagonalize_rtm_symmetric(psiL; bring_gen_can, gen_can_method, normalize_eigs, sort_by_largest=false)
     return renyi_entropies(eigs_rtm; normalize_eigs=false)
