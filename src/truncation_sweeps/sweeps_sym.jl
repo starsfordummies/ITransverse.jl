@@ -162,6 +162,9 @@ function tcontract(::Algorithm"naiveRTMsymRTM", A::MPO, ψ::MPS; preserve_tags_m
     truncate_sweep_sym_rtm!(psi; kwargs...)
 end
 
+""" Single-MPS (symmetric) case has no L != R to distinguish: `"RTM"` means `"RTMsym"`. """
+tcontract(::Algorithm"RTM", A::MPO, ψ::MPS; kwargs...) = tcontract(Algorithm"RTMsym"(), A, ψ; kwargs...)
+
 """ Contract MPO-MPS with algorithm densitymatrix, starting from the left. At the end we can chop/extend 
 if we work with light cone """
 function tcontract(::Algorithm"RTMsym",
