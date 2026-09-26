@@ -81,7 +81,7 @@ export symmetrize,
     trace_mpo_squared
     #max_diff
 
-export symm_svd, symm_oeig, mytrunc_eig, ceigen
+export symm_svd, symm_oeig, mytrunc_eig, ceigen, svd_cutoff
 
 export beta_lims
 

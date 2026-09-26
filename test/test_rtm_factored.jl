@@ -8,6 +8,12 @@ the factored RTM says is redundant.
 Where no side is rank deficient the kernel takes the dense route, so the two
 settings must then agree *bitwise* -- that is the folded-Ising two-tMPO case,
 where D = d = 4.
+
+The RTM calls pin `cutoff_on=:squares`: at cutoff=1e-14 the default `:values` rule
+cuts at ~1e-14 of the largest singular value, i.e. at the numerical noise floor,
+where the two routes (whose rounding differs) keep different noise-level directions
+and the output states then differ at ~1e-5. What is tested here is the route, not
+the cutoff convention.
 """
 
 using ITensors, ITensorMPS, ITransverse
@@ -50,7 +56,7 @@ end
         ψR = random_mps(ComplexF64, ss, linkdims=chiR)
         AL = _crandom_mpo(ss, chiA)
         AR = _crandom_mpo(ss, chiA)
-        tk = (alg="RTM", cutoff=1e-14, maxdim=64, mindim=1)
+        tk = (alg="RTM", cutoff=1e-14, cutoff_on=:squares, maxdim=64, mindim=1)
         for dir in (:right, :left)
             _agree(trapply(ψL, AR, ψR; direction=dir, factored=false, tk...),
                    trapply(ψL, AR, ψR; direction=dir, factored=true,  tk...))
@@ -84,12 +90,12 @@ end
     @test maxlinkdim(ψL) > 4
 
     for dir in (:right, :left)
-        _agree(trapply(ψL, col, ψR; direction=dir, factored=false, alg="RTM", cutoff=1e-14, maxdim=32, mindim=1),
-               trapply(ψL, col, ψR; direction=dir, factored=true,  alg="RTM", cutoff=1e-14, maxdim=32, mindim=1))
-        _agree(tlapply(ψL, col, ψR; direction=dir, factored=false, alg="RTM", cutoff=1e-14, maxdim=32, mindim=1),
-               tlapply(ψL, col, ψR; direction=dir, factored=true,  alg="RTM", cutoff=1e-14, maxdim=32, mindim=1))
-        _agree(tlrapply(ψL, col, colop, ψR; direction=dir, factored=false, alg="RTM", cutoff=1e-14, maxdim=32, mindim=1),
-               tlrapply(ψL, col, colop, ψR; direction=dir, factored=true,  alg="RTM", cutoff=1e-14, maxdim=32, mindim=1))
+        _agree(trapply(ψL, col, ψR; direction=dir, factored=false, alg="RTM", cutoff=1e-14, cutoff_on=:squares, maxdim=32, mindim=1),
+               trapply(ψL, col, ψR; direction=dir, factored=true,  alg="RTM", cutoff=1e-14, cutoff_on=:squares, maxdim=32, mindim=1))
+        _agree(tlapply(ψL, col, ψR; direction=dir, factored=false, alg="RTM", cutoff=1e-14, cutoff_on=:squares, maxdim=32, mindim=1),
+               tlapply(ψL, col, ψR; direction=dir, factored=true,  alg="RTM", cutoff=1e-14, cutoff_on=:squares, maxdim=32, mindim=1))
+        _agree(tlrapply(ψL, col, colop, ψR; direction=dir, factored=false, alg="RTM", cutoff=1e-14, cutoff_on=:squares, maxdim=32, mindim=1),
+               tlrapply(ψL, col, colop, ψR; direction=dir, factored=true,  alg="RTM", cutoff=1e-14, cutoff_on=:squares, maxdim=32, mindim=1))
     end
 end
 
@@ -112,7 +118,7 @@ end
     @test maxlinkdim(ψR) > 4
     @test hasqns(ψR[2]) && hasqns(ψL[2])
 
-    tk = (alg="RTM", cutoff=1e-14, maxdim=32, mindim=1)
+    tk = (alg="RTM", cutoff=1e-14, cutoff_on=:squares, maxdim=32, mindim=1)
     for dir in (:right, :left)
         # `qr` works on block-sparse tensors, so :always is exact there too
         _agree(trapply(ψL, col, ψR; direction=dir, factored=false,   tk...),

@@ -8,7 +8,8 @@ function truncate_sweep(psi::TMPSorMPS, phi::TMPSorMPS;
         cutoff::Real  = 1e-13,
         maxdim::Int   = max(maxlinkdim(psi), maxlinkdim(phi)),
         direction::Symbol = :right,
-        compute_overlaps::Bool = false
+        compute_overlaps::Bool = false,
+        cutoff_on::Symbol = :values
     )
     psi, phi = unsided(psi), unsided(phi)  # accept a tagged boundary vector, work on the MPS
 
@@ -43,9 +44,9 @@ function truncate_sweep(psi::TMPSorMPS, phi::TMPSorMPS;
 
         bond = ii + sv_offset  # :right → ii-1 (bond to the left), :left → ii (bond to the right)
  
-        U, S, Vdag = svd(env, commonind(env, Ai); cutoff, maxdim,
-                         lefttags  = tags(linkind(psi, bond)),
-                         righttags = tags(linkind(phi, bond)))
+        U, S, Vdag = first(svd_cutoff(env, commonind(env, Ai); cutoff_on, cutoff, maxdim,
+                                      lefttags  = tags(linkind(psi, bond)),
+                                      righttags = tags(linkind(phi, bond))))
         norm_factor = sum(S)
 
         XU    = dag(U)
@@ -84,7 +85,7 @@ end
 ####### NEW SWEEPS 
 
 # TODO direction 
-function truncate_rsweep_rtm!(psi::TMPSorMPS, phi::TMPSorMPS; cutoff::Float64, maxdim::Int)
+function truncate_rsweep_rtm!(psi::TMPSorMPS, phi::TMPSorMPS; cutoff::Float64, maxdim::Int, cutoff_on::Symbol=:values)
     psi, phi = unsided(psi), unsided(phi)  # accept a tagged boundary vector, work on the MPS
 
     @assert siteinds(psi) == siteinds(phi)
@@ -118,7 +119,7 @@ function truncate_rsweep_rtm!(psi::TMPSorMPS, phi::TMPSorMPS; cutoff::Float64, m
     rho = workL * Lenvs[N-1]
     rho *= workR
 
-    F = svd(rho, ss[N]; cutoff, maxdim)
+    F, _ = svd_cutoff(rho, ss[N]; cutoff_on, cutoff, maxdim)
 
     workL *= dag(F.U)
     workR *= dag(F.V)
@@ -140,7 +141,7 @@ function truncate_rsweep_rtm!(psi::TMPSorMPS, phi::TMPSorMPS; cutoff::Float64, m
 
         @assert ndims(rho) == 4 
 
-        F = svd(rho, (ss[jj], F.u); cutoff, maxdim)
+        F, _ = svd_cutoff(rho, (ss[jj], F.u); cutoff_on, cutoff, maxdim)
         S = F.S
         workL *= dag(F.U)
         workR *= dag(F.V)
@@ -173,7 +174,8 @@ function truncate_sweep_rtm!(psiL::TMPSorMPS, psiR::TMPSorMPS;
         cutoff::Float64,
         maxdim::Int,
         direction::Symbol = :right,
-        preserve_mps_tags::Bool = true
+        preserve_mps_tags::Bool = true,
+        cutoff_on::Symbol = :values
     )
     psiL, psiR = unsided(psiL), unsided(psiR)  # accept a tagged boundary vector, work on the MPS
 
@@ -248,7 +250,7 @@ function truncate_sweep_rtm!(psiL::TMPSorMPS, psiR::TMPSorMPS;
         
         @assert ndims(rho) == (isnothing(Fu) ? 2 : 4) "ndims=$(ndims(rho)) at jj=$jj"
 
-        F = svd(rho, svd_linds; cutoff, maxdim, lefttags=tsL, righttags=tsR)
+        F, _ = svd_cutoff(rho, svd_linds; cutoff_on, cutoff, maxdim, lefttags=tsL, righttags=tsR)
         Fu = F.u
 
         workL *= dag(F.U)

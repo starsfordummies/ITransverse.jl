@@ -27,6 +27,7 @@ function powermethod_sym(in_mps::TMPSorMPS, in_mpo::MPO, pm_params::PMParams; no
     eltype_S = use_eig ? ComplexF64 : Float64 
 
     sv_prev = zeros(eltype_S, 2,2)
+    warned_cond = false
 
     for jj = 1:itermax
 
@@ -48,6 +49,15 @@ function powermethod_sym(in_mps::TMPSorMPS, in_mpo::MPO, pm_params::PMParams; no
             # normalize so that <L|R> = 1 
             overlap = overlap_noconj(psi_work,psi_work)
             psi_work = psi_work / sqrt(overlap)
+            # conditioning guard: with ψᵀψ = 1, a large ‖ψ‖² means the iterate is dominated by
+            # directions with ψᵀψ ≈ 0 (a strongly non-normal column): precision is being lost
+            if !warned_cond && (jj == 1 || jj % 10 == 0)
+                lc = 2 * lognorm(psi_work)
+                if !isfinite(lc) || lc > 25
+                    @warn "powermethod_sym: ‖ψ‖²/|ψᵀψ| ≈ exp($(round(lc, digits=1))) at step $jj - the column is badly conditioned and the fixed point is losing precision (check the tMPO gauge / balance its bond)"
+                    warned_cond = true
+                end
+            end
         end # otherwise we do nothing - norm can blow up! 
 
         fidelity = if compute_fidelity 

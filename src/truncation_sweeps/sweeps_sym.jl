@@ -4,7 +4,8 @@ direction = :left  → sweeps 1→N
 direction = :right → sweeps N→1
 """
 function truncate_sweep_sym(in_psi::TMPSorMPS; 
-    cutoff::Float64, maxdim::Int, use_eig::Bool=false, direction::Symbol=:right)
+    cutoff::Float64, maxdim::Int, use_eig::Bool=false, direction::Symbol=:right,
+    cutoff_on::Symbol=:values)
     in_psi = unsided(in_psi)  # accept a tagged boundary vector, work on the MPS
 
     mpslen = length(in_psi)
@@ -37,7 +38,7 @@ function truncate_sweep_sym(in_psi::TMPSorMPS;
         @assert order(env) == 2 "unexpected env indices: $(inds(env))"
 
         Sn = if !use_eig 
-            F = symm_svd(env, ind(env, 1); cutoff, maxdim, lefttags="Link,l=$(ii+sv_offset)")
+            F = symm_svd(env, ind(env, 1); cutoff, maxdim, cutoff_on, lefttags="Link,l=$(ii+sv_offset)")
     
             XU    = dag(F.U)
             XUinv = F.U
@@ -175,6 +176,7 @@ function tcontract(::Algorithm"RTMsym",
         mindim = 1,
         use_eig::Bool=false,
         direction::Symbol=:right,
+        cutoff_on::Symbol=:values,   # SVD route only; the eigen route truncates on eigenvalues
         kwargs...,
     )
 
@@ -203,17 +205,32 @@ function tcontract(::Algorithm"RTMsym",
     # Store the right environment tensors
     E = Vector{ITensor}(undef, N)
 
-    E[N] = N > n ?  A[N] * A_c[N] : ψ[N] * A[N] * A_c[N] * ψ_c[N]
+    # Overflow guard for the unnormalised running products below (badly conditioned columns, e.g.
+    # an unbalanced tMPO over a long chain, used to end in `matrix contains Infs or NaNs` in the
+    # SVD). When a norm leaves [1e-40, 1e40] the tensor is rescaled by an exact power of two:
+    # that changes only the floating-point exponent, and every later operation (contractions, the
+    # SVD, the relative cutoff) commutes with it bit for bit. So the output is bitwise identical
+    # to the unguarded sweep whenever that one stays finite. 1e40 keeps rho = E * L * L'' and the
+    # squares formed inside the SVD representable. The environments' shifts never reach the
+    # output; the shift of L is restored exactly on the last tensor.
+    # SVD route only: the eig route (`symm_oeig`, complex-orthogonal normalisation through complex
+    # square roots) is not exactly covariant under the rescaling, so there the sweep is left as it
+    # was - unguarded, and bitwise unchanged.
+    _guard(x) = use_eig ? (x, 0) :
+                (nx = norm(x); (isfinite(nx) && nx > 0 && (nx > 1e40 || nx < 1e-40)) ?
+                 (k = exponent(nx); (x * ldexp(1.0, -k), k)) : (x, 0))
+
+    E[N] = first(_guard(N > n ?  A[N] * A_c[N] : ψ[N] * A[N] * A_c[N] * ψ_c[N]))
 
     for j in reverse(n+1:N-1)
-        E[j] = E[j + 1] * A[j] * A_c[j] 
+        E[j] = first(_guard(E[j + 1] * A[j] * A_c[j]))
     end
     for j in reverse(2:min(N-1,n))
-        E[j] = E[j + 1] * ψ[j] * A[j] * A_c[j] * ψ_c[j]
+        E[j] = first(_guard(E[j + 1] * ψ[j] * A[j] * A_c[j] * ψ_c[j]))
 
     end
 
-    L = ψ[1] * A[1]
+    L, shift_L = _guard(ψ[1] * A[1])
     l_renorm = nothing
 
     SV_all = zeros(eltype_S, n-1, maxdim)
@@ -246,10 +263,11 @@ function tcontract(::Algorithm"RTMsym",
             F.V, F.D, F.l, L * F.V * ψ[j+1] * A[j+1]
 
         else
-            F = symm_svd(rho, Lis, Ris; cutoff, maxdim=bond_maxdim, lefttags=ts, kwargs...)
+            F = symm_svd(rho, Lis, Ris; cutoff, maxdim=bond_maxdim, cutoff_on, lefttags=ts, kwargs...)
             F.U, F.S, F.u, L * dag(F.U) * ψ[j+1] * A[j+1]
 
         end
+        L, k = _guard(L); shift_L += k
 
         ψ_out[j] = U
 
@@ -260,7 +278,18 @@ function tcontract(::Algorithm"RTMsym",
     
     end
 
-    ψ_out[n] = L
+    if iszero(shift_L)
+        ψ_out[n] = L
+    elseif abs(shift_L) < 1000 && isfinite(norm(L) * ldexp(1.0, shift_L))
+        ψ_out[n] = L * ldexp(1.0, shift_L)          # exact: identical to the unguarded result
+    else
+        # not representable (the unguarded sweep would have returned Inf/0): spread the scale
+        # evenly over the chain instead
+        ψ_out[n] = L
+        f = 2.0^(shift_L / n)
+        for j in 1:n; ψ_out[j] = ψ_out[j] * f; end
+        @warn "tcontract(RTMsym): norm 2^$(shift_L) not representable, spread over $(n) sites"
+    end
 
     for j = n+1:N 
         ψ_out[j] = A[j]

@@ -20,17 +20,13 @@ that is known to be rank deficient. `svd_ERL` avoids that by doing a QR before S
 
 Returns what `F = svd(E * R * L, Ris)` would give as `(F.U, F.S, F.V, F.u)`.
 
-`factored` selects the route:
-
-  * `true` (default) - QR-compress the outer factors wherever that reduces the
-    SVD and there are no QN (otherwise seems slower)
-  * `false` - always build `rho` and SVD it densely.
-  * `:always` - QR-factorize whenever there is a rank deficit, QN included.
-
-`Ris` are the open indices of `R`, i.e. the ones the SVD keeps on the `U` side.
+`cutoff_on` selects what `cutoff` measures: `:values` (default, `cutoff^2` handed to
+ITensors' squares rule), `:values_bench` (the linear rule applied exactly) or `:squares`.
+See [`svd_cutoff`](@ref).
 """
 function svd_ERL(E::ITensor, R::ITensor, L::ITensor, Ris;
         factored::Union{Bool, Symbol} = true,
+        cutoff_on::Symbol = :values,
         cutoff, maxdim, mindim, lefttags, righttags, kwargs...)
 
     Rint, Rop = commoninds(R, E), uniqueinds(R, E)
@@ -41,7 +37,7 @@ function svd_ERL(E::ITensor, R::ITensor, L::ITensor, Ris;
 
     function skipqr_svd()
         rho = E * R * L
-        F = svd(rho, Ris; cutoff, maxdim, mindim, lefttags, righttags, kwargs...)
+        F, _ = svd_cutoff(rho, Ris; cutoff_on, cutoff, maxdim, mindim, lefttags, righttags, kwargs...)
         return F.U, F.S, F.V, F.u
     end
 
@@ -68,7 +64,7 @@ function svd_ERL(E::ITensor, R::ITensor, L::ITensor, Ris;
 
     T = (E * Rr) * Ll
 
-    F = svd(T, rowinds; cutoff, maxdim, mindim, lefttags, righttags, kwargs...)
+    F, _ = svd_cutoff(T, rowinds; cutoff_on, cutoff, maxdim, mindim, lefttags, righttags, kwargs...)
 
     # dag(Q)*Q = 1 on both sides, so re-multiplying keeps U, V isometric and
     # gives exactly the singular vectors of rho.
@@ -77,3 +73,4 @@ function svd_ERL(E::ITensor, R::ITensor, L::ITensor, Ris;
 
     return U, F.S, V, F.u
 end
+

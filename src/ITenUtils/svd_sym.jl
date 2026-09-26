@@ -17,6 +17,16 @@ TruncSVD has no field Vt
 
 
 """
+    linear_cutoff(cutoff) -> Union{Nothing,Float64}
+
+Cutoff for the `:values` convention. `nothing` and `0` both mean "keep every singular
+value" and come back as `nothing`, which skips truncation; a positive cutoff is clamped to
+`eps()`, since below that the criterion can only ask to keep LAPACK noise (~`eps * smax`).
+"""
+linear_cutoff(cutoff) = (isnothing(cutoff) || iszero(cutoff)) ? nothing : max(cutoff, eps(float(typeof(cutoff))))
+
+
+"""
     truncated_svd(M; cutoff, maxdim, cutoff_on=:squares) -> SVD, Spectrum
 
 SVD of matrix `M` with truncation.
@@ -65,6 +75,7 @@ function truncated_svd(
     # which is the case for the two-layer reduced transition matrices `symm_svd` is fed.
     # (`collect` because `truncate!!` mutates what it is given.)
     P = if cutoff_on === :values
+        cutoff = linear_cutoff(cutoff)
         float.(collect(MS))
     elseif cutoff_on === :squares
         MS .^ 2
@@ -152,6 +163,20 @@ function sym_unitary_sqrt(z::AbstractMatrix; cluster_tol=1e-7, diag_tol=1e-12)
 
     e = vec(sum(Q .* (z * Q); dims=1))          # = diag(transpose(Q) * z * Q), the phases
     return Q * Diagonal(sqrt.(complex.(e) ./ abs.(e))) * transpose(Q)
+end
+
+
+"""
+    _host_sym_unitary_sqrt(z::AbstractMatrix)
+
+[`sym_unitary_sqrt`](@ref) evaluated on a host (CPU) copy of `z`, returned in `z`'s own array
+type. `z` is only the small (bond x bond) Takagi fix-up matrix, so the round trip is cheap, and
+`sym_unitary_sqrt` itself is not GPU-safe (`Matrix(Diagonal(::CuArray))`, `eigen(Symmetric(...))`
+scalar-index a device array). A no-op copy on the CPU.
+"""
+function _host_sym_unitary_sqrt(z::AbstractMatrix)
+    w = sym_unitary_sqrt(Array(z))
+    return adapt(Base.typename(NDTensors.unwrap_array_type(z)).wrapper, w)
 end
 
 
@@ -315,6 +340,45 @@ end
 
 
 """
+    svd_cutoff(ac::ITensor, linds; cutoff_on=:values, cutoff, kwargs...) -> (F::TruncSVD, spec)
+
+ITensors `svd` with a choice of what `cutoff` measures, for the truncations whose singular
+values are probabilities (reduced transition matrices):
+
+  * `:values` (default) - the discarded fraction of `sum(S)`, approximated by handing
+    `cutoff^2` to ITensors' squares rule. Exact when one singular value dominates; on RTM
+    spectra from the transverse MC it kept the same count on 90-95% of bonds and one more
+    on the rest. No extra cost, works with QNs.
+  * `:values_bench` - the same rule applied exactly ([`svd_trunc_values`](@ref)): a second
+    pass or a slice when the cutoff bites. Slightly slower; meant for tests and for matching
+    the plain-array backend, whose `:values` is exact, state for state.
+  * `:squares` - the discarded fraction of `sum(S.^2)`, plain ITensors behaviour.
+
+For the two `:values` modes `cutoff` of `nothing` or `0` keeps every singular value and a
+positive one is clamped to `eps()` ([`linear_cutoff`](@ref)).
+
+Other keywords (`maxdim`, `mindim`, tags, ...) go to `svd`.
+"""
+function svd_cutoff(ac::ITensor, linds; cutoff_on::Symbol=:values, cutoff=nothing, kwargs...)
+    if cutoff_on === :values_bench
+        # the exact routine slices when handed a single Index
+        iL = linds isa Index ? linds : (length(linds) == 1 ? only(linds) : linds)
+        return svd_trunc_values(ac, iL; cutoff=linear_cutoff(cutoff), kwargs...)
+    end
+    c = if cutoff_on === :values
+        c0 = linear_cutoff(cutoff)
+        isnothing(c0) ? nothing : c0^2
+    elseif cutoff_on === :squares
+        cutoff
+    else
+        throw(ArgumentError("cutoff_on must be :values, :values_bench or :squares, got $(repr(cutoff_on))"))
+    end
+    F = svd(ac, linds; cutoff=c, kwargs...)
+    return F, F.spec
+end
+
+
+"""
     symm_svd(a::ITensor, linds, rinds = uniqueinds(a, linds); kwargs...)
 
 Complex-*symmetric* SVD: returns `TruncSVD(U, S, Uᵀ, ...)` with `a ≈ U * S * transpose(U)`,
@@ -327,10 +391,11 @@ that the transposition implies. Both are exact no-ops without QNs, so the plain 
 unchanged - see `test_qn_symmetric.jl` for the reconstruction checks.
 
 The cutoff is linear in the singular values rather than in their squares, as for the matrix
-method - see [`symm_svd(::Matrix)`](@ref) for why, and [`svd_trunc_values`](@ref) for how.
+method - see [`symm_svd(::Matrix)`](@ref) for why; `cutoff_on` selects how that is applied
+(see [`svd_cutoff`](@ref): `cutoff^2` trick by default, `:values_bench` exact).
 """
 function symm_svd(a::ITensor, linds, rinds = uniqueinds(a, linds) ;
-                  cutoff=nothing, maxdim=nothing, mindim=nothing,
+                  cutoff=nothing, maxdim=nothing, mindim=nothing, cutoff_on::Symbol=:values,
                   use_absolute_cutoff=nothing, use_relative_cutoff=nothing, kwargs...)
 
     cL = combiner(linds)
@@ -344,8 +409,8 @@ function symm_svd(a::ITensor, linds, rinds = uniqueinds(a, linds) ;
     ac = symmetrize(ac)
 
     # u * s * vd ≈ a
-    F, spec = svd_trunc_values(ac, iL; cutoff, maxdim, mindim,
-                               use_absolute_cutoff, use_relative_cutoff, kwargs...)
+    F, spec = svd_cutoff(ac, iL; cutoff_on, cutoff, maxdim, mindim,
+                         use_absolute_cutoff, use_relative_cutoff, kwargs...)
 
     # z = U^dag * V as a (u,v) matrix. With QNs `dag(U)` would flip the arrow of the leg we
     # contract over, so conjugate the data instead and reverse the arrows afterwards - that
@@ -359,7 +424,7 @@ function symm_svd(a::ITensor, linds, rinds = uniqueinds(a, linds) ;
     # (`complex` because the phases are complex even when z itself came out real, which is
     # what a real symmetric environment gives; `blockwise_matfun` writes into a copy of z.)
     sq_z = hasqns(z) ? blockwise_matfun(sym_unitary_sqrt, complex(z)) :
-                       ITensor(sym_unitary_sqrt(matrix(z)), inds(z))
+                       ITensor(_host_sym_unitary_sqrt(matrix(z)), inds(z))
 
     uS = F.U * sq_z
     u = replaceinds(uS, F.v => F.u)* dag(cL)
@@ -405,7 +470,7 @@ function symm_factorization(a::ITensor, linds; cutoff=nothing, maxdim=nothing)
     # unitary part has an exact square root (see [`sym_unitary_sqrt`](@ref)).
     z = dag(u) * vd' * delta(iL, iR') * delta(index_v', index_v)
 
-    sq_z = ITensor(sym_unitary_sqrt(matrix(z, index_u, index_v)) * Diagonal(sqrt.(diag(s))),
+    sq_z = ITensor(_host_sym_unitary_sqrt(matrix(z, index_u, index_v)) * Diagonal(sqrt.(diag(s))),
                    index_u, index_v)
 
     uu = u * sq_z
