@@ -9,28 +9,45 @@ rho0-o--o--o--o--o--o-fold_op
 ````
 
 and the other way round for :right. So a :left tMPO_ext should have `n_ext` more `p` legs than `p'`
+
+**Bottom extension** (`LR_bottom`, `n_ext_bottom`): the same for the BOTTOM end, i.e. the first
+`n_ext_bottom` sites get the edge tensor of side `LR_bottom`. This is the column of a
+*double* light cone: at infinite temperature the gates outside the FORWARD cone of a bottom
+operator cancel by unitality (U𝟙U† = 𝟙), exactly as those outside the backward cone of the
+top operator cancel against the trace, so a column can start late with spatial-boundary
+tensors at its foot. `ts` are then the column's own time sites (it need not start at time 1)
+and `rho0` closes it at its first site. Needs `nbeta == 0`. `LR` may be omitted when
+`n_ext == 0`. With the defaults (`n_ext_bottom = 0`) nothing changes.
+
+`inner_bottom`/`inner_top` pass `inner=true` to the boundary attachment, for a column that
+ends a boundary MPS stopping inside the network (see `close_boundary`).
 """
 function folded_tMPO_ext(b::FoldtMPOBlocks, ts::Vector{<:Index}; 
-    LR::Symbol, n_ext::Int=1, fold_op = nothing, init_beta_only::Bool=true)
+    LR::Union{Symbol,Nothing}=nothing, n_ext::Int=1, fold_op = nothing, init_beta_only::Bool=true,
+    LR_bottom::Union{Symbol,Nothing}=nothing, n_ext_bottom::Int=0, rho0=b.rho0,
+    inner_bottom::Bool=false, inner_top::Bool=false)
 
     Nt = length(ts)
     Nb = b.tp.nbeta
     
     @assert init_beta_only # extending on imag time not implemented yet, so only accept beta at the bottom 
     @assert Nb + n_ext < Nt # extending on imag time not implemented yet
+    n_ext_bottom > 0 && Nb > 0 && error("bottom extension needs nbeta == 0 (got $(Nb))")
+    n_ext + n_ext_bottom <= Nt || error("n_ext + n_ext_bottom = $(n_ext + n_ext_bottom) > $(Nt) sites")
 
     (; WWc, WWc_im, WWl, WWr, iL, iR, iP, iPs) = b 
     
     @assert inds(WWc) == inds(WWc_im)
 
-
-    WWedge, edge_plev = if LR == :left
+    _edge(side) = if side == :left
         WWl, 0
-    elseif LR == :right 
+    elseif side == :right 
         WWr, 1
     else
-        error("Invalid LR =  ($(LR))  use :left or :right " )
+        error("Invalid LR =  ($(side))  use :left or :right " )
     end
+    WWedge, edge_plev = n_ext > 0 ? _edge(LR) : (nothing, 0)
+    WWbot, bot_plev = n_ext_bottom > 0 ? _edge(LR_bottom) : (nothing, 0)
 
     #match indices for real-imag so it's easier to work with them 
     replaceinds!(WWc_im, inds(WWc_im), inds(WWc))
@@ -51,7 +68,11 @@ function folded_tMPO_ext(b::FoldtMPOBlocks, ts::Vector{<:Index};
         newinds = (ts[ii],   ts[ii]',   tl[ii],   tl[ii+1])
         oo[ii] = replaceinds(WWc_im, WWinds, newinds)
     end
-    for ii = Nb+1:Nt-n_ext
+    for ii = 1:n_ext_bottom # bottom edge: same single-leg tensors as the top edge
+        newinds = (prime(ts[ii], bot_plev),   prime(ts[ii], bot_plev),   tl[ii],   tl[ii+1])
+        oo[ii] = replaceinds(WWbot, WWinds, newinds)
+    end
+    for ii = max(Nb, n_ext_bottom)+1:Nt-n_ext
         newinds = (ts[ii],   ts[ii]',   tl[ii],   tl[ii+1])
         oo[ii] = replaceinds(WWc, WWinds, newinds)
     end
@@ -77,8 +98,8 @@ function folded_tMPO_ext(b::FoldtMPOBlocks, ts::Vector{<:Index};
     =# 
 
     # Contract first tensor with initial state, last one with the operator (default Identity)
-    attach_boundary_bottom!(oo, b.rho0, tl[1])
-    attach_boundary_top!(oo, something(fold_op, vectorized_identity(tl[end])), tl[end])
+    attach_boundary_bottom!(oo, rho0, tl[1]; inner=inner_bottom)
+    attach_boundary_top!(oo, something(fold_op, vectorized_identity(tl[end])), tl[end]; inner=inner_top)
 
     return oo
 

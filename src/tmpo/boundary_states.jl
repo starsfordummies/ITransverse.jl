@@ -99,13 +99,16 @@ n_boundary_sites(A) = is_product_boundary(A) ? 0 : 1
 boundary_linkdim(A::ITensor) = is_product_boundary(A) ? 1 : dim(boundary_bond_ind(A))
 
 """
-    check_boundary(A::ITensor)
+    check_boundary(A::ITensor; inner=false)
 
 Check that `A` obeys the boundary-state convention (see [`boundary_tensor`](@ref)):
 rank 1 (product), rank 2 (edge column, one unprimed bond) or rank 3
 (bulk column, bonds `(s, s')`). Throws a descriptive error otherwise.
+
+`inner=true` accepts a rank-2 tensor whose bond is primed: the right end of a boundary
+MPS that stops on an INNER column of the network (see [`close_boundary`](@ref)).
 """
-function check_boundary(A::ITensor)
+function check_boundary(A::ITensor; inner::Bool=false)
     nd = ndims(A)
     nd == 1 && return A
 
@@ -117,7 +120,7 @@ function check_boundary(A::ITensor)
     bonds = boundary_bond_inds(A)
 
     if nd == 2
-        plev(only(bonds)) == 0 || error(
+        (inner || plev(only(bonds)) == 0) || error(
             "The bond leg of a rank-2 (edge) boundary tensor must be unprimed, got $(only(bonds))")
     elseif nd == 3
         s1, s2 = bonds
@@ -170,14 +173,21 @@ end
 boundary_tensor(A::AbstractVector; kwargs...) = to_boundary(A)
 
 """
-    close_boundary(A::ITensor, v; side::Symbol)
+    close_boundary(A::ITensor, v; side::Symbol, inner=false)
 
 Close the `side` (`:left` or `:right`) bond of a rank-3 (bulk) boundary tensor with the
 vector `v`, returning the rank-2 tensor of the corresponding *edge* column of the
 boundary MPS. The surviving leg keeps the (unprimed) boundary bond index of `A`, so the
 edge tMPS and the bulk tMPO automatically share their extra site index.
+
+`inner=true` is for a boundary MPS that does not span the whole network -- e.g. a local
+operator written as a small MPO over a few columns, with plain product boundaries on the
+others. Its end columns are then INNER tMPO columns, whose site legs keep their prime
+level (unprimed `s` connects to the right neighbour, `s'` to the left one), so the
+surviving leg is NOT unprimed when closing the right bond. Attach the result with
+`attach_boundary_bottom!/top!(...; inner=true)`.
 """
-function close_boundary(A::ITensor, v; side::Symbol)
+function close_boundary(A::ITensor, v; side::Symbol, inner::Bool=false)
     ndims(A) == 3 || error("close_boundary expects a rank-3 (bulk) boundary tensor, got $(ndims(A)) legs")
     check_boundary(A)
     s = boundary_bond_ind(A)
@@ -185,6 +195,7 @@ function close_boundary(A::ITensor, v; side::Symbol)
     if side == :left
         return check_boundary(A * replaceind(vt, s => s'))
     elseif side == :right
+        inner && return check_boundary(A * vt; inner=true)
         return check_boundary(noprime(A * vt))
     else
         error("Unknown side: $(side) (must be :left or :right)")
@@ -286,7 +297,7 @@ function _qn_boundary_vector(v::AbstractVector, hook::Index)
 end
 
 """ Normalize user input (Vector/Array/ITensor) to an ITensor living on the chain-end index `hook`. """
-function _boundary_itensor(x, hook::Index)
+function _boundary_itensor(x, hook::Index; inner::Bool=false)
     t = if x isa ITensor
         (hasqns(hook) && !hasqns(x) && ndims(x) == 1) ?
             _qn_boundary_vector(itensor_to_vector(x), hook) : x
@@ -294,35 +305,38 @@ function _boundary_itensor(x, hook::Index)
         hasqns(hook) ? _qn_boundary_vector(complex(collect(x)), hook) :
                        to_itensor(collect(x), Index(dim(hook), "Site"))
     end
-    check_boundary(t)
+    check_boundary(t; inner)
     ip = boundary_phys_ind(t)
     dim(ip) == dim(hook) || error(
         "Boundary state has physical dimension $(dim(ip)) but the temporal chain expects $(dim(hook))")
     return t
 end
 
-function _check_boundary_rank(t::ITensor, psi::AbstractMPS)
+function _check_boundary_rank(t::ITensor, psi::AbstractMPS; inner::Bool=false)
     if psi isa MPS && ndims(t) == 3
         error("""A rank-3 (bulk) boundary state adds an extra site with two site legs, which only
                  makes sense for a tMPO. Close one of its bonds with `close_boundary(A, v; side)`
                  to get the rank-2 edge tensor needed by a tMPS.""")
-    elseif psi isa MPO && ndims(t) == 2
+    elseif psi isa MPO && ndims(t) == 2 && !inner
         error("""A rank-2 (edge) boundary state adds an extra site with a single site leg, which only
-                 makes sense for an edge tMPS. Pass the rank-3 bulk tensor to build a tMPO.""")
+                 makes sense for an edge tMPS. Pass the rank-3 bulk tensor to build a tMPO, or
+                 `inner=true` if this column is the end of a boundary MPS that stops inside the
+                 network (see `close_boundary`).""")
     end
     return t
 end
 
 """
-    attach_boundary_bottom!(psi, bl, hook::Index)
+    attach_boundary_bottom!(psi, bl, hook::Index; inner=false)
 
 Close the bottom (first) end of a temporal chain, whose dangling link is `hook`, with the
 boundary state `bl`. Product states are contracted into `psi[1]`, non-product ones are
 prepended as an extra site. See [`boundary_tensor`](@ref) for the conventions.
+`inner=true` accepts a rank-2 `bl` on a tMPO column (see [`close_boundary`](@ref)).
 """
-function attach_boundary_bottom!(psi::AbstractMPS, bl, hook::Index)
-    blt = _boundary_itensor(bl, hook)
-    _check_boundary_rank(blt, psi)
+function attach_boundary_bottom!(psi::AbstractMPS, bl, hook::Index; inner::Bool=false)
+    blt = _boundary_itensor(bl, hook; inner)
+    _check_boundary_rank(blt, psi; inner)
     blt = adapt(NDTensors.unwrap_array_type(psi[1]), blt)
     ip = boundary_phys_ind(blt)
 
@@ -336,17 +350,18 @@ function attach_boundary_bottom!(psi::AbstractMPS, bl, hook::Index)
 end
 
 """
-    attach_boundary_top!(psi, tr, hook::Index; dagger=false)
+    attach_boundary_top!(psi, tr, hook::Index; dagger=false, inner=false)
 
 Close the top (last) end of a temporal chain, whose dangling link is `hook`, with the
 boundary state (or operator) `tr`. `tr` is used **as is** unless `dagger=true`, in which case
 it is conjugated - as one wants for a bra ⟨ϕ_f| closing the network.
-See [`attach_boundary_bottom!`](@ref).
+See [`attach_boundary_bottom!`](@ref) (also for `inner`).
 """
-function attach_boundary_top!(psi::AbstractMPS, tr, hook::Index; dagger::Bool=false)
-    trt = _boundary_itensor(tr, hook)
+function attach_boundary_top!(psi::AbstractMPS, tr, hook::Index; dagger::Bool=false,
+                              inner::Bool=false)
+    trt = _boundary_itensor(tr, hook; inner)
     dagger && (trt = dag(trt))
-    _check_boundary_rank(trt, psi)
+    _check_boundary_rank(trt, psi; inner)
     trt = adapt(NDTensors.unwrap_array_type(psi[end]), trt)
     ip = boundary_phys_ind(trt)
 
