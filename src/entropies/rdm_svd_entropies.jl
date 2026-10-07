@@ -16,6 +16,11 @@ function diagonalize_rdm(psi::TMPSorMPS)
 end
 
 function LinearAlgebra.svdvals(a::ITensor, linds; kwargs...)
+    if hasqns(a)
+        # block-sparse: combiner contraction needs matching QN directions, so use the block SVD
+        _, S, _ = svd(a, linds; kwargs...)
+        return spectrum_vector(S)  # per-block storage, so needs a global sort
+    end
     rinds = uniqueinds(a, linds)
     cL = combiner(linds...)
     cR = combiner(rinds...)
