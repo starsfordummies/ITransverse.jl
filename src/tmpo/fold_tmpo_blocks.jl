@@ -48,9 +48,10 @@ from either tMPOParameters or directly from an MPO of U=exp(iHt) defined on spat
 function FoldtMPOBlocks(x::Union{tMPOParams, MPO}; init_state=nothing, check_sym::Bool=true)
 
     WWl, WWc, WWr, (link1, link2, P, Ps) = build_WW(x)
-    time_P = Index(dim(link1), "Site,time")
-    time_L = Index(dim(P), "Link,time")
-    time_R = Index(dim(Ps), "Link,time")
+    # `sim` keeps the (fused) QN space; without QNs it is the same as a fresh Index of that dimension
+    time_P = sim(link1; tags = "Site,time")
+    time_L = sim(P; tags = "Link,time")
+    time_R = sim(noprime(Ps); tags = "Link,time")
 
     if check_sym
         symP = check_symmetry_swap(WWc, P, Ps; verbose=false)
@@ -74,9 +75,9 @@ function FoldtMPOBlocks(x::Union{tMPOParams, MPO}; init_state=nothing, check_sym
 
     unrotated_inds = (link1, link2, P, Ps)
     rotated_inds = (time_P', time_P, time_L, time_R)
-    WWl = replaceinds(WWl, unrotated_inds, rotated_inds)
-    WWc = replaceinds(WWc, unrotated_inds, rotated_inds)
-    WWr = replaceinds(WWr, unrotated_inds, rotated_inds)
+    WWl = _replaceinds_arrow(WWl, unrotated_inds, rotated_inds)
+    WWc = _replaceinds_arrow(WWc, unrotated_inds, rotated_inds)
+    WWr = _replaceinds_arrow(WWr, unrotated_inds, rotated_inds)
 
   
     tp, WWl_im, WWc_im, WWr_im = if x isa MPO 
@@ -103,15 +104,16 @@ function FoldtMPOBlocks(x::Union{tMPOParams, MPO}; init_state=nothing, check_sym
         
         WWl_im, WWc_im, WWr_im, unrotated_inds = build_WW(tp; build_imag=true)
 
-        WWl_im = replaceinds(WWl_im, unrotated_inds, rotated_inds)
-        WWc_im = replaceinds(WWc_im, unrotated_inds, rotated_inds)
-        WWr_im = replaceinds(WWr_im, unrotated_inds, rotated_inds)
+        WWl_im = _replaceinds_arrow(WWl_im, unrotated_inds, rotated_inds)
+        WWc_im = _replaceinds_arrow(WWc_im, unrotated_inds, rotated_inds)
+        WWr_im = _replaceinds_arrow(WWr_im, unrotated_inds, rotated_inds)
 
         tp, WWl_im, WWc_im, WWr_im
 
     end
 
-    # Fold the initial state (if it isn't folded/vectorized already).
+    # Fold the initial state (if it isn't folded/vectorized already). Kept in Kronecker order also
+    # with QNs: the builders move product boundaries to the fused basis (`_qn_fold_boundary`).
     # Non-product initial states keep their (doubled) bond legs, see `boundary_tensor`.
     rho0 = fold_boundary(tp.bl; folded_dim=dim(P), tags="Site,rho0")
 

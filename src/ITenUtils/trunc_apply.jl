@@ -148,20 +148,21 @@ function tcontract(::Algorithm"densitymatrix",
     # In case A and ψ have the same link indices
     A = sim(linkinds, A)
 
-    ψ_c = dag(ψ)''
+    # conjugate copy of ψ built site by site when needed: ψ can be long, a full copy is not free
+    ψ_c(j) = prime(dag(ψ[j]), 2)
     simA_c = prime(dag(A), 2)
     A_c = replaceprime(simA_c, 3 => 1)
 
     # Store the right environment tensors
     E = Vector{ITensor}(undef, N)
 
-    E[N] = N > n ?  A[N] * A_c[N] : ψ[N] * A[N] * A_c[N] * ψ_c[N]
+    E[N] = N > n ?  A[N] * A_c[N] : ψ[N] * A[N] * A_c[N] * ψ_c(N)
 
     for j in reverse(n+1:N-1)
         E[j] = E[j + 1] * A[j] * A_c[j] 
     end
     for j in reverse(2:min(N-1,n))
-        E[j] = E[j + 1] * ψ[j] * A[j] * A_c[j] * ψ_c[j]
+        E[j] = E[j + 1] * ψ[j] * A[j] * A_c[j] * ψ_c(j)
 
     end
 
@@ -169,7 +170,7 @@ function tcontract(::Algorithm"densitymatrix",
 
 
     L = ψ[1] * A[1]
-    simL_c =  ψ_c[1] * simA_c[1]
+    simL_c =  ψ_c(1) * simA_c[1]
     l_renorm = nothing
     r_renorm = nothing
 
@@ -186,7 +187,7 @@ function tcontract(::Algorithm"densitymatrix",
         maxdim = min(prod_dims, requested_maxdim)
 
         s = siteinds(uniqueinds, A, ψ, j)
-        s̃ = siteinds(uniqueinds, simA_c, ψ_c, j)
+        s̃ = uniqueinds(siteinds(simA_c, j), inds(ψ_c(j)))
         rho = E[j + 1] * L * simL_c
         l = linkind(ψ, j)
         ts = isnothing(l) ? "" : tags(l)
@@ -209,7 +210,7 @@ function tcontract(::Algorithm"densitymatrix",
         ψ_out[j] = Ut
 
         L = L * dag(Ut) * ψ[j+1] * A[j+1]
-        simL_c = simL_c * U* ψ_c[j+1] * simA_c[j+1]
+        simL_c = simL_c * U* ψ_c(j+1) * simA_c[j+1]
 
         Dvec = spectrum_vector(D)/sum(D)
  

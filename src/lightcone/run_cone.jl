@@ -1,4 +1,24 @@
 
+# Truncation algorithms that act on one vector alone, with no left-right environment
+const _ONE_SIDED_ALGS = ("densitymatrix", "naive", "cudensitymatrix")
+
+"""
+    sym_left(rr::MPS)
+
+The left vector of a left-right symmetric network: `rr` transposed (QN arrows reversed, see
+[`transpose_arrows`](@ref)), with its own link indices. Unlike `transpose_arrows` it never
+copies: every tensor is a view of the data of `rr`, so it costs no memory. Do not modify it
+in place.
+"""
+function sym_left(rr::MPS)
+    ll = sim(linkinds, rr)  # new link Indices, same storage
+    hasqns(ll) || return ll
+    for j in eachindex(ll)
+        ll.data[j] = ITensors.setinds(ll[j], dag(inds(ll[j])))  # arrows flipped, same storage
+    end
+    return ll
+end
+
 """ Runs the light cone algorithm up to a length of nT_final timesteps
 """
 function run_cone(ll::TMPSorMPS, rr::TMPSorMPS,
@@ -13,7 +33,9 @@ function run_cone(ll::TMPSorMPS, rr::TMPSorMPS,
 
     Id = vectorized_identity(dim(b.iR))
 
-    time_dim = dim(b.WWc,1)
+    # Symmetric case with an algorithm that truncates each vector on its own: the left vector is
+    # just the transpose of the right one, so only the right one is built and truncated
+    one_sided = opt_method == :sym && truncp.alg in _ONE_SIDED_ALGS
 
     if truncp.direction == :right
         sweep_str = "ψ0<=Op"
@@ -37,16 +59,25 @@ function run_cone(ll::TMPSorMPS, rr::TMPSorMPS,
 
         ts = siteinds(rr)
         n_ext = nt - length(rr)
-        append!(ts, [Index(time_dim, tags="Site,n=$(length(rr)+jj),time_fold") for jj in 1:n_ext])
+        append!(ts, [sim(b.iP; tags="Site,n=$(length(rr)+jj),time_fold") for jj in 1:n_ext])
 
-        ll, rr, sv = if opt_method == :sym
+        ll, rr, sv = if one_sided
+
+            tmpoR = folded_tMPO_ext(b, ts; LR=:right, fold_op=Id, n_ext)
+            ll = nothing  # drop the reference to the old view, so its R can be freed
+
+            rr, sv = tapply(tmpoR, rr; truncp...)
+
+            nothing, rr, sv
+
+        elseif opt_method == :sym
 
             tmpoL = folded_tMPO_ext(b, ts; LR=:left, fold_op=optimize_op, n_ext) 
             tmpoR = folded_tMPO_ext(b, ts; LR=:right, fold_op=Id, n_ext)
         
             _, rr, sv = tlrapply(ll, tmpoL, tmpoR, rr; truncp...)
 
-            sim(linkinds, rr), rr, sv
+            nothing, rr, sv
             
         else # update both 
 
@@ -66,11 +97,18 @@ function run_cone(ll::TMPSorMPS, rr::TMPSorMPS,
         end
 
 
-        overlapLR = overlap_noconj(ll,rr)
-
         # At each step we renormalize so that the overlap <L|R>=1 !
-        ll *= sqrt(1/overlapLR)
-        rr *= sqrt(1/overlapLR)
+        overlapLR = if opt_method == :sym
+            ov = overlap_noconj(sym_left(rr), rr)
+            rr *= sqrt(1/ov)
+            ll = sym_left(rr)  # L = R^T, so <L|R> picks up the factor twice
+            ov
+        else
+            ov = overlap_noconj(ll,rr)
+            ll *= sqrt(1/ov)
+            rr *= sqrt(1/ov)
+            ov
+        end
 
         state = (L=ll, R=rr, b=b, sv=sv)  # sv is TruncLR.sv: χ x ncuts SVD singular values matrix
         checkpoint(state, nt)

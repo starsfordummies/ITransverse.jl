@@ -5,16 +5,15 @@ builds a (length n) tMPS with "time_fold"-labelled legs.
 function init_cone(b::FoldtMPOBlocks, n::Int=6; LR::Symbol=:right, full::Bool=true)
 
     @assert b.tp.nbeta == 0  # not implemented yet otherwise
-    time_dim = dim(b.WWc,1)
-    
-    ts = addtags(siteinds(time_dim, n; conserve_qns=false), "time_fold")
+    # copies of b.iP: with QNs they carry its fused QN space, without they are plain indices
+    ts = [sim(b.iP; tags="Site,n=$ii,time_fold") for ii in 1:n]
 
     init_cone(b, ts; LR, full)
 
 end
 
 
-function init_cone(b::FoldtMPOBlocks, ts::Vector{Index{Int64}}; LR::Symbol, full::Bool)
+function init_cone(b::FoldtMPOBlocks, ts::Vector{<:Index}; LR::Symbol, full::Bool)
 
     @assert b.tp.nbeta == 0  # not implemented yet otherwise
     
