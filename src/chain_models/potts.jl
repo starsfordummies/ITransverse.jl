@@ -84,6 +84,7 @@ ITensors.op(::OpName"τplusτdag",::SiteType"S1_Z3") =
  """ Potts H MPO built with autoMPO 
  Convention is H = -J Σ Σdag - J Σdag Σ - f τplusτdag
  with Σ = diag(exp(2πi/3), exp(4πi/3), 1) 
+ (or the Σ ↔ τ rotated form for `mp.coupling == :tau`, see `potts_op_names`)
  and 
 ```
      001
@@ -94,16 +95,17 @@ ITensors.op(::OpName"τplusτdag",::SiteType"S1_Z3") =
 
 function H_potts(sites_potts, mp::PottsParams)
     (; JSS, ftau) = mp
+    A, Ad, F = potts_op_names(mp)
     N = length(sites_potts)
 
     os = OpSum()
     for j=1:N-1
-        os += -JSS,"Σ",j,"Σdag",j+1
-        os += -JSS,"Σdag",j,"Σ",j+1
+        os += -JSS,A,j,Ad,j+1
+        os += -JSS,Ad,j,A,j+1
     end
 
     for j=1:N
-        os += -ftau,"τplusτdag", j
+        os += -ftau,F, j
     end
 
     H_potts = MPO(os,sites_potts)
@@ -199,273 +201,141 @@ end
 
 ########## U(t) builders ###########
 
-
 """
-Builds exp(Hpotts) with the expression a la Murg (sin/cos alike). 
-dt should be already included in the parameters! 
-Bond dimension is 3
+    potts_op_names(mp::PottsParams) -> (A, Adag, F)
+
+Operator names of the Potts chain ``H = -J \\sum_i (A_i A^\\dagger_{i+1} + h.c.) - f \\sum_i F_i``
+in the form selected by `mp.coupling`:
+
+- `:sigma` - `A = Σ`, `F = τ + τ†` (the historical convention);
+- `:tau`   - `A = τ`, `F = Σ + Σ†`, the same model rotated by an on-site Fourier transform.
+  Here the Z3 generator `∏ Σ` is diagonal, so this is the form that can carry Z3 QNs
+  (`siteinds("S1_Z3", N; conserve_qns=true)`).
 """
-function expH_potts_murg(sites, mp::PottsParams; dt::Number)
-    (; JSS, ftau) = mp
+function potts_op_names(mp::PottsParams)
+    mp.coupling === :sigma && return ("Σ", "Σdag", "τplusτdag")
+    mp.coupling === :tau   && return ("τ", "τdag", "ΣplusΣdag")
+    throw(ArgumentError("PottsParams.coupling must be :sigma or :tau, got $(mp.coupling)"))
+end
 
-    Jtwodt = JSS * dt
-    fdt = ftau * dt
-
-    fsumI_a(x) = (2*exp(-x) + exp(2*x))/3.
-    fsumΣ_a(x) = (-exp(-x) + exp(2*x))/3.
-
-    N = length(sites)
-
-    link_dimension = 3
-
-    linkindices = [Index(link_dimension, "Link,l=$(n-1)") for n = 1:N+1]
-
-    U_t = MPO(N)
-
-    # Here should be implemented exp(ϵ (ΣΣdag + ΣdagΣ))
-    # for imag time evol we should have ϵ = -i dt
-    # but we have an overall -J sign in the ham, so we should take 
-
-    ϵ = Jtwodt * 1.0im 
-
-    #fI = fsumI(ϵ, 20)
-    #fΣ = fsumΣ(ϵ, 20)
-
-
-    fI = fsumI_a(ϵ)
-    fΣ = fsumΣ_a(ϵ)
-
-    for n = 1:N
-        # siteindex s
-        #s = sites[n]
-
-        # left link index ll with daggered QN conserving direction (if applicable)
-        # labels the rows
-        ll = dag(linkindices[n])
-
-        # right link index rl - labels the columns
-        rl = linkindices[n+1]
-
-        I = op(sites, "Id", n)
-
-        Σ = op(sites, "Σ", n)
-        Σd = op(sites, "Σdag", n)
-
-
-        # Init ITensor inside MPO
-        if n == 1
-            # Row vector at the left 
-            U_t[n] =  onehot(rl => 1) * sqrt(fI) * I
-            U_t[n] += onehot(rl => 2) * sqrt(fΣ) * Σ
-            U_t[n] += onehot(rl => 3) * sqrt(fΣ) * Σd
-
-        elseif n == N
-            U_t[n] =  onehot(ll => 1) * sqrt(fI) * I
-            U_t[n] += onehot(ll => 2) * sqrt(fΣ) * Σd
-            U_t[n] += onehot(ll => 3) * sqrt(fΣ) * Σ
-        else
-
-            U_t[n] =  onehot(ll => 1, rl =>1) * fI * I
-            U_t[n] += onehot(ll => 1, rl =>2) * sqrt(fI*fΣ) * Σ
-            U_t[n] += onehot(ll => 1, rl =>3) * sqrt(fI*fΣ) * Σd
-
-            U_t[n] += onehot(ll => 2, rl =>1) * sqrt(fI*fΣ) * Σd
-            U_t[n] += onehot(ll => 2, rl =>2) * fΣ * I
-            U_t[n] += onehot(ll => 2, rl =>3) * fΣ * Σ
-
-            U_t[n] += onehot(ll => 3, rl =>1) * sqrt(fI*fΣ) * Σ
-            U_t[n] += onehot(ll => 3, rl =>2) * fΣ * Σd
-            U_t[n] += onehot(ll => 3, rl =>3) * fΣ * I
-
-        end
-
-        # Mutiply by f-tau part
-
-        if abs(fdt) > 1e-10
-
-            ttdag = op(sites, "τplusτdag",  n)
-            expT = exp(im * ttdag * fdt/2)
-
-            U_t[n] = prime(U_t[n]) * expT
-            U_t[n] = noprime(U_t[n] * prime(expT), 2)
-        end
-
+function _check_potts_qns(sites, mp::PottsParams)
+    if hasqns(sites) && mp.coupling !== :tau
+        error("""
+            Potts with QN sites needs coupling=:tau: in the Σ-diagonal basis the Z3 generator
+            is ∏ τ, which is not diagonal, so τ + τ† has no definite flux. Use
+            PottsParams(J, f; coupling=:tau, phys_site=siteind("S1_Z3"; conserve_qns=true)).""")
     end
+end
 
-    return U_t
+""" `E·W·E` with the symmetric half-step of the on-site field, `E = exp(i f dt/2 F)` """
+function _potts_field_halfsteps!(U::MPO, sites, mp::PottsParams, dt::Number)
+    fdt = mp.ftau * dt
+    abs(fdt) > 1e-10 || return U
+    _, _, F = potts_op_names(mp)
+    for n in eachindex(U)
+        E = exp(im * fdt / 2 * op(F, sites[n]))
+        U[n] = product(E, product(U[n], E))
+    end
+    return U
 end
 
 
-# """
-# Builds exp(Hpotts) with the expression a la Murg (sin/cos alike),\\
-# using the alternate prescription swapping basically Σ ↔ τ
-# Bond dimension is 3
-# """
-# function expH_potts_murg_alt(sites, 
-#     J::Real, fpotts::Real,
-#     dt::Number)
-
-#     fsumI_a(x) = (2*exp(-x) + exp(2*x))/3.
-#     fsumΣ_a(x) = (-exp(-x) + exp(2*x))/3.
-
-#     N = length(sites)
-
-#     link_dimension = 3
-
-#     linkindices = [Index(link_dimension, "Link,l=$(n-1)") for n = 1:N+1]
-
-#     U_t = MPO(N)
-
-#     # Here should be implemented exp(ϵ (ΣΣdag + ΣdagΣ))
-#     # for imag time evol we should have ϵ = -i dt
-#     # but we have an overall -J sign in the ham, so we should take 
-
-#     ϵ = J * 1.0im * dt 
-
-#     fI = fsumI_a(ϵ)
-#     fτ = fsumΣ_a(ϵ)
-
-#     for n = 1:N
-#         # siteindex s
-#         #s = sites[n]
-
-#         # left link index ll with daggered QN conserving direction (if applicable)
-#         # labels the rows
-#         ll = dag(linkindices[n])
-
-#         # right link index rl - labels the columns
-#         rl = linkindices[n+1]
-
-#         I = op(sites, "Id", n)
-
-#         τ = op(sites, "τ", n)
-#         τd = op(sites, "τdag", n)
-
-#         #@show matrix(τ)
-#         #@show matrix(τd) 
-
-#         # Init ITensor inside MPO
-#         if n == 1
-#             # Row vector at the left 
-#             U_t[n] =  onehot(rl => 1) * sqrt(fI) * I
-#             U_t[n] += onehot(rl => 2) * sqrt(fτ) * τ
-#             U_t[n] += onehot(rl => 3) * sqrt(fτ) * τd
-
-#         elseif n == N
-#             #U_t[n] = ITensor(ComplexF64, ll, dag(s), s')
-#             U_t[n] =  onehot(ll => 1) * sqrt(fI) * I
-#             U_t[n] += onehot(ll => 2) * sqrt(fτ) * τd
-#             U_t[n] += onehot(ll => 3) * sqrt(fτ) * τ
-
-#         else
-#             U_t[n] =  onehot(ll => 1, rl =>1) * fI * I
-#             U_t[n] += onehot(ll => 1, rl =>2) * sqrt(fI*fτ) * τ
-#             U_t[n] += onehot(ll => 1, rl =>3) * sqrt(fI*fτ) * τd
-
-#             U_t[n] += onehot(ll => 2, rl =>1) * sqrt(fI*fτ) * τd
-#             U_t[n] += onehot(ll => 2, rl =>2) * fτ * I
-#             U_t[n] += onehot(ll => 2, rl =>3) * fτ * τ
-
-#             U_t[n] += onehot(ll => 3, rl =>1) * sqrt(fI*fτ) * τ
-#             U_t[n] += onehot(ll => 3, rl =>2) * fτ * τd
-#             U_t[n] += onehot(ll => 3, rl =>3) * fτ * I
-
-#         end
-
-#         # Mutiply by f-tau part
-
-#         if fpotts > 1e-10
-
-#             ssdag = op(sites, "ΣplusΣdag",  n)
-#             expT = exp(ϵ * ssdag * fpotts/2)
-
-#             U_t[n] = prime(U_t[n]) * expT
-#             U_t[n] = noprime(U_t[n] * prime(expT), 2)
-#         end
-
-#     end
-
-#     return U_t
-# end
-
-
-
 """
-Builds exp(Hpotts) using Symmetric SVD decomposition,\\
-should be symmetric (p<->p') and (L<->R)
-Bond dimension is 3. 
-dt should be already included in the parameters! 
+    expH_potts_murg(sites, mp::PottsParams; dt) -> MPO
+
+exp(-iH dt) a la Murg, bond dimension 3. With `A³ = 1` the bond gate is exactly
+
+    exp(ϵ (A⊗A† + A†⊗A)) = Σ_p g_p A^p ⊗ A^{-p},    ϵ = i J dt,
+    g_0 = (2e^{-ϵ} + e^{2ϵ})/3,   g_1 = g_2 = (e^{2ϵ} - e^{-ϵ})/3
+
+and bond state `p` carries `A^p` to the left and `A^{-p}` to the right, i.e. Z3 charge `p`:
+with QN sites (`coupling=:tau`) the links carry exactly that. The field is split
+symmetrically around the bond gates. `dt` already includes the couplings' units; imaginary
+`dt = -iβ` gives exp(-βH).
+
+The single tensor is **not** symmetric under L↔R: `W[a,b] = W[-b,-a]`, the transposition maps
+the bond charge `p → -p` (spatial reflection reverses the Z3 current), so the rotated column
+satisfies `Tᵀ = C T C` with `C` the charge conjugation `p → -p` on every time site. For
+boundary states invariant under charge conjugation (with QNs: the neutral state, `[0,0,1]` for
+`coupling=:tau`) `C T C = T`, so the whole column *is* symmetric, `Tᵀ = T`, and the symmetric
+(L = Rᵀ) machinery applies; for charged boundaries it does not.
+[`expH_potts_symmetric_svd`](@ref) gives tensors that are symmetric one by one (no QNs).
 """
-function expH_potts_symmetric_svd(in_space_sites, mp::PottsParams; dt::Number)
-    (; JSS, ftau) = mp
+function expH_potts_murg(sites, mp::PottsParams; dt::Number)
+    _check_potts_qns(sites, mp)
+    A, Ad, _ = potts_op_names(mp)
 
-    # ASSERT NEED SYMMETRY p<->p' OR WE SHOuLD BE MORE CAREFUL
+    ϵ = mp.JSS * dt * im
+    fI = (2*exp(-ϵ) + exp(2*ϵ))/3
+    fA = (exp(2*ϵ) - exp(-ϵ))/3
+    g = (fI, fA, fA)
 
-    Jdt = JSS * dt
-    fdt = ftau * dt
-    ϵ = Jdt * 1.0im 
+    N = length(sites)
+    links = if hasqns(sites)
+        [Index([QN("Z", p, 3) => 1 for p in 0:2], "Link,l=$(n-1)"; dir=ITensors.Out) for n in 1:N+1]
+    else
+        [Index(3, "Link,l=$(n-1)") for n in 1:N+1]
+    end
 
-    N = length(in_space_sites)
+    U = MPO(N)
+    for n in 1:N
+        s = sites[n]
+        powA = (op("Id", s), op(A, s), op(Ad, s))           # A^p, p = 0,1,2
+        lf(p) = sqrt(g[p+1]) * powA[p+1]                    # left factor of bond state p
+        rf(p) = sqrt(g[p+1]) * powA[mod(-p, 3)+1]           # right factor: A^{-p}
+        ll, rl = dag(links[n]), links[n+1]
 
-    U_t = MPO(N)
-
-    uT_open = ITensor()
-
-    for n = 1:N-1 # TODO CHECK THIS
-
-        Σi = op(in_space_sites, "Σ", n)
-        Σid = op(in_space_sites, "Σdag", n)
-
-        Σj = op(in_space_sites, "Σ", n+1)
-        Σjd = op(in_space_sites, "Σdag", n+1)
-
-
-        e1 = exp(ϵ*(Σi * Σjd + Σid * Σj))
-
-        c1 = combiner(inds(Σi))
-        c2 = combiner(inds(Σj))
-
-        e1c = e1 * c1 * c2
-
-        u, s, uT, _, _ = symm_svd(e1c, combinedind(c1), cutoff=1e-15)
-
-        u_sqs = u * sqrt.(s)
-        uT_sqs = sqrt.(s) * uT
-
-        u_open = u_sqs * dag(c1) * delta(inds(s))
-        replacetags!(u_open, "u" => "Link,l=$n")
-
-
-        if n == 1
-            U_t[n] = u_open
-            
+        U[n] = if n == 1
+            sum(onehot(rl => p+1) * lf(p) for p in 0:2)
+        elseif n == N
+            sum(onehot(ll => p+1) * rf(p) for p in 0:2)
         else
-            uu = uT_open * prime(u_open, "Site")
-            uu = replaceprime( uu, 2 => 1)
-            U_t[n] = uu
-        end
-
-        uT_open = uT_sqs * dag(c2)
-        replacetags!(uT_open, "u" => "Link,l=$n")
-
-
-    end
-
-    U_t[N] = uT_open
-
-    if abs(fdt) > 1e-10
-        for n = 1:N
-
-            ttdag = op(in_space_sites, "τplusτdag",  n)
-            expT = exp(im * ttdag * fdt/2)
-
-            U_t[n] = prime(U_t[n], "Site") * expT
-            U_t[n] = noprime(U_t[n] * prime(expT, "Site"), 2)
+            sum(onehot(ll => a+1, rl => b+1) * product(rf(a), lf(b)) for a in 0:2, b in 0:2)
         end
     end
 
-    #@show U_t
+    return _potts_field_halfsteps!(U, sites, mp, dt)
+end
 
-    return U_t
 
+"""
+    expH_potts_symmetric_svd(sites, mp::PottsParams; dt) -> MPO
+
+exp(-iH dt) with each bond gate split by a complex-symmetric SVD, `G = Σ_k A_k ⊗ A_k`, so that
+the MPO is symmetric under p↔p' and L↔R (what the symmetric transverse algorithms want).
+Bond dimension 3; same operator as [`expH_potts_murg`](@ref).
+
+**No QNs**: the symmetric bond basis is made of `A^p ± A^{-p}` combinations, i.e. it mixes
+the Z3 charges `±p`. That is unavoidable: an L↔R symmetric tensor sends the same charge both
+ways, so for Z3 it can only carry charge 0. With QN sites use [`expH_potts_murg`](@ref)
+(`scheme=Murg()`): its tensors are symmetric only up to charge conjugation, but the column
+built from them is symmetric for neutral boundary states.
+"""
+function expH_potts_symmetric_svd(sites, mp::PottsParams; dt::Number)
+    hasqns(sites) && error("""
+        expH_potts_symmetric_svd: a transposition-symmetric (L↔R) bond basis mixes the Z3
+        charges ±1, so it cannot carry QNs. Use scheme=Murg() (expH_potts_murg) with QN sites.""")
+    A, Ad, _ = potts_op_names(mp)
+
+    ϵ = mp.JSS * dt * im
+    N = length(sites)
+    U = MPO(N)
+
+    right_prev = ITensor()
+    for n in 1:N-1
+        si, sj = sites[n], sites[n+1]
+        G = exp(ϵ * (op(A, si) * op(Ad, sj) + op(Ad, si) * op(A, sj)))
+
+        F = symm_svd(G, (si', dag(si)); cutoff=1e-15)
+        sqS = sqrt.(F.S)
+        link = settags(F.v, "Link,l=$n")
+        left  = replaceind(F.U * sqS, F.v => link)
+        right = replaceind(sqS * F.V, F.u => link)
+
+        U[n] = n == 1 ? left : product(right_prev, left)
+        right_prev = right
+    end
+    U[N] = right_prev
+
+    return _potts_field_halfsteps!(U, sites, mp, dt)
 end
