@@ -127,6 +127,7 @@ include("truncation_sweeps/rtm_svd.jl")
 include("truncation_sweeps/rtm_r_contract.jl")
 include("truncation_sweeps/rtm_lr_contract.jl")
 include("truncation_sweeps/rtm_eig.jl")
+include("truncation_sweeps/rtm_eigs.jl")
 
 export truncparams 
 
