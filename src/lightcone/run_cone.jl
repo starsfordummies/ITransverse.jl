@@ -28,6 +28,10 @@ function run_cone(ll::TMPSorMPS, rr::TMPSorMPS,
     nT_final::Int
 )
     ll, rr = unsided(ll), unsided(rr)  # accept a tagged boundary vector, work on the MPS
+    # With QNs, a left vector started as a copy of the right one has the same arrows and
+    # cannot be contracted with the tMPOs: make it the transpose (no-op without QNs, and for
+    # an already-dual left vector such as one resumed from a checkpoint)
+    arrows_clash(ll, rr) && (ll = sim(linkinds, transpose_arrows(ll)))
 
     (; opt_method, optimize_op, truncp, vwidth) = cone_pars
 

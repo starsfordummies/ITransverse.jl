@@ -30,12 +30,12 @@
 QNs of `x`, not on its arrow. """
 function _qn_fold_layout(x::Index)
     d = dim(x)
-    qs = [qn(x, a) for a in 1:d]
+    qs = reduce(vcat, [fill(q, n) for (q, n) in space(x)])  # charge of each state, not block
     f = [qs[a] - qs[b] for b in 1:d for a in 1:d]          # a fastest
     reps = unique(f)
     perm = reduce(vcat, [findall(==(q), f) for q in reps])
-    space = [q => count(==(q), f) for q in reps]
-    return space, perm
+    fspace = [q => count(==(q), f) for q in reps]
+    return fspace, perm
 end
 
 """ Fusion tensor of the stored leg `x` of W with its partner `prime(x, 2)` of dag(W''),
