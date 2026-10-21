@@ -14,6 +14,24 @@ julia> using Pkg
 julia> Pkg.add(url="https://github.com/starsfordummies/ITransverse.jl.git")
 ```
 
+If you use this code in your work and are happy with the results, feel free to cite the ITransverse paper
+
+```
+@article{SciPostPhysCodeb.63,
+	title = {The ITransverse.jl library for transverse tensor network contractions},
+	pages = {63},
+	author = {Carignano, Stefano},
+	journal = {SciPost Phys. Codebases},
+	year = {2026},
+	publisher = {SciPost},
+	doi = {10.21468/SciPostPhysCodeb.63},
+	url = {https://scipost.org/10.21468/SciPostPhysCodeb.63}
+}
+```
+
+If you find some bugs, let us know! 
+
+
 ## Motivation: time evolution of 1D quantum systems
 
 The 2D tensor network associated with the time evolution of a quantum chain is 
@@ -209,7 +227,6 @@ We provide high-level functions for the following algorithms (more details below
 We have a few basic structs which define the models and truncations and are carried around in the programs.
 Most notably we have
 
-- `ModelParams` for building the basic model Hamiltonians
 - `tMPOParams` for building the temporal MPOs (including the initial states and closing operators)
 - `PMParams` where we store also additional parameters required for the power methods
 - `ConeParams` where we store also additional parameters required for the light cone algorithms
@@ -256,10 +273,8 @@ See the example provided in the examples/ folder
 
 We provide tools for diagonalizing the RTMs and computing all sorts of generalized entropies from them. One can
 
-- diagonalize directly the RTM T_t (for very short tMPS only, of course)
+- diagonalize directly the RTM T_t 
 - compute Tr(T_t^2) by contracting twice the left and right dominant vectors
-- __If__ we have a symmetric RTM (<L| = <Rbar|), we can put the RTM in a symmetric gauge where we have orthogonal matrices,
-  so that we can compute the eigenvalues by diagonalizing site by site some environments of size ~chi^2
 
 ## Models
 
