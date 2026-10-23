@@ -151,7 +151,11 @@ function tcontract(::Algorithm"densitymatrix",
     # conjugate copy of ψ built site by site when needed: ψ can be long, a full copy is not free
     ψ_c(j) = prime(dag(ψ[j]), 2)
     simA_c = prime(dag(A), 2)
-    A_c = replaceprime(simA_c, 3 => 1)
+    # A_c keeps A's OUTPUT legs (those ψ does not contract) so A·A_c traces over them.
+    # The input level is read off site 1: a primed ψ applies the transpose.
+    inlev = plev(only(commoninds(siteinds(A, 1), siteinds(ψ, 1))))
+    outs = [filter(i -> plev(i) != inlev, siteinds(A, j)) for j in 1:N]
+    A_c = MPO([replaceinds(simA_c[j], prime.(outs[j], 2), outs[j]) for j in 1:N])
 
     # Store the right environment tensors
     E = Vector{ITensor}(undef, N)
