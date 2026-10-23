@@ -157,6 +157,11 @@ function combine_and_fold(W1::Union{AbstractMPS, TransverseMPS},
         W12[end] *= comb_link[end]
     end
 
+    # popfirst!/pop! on the raw data bypass the ortho bookkeeping: the right limit would still
+    # point past the end of the shortened chain (orthogonalize!/truncate! then index out of
+    # bounds). Nothing about W12's form is known anyway, so mark it unknown for its new length.
+    ITensorMPS.reset_ortho_lims!(W12)
+
 
 
     if !isnothing(new_siteinds)

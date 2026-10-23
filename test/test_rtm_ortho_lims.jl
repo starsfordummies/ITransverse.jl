@@ -85,3 +85,65 @@ end
         @test norm(res.L) ≈ sqrt(abs(real(inner(res.L, res.L)))) rtol = 1e-10
     end
 end
+
+# The other places that record ortho limits by hand, or touch MPS data below `setindex!`.
+# Each claim is checked the same way: the tensors the limits call isometries must be
+# isometries, and the cheap norm(psi) must agree with a full contraction.
+norm_consistent(psi) = isapprox(norm(psi), sqrt(abs(real(inner(psi, psi)))); rtol = 1e-10)
+valid_lims(psi) = 0 <= ITensorMPS.leftlim(psi) < ITensorMPS.rightlim(psi) <= length(psi) + 1
+
+@testset "other ortho-limit setters" begin
+    Random.seed!(2468)
+    s = siteinds(2, 10)
+
+    @testset "ttruncate!, site_range = $sr" for sr in (1:10, 3:7)
+        psi = random_mps(ComplexF64, s; linkdims = 6)
+        ttruncate!(psi; site_range = sr, maxdim = 3)
+        @test ortho_residual(psi) < 1e-10
+        @test norm_consistent(psi)
+    end
+
+    @testset "tcontract densitymatrix" begin
+        psi = random_mps(ComplexF64, s; linkdims = 4)
+        A   = random_mpo(s) + im * random_mpo(s)
+        out = tapply(ITransverse.Algorithm("densitymatrix"), A, psi; cutoff = 0.0, maxdim = 6)
+        out = out isa Tuple ? first(out) : out
+        @test ortho_residual(out) < 1e-10
+        @test norm_consistent(out)
+    end
+
+    @testset "gen_orthogonalize: limits only where the form is unitary" begin
+        # complex: bilinear isometries are not unitary ones -> limits must stay unknown
+        g = gen_orthogonalize(random_mps(ComplexF64, s; linkdims = 4), 5)
+        @test !isortho(g)
+        @test norm_consistent(g)
+        # real: the two forms coincide -> the centre is recorded and is truthful
+        gr = gen_orthogonalize(random_mps(Float64, s; linkdims = 4), 5)
+        @test isortho(gr) && orthocenter(gr) == 5
+        @test ortho_residual(gr) < 1e-10
+        @test norm_consistent(gr)
+    end
+
+    @testset "normbyfactor does not touch its input" begin
+        psi = random_mps(ComplexF64, s; linkdims = 4)
+        ref = deepcopy(psi)
+        out = normbyfactor(psi, 7.0)
+        @test all(norm(psi[j] - ref[j]) == 0 for j in eachindex(psi))
+        @test ITensorMPS.ortho_lims(psi) == ITensorMPS.ortho_lims(ref)
+        @test inner(out, out) ≈ inner(ref, ref) / 49
+        @test norm_consistent(out)
+    end
+
+    @testset "combine_and_fold leaves valid limits after dropping sites" begin
+        tp  = ising_tp()
+        bfw = FwtMPOBlocks(tp)
+        ts  = siteinds("S=1/2", 8)
+        fwmps = fw_tMPS(bfw, ts; tr = [1, 1])
+        fold, _, _ = ITransverse.combine_and_fold(fwmps, fwmps; fold_op = [1 0; 0 1],
+                                                  fold_init_state = [1, 0, 0, 1], dag_W2 = true)
+        @test valid_lims(fold)
+        @test !isortho(fold)
+        f2 = orthogonalize(fold, 1)          # used to index past the end of the chain
+        @test norm_consistent(f2)
+    end
+end

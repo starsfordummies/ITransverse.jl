@@ -43,6 +43,7 @@ function folded_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index}; LR::Symbol=:right,
     if !init_beta_only
         error("init_beta on both sides not implemented yet")
     end
+    _check_qn_time_sites(b, ts)
     if LR == :left
         WW = b.WWl
         WW_im = b.WWl_im
@@ -64,18 +65,18 @@ function folded_tMPS(b::FoldtMPOBlocks, ts::Vector{<:Index}; LR::Symbol=:right,
         psi[ib] = WW_im
     end
 
-    tlinks = [Index(dim(b.iR), "Link,time_fold,l=$(ii-1)") for ii in 1:length(ts)+1]
+    tlinks = [sim(b.iR; tags = "Link,time_fold,l=$(ii-1)") for ii in 1:length(ts)+1]
 
     for ii in eachindex(psi)
         newinds = get_newinds(ii, tlinks)
-        psi[ii] = replaceinds(psi[ii], WWinds, newinds)
+        psi[ii] = _replaceinds_arrow(psi[ii], WWinds, newinds)
     end
 
     # A non-product boundary is *appended* as its own site; count what each end added, see
     # the same point in `fw_tMPS`.
-    attach_boundary_bottom!(psi, rho0, tlinks[1])
+    attach_boundary_bottom!(psi, _qn_fold_boundary(b, rho0, tlinks[1]), tlinks[1])
 
-    attach_boundary_top!(psi, something(fold_op, vectorized_identity(tlinks[end])), tlinks[end])
+    attach_boundary_top!(psi, _qn_fold_boundary(b, fold_op, tlinks[end]), tlinks[end])
 
     # A transverse boundary vector always carries its side; `unsided` gives the bare state.
     return TransverseMPS(psi, LR)
@@ -138,6 +139,7 @@ end
 function folded_tMPO_open_edges(b::FoldtMPOBlocks, ts::Vector{<:Index}; init_beta_only::Bool=true, verbose::Bool=false)
 
     (; tp, WWc, WWc_im, iL, iR, iP, iPs) = b
+    _check_qn_time_sites(b, ts)
 
     #match indices for real-imag so it's easier to work with them 
     replaceinds!(WWc_im, inds(WWc_im), inds(WWc))
@@ -164,17 +166,17 @@ function folded_tMPO_open_edges(b::FoldtMPOBlocks, ts::Vector{<:Index}; init_bet
     virtual_ind_size = dim(iR)
 
     # two tlinks will be contracted at the end
-    tlinks = [Index(virtual_ind_size,"Link,time_fold,l=$(ii-1)") for ii in 1:length(ts)+1]
+    tlinks = [sim(iR; tags = "Link,time_fold,l=$(ii-1)") for ii in 1:length(ts)+1]
 
     WWinds =  (iP, iPs, iL, iR)
 
     for ii in eachindex(oo)
         newinds = (ts[ii],        ts[ii]',       tlinks[ii],   tlinks[ii+1])
         if ii > b1 && ii <= b2
-            oo[ii] = replaceinds(WWc, WWinds, newinds)
+            oo[ii] = _replaceinds_arrow(WWc, WWinds, newinds)
         else
             #@warn "Filling imag beta tensor O[$(ii)]"
-            oo[ii] = replaceinds(WWc_im, WWinds, newinds)
+            oo[ii] = _replaceinds_arrow(WWc_im, WWinds, newinds)
         end
     end
 
@@ -201,6 +203,7 @@ and rank 2 is exactly right at the ends.
 """
 function folded_tMPO_op(b::FoldtMPOBlocks, ts::Vector{<:Index}, op::ITensor;
                         init_beta_only::Bool=true, rho0=b.rho0)
+    hasqns(b.iR) && error("folded_tMPO_op: QN folded blocks not supported yet")
     oo, bl_ind, tr_ind = folded_tMPO_open_edges(b, ts; init_beta_only)
     attach_boundary_bottom!(oo, rho0, bl_ind)
     ip = only(inds(op, "Site"))
@@ -224,8 +227,8 @@ function folded_tMPO(b::FoldtMPOBlocks, ts::Vector{<:Index};
 
     oo, bl_ind, tr_ind = folded_tMPO_open_edges(b, ts; init_beta_only, verbose)
 
-    attach_boundary_bottom!(oo, rho0, bl_ind)
-    attach_boundary_top!(oo, something(fold_op, vectorized_identity(tr_ind)), tr_ind)
+    attach_boundary_bottom!(oo, _qn_fold_boundary(b, rho0, bl_ind), bl_ind)
+    attach_boundary_top!(oo, _qn_fold_boundary(b, fold_op, tr_ind), tr_ind)
 
     return oo
 end

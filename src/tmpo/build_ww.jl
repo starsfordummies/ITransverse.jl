@@ -17,6 +17,9 @@ Builds *Folded* but **UN-ROTATED** tensors, just W * Wdag and joined indices
 """
 function build_WW(eH::MPO)
 
+    # QNs: explicit fusion with a basis that is the same for every copy of a leg (see qn_fold.jl)
+    hasqns(eH) && return _build_WW_qn(eH)
+
     # Same indices for all tensors
     space_phys = Index(dim(siteind(eH,2))^2, "Site,space")
     space_link1 = Index(linkdim(eH,1)^2, "Link,space")
