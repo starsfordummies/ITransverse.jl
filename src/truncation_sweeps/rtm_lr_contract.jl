@@ -38,7 +38,7 @@ end
 
 """ Builds LEFT environments, sweeps RIGHT→LEFT (opt. tauB = trA(tau) )"""
 function _tlrcontract_rtm_left(ψL::MPS, AL::MPO, AR::MPO, ψR::MPS;
-        cutoff, maxdim, mindim, preserve_mps_tags, factored::Union{Bool,Symbol}=true, kwargs...)
+        cutoff, maxdim, mindim, preserve_mps_tags, factored::Union{Bool,Symbol}=true, kernel=svd_ERL, kwargs...)
 
     NL = length(AL)
     NR = length(AR)
@@ -92,7 +92,7 @@ function _tlrcontract_rtm_left(ψL::MPS, AL::MPO, AR::MPO, ψR::MPS;
         Ris = isnothing(renorm_idx) ? IndexSet(sR[j+1]) : IndexSet(sR[j+1], renorm_idx)
 
         # We associate the "U" SVD branch to the R, the "V" to the L
-        U, S, V, renorm_idx = svd_ERL(E[j], R, L, Ris; factored, cutoff, maxdim, mindim,
+        U, S, V, renorm_idx = kernel(E[j], R, L, Ris; factored, cutoff, maxdim, mindim,
                                       lefttags=tsR, righttags=tsL, kwargs...)
 
         ψR_out[j+1] = U
@@ -120,7 +120,7 @@ end
 
 """ Builds RIGHT environments, sweeps LEFT→RIGHT (opt. tauA=trB(tau) ) """
 function _tlrcontract_rtm_right(ψL::MPS, AL::MPO, AR::MPO, ψR::MPS;
-        cutoff, maxdim, mindim, preserve_mps_tags, factored::Union{Bool,Symbol}=true, kwargs...)
+        cutoff, maxdim, mindim, preserve_mps_tags, factored::Union{Bool,Symbol}=true, kernel=svd_ERL, kwargs...)
 
     AL  = AL'
     ψL  = ψL''
@@ -170,7 +170,7 @@ function _tlrcontract_rtm_right(ψL::MPS, AL::MPO, AR::MPO, ψR::MPS;
 
         Ris = isnothing(renorm_idx) ? IndexSet(sR[j-1]) : IndexSet(sR[j-1], renorm_idx)
 
-        U, S, V, renorm_idx = svd_ERL(E[j], R, L, Ris; factored, cutoff, maxdim, mindim,
+        U, S, V, renorm_idx = kernel(E[j], R, L, Ris; factored, cutoff, maxdim, mindim,
                                       lefttags=tsR, righttags=tsL, kwargs...)
 
         ψR_out[j-1] = U
