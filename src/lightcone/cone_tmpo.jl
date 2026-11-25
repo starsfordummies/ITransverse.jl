@@ -36,6 +36,7 @@ function folded_tMPO_ext(b::FoldtMPOBlocks, ts::Vector{<:Index};
     n_ext + n_ext_bottom <= Nt || error("n_ext + n_ext_bottom = $(n_ext + n_ext_bottom) > $(Nt) sites")
 
     (; WWc, WWc_im, WWl, WWr, iL, iR, iP, iPs) = b 
+    _check_qn_time_sites(b, ts)
     
     @assert inds(WWc) == inds(WWc_im)
 
@@ -57,7 +58,7 @@ function folded_tMPO_ext(b::FoldtMPOBlocks, ts::Vector{<:Index};
     dim_virtual_inds = dim(b.iR)
 
     # Time links
-    tl = [Index(dim_virtual_inds,"Link,time_fold,l=$(ii-1)") for ii in 1:Nt+1]
+    tl = [sim(iR; tags = "Link,time_fold,l=$(ii-1)") for ii in 1:Nt+1]
 
 
 
@@ -66,19 +67,19 @@ function folded_tMPO_ext(b::FoldtMPOBlocks, ts::Vector{<:Index};
 
     for ii = 1:Nb
         newinds = (ts[ii],   ts[ii]',   tl[ii],   tl[ii+1])
-        oo[ii] = replaceinds(WWc_im, WWinds, newinds)
+        oo[ii] = _replaceinds_arrow(WWc_im, WWinds, newinds)
     end
     for ii = 1:n_ext_bottom # bottom edge: same single-leg tensors as the top edge
         newinds = (prime(ts[ii], bot_plev),   prime(ts[ii], bot_plev),   tl[ii],   tl[ii+1])
-        oo[ii] = replaceinds(WWbot, WWinds, newinds)
+        oo[ii] = _replaceinds_arrow(WWbot, WWinds, newinds)
     end
     for ii = max(Nb, n_ext_bottom)+1:Nt-n_ext
         newinds = (ts[ii],   ts[ii]',   tl[ii],   tl[ii+1])
-        oo[ii] = replaceinds(WWc, WWinds, newinds)
+        oo[ii] = _replaceinds_arrow(WWc, WWinds, newinds)
     end
     for ii = Nt-n_ext+1:Nt # no prime here
         newinds = (prime(ts[ii], edge_plev),   prime(ts[ii], edge_plev),   tl[ii],   tl[ii+1]) 
-        oo[ii] = replaceinds(WWedge, WWinds, newinds)
+        oo[ii] = _replaceinds_arrow(WWedge, WWinds, newinds)
     end
 
    #= 
@@ -92,14 +93,14 @@ function folded_tMPO_ext(b::FoldtMPOBlocks, ts::Vector{<:Index};
 
     for ii in eachindex(oo)
         newinds = (ts[ii],           ts[ii]',          tl[ii],    tl[ii+1])
-        oo[ii] = replaceinds(oo[ii], WWinds, newinds)
+        oo[ii] = _replaceinds_arrow(oo[ii], WWinds, newinds)
     end
 
     =# 
 
     # Contract first tensor with initial state, last one with the operator (default Identity)
-    attach_boundary_bottom!(oo, rho0, tl[1]; inner=inner_bottom)
-    attach_boundary_top!(oo, something(fold_op, vectorized_identity(tl[end])), tl[end]; inner=inner_top)
+    attach_boundary_bottom!(oo, _qn_fold_boundary(b, rho0, tl[1]), tl[1]; inner=inner_bottom)
+    attach_boundary_top!(oo, _qn_fold_boundary(b, fold_op, tl[end]), tl[end]; inner=inner_top)
 
     return oo
 

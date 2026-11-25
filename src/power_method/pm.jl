@@ -106,14 +106,19 @@ builds <L| = <ψ0|(in_mpo_L)^N->inf
 and  |R> = (in_mpo_R)^N|ψ0>
 
 """
-function powermethod_lr(in_mps::TMPSorMPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::PMParams)
+function powermethod_lr(in_mps::TMPSorMPS, in_mpo_L::MPO, in_mpo_R::MPO, pm_params::PMParams;
+        left_start=nothing)
     in_mps = unsided(in_mps)  # accept a tagged boundary vector, work on the MPS
+    # With QNs the left vector lives in the dual space: its site arrows are those of the transposed
+    # right one (an MPS cannot be applied from the left with the same arrows as the right start).
+    # `transpose_arrows` is the identity without QNs, so non-QN behaviour is unchanged.
+    left_mps = left_start === nothing ? transpose_arrows(in_mps) : unsided(left_start)
 
     (;itermax, cutoffs, maxdims, truncp, normalization, compute_fidelity) = pm_params
 
     stepper, info_iterations = init_pm(pm_params)
 
-    ll, rr, svs = tlrapply(in_mps, in_mpo_L, in_mpo_R, in_mps; truncp...)
+    ll, rr, svs = tlrapply(left_mps, in_mpo_L, in_mpo_R, in_mps; truncp...)
    
     llprev = copy(ll)
 

@@ -312,6 +312,15 @@ function _boundary_itensor(x, hook::Index; inner::Bool=false)
     return t
 end
 
+""" `t` with its leg `ip` renamed to `x`, carrying the arrow dual to `x` so that it contracts
+into the tensor storing `x`. `replaceind` keeps the arrow of `ip`, which is not always the right
+one (e.g. at the top of a folded column), hence the explicit flip (data untouched). """
+function _dual_leg(t::ITensor, ip::Index, x::Index)
+    t = replaceind(t, ip => dag(x))
+    (hasqns(t) && dir(stored_ind(t, x)) == dir(x)) && (t = transpose_arrows(t))
+    return t
+end
+
 function _check_boundary_rank(t::ITensor, psi::AbstractMPS; inner::Bool=false)
     if psi isa MPS && ndims(t) == 3
         error("""A rank-3 (bulk) boundary state adds an extra site with two site legs, which only
@@ -341,7 +350,7 @@ function attach_boundary_bottom!(psi::AbstractMPS, bl, hook::Index; inner::Bool=
     ip = boundary_phys_ind(blt)
 
     if is_product_boundary(blt)
-        psi[1] = psi[1] * replaceind(blt, ip => dag(stored_ind(psi[1], hook)))
+        psi[1] = psi[1] * _dual_leg(blt, ip, stored_ind(psi[1], hook))
     else
         pushfirst!(psi.data, replaceind(blt, ip => hook))
         _reset_ortho_lims!(psi)
@@ -366,7 +375,7 @@ function attach_boundary_top!(psi::AbstractMPS, tr, hook::Index; dagger::Bool=fa
     ip = boundary_phys_ind(trt)
 
     if is_product_boundary(trt)
-        psi[end] = psi[end] * replaceind(trt, ip => dag(stored_ind(psi[end], hook)))
+        psi[end] = psi[end] * _dual_leg(trt, ip, stored_ind(psi[end], hook))
     else
         push!(psi.data, replaceind(trt, ip => hook)) # TODO or: dag(stored_ind(psi[end], hook) ?
         _reset_ortho_lims!(psi)

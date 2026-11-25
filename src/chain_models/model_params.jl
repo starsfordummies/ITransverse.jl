@@ -47,18 +47,23 @@ IsingParams(Jtwo::Number, gperp::Number, hpar::Number; phys_site::Index=Index(2,
 Parameters for the 3-state Potts chain.
 
 Fields:
-- `JSS`   – spin-spin coupling (default 1.0)
-- `ftau`  – transverse (clock) field (default 0.4)
-- `phys_site` – physical site index (default `S=1`, i.e. 3-dimensional)
+- `JSS`   - spin-spin coupling (default 1.0)
+- `ftau`  - transverse (clock) field (default 0.4)
+- `phys_site` - physical site index (default `S=1`, i.e. 3-dimensional)
+- `coupling`  - `:sigma` (default) for ``H = -J\\sum(Σ_iΣ^\\dagger_{i+1} + h.c.) - f\\sum(τ+τ^\\dagger)``,
+  or `:tau` for the Fourier-rotated ``H = -J\\sum(τ_iτ^\\dagger_{i+1} + h.c.) - f\\sum(Σ+Σ^\\dagger)``
+  (same spectrum; the Z3 generator ``\\prod Σ`` is diagonal, so it is the form that supports
+  Z3 QNs, e.g. `phys_site=siteind("S1_Z3"; conserve_qns=true)`). See `potts_op_names`.
 """
 Base.@kwdef mutable struct PottsParams <: ModelParams
     JSS::Float64  = 1.0
     ftau::Float64 = 0.4
     phys_site::Index = Index(3, "S=1")
+    coupling::Symbol = :sigma
 end
 # Positional constructor for backward compatibility: PottsParams(J, f)
-PottsParams(JSS::Number, ftau::Number; phys_site::Index=Index(3, "S=1")) =
-    PottsParams(; JSS=Float64(JSS), ftau=Float64(ftau), phys_site)
+PottsParams(JSS::Number, ftau::Number; phys_site::Index=Index(3, "S=1"), coupling::Symbol=:sigma) =
+    PottsParams(; JSS=Float64(JSS), ftau=Float64(ftau), phys_site, coupling)
 
 
 """
@@ -69,10 +74,10 @@ Parameters for the XXZ spin-1/2 chain
 (spin-1/2 operators, ``S=\\sigma/2``; same overall-minus convention as [`IsingParams`](@ref)).
 
 Fields:
-- `J_XY` – XY coupling (default 1.0)
-- `J_ZZ` – Ising (ZZ) anisotropy (default 1.0)
-- `hz`   – longitudinal field (default 0.0)
-- `phys_site` – physical site index
+- `J_XY` - XY coupling (default 1.0)
+- `J_ZZ` - Ising (ZZ) anisotropy (default 1.0)
+- `hz`   - longitudinal field (default 0.0)
+- `phys_site` - physical site index
 """
 Base.@kwdef mutable struct XXZParams <: ModelParams
     J_XY::Float64  = 1.0

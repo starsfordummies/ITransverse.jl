@@ -109,6 +109,10 @@ The **physical state represented by the MPS is unchanged** (no truncation).
   fields that do not admit a positive-definite inner product.
 - The gauge is **not** the same as the standard ITensor gauge: overlaps
   `⟨ψ|φ⟩` must be computed with the appropriate bilinear contraction.
+- ITensorMPS's orthogonality limits are set to `center` only for real tensors, where the
+  bilinear and unitary forms coincide. For complex tensors they are left unknown
+  (`isortho(M) == false`), so `norm`, `orthogonalize!`, `truncate!` do not mistake the
+  complex-orthogonal tensors for unitary isometries.
 
 # Example
 ```julia
@@ -134,9 +138,8 @@ function gen_orthogonalize!(M::MPS, center::Int)
         _gen_rightorth!(M, i)
     end
 
-    # Update ITensorMPS book-keeping
-    setleftlim!(M, center - 1)
-    setrightlim!(M, center + 1)
+    setleftlim!(M, 0)
+    setrightlim!(M, N + 1)
 
     return M
 end
